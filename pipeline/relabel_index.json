@@ -1,0 +1,989 @@
+[
+ {
+  "i": 0,
+  "car": "RCG2235",
+  "angle": "右前",
+  "label": "negative",
+  "file": "000_RCG2235_右前.jpg"
+ },
+ {
+  "i": 1,
+  "car": "RCG2235",
+  "angle": "右後",
+  "label": "negative",
+  "file": "001_RCG2235_右後.jpg"
+ },
+ {
+  "i": 2,
+  "car": "RCG2235",
+  "angle": "左前",
+  "label": "negative",
+  "file": "002_RCG2235_左前.jpg"
+ },
+ {
+  "i": 3,
+  "car": "RCG2235",
+  "angle": "左後",
+  "label": "negative",
+  "file": "003_RCG2235_左後.jpg"
+ },
+ {
+  "i": 4,
+  "car": "RCQ6760",
+  "angle": "右前",
+  "label": "negative",
+  "file": "004_RCQ6760_右前.jpg"
+ },
+ {
+  "i": 5,
+  "car": "RCQ6760",
+  "angle": "右後",
+  "label": "negative",
+  "file": "005_RCQ6760_右後.jpg"
+ },
+ {
+  "i": 6,
+  "car": "RCQ6760",
+  "angle": "左前",
+  "label": "negative",
+  "file": "006_RCQ6760_左前.jpg"
+ },
+ {
+  "i": 7,
+  "car": "RCQ6760",
+  "angle": "左後",
+  "label": "negative",
+  "file": "007_RCQ6760_左後.jpg"
+ },
+ {
+  "i": 8,
+  "car": "RCW1883",
+  "angle": "右前",
+  "label": "negative",
+  "file": "008_RCW1883_右前.jpg"
+ },
+ {
+  "i": 9,
+  "car": "RCW1883",
+  "angle": "右後",
+  "label": "negative",
+  "file": "009_RCW1883_右後.jpg"
+ },
+ {
+  "i": 10,
+  "car": "RCW1883",
+  "angle": "左前",
+  "label": "negative",
+  "file": "010_RCW1883_左前.jpg"
+ },
+ {
+  "i": 11,
+  "car": "RCW1883",
+  "angle": "左後",
+  "label": "negative",
+  "file": "011_RCW1883_左後.jpg"
+ },
+ {
+  "i": 12,
+  "car": "RCX5100",
+  "angle": "右前",
+  "label": "negative",
+  "file": "012_RCX5100_右前.jpg"
+ },
+ {
+  "i": 13,
+  "car": "RCX5100",
+  "angle": "右後",
+  "label": "negative",
+  "file": "013_RCX5100_右後.jpg"
+ },
+ {
+  "i": 14,
+  "car": "RCX5100",
+  "angle": "左前",
+  "label": "negative",
+  "file": "014_RCX5100_左前.jpg"
+ },
+ {
+  "i": 15,
+  "car": "RCX5100",
+  "angle": "左後",
+  "label": "negative",
+  "file": "015_RCX5100_左後.jpg"
+ },
+ {
+  "i": 16,
+  "car": "RDG8571",
+  "angle": "右前",
+  "label": "negative",
+  "file": "016_RDG8571_右前.jpg"
+ },
+ {
+  "i": 17,
+  "car": "RDG8571",
+  "angle": "右後",
+  "label": "negative",
+  "file": "017_RDG8571_右後.jpg"
+ },
+ {
+  "i": 18,
+  "car": "RDG8571",
+  "angle": "左前",
+  "label": "negative",
+  "file": "018_RDG8571_左前.jpg"
+ },
+ {
+  "i": 19,
+  "car": "RDG8571",
+  "angle": "左後",
+  "label": "negative",
+  "file": "019_RDG8571_左後.jpg"
+ },
+ {
+  "i": 20,
+  "car": "RDG8578",
+  "angle": "右前",
+  "label": "negative",
+  "file": "020_RDG8578_右前.jpg"
+ },
+ {
+  "i": 21,
+  "car": "RDG8578",
+  "angle": "右後",
+  "label": "negative",
+  "file": "021_RDG8578_右後.jpg"
+ },
+ {
+  "i": 22,
+  "car": "RDG8578",
+  "angle": "左前",
+  "label": "negative",
+  "file": "022_RDG8578_左前.jpg"
+ },
+ {
+  "i": 23,
+  "car": "RDG8578",
+  "angle": "左後",
+  "label": "negative",
+  "file": "023_RDG8578_左後.jpg"
+ },
+ {
+  "i": 24,
+  "car": "RDG9853",
+  "angle": "右前",
+  "label": "negative",
+  "file": "024_RDG9853_右前.jpg"
+ },
+ {
+  "i": 25,
+  "car": "RDG9853",
+  "angle": "右後",
+  "label": "negative",
+  "file": "025_RDG9853_右後.jpg"
+ },
+ {
+  "i": 26,
+  "car": "RDG9853",
+  "angle": "左前",
+  "label": "negative",
+  "file": "026_RDG9853_左前.jpg"
+ },
+ {
+  "i": 27,
+  "car": "RDG9853",
+  "angle": "左後",
+  "label": "negative",
+  "file": "027_RDG9853_左後.jpg"
+ },
+ {
+  "i": 28,
+  "car": "RDL7827",
+  "angle": "右前",
+  "label": "negative",
+  "file": "028_RDL7827_右前.jpg"
+ },
+ {
+  "i": 29,
+  "car": "RDL7827",
+  "angle": "右後",
+  "label": "negative",
+  "file": "029_RDL7827_右後.jpg"
+ },
+ {
+  "i": 30,
+  "car": "RDL7827",
+  "angle": "左前",
+  "label": "negative",
+  "file": "030_RDL7827_左前.jpg"
+ },
+ {
+  "i": 31,
+  "car": "RDL7827",
+  "angle": "左後",
+  "label": "negative",
+  "file": "031_RDL7827_左後.jpg"
+ },
+ {
+  "i": 32,
+  "car": "RDL7832",
+  "angle": "右前",
+  "label": "negative",
+  "file": "032_RDL7832_右前.jpg"
+ },
+ {
+  "i": 33,
+  "car": "RDL7832",
+  "angle": "右後",
+  "label": "negative",
+  "file": "033_RDL7832_右後.jpg"
+ },
+ {
+  "i": 34,
+  "car": "RDL7832",
+  "angle": "左前",
+  "label": "negative",
+  "file": "034_RDL7832_左前.jpg"
+ },
+ {
+  "i": 35,
+  "car": "RDL7832",
+  "angle": "左後",
+  "label": "negative",
+  "file": "035_RDL7832_左後.jpg"
+ },
+ {
+  "i": 36,
+  "car": "RDQ5916",
+  "angle": "右前",
+  "label": "negative",
+  "file": "036_RDQ5916_右前.jpg"
+ },
+ {
+  "i": 37,
+  "car": "RDQ5916",
+  "angle": "右後",
+  "label": "negative",
+  "file": "037_RDQ5916_右後.jpg"
+ },
+ {
+  "i": 38,
+  "car": "RDQ5916",
+  "angle": "左前",
+  "label": "negative",
+  "file": "038_RDQ5916_左前.jpg"
+ },
+ {
+  "i": 39,
+  "car": "RDQ5916",
+  "angle": "左後",
+  "label": "negative",
+  "file": "039_RDQ5916_左後.jpg"
+ },
+ {
+  "i": 40,
+  "car": "RDR6350",
+  "angle": "右前",
+  "label": "negative",
+  "file": "040_RDR6350_右前.jpg"
+ },
+ {
+  "i": 41,
+  "car": "RDR6350",
+  "angle": "右後",
+  "label": "negative",
+  "file": "041_RDR6350_右後.jpg"
+ },
+ {
+  "i": 42,
+  "car": "RDR6350",
+  "angle": "左前",
+  "label": "negative",
+  "file": "042_RDR6350_左前.jpg"
+ },
+ {
+  "i": 43,
+  "car": "RDR6350",
+  "angle": "左後",
+  "label": "negative",
+  "file": "043_RDR6350_左後.jpg"
+ },
+ {
+  "i": 44,
+  "car": "RDS2805",
+  "angle": "右前",
+  "label": "negative",
+  "file": "044_RDS2805_右前.jpg"
+ },
+ {
+  "i": 45,
+  "car": "RDS2805",
+  "angle": "右後",
+  "label": "negative",
+  "file": "045_RDS2805_右後.jpg"
+ },
+ {
+  "i": 46,
+  "car": "RDS2805",
+  "angle": "左前",
+  "label": "negative",
+  "file": "046_RDS2805_左前.jpg"
+ },
+ {
+  "i": 47,
+  "car": "RDS2805",
+  "angle": "左後",
+  "label": "negative",
+  "file": "047_RDS2805_左後.jpg"
+ },
+ {
+  "i": 48,
+  "car": "RDU-5572",
+  "angle": "右前",
+  "label": "negative",
+  "file": "048_RDU-5572_右前.jpg"
+ },
+ {
+  "i": 49,
+  "car": "RDU-5572",
+  "angle": "右後",
+  "label": "negative",
+  "file": "049_RDU-5572_右後.jpg"
+ },
+ {
+  "i": 50,
+  "car": "RDU-5572",
+  "angle": "左前",
+  "label": "negative",
+  "file": "050_RDU-5572_左前.jpg"
+ },
+ {
+  "i": 51,
+  "car": "RDU-5572",
+  "angle": "左後",
+  "label": "negative",
+  "file": "051_RDU-5572_左後.jpg"
+ },
+ {
+  "i": 52,
+  "car": "RDU-7390",
+  "angle": "右前",
+  "label": "negative",
+  "file": "052_RDU-7390_右前.jpg"
+ },
+ {
+  "i": 53,
+  "car": "RDU-7390",
+  "angle": "右後",
+  "label": "negative",
+  "file": "053_RDU-7390_右後.jpg"
+ },
+ {
+  "i": 54,
+  "car": "RDU-7390",
+  "angle": "左前",
+  "label": "negative",
+  "file": "054_RDU-7390_左前.jpg"
+ },
+ {
+  "i": 55,
+  "car": "RDU-7390",
+  "angle": "左後",
+  "label": "negative",
+  "file": "055_RDU-7390_左後.jpg"
+ },
+ {
+  "i": 56,
+  "car": "RDW-7085",
+  "angle": "右前",
+  "label": "negative",
+  "file": "056_RDW-7085_右前.jpg"
+ },
+ {
+  "i": 57,
+  "car": "RDW-7085",
+  "angle": "右後",
+  "label": "negative",
+  "file": "057_RDW-7085_右後.jpg"
+ },
+ {
+  "i": 58,
+  "car": "RDW-7085",
+  "angle": "左前",
+  "label": "negative",
+  "file": "058_RDW-7085_左前.jpg"
+ },
+ {
+  "i": 59,
+  "car": "RDW-7085",
+  "angle": "左後",
+  "label": "negative",
+  "file": "059_RDW-7085_左後.jpg"
+ },
+ {
+  "i": 60,
+  "car": "RDZ-9006",
+  "angle": "右前",
+  "label": "negative",
+  "file": "060_RDZ-9006_右前.jpg"
+ },
+ {
+  "i": 61,
+  "car": "RDZ-9006",
+  "angle": "右後",
+  "label": "negative",
+  "file": "061_RDZ-9006_右後.jpg"
+ },
+ {
+  "i": 62,
+  "car": "RDZ-9006",
+  "angle": "左前",
+  "label": "negative",
+  "file": "062_RDZ-9006_左前.jpg"
+ },
+ {
+  "i": 63,
+  "car": "RDZ-9006",
+  "angle": "左後",
+  "label": "negative",
+  "file": "063_RDZ-9006_左後.jpg"
+ },
+ {
+  "i": 64,
+  "car": "RDZ0155",
+  "angle": "右前",
+  "label": "negative",
+  "file": "064_RDZ0155_右前.jpg"
+ },
+ {
+  "i": 65,
+  "car": "RDZ0155",
+  "angle": "右後",
+  "label": "negative",
+  "file": "065_RDZ0155_右後.jpg"
+ },
+ {
+  "i": 66,
+  "car": "RDZ0155",
+  "angle": "左前",
+  "label": "negative",
+  "file": "066_RDZ0155_左前.jpg"
+ },
+ {
+  "i": 67,
+  "car": "RDZ0155",
+  "angle": "左後",
+  "label": "negative",
+  "file": "067_RDZ0155_左後.jpg"
+ },
+ {
+  "i": 68,
+  "car": "RDZ6950",
+  "angle": "右前",
+  "label": "negative",
+  "file": "068_RDZ6950_右前.jpg"
+ },
+ {
+  "i": 69,
+  "car": "RDZ6950",
+  "angle": "右後",
+  "label": "negative",
+  "file": "069_RDZ6950_右後.jpg"
+ },
+ {
+  "i": 70,
+  "car": "RDZ6950",
+  "angle": "左前",
+  "label": "negative",
+  "file": "070_RDZ6950_左前.jpg"
+ },
+ {
+  "i": 71,
+  "car": "RDZ6950",
+  "angle": "左後",
+  "label": "negative",
+  "file": "071_RDZ6950_左後.jpg"
+ },
+ {
+  "i": 72,
+  "car": "RDZ7922",
+  "angle": "右前",
+  "label": "negative",
+  "file": "072_RDZ7922_右前.jpg"
+ },
+ {
+  "i": 73,
+  "car": "RDZ7922",
+  "angle": "右後",
+  "label": "negative",
+  "file": "073_RDZ7922_右後.jpg"
+ },
+ {
+  "i": 74,
+  "car": "RDZ7922",
+  "angle": "左前",
+  "label": "negative",
+  "file": "074_RDZ7922_左前.jpg"
+ },
+ {
+  "i": 75,
+  "car": "RDZ7922",
+  "angle": "左後",
+  "label": "negative",
+  "file": "075_RDZ7922_左後.jpg"
+ },
+ {
+  "i": 76,
+  "car": "RFB-2590",
+  "angle": "右前",
+  "label": "negative",
+  "file": "076_RFB-2590_右前.jpg"
+ },
+ {
+  "i": 77,
+  "car": "RFB-2590",
+  "angle": "右後",
+  "label": "negative",
+  "file": "077_RFB-2590_右後.jpg"
+ },
+ {
+  "i": 78,
+  "car": "RFB-2590",
+  "angle": "左前",
+  "label": "negative",
+  "file": "078_RFB-2590_左前.jpg"
+ },
+ {
+  "i": 79,
+  "car": "RFB-2590",
+  "angle": "左後",
+  "label": "negative",
+  "file": "079_RFB-2590_左後.jpg"
+ },
+ {
+  "i": 80,
+  "car": "RFB-3295",
+  "angle": "右前",
+  "label": "negative",
+  "file": "080_RFB-3295_右前.jpg"
+ },
+ {
+  "i": 81,
+  "car": "RFB-3295",
+  "angle": "右後",
+  "label": "negative",
+  "file": "081_RFB-3295_右後.jpg"
+ },
+ {
+  "i": 82,
+  "car": "RFB-3295",
+  "angle": "左前",
+  "label": "negative",
+  "file": "082_RFB-3295_左前.jpg"
+ },
+ {
+  "i": 83,
+  "car": "RFB-3295",
+  "angle": "左後",
+  "label": "negative",
+  "file": "083_RFB-3295_左後.jpg"
+ },
+ {
+  "i": 84,
+  "car": "RFB5176",
+  "angle": "右前",
+  "label": "negative",
+  "file": "084_RFB5176_右前.jpg"
+ },
+ {
+  "i": 85,
+  "car": "RFB5176",
+  "angle": "右後",
+  "label": "negative",
+  "file": "085_RFB5176_右後.jpg"
+ },
+ {
+  "i": 86,
+  "car": "RFB5176",
+  "angle": "左前",
+  "label": "negative",
+  "file": "086_RFB5176_左前.jpg"
+ },
+ {
+  "i": 87,
+  "car": "RFB5176",
+  "angle": "左後",
+  "label": "negative",
+  "file": "087_RFB5176_左後.jpg"
+ },
+ {
+  "i": 88,
+  "car": "RFD-1336",
+  "angle": "右前",
+  "label": "negative",
+  "file": "088_RFD-1336_右前.jpg"
+ },
+ {
+  "i": 89,
+  "car": "RFD-1336",
+  "angle": "右後",
+  "label": "negative",
+  "file": "089_RFD-1336_右後.jpg"
+ },
+ {
+  "i": 90,
+  "car": "RFD-1336",
+  "angle": "左前",
+  "label": "negative",
+  "file": "090_RFD-1336_左前.jpg"
+ },
+ {
+  "i": 91,
+  "car": "RFD-1336",
+  "angle": "左後",
+  "label": "negative",
+  "file": "091_RFD-1336_左後.jpg"
+ },
+ {
+  "i": 92,
+  "car": "RFD-8522",
+  "angle": "右前",
+  "label": "negative",
+  "file": "092_RFD-8522_右前.jpg"
+ },
+ {
+  "i": 93,
+  "car": "RFD-8522",
+  "angle": "右後",
+  "label": "negative",
+  "file": "093_RFD-8522_右後.jpg"
+ },
+ {
+  "i": 94,
+  "car": "RFD-8522",
+  "angle": "左前",
+  "label": "negative",
+  "file": "094_RFD-8522_左前.jpg"
+ },
+ {
+  "i": 95,
+  "car": "RFD-8522",
+  "angle": "左後",
+  "label": "negative",
+  "file": "095_RFD-8522_左後.jpg"
+ },
+ {
+  "i": 96,
+  "car": "RFG7213",
+  "angle": "右前",
+  "label": "negative",
+  "file": "096_RFG7213_右前.jpg"
+ },
+ {
+  "i": 97,
+  "car": "RFG7213",
+  "angle": "右後",
+  "label": "negative",
+  "file": "097_RFG7213_右後.jpg"
+ },
+ {
+  "i": 98,
+  "car": "RFG7213",
+  "angle": "左前",
+  "label": "negative",
+  "file": "098_RFG7213_左前.jpg"
+ },
+ {
+  "i": 99,
+  "car": "RFG7213",
+  "angle": "左後",
+  "label": "negative",
+  "file": "099_RFG7213_左後.jpg"
+ },
+ {
+  "i": 100,
+  "car": "RFH7851",
+  "angle": "右前",
+  "label": "negative",
+  "file": "100_RFH7851_右前.jpg"
+ },
+ {
+  "i": 101,
+  "car": "RFH7851",
+  "angle": "右後",
+  "label": "negative",
+  "file": "101_RFH7851_右後.jpg"
+ },
+ {
+  "i": 102,
+  "car": "RFH7851",
+  "angle": "左前",
+  "label": "negative",
+  "file": "102_RFH7851_左前.jpg"
+ },
+ {
+  "i": 103,
+  "car": "RFH7851",
+  "angle": "左後",
+  "label": "negative",
+  "file": "103_RFH7851_左後.jpg"
+ },
+ {
+  "i": 104,
+  "car": "RFH7873",
+  "angle": "右前",
+  "label": "negative",
+  "file": "104_RFH7873_右前.jpg"
+ },
+ {
+  "i": 105,
+  "car": "RFH7873",
+  "angle": "右後",
+  "label": "negative",
+  "file": "105_RFH7873_右後.jpg"
+ },
+ {
+  "i": 106,
+  "car": "RFH7873",
+  "angle": "左前",
+  "label": "negative",
+  "file": "106_RFH7873_左前.jpg"
+ },
+ {
+  "i": 107,
+  "car": "RFH7873",
+  "angle": "左後",
+  "label": "negative",
+  "file": "107_RFH7873_左後.jpg"
+ },
+ {
+  "i": 108,
+  "car": "RFH8052",
+  "angle": "右前",
+  "label": "negative",
+  "file": "108_RFH8052_右前.jpg"
+ },
+ {
+  "i": 109,
+  "car": "RFH8052",
+  "angle": "右後",
+  "label": "negative",
+  "file": "109_RFH8052_右後.jpg"
+ },
+ {
+  "i": 110,
+  "car": "RFH8052",
+  "angle": "左前",
+  "label": "negative",
+  "file": "110_RFH8052_左前.jpg"
+ },
+ {
+  "i": 111,
+  "car": "RFH8052",
+  "angle": "左後",
+  "label": "negative",
+  "file": "111_RFH8052_左後.jpg"
+ },
+ {
+  "i": 112,
+  "car": "RFH8122",
+  "angle": "右前",
+  "label": "negative",
+  "file": "112_RFH8122_右前.jpg"
+ },
+ {
+  "i": 113,
+  "car": "RFH8122",
+  "angle": "右後",
+  "label": "negative",
+  "file": "113_RFH8122_右後.jpg"
+ },
+ {
+  "i": 114,
+  "car": "RFH8122",
+  "angle": "左前",
+  "label": "negative",
+  "file": "114_RFH8122_左前.jpg"
+ },
+ {
+  "i": 115,
+  "car": "RFH8122",
+  "angle": "左後",
+  "label": "negative",
+  "file": "115_RFH8122_左後.jpg"
+ },
+ {
+  "i": 116,
+  "car": "RFM-2791",
+  "angle": "右前",
+  "label": "negative",
+  "file": "116_RFM-2791_右前.jpg"
+ },
+ {
+  "i": 117,
+  "car": "RFM-2791",
+  "angle": "右後",
+  "label": "negative",
+  "file": "117_RFM-2791_右後.jpg"
+ },
+ {
+  "i": 118,
+  "car": "RFM-2791",
+  "angle": "左前",
+  "label": "negative",
+  "file": "118_RFM-2791_左前.jpg"
+ },
+ {
+  "i": 119,
+  "car": "RFM-2791",
+  "angle": "左後",
+  "label": "negative",
+  "file": "119_RFM-2791_左後.jpg"
+ },
+ {
+  "i": 120,
+  "car": "RCR-7661",
+  "angle": "左後",
+  "label": "positive",
+  "file": "120_RCR-7661_左後.jpg"
+ },
+ {
+  "i": 121,
+  "car": "RCW-8382",
+  "angle": "左前",
+  "label": "positive",
+  "file": "121_RCW-8382_左前.jpg"
+ },
+ {
+  "i": 122,
+  "car": "RCW-9206",
+  "angle": "左前",
+  "label": "positive",
+  "file": "122_RCW-9206_左前.jpg"
+ },
+ {
+  "i": 123,
+  "car": "RDH-2261",
+  "angle": "左後",
+  "label": "positive",
+  "file": "123_RDH-2261_左後.jpg"
+ },
+ {
+  "i": 124,
+  "car": "RDH-3092",
+  "angle": "左後",
+  "label": "positive",
+  "file": "124_RDH-3092_左後.jpg"
+ },
+ {
+  "i": 125,
+  "car": "RDJ-0772",
+  "angle": "左前",
+  "label": "positive",
+  "file": "125_RDJ-0772_左前.jpg"
+ },
+ {
+  "i": 126,
+  "car": "RDJ-0793",
+  "angle": "左前",
+  "label": "positive",
+  "file": "126_RDJ-0793_左前.jpg"
+ },
+ {
+  "i": 127,
+  "car": "RDL-5171",
+  "angle": "左前",
+  "label": "positive",
+  "file": "127_RDL-5171_左前.jpg"
+ },
+ {
+  "i": 128,
+  "car": "RDL-7836",
+  "angle": "左後",
+  "label": "positive",
+  "file": "128_RDL-7836_左後.jpg"
+ },
+ {
+  "i": 129,
+  "car": "RDL-8265",
+  "angle": "右後",
+  "label": "positive",
+  "file": "129_RDL-8265_右後.jpg"
+ },
+ {
+  "i": 130,
+  "car": "RDL-9262",
+  "angle": "右前",
+  "label": "positive",
+  "file": "130_RDL-9262_右前.jpg"
+ },
+ {
+  "i": 131,
+  "car": "RDQ-1950",
+  "angle": "右後",
+  "label": "positive",
+  "file": "131_RDQ-1950_右後.jpg"
+ },
+ {
+  "i": 132,
+  "car": "RDU-6956",
+  "angle": "右前",
+  "label": "positive",
+  "file": "132_RDU-6956_右前.jpg"
+ },
+ {
+  "i": 133,
+  "car": "RDU-9162",
+  "angle": "左前",
+  "label": "positive",
+  "file": "133_RDU-9162_左前.jpg"
+ },
+ {
+  "i": 134,
+  "car": "RDX-1085",
+  "angle": "右前",
+  "label": "positive",
+  "file": "134_RDX-1085_右前.jpg"
+ },
+ {
+  "i": 135,
+  "car": "RDX-2376",
+  "angle": "右後",
+  "label": "positive",
+  "file": "135_RDX-2376_右後.jpg"
+ },
+ {
+  "i": 136,
+  "car": "RDY-6382",
+  "angle": "左前",
+  "label": "positive",
+  "file": "136_RDY-6382_左前.jpg"
+ },
+ {
+  "i": 137,
+  "car": "RDZ-0187",
+  "angle": "右後",
+  "label": "positive",
+  "file": "137_RDZ-0187_右後.jpg"
+ },
+ {
+  "i": 138,
+  "car": "RFB-2091",
+  "angle": "右前",
+  "label": "positive",
+  "file": "138_RFB-2091_右前.jpg"
+ },
+ {
+  "i": 139,
+  "car": "RFB-2091",
+  "angle": "左前",
+  "label": "positive",
+  "file": "139_RFB-2091_左前.jpg"
+ },
+ {
+  "i": 140,
+  "car": "RFD-0332",
+  "angle": "右前",
+  "label": "positive",
+  "file": "140_RFD-0332_右前.jpg"
+ }
+]

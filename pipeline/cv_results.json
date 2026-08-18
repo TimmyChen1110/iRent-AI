@@ -1,0 +1,3656 @@
+[
+ {
+  "align_ok": false,
+  "inliers": 7,
+  "pair_score": null,
+  "components": [],
+  "car": "RCG2235",
+  "angle": "右前",
+  "label": "negative"
+ },
+ {
+  "align_ok": false,
+  "inliers": 16,
+  "pair_score": null,
+  "components": [],
+  "car": "RCG2235",
+  "angle": "右後",
+  "label": "negative"
+ },
+ {
+  "align_ok": true,
+  "inliers": 44,
+  "pair_score": 11.6837,
+  "components": [
+   {
+    "bbox": [
+     12,
+     12,
+     1268,
+     708
+    ],
+    "area": 757877,
+    "mean_diff": 0.863,
+    "salience": 11.6837
+   }
+  ],
+  "car": "RCG2235",
+  "angle": "左前",
+  "label": "negative"
+ },
+ {
+  "align_ok": true,
+  "inliers": 25,
+  "pair_score": 11.7556,
+  "components": [
+   {
+    "bbox": [
+     12,
+     12,
+     1268,
+     708
+    ],
+    "area": 651446,
+    "mean_diff": 0.8781,
+    "salience": 11.7556
+   },
+   {
+    "bbox": [
+     532,
+     336,
+     688,
+     367
+    ],
+    "area": 1772,
+    "mean_diff": 0.7297,
+    "salience": 5.4578
+   }
+  ],
+  "car": "RCG2235",
+  "angle": "左後",
+  "label": "negative"
+ },
+ {
+  "align_ok": false,
+  "inliers": 10,
+  "pair_score": null,
+  "components": [],
+  "car": "RCQ6760",
+  "angle": "右前",
+  "label": "negative"
+ },
+ {
+  "align_ok": false,
+  "inliers": 20,
+  "pair_score": null,
+  "components": [],
+  "car": "RCQ6760",
+  "angle": "右後",
+  "label": "negative"
+ },
+ {
+  "align_ok": true,
+  "inliers": 104,
+  "pair_score": 11.3386,
+  "components": [
+   {
+    "bbox": [
+     12,
+     12,
+     1268,
+     647
+    ],
+    "area": 587436,
+    "mean_diff": 0.8536,
+    "salience": 11.3386
+   },
+   {
+    "bbox": [
+     181,
+     636,
+     244,
+     652
+    ],
+    "area": 427,
+    "mean_diff": 0.6636,
+    "salience": 4.0192
+   }
+  ],
+  "car": "RCQ6760",
+  "angle": "左前",
+  "label": "negative"
+ },
+ {
+  "align_ok": true,
+  "inliers": 39,
+  "pair_score": 11.3342,
+  "components": [
+   {
+    "bbox": [
+     12,
+     12,
+     1268,
+     708
+    ],
+    "area": 535040,
+    "mean_diff": 0.8593,
+    "salience": 11.3342
+   },
+   {
+    "bbox": [
+     1149,
+     687,
+     1268,
+     708
+    ],
+    "area": 1449,
+    "mean_diff": 0.7425,
+    "salience": 5.4047
+   },
+   {
+    "bbox": [
+     1176,
+     518,
+     1259,
+     545
+    ],
+    "area": 950,
+    "mean_diff": 0.7426,
+    "salience": 5.0917
+   },
+   {
+    "bbox": [
+     96,
+     562,
+     159,
+     581
+    ],
+    "area": 617,
+    "mean_diff": 0.7057,
+    "salience": 4.5342
+   },
+   {
+    "bbox": [
+     888,
+     603,
+     961,
+     634
+    ],
+    "area": 804,
+    "mean_diff": 0.6424,
+    "salience": 4.2976
+   },
+   {
+    "bbox": [
+     972,
+     656,
+     1022,
+     675
+    ],
+    "area": 405,
+    "mean_diff": 0.6969,
+    "salience": 4.1838
+   }
+  ],
+  "car": "RCQ6760",
+  "angle": "左後",
+  "label": "negative"
+ },
+ {
+  "align_ok": true,
+  "inliers": 36,
+  "pair_score": 11.7528,
+  "components": [
+   {
+    "bbox": [
+     12,
+     12,
+     1239,
+     623
+    ],
+    "area": 626793,
+    "mean_diff": 0.8805,
+    "salience": 11.7528
+   }
+  ],
+  "car": "RCW1883",
+  "angle": "右前",
+  "label": "negative"
+ },
+ {
+  "align_ok": false,
+  "inliers": 5,
+  "pair_score": null,
+  "components": [],
+  "car": "RCW1883",
+  "angle": "右後",
+  "label": "negative"
+ },
+ {
+  "align_ok": true,
+  "inliers": 48,
+  "pair_score": 11.0427,
+  "components": [
+   {
+    "bbox": [
+     12,
+     192,
+     1254,
+     708
+    ],
+    "area": 423864,
+    "mean_diff": 0.8522,
+    "salience": 11.0427
+   },
+   {
+    "bbox": [
+     579,
+     543,
+     710,
+     595
+    ],
+    "area": 1716,
+    "mean_diff": 0.6141,
+    "salience": 4.5735
+   },
+   {
+    "bbox": [
+     524,
+     540,
+     613,
+     562
+    ],
+    "area": 757,
+    "mean_diff": 0.6857,
+    "salience": 4.5459
+   }
+  ],
+  "car": "RCW1883",
+  "angle": "左前",
+  "label": "negative"
+ },
+ {
+  "align_ok": false,
+  "inliers": 15,
+  "pair_score": null,
+  "components": [],
+  "car": "RCW1883",
+  "angle": "左後",
+  "label": "negative"
+ },
+ {
+  "align_ok": true,
+  "inliers": 73,
+  "pair_score": 11.9402,
+  "components": [
+   {
+    "bbox": [
+     12,
+     58,
+     1268,
+     708
+    ],
+    "area": 662447,
+    "mean_diff": 0.8908,
+    "salience": 11.9402
+   }
+  ],
+  "car": "RCX5100",
+  "angle": "右前",
+  "label": "negative"
+ },
+ {
+  "align_ok": true,
+  "inliers": 27,
+  "pair_score": 11.7613,
+  "components": [
+   {
+    "bbox": [
+     12,
+     67,
+     1268,
+     708
+    ],
+    "area": 596771,
+    "mean_diff": 0.8844,
+    "salience": 11.7613
+   }
+  ],
+  "car": "RCX5100",
+  "angle": "右後",
+  "label": "negative"
+ },
+ {
+  "align_ok": true,
+  "inliers": 65,
+  "pair_score": 11.9313,
+  "components": [
+   {
+    "bbox": [
+     12,
+     12,
+     1254,
+     708
+    ],
+    "area": 629481,
+    "mean_diff": 0.8936,
+    "salience": 11.9313
+   },
+   {
+    "bbox": [
+     977,
+     372,
+     1078,
+     393
+    ],
+    "area": 519,
+    "mean_diff": 0.6282,
+    "salience": 3.9276
+   }
+  ],
+  "car": "RCX5100",
+  "angle": "左前",
+  "label": "negative"
+ },
+ {
+  "align_ok": true,
+  "inliers": 254,
+  "pair_score": 11.5684,
+  "components": [
+   {
+    "bbox": [
+     12,
+     38,
+     1268,
+     708
+    ],
+    "area": 635025,
+    "mean_diff": 0.8658,
+    "salience": 11.5684
+   },
+   {
+    "bbox": [
+     528,
+     441,
+     823,
+     506
+    ],
+    "area": 3818,
+    "mean_diff": 0.7371,
+    "salience": 6.0789
+   },
+   {
+    "bbox": [
+     402,
+     405,
+     459,
+     418
+    ],
+    "area": 554,
+    "mean_diff": 0.6328,
+    "salience": 3.9973
+   }
+  ],
+  "car": "RCX5100",
+  "angle": "左後",
+  "label": "negative"
+ },
+ {
+  "align_ok": false,
+  "inliers": 22,
+  "pair_score": null,
+  "components": [],
+  "car": "RDG8571",
+  "angle": "右前",
+  "label": "negative"
+ },
+ {
+  "align_ok": false,
+  "inliers": 8,
+  "pair_score": null,
+  "components": [],
+  "car": "RDG8571",
+  "angle": "右後",
+  "label": "negative"
+ },
+ {
+  "align_ok": false,
+  "inliers": 8,
+  "pair_score": null,
+  "components": [],
+  "car": "RDG8571",
+  "angle": "左前",
+  "label": "negative"
+ },
+ {
+  "align_ok": false,
+  "inliers": 7,
+  "pair_score": null,
+  "components": [],
+  "car": "RDG8571",
+  "angle": "左後",
+  "label": "negative"
+ },
+ {
+  "align_ok": false,
+  "inliers": 13,
+  "pair_score": null,
+  "components": [],
+  "car": "RDG8578",
+  "angle": "右前",
+  "label": "negative"
+ },
+ {
+  "align_ok": false,
+  "inliers": 23,
+  "pair_score": null,
+  "components": [],
+  "car": "RDG8578",
+  "angle": "右後",
+  "label": "negative"
+ },
+ {
+  "align_ok": false,
+  "inliers": 8,
+  "pair_score": null,
+  "components": [],
+  "car": "RDG8578",
+  "angle": "左前",
+  "label": "negative"
+ },
+ {
+  "align_ok": false,
+  "inliers": 22,
+  "pair_score": null,
+  "components": [],
+  "car": "RDG8578",
+  "angle": "左後",
+  "label": "negative"
+ },
+ {
+  "align_ok": true,
+  "inliers": 77,
+  "pair_score": 11.679,
+  "components": [
+   {
+    "bbox": [
+     21,
+     12,
+     1136,
+     663
+    ],
+    "area": 475333,
+    "mean_diff": 0.8935,
+    "salience": 11.679
+   },
+   {
+    "bbox": [
+     530,
+     510,
+     639,
+     537
+    ],
+    "area": 953,
+    "mean_diff": 0.7754,
+    "salience": 5.319
+   },
+   {
+    "bbox": [
+     826,
+     435,
+     923,
+     460
+    ],
+    "area": 579,
+    "mean_diff": 0.695,
+    "salience": 4.4211
+   },
+   {
+    "bbox": [
+     550,
+     434,
+     711,
+     446
+    ],
+    "area": 585,
+    "mean_diff": 0.645,
+    "salience": 4.1094
+   }
+  ],
+  "car": "RDG9853",
+  "angle": "右前",
+  "label": "negative"
+ },
+ {
+  "align_ok": true,
+  "inliers": 139,
+  "pair_score": 11.6026,
+  "components": [
+   {
+    "bbox": [
+     12,
+     12,
+     1268,
+     708
+    ],
+    "area": 653610,
+    "mean_diff": 0.8665,
+    "salience": 11.6026
+   },
+   {
+    "bbox": [
+     404,
+     357,
+     601,
+     382
+    ],
+    "area": 2891,
+    "mean_diff": 0.7292,
+    "salience": 5.8115
+   },
+   {
+    "bbox": [
+     465,
+     413,
+     556,
+     433
+    ],
+    "area": 995,
+    "mean_diff": 0.8142,
+    "salience": 5.6202
+   },
+   {
+    "bbox": [
+     479,
+     336,
+     579,
+     350
+    ],
+    "area": 763,
+    "mean_diff": 0.7274,
+    "salience": 4.828
+   },
+   {
+    "bbox": [
+     492,
+     475,
+     697,
+     488
+    ],
+    "area": 1062,
+    "mean_diff": 0.6921,
+    "salience": 4.8227
+   }
+  ],
+  "car": "RDG9853",
+  "angle": "右後",
+  "label": "negative"
+ },
+ {
+  "align_ok": true,
+  "inliers": 108,
+  "pair_score": 11.9564,
+  "components": [
+   {
+    "bbox": [
+     12,
+     12,
+     1268,
+     682
+    ],
+    "area": 625596,
+    "mean_diff": 0.8958,
+    "salience": 11.9564
+   },
+   {
+    "bbox": [
+     999,
+     359,
+     1248,
+     441
+    ],
+    "area": 6533,
+    "mean_diff": 0.6906,
+    "salience": 6.067
+   },
+   {
+    "bbox": [
+     395,
+     454,
+     562,
+     477
+    ],
+    "area": 610,
+    "mean_diff": 0.7227,
+    "salience": 4.6353
+   },
+   {
+    "bbox": [
+     881,
+     303,
+     947,
+     316
+    ],
+    "area": 514,
+    "mean_diff": 0.739,
+    "salience": 4.6129
+   },
+   {
+    "bbox": [
+     272,
+     434,
+     383,
+     452
+    ],
+    "area": 444,
+    "mean_diff": 0.6487,
+    "salience": 3.9546
+   }
+  ],
+  "car": "RDG9853",
+  "angle": "左前",
+  "label": "negative"
+ },
+ {
+  "align_ok": true,
+  "inliers": 49,
+  "pair_score": 11.4585,
+  "components": [
+   {
+    "bbox": [
+     12,
+     12,
+     1268,
+     708
+    ],
+    "area": 642844,
+    "mean_diff": 0.8568,
+    "salience": 11.4585
+   },
+   {
+    "bbox": [
+     964,
+     305,
+     1117,
+     341
+    ],
+    "area": 1158,
+    "mean_diff": 0.7786,
+    "salience": 5.4923
+   }
+  ],
+  "car": "RDG9853",
+  "angle": "左後",
+  "label": "negative"
+ },
+ {
+  "align_ok": true,
+  "inliers": 46,
+  "pair_score": 12.1235,
+  "components": [
+   {
+    "bbox": [
+     12,
+     108,
+     1268,
+     708
+    ],
+    "area": 660952,
+    "mean_diff": 0.9046,
+    "salience": 12.1235
+   }
+  ],
+  "car": "RDL7827",
+  "angle": "右前",
+  "label": "negative"
+ },
+ {
+  "align_ok": false,
+  "inliers": 24,
+  "pair_score": null,
+  "components": [],
+  "car": "RDL7827",
+  "angle": "右後",
+  "label": "negative"
+ },
+ {
+  "align_ok": true,
+  "inliers": 142,
+  "pair_score": 12.3256,
+  "components": [
+   {
+    "bbox": [
+     12,
+     12,
+     1268,
+     708
+    ],
+    "area": 721859,
+    "mean_diff": 0.9137,
+    "salience": 12.3256
+   }
+  ],
+  "car": "RDL7827",
+  "angle": "左前",
+  "label": "negative"
+ },
+ {
+  "align_ok": false,
+  "inliers": 21,
+  "pair_score": null,
+  "components": [],
+  "car": "RDL7827",
+  "angle": "左後",
+  "label": "negative"
+ },
+ {
+  "align_ok": true,
+  "inliers": 208,
+  "pair_score": 10.4153,
+  "components": [
+   {
+    "bbox": [
+     12,
+     104,
+     1090,
+     708
+    ],
+    "area": 415837,
+    "mean_diff": 0.805,
+    "salience": 10.4153
+   },
+   {
+    "bbox": [
+     152,
+     429,
+     180,
+     457
+    ],
+    "area": 409,
+    "mean_diff": 0.6061,
+    "salience": 3.6448
+   }
+  ],
+  "car": "RDL7832",
+  "angle": "右前",
+  "label": "negative"
+ },
+ {
+  "align_ok": true,
+  "inliers": 32,
+  "pair_score": 10.6297,
+  "components": [
+   {
+    "bbox": [
+     145,
+     28,
+     1244,
+     634
+    ],
+    "area": 343647,
+    "mean_diff": 0.8339,
+    "salience": 10.6297
+   },
+   {
+    "bbox": [
+     724,
+     404,
+     825,
+     427
+    ],
+    "area": 551,
+    "mean_diff": 0.6166,
+    "salience": 3.8916
+   },
+   {
+    "bbox": [
+     156,
+     601,
+     225,
+     637
+    ],
+    "area": 728,
+    "mean_diff": 0.5703,
+    "salience": 3.7588
+   }
+  ],
+  "car": "RDL7832",
+  "angle": "右後",
+  "label": "negative"
+ },
+ {
+  "align_ok": false,
+  "inliers": 9,
+  "pair_score": null,
+  "components": [],
+  "car": "RDL7832",
+  "angle": "左前",
+  "label": "negative"
+ },
+ {
+  "align_ok": true,
+  "inliers": 29,
+  "pair_score": 10.4814,
+  "components": [
+   {
+    "bbox": [
+     12,
+     75,
+     1129,
+     693
+    ],
+    "area": 380491,
+    "mean_diff": 0.8157,
+    "salience": 10.4814
+   },
+   {
+    "bbox": [
+     868,
+     645,
+     920,
+     678
+    ],
+    "area": 509,
+    "mean_diff": 0.6361,
+    "salience": 3.9644
+   },
+   {
+    "bbox": [
+     135,
+     566,
+     189,
+     610
+    ],
+    "area": 742,
+    "mean_diff": 0.591,
+    "salience": 3.9059
+   },
+   {
+    "bbox": [
+     880,
+     599,
+     950,
+     631
+    ],
+    "area": 662,
+    "mean_diff": 0.5996,
+    "salience": 3.8946
+   },
+   {
+    "bbox": [
+     74,
+     556,
+     128,
+     589
+    ],
+    "area": 532,
+    "mean_diff": 0.5946,
+    "salience": 3.7321
+   }
+  ],
+  "car": "RDL7832",
+  "angle": "左後",
+  "label": "negative"
+ },
+ {
+  "align_ok": true,
+  "inliers": 57,
+  "pair_score": 11.3946,
+  "components": [
+   {
+    "bbox": [
+     12,
+     156,
+     1034,
+     708
+    ],
+    "area": 415826,
+    "mean_diff": 0.8807,
+    "salience": 11.3946
+   }
+  ],
+  "car": "RDQ5916",
+  "angle": "右前",
+  "label": "negative"
+ },
+ {
+  "align_ok": true,
+  "inliers": 69,
+  "pair_score": 11.1823,
+  "components": [
+   {
+    "bbox": [
+     12,
+     122,
+     999,
+     708
+    ],
+    "area": 372241,
+    "mean_diff": 0.8718,
+    "salience": 11.1823
+   },
+   {
+    "bbox": [
+     228,
+     409,
+     298,
+     454
+    ],
+    "area": 903,
+    "mean_diff": 0.603,
+    "salience": 4.104
+   }
+  ],
+  "car": "RDQ5916",
+  "angle": "右後",
+  "label": "negative"
+ },
+ {
+  "align_ok": false,
+  "inliers": 18,
+  "pair_score": null,
+  "components": [],
+  "car": "RDQ5916",
+  "angle": "左前",
+  "label": "negative"
+ },
+ {
+  "align_ok": true,
+  "inliers": 90,
+  "pair_score": 11.4864,
+  "components": [
+   {
+    "bbox": [
+     173,
+     71,
+     1167,
+     639
+    ],
+    "area": 383928,
+    "mean_diff": 0.8933,
+    "salience": 11.4864
+   },
+   {
+    "bbox": [
+     766,
+     424,
+     889,
+     456
+    ],
+    "area": 1485,
+    "mean_diff": 0.6458,
+    "salience": 4.7166
+   },
+   {
+    "bbox": [
+     854,
+     353,
+     926,
+     410
+    ],
+    "area": 779,
+    "mean_diff": 0.6557,
+    "salience": 4.3658
+   }
+  ],
+  "car": "RDQ5916",
+  "angle": "左後",
+  "label": "negative"
+ },
+ {
+  "align_ok": true,
+  "inliers": 129,
+  "pair_score": 12.1742,
+  "components": [
+   {
+    "bbox": [
+     12,
+     12,
+     1098,
+     683
+    ],
+    "area": 603081,
+    "mean_diff": 0.9147,
+    "salience": 12.1742
+   },
+   {
+    "bbox": [
+     180,
+     313,
+     271,
+     335
+    ],
+    "area": 427,
+    "mean_diff": 0.6193,
+    "salience": 3.7508
+   }
+  ],
+  "car": "RDR6350",
+  "angle": "右前",
+  "label": "negative"
+ },
+ {
+  "align_ok": true,
+  "inliers": 75,
+  "pair_score": 11.3602,
+  "components": [
+   {
+    "bbox": [
+     132,
+     12,
+     1268,
+     539
+    ],
+    "area": 459516,
+    "mean_diff": 0.8713,
+    "salience": 11.3602
+   }
+  ],
+  "car": "RDR6350",
+  "angle": "右後",
+  "label": "negative"
+ },
+ {
+  "align_ok": false,
+  "inliers": 24,
+  "pair_score": null,
+  "components": [],
+  "car": "RDR6350",
+  "angle": "左前",
+  "label": "negative"
+ },
+ {
+  "align_ok": true,
+  "inliers": 93,
+  "pair_score": 11.9611,
+  "components": [
+   {
+    "bbox": [
+     12,
+     12,
+     1268,
+     708
+    ],
+    "area": 757975,
+    "mean_diff": 0.8835,
+    "salience": 11.9611
+   }
+  ],
+  "car": "RDR6350",
+  "angle": "左後",
+  "label": "negative"
+ },
+ {
+  "align_ok": true,
+  "inliers": 136,
+  "pair_score": 10.125,
+  "components": [
+   {
+    "bbox": [
+     188,
+     74,
+     1268,
+     549
+    ],
+    "area": 233181,
+    "mean_diff": 0.8192,
+    "salience": 10.125
+   },
+   {
+    "bbox": [
+     92,
+     541,
+     268,
+     698
+    ],
+    "area": 13643,
+    "mean_diff": 0.7596,
+    "salience": 7.2324
+   },
+   {
+    "bbox": [
+     436,
+     607,
+     634,
+     695
+    ],
+    "area": 5272,
+    "mean_diff": 0.6624,
+    "salience": 5.6773
+   },
+   {
+    "bbox": [
+     320,
+     593,
+     392,
+     630
+    ],
+    "area": 1136,
+    "mean_diff": 0.6821,
+    "salience": 4.7986
+   },
+   {
+    "bbox": [
+     1201,
+     551,
+     1268,
+     626
+    ],
+    "area": 1388,
+    "mean_diff": 0.6555,
+    "salience": 4.743
+   },
+   {
+    "bbox": [
+     633,
+     432,
+     677,
+     461
+    ],
+    "area": 616,
+    "mean_diff": 0.7318,
+    "salience": 4.7006
+   },
+   {
+    "bbox": [
+     488,
+     555,
+     546,
+     609
+    ],
+    "area": 926,
+    "mean_diff": 0.6733,
+    "salience": 4.5993
+   },
+   {
+    "bbox": [
+     1119,
+     593,
+     1169,
+     622
+    ],
+    "area": 822,
+    "mean_diff": 0.6784,
+    "salience": 4.5531
+   }
+  ],
+  "car": "RDS2805",
+  "angle": "右前",
+  "label": "negative"
+ },
+ {
+  "align_ok": false,
+  "inliers": 10,
+  "pair_score": null,
+  "components": [],
+  "car": "RDS2805",
+  "angle": "右後",
+  "label": "negative"
+ },
+ {
+  "align_ok": false,
+  "inliers": 8,
+  "pair_score": null,
+  "components": [],
+  "car": "RDS2805",
+  "angle": "左前",
+  "label": "negative"
+ },
+ {
+  "align_ok": false,
+  "inliers": 23,
+  "pair_score": null,
+  "components": [],
+  "car": "RDS2805",
+  "angle": "左後",
+  "label": "negative"
+ },
+ {
+  "align_ok": false,
+  "inliers": 17,
+  "pair_score": null,
+  "components": [],
+  "car": "RDU-5572",
+  "angle": "右前",
+  "label": "negative"
+ },
+ {
+  "align_ok": false,
+  "inliers": 20,
+  "pair_score": null,
+  "components": [],
+  "car": "RDU-5572",
+  "angle": "右後",
+  "label": "negative"
+ },
+ {
+  "align_ok": false,
+  "inliers": 16,
+  "pair_score": null,
+  "components": [],
+  "car": "RDU-5572",
+  "angle": "左前",
+  "label": "negative"
+ },
+ {
+  "align_ok": true,
+  "inliers": 64,
+  "pair_score": 11.0551,
+  "components": [
+   {
+    "bbox": [
+     12,
+     12,
+     1268,
+     686
+    ],
+    "area": 584581,
+    "mean_diff": 0.8325,
+    "salience": 11.0551
+   },
+   {
+    "bbox": [
+     596,
+     309,
+     673,
+     339
+    ],
+    "area": 777,
+    "mean_diff": 0.8788,
+    "salience": 5.8489
+   },
+   {
+    "bbox": [
+     619,
+     422,
+     755,
+     487
+    ],
+    "area": 1857,
+    "mean_diff": 0.6733,
+    "salience": 5.0678
+   },
+   {
+    "bbox": [
+     586,
+     293,
+     665,
+     313
+    ],
+    "area": 477,
+    "mean_diff": 0.7353,
+    "salience": 4.5349
+   }
+  ],
+  "car": "RDU-5572",
+  "angle": "左後",
+  "label": "negative"
+ },
+ {
+  "align_ok": false,
+  "inliers": 23,
+  "pair_score": null,
+  "components": [],
+  "car": "RDU-7390",
+  "angle": "右前",
+  "label": "negative"
+ },
+ {
+  "align_ok": true,
+  "inliers": 35,
+  "pair_score": 11.5982,
+  "components": [
+   {
+    "bbox": [
+     150,
+     68,
+     1250,
+     708
+    ],
+    "area": 528781,
+    "mean_diff": 0.8801,
+    "salience": 11.5982
+   }
+  ],
+  "car": "RDU-7390",
+  "angle": "右後",
+  "label": "negative"
+ },
+ {
+  "align_ok": false,
+  "inliers": 12,
+  "pair_score": null,
+  "components": [],
+  "car": "RDU-7390",
+  "angle": "左前",
+  "label": "negative"
+ },
+ {
+  "align_ok": true,
+  "inliers": 36,
+  "pair_score": 11.6018,
+  "components": [
+   {
+    "bbox": [
+     12,
+     12,
+     1168,
+     708
+    ],
+    "area": 602148,
+    "mean_diff": 0.8718,
+    "salience": 11.6018
+   }
+  ],
+  "car": "RDU-7390",
+  "angle": "左後",
+  "label": "negative"
+ },
+ {
+  "align_ok": false,
+  "inliers": 11,
+  "pair_score": null,
+  "components": [],
+  "car": "RDW-7085",
+  "angle": "右前",
+  "label": "negative"
+ },
+ {
+  "align_ok": false,
+  "inliers": 21,
+  "pair_score": null,
+  "components": [],
+  "car": "RDW-7085",
+  "angle": "右後",
+  "label": "negative"
+ },
+ {
+  "align_ok": false,
+  "inliers": 8,
+  "pair_score": null,
+  "components": [],
+  "car": "RDW-7085",
+  "angle": "左前",
+  "label": "negative"
+ },
+ {
+  "align_ok": false,
+  "inliers": 6,
+  "pair_score": null,
+  "components": [],
+  "car": "RDW-7085",
+  "angle": "左後",
+  "label": "negative"
+ },
+ {
+  "align_ok": false,
+  "inliers": 18,
+  "pair_score": null,
+  "components": [],
+  "car": "RDZ-9006",
+  "angle": "右前",
+  "label": "negative"
+ },
+ {
+  "align_ok": true,
+  "inliers": 38,
+  "pair_score": 11.3607,
+  "components": [
+   {
+    "bbox": [
+     12,
+     12,
+     1268,
+     702
+    ],
+    "area": 623697,
+    "mean_diff": 0.8514,
+    "salience": 11.3607
+   },
+   {
+    "bbox": [
+     1178,
+     170,
+     1268,
+     235
+    ],
+    "area": 3278,
+    "mean_diff": 0.7864,
+    "salience": 6.3659
+   },
+   {
+    "bbox": [
+     535,
+     287,
+     686,
+     367
+    ],
+    "area": 3591,
+    "mean_diff": 0.6827,
+    "salience": 5.5886
+   }
+  ],
+  "car": "RDZ-9006",
+  "angle": "右後",
+  "label": "negative"
+ },
+ {
+  "align_ok": false,
+  "inliers": 17,
+  "pair_score": null,
+  "components": [],
+  "car": "RDZ-9006",
+  "angle": "左前",
+  "label": "negative"
+ },
+ {
+  "align_ok": false,
+  "inliers": 7,
+  "pair_score": null,
+  "components": [],
+  "car": "RDZ-9006",
+  "angle": "左後",
+  "label": "negative"
+ },
+ {
+  "align_ok": false,
+  "inliers": 7,
+  "pair_score": null,
+  "components": [],
+  "car": "RDZ0155",
+  "angle": "右前",
+  "label": "negative"
+ },
+ {
+  "align_ok": false,
+  "inliers": 21,
+  "pair_score": null,
+  "components": [],
+  "car": "RDZ0155",
+  "angle": "右後",
+  "label": "negative"
+ },
+ {
+  "align_ok": false,
+  "inliers": 20,
+  "pair_score": null,
+  "components": [],
+  "car": "RDZ0155",
+  "angle": "左前",
+  "label": "negative"
+ },
+ {
+  "align_ok": true,
+  "inliers": 26,
+  "pair_score": 10.7257,
+  "components": [
+   {
+    "bbox": [
+     12,
+     142,
+     1268,
+     708
+    ],
+    "area": 360181,
+    "mean_diff": 0.8383,
+    "salience": 10.7257
+   },
+   {
+    "bbox": [
+     133,
+     517,
+     195,
+     536
+    ],
+    "area": 703,
+    "mean_diff": 0.7365,
+    "salience": 4.8281
+   }
+  ],
+  "car": "RDZ0155",
+  "angle": "左後",
+  "label": "negative"
+ },
+ {
+  "align_ok": true,
+  "inliers": 140,
+  "pair_score": 11.7889,
+  "components": [
+   {
+    "bbox": [
+     12,
+     12,
+     1170,
+     708
+    ],
+    "area": 577318,
+    "mean_diff": 0.8886,
+    "salience": 11.7889
+   },
+   {
+    "bbox": [
+     487,
+     518,
+     560,
+     540
+    ],
+    "area": 868,
+    "mean_diff": 0.744,
+    "salience": 5.0339
+   },
+   {
+    "bbox": [
+     436,
+     423,
+     549,
+     482
+    ],
+    "area": 1141,
+    "mean_diff": 0.71,
+    "salience": 4.9984
+   },
+   {
+    "bbox": [
+     621,
+     528,
+     732,
+     571
+    ],
+    "area": 1770,
+    "mean_diff": 0.6293,
+    "salience": 4.706
+   },
+   {
+    "bbox": [
+     880,
+     527,
+     925,
+     554
+    ],
+    "area": 428,
+    "mean_diff": 0.5465,
+    "salience": 3.3111
+   }
+  ],
+  "car": "RDZ6950",
+  "angle": "右前",
+  "label": "negative"
+ },
+ {
+  "align_ok": true,
+  "inliers": 181,
+  "pair_score": 11.2415,
+  "components": [
+   {
+    "bbox": [
+     12,
+     89,
+     1186,
+     708
+    ],
+    "area": 444482,
+    "mean_diff": 0.8644,
+    "salience": 11.2415
+   },
+   {
+    "bbox": [
+     60,
+     365,
+     657,
+     486
+    ],
+    "area": 12190,
+    "mean_diff": 0.755,
+    "salience": 7.1029
+   },
+   {
+    "bbox": [
+     473,
+     479,
+     607,
+     499
+    ],
+    "area": 768,
+    "mean_diff": 0.6541,
+    "salience": 4.3456
+   },
+   {
+    "bbox": [
+     494,
+     555,
+     527,
+     599
+    ],
+    "area": 462,
+    "mean_diff": 0.6692,
+    "salience": 4.106
+   }
+  ],
+  "car": "RDZ6950",
+  "angle": "右後",
+  "label": "negative"
+ },
+ {
+  "align_ok": true,
+  "inliers": 177,
+  "pair_score": 12.1713,
+  "components": [
+   {
+    "bbox": [
+     12,
+     12,
+     1268,
+     708
+    ],
+    "area": 730447,
+    "mean_diff": 0.9015,
+    "salience": 12.1713
+   },
+   {
+    "bbox": [
+     501,
+     468,
+     555,
+     504
+    ],
+    "area": 931,
+    "mean_diff": 0.8417,
+    "salience": 5.7537
+   },
+   {
+    "bbox": [
+     527,
+     521,
+     597,
+     552
+    ],
+    "area": 545,
+    "mean_diff": 0.6552,
+    "salience": 4.1284
+   },
+   {
+    "bbox": [
+     343,
+     449,
+     435,
+     469
+    ],
+    "area": 635,
+    "mean_diff": 0.6345,
+    "salience": 4.0948
+   }
+  ],
+  "car": "RDZ6950",
+  "angle": "左前",
+  "label": "negative"
+ },
+ {
+  "align_ok": true,
+  "inliers": 144,
+  "pair_score": 11.3442,
+  "components": [
+   {
+    "bbox": [
+     389,
+     37,
+     1268,
+     662
+    ],
+    "area": 290458,
+    "mean_diff": 0.9018,
+    "salience": 11.3442
+   },
+   {
+    "bbox": [
+     337,
+     418,
+     776,
+     598
+    ],
+    "area": 19038,
+    "mean_diff": 0.7714,
+    "salience": 7.6016
+   },
+   {
+    "bbox": [
+     603,
+     443,
+     994,
+     513
+    ],
+    "area": 4556,
+    "mean_diff": 0.7028,
+    "salience": 5.9202
+   },
+   {
+    "bbox": [
+     842,
+     559,
+     901,
+     606
+    ],
+    "area": 1060,
+    "mean_diff": 0.7674,
+    "salience": 5.3459
+   },
+   {
+    "bbox": [
+     732,
+     422,
+     753,
+     455
+    ],
+    "area": 419,
+    "mean_diff": 0.8321,
+    "salience": 5.024
+   },
+   {
+    "bbox": [
+     610,
+     19,
+     728,
+     58
+    ],
+    "area": 1855,
+    "mean_diff": 0.6624,
+    "salience": 4.9851
+   }
+  ],
+  "car": "RDZ6950",
+  "angle": "左後",
+  "label": "negative"
+ },
+ {
+  "align_ok": false,
+  "inliers": 14,
+  "pair_score": null,
+  "components": [],
+  "car": "RDZ7922",
+  "angle": "右前",
+  "label": "negative"
+ },
+ {
+  "align_ok": false,
+  "inliers": 19,
+  "pair_score": null,
+  "components": [],
+  "car": "RDZ7922",
+  "angle": "右後",
+  "label": "negative"
+ },
+ {
+  "align_ok": true,
+  "inliers": 38,
+  "pair_score": 11.7609,
+  "components": [
+   {
+    "bbox": [
+     12,
+     12,
+     1268,
+     708
+    ],
+    "area": 635725,
+    "mean_diff": 0.8801,
+    "salience": 11.7609
+   },
+   {
+    "bbox": [
+     593,
+     441,
+     999,
+     539
+    ],
+    "area": 7903,
+    "mean_diff": 0.8012,
+    "salience": 7.1909
+   },
+   {
+    "bbox": [
+     1058,
+     388,
+     1268,
+     409
+    ],
+    "area": 1695,
+    "mean_diff": 0.8906,
+    "salience": 6.6218
+   },
+   {
+    "bbox": [
+     669,
+     536,
+     885,
+     565
+    ],
+    "area": 1908,
+    "mean_diff": 0.6713,
+    "salience": 5.0712
+   },
+   {
+    "bbox": [
+     607,
+     299,
+     780,
+     333
+    ],
+    "area": 1610,
+    "mean_diff": 0.601,
+    "salience": 4.4378
+   },
+   {
+    "bbox": [
+     464,
+     492,
+     545,
+     510
+    ],
+    "area": 408,
+    "mean_diff": 0.618,
+    "salience": 3.7153
+   }
+  ],
+  "car": "RDZ7922",
+  "angle": "左前",
+  "label": "negative"
+ },
+ {
+  "align_ok": false,
+  "inliers": 6,
+  "pair_score": null,
+  "components": [],
+  "car": "RDZ7922",
+  "angle": "左後",
+  "label": "negative"
+ },
+ {
+  "align_ok": true,
+  "inliers": 127,
+  "pair_score": 11.7336,
+  "components": [
+   {
+    "bbox": [
+     12,
+     12,
+     1268,
+     708
+    ],
+    "area": 635896,
+    "mean_diff": 0.8781,
+    "salience": 11.7336
+   },
+   {
+    "bbox": [
+     638,
+     403,
+     698,
+     425
+    ],
+    "area": 744,
+    "mean_diff": 0.82,
+    "salience": 5.4217
+   }
+  ],
+  "car": "RFB-2590",
+  "angle": "右前",
+  "label": "negative"
+ },
+ {
+  "align_ok": true,
+  "inliers": 137,
+  "pair_score": 11.2212,
+  "components": [
+   {
+    "bbox": [
+     12,
+     12,
+     1268,
+     680
+    ],
+    "area": 522566,
+    "mean_diff": 0.8523,
+    "salience": 11.2212
+   },
+   {
+    "bbox": [
+     717,
+     209,
+     836,
+     222
+    ],
+    "area": 610,
+    "mean_diff": 0.7381,
+    "salience": 4.7336
+   },
+   {
+    "bbox": [
+     439,
+     94,
+     537,
+     126
+    ],
+    "area": 862,
+    "mean_diff": 0.6526,
+    "salience": 4.4114
+   },
+   {
+    "bbox": [
+     461,
+     129,
+     527,
+     156
+    ],
+    "area": 552,
+    "mean_diff": 0.6487,
+    "salience": 4.0957
+   },
+   {
+    "bbox": [
+     160,
+     243,
+     311,
+     254
+    ],
+    "area": 510,
+    "mean_diff": 0.6564,
+    "salience": 4.0923
+   }
+  ],
+  "car": "RFB-2590",
+  "angle": "右後",
+  "label": "negative"
+ },
+ {
+  "align_ok": true,
+  "inliers": 141,
+  "pair_score": 11.2086,
+  "components": [
+   {
+    "bbox": [
+     20,
+     12,
+     1268,
+     708
+    ],
+    "area": 569130,
+    "mean_diff": 0.8458,
+    "salience": 11.2086
+   },
+   {
+    "bbox": [
+     1112,
+     427,
+     1268,
+     499
+    ],
+    "area": 2863,
+    "mean_diff": 0.7157,
+    "salience": 5.6965
+   },
+   {
+    "bbox": [
+     1153,
+     306,
+     1268,
+     425
+    ],
+    "area": 4445,
+    "mean_diff": 0.6719,
+    "salience": 5.6437
+   },
+   {
+    "bbox": [
+     500,
+     409,
+     547,
+     428
+    ],
+    "area": 665,
+    "mean_diff": 0.8232,
+    "salience": 5.3508
+   }
+  ],
+  "car": "RFB-2590",
+  "angle": "左前",
+  "label": "negative"
+ },
+ {
+  "align_ok": true,
+  "inliers": 73,
+  "pair_score": 11.0391,
+  "components": [
+   {
+    "bbox": [
+     12,
+     49,
+     1232,
+     689
+    ],
+    "area": 478755,
+    "mean_diff": 0.844,
+    "salience": 11.0391
+   },
+   {
+    "bbox": [
+     868,
+     314,
+     1151,
+     414
+    ],
+    "area": 10883,
+    "mean_diff": 0.7546,
+    "salience": 7.0143
+   },
+   {
+    "bbox": [
+     818,
+     26,
+     1059,
+     55
+    ],
+    "area": 1990,
+    "mean_diff": 0.7682,
+    "salience": 5.8353
+   },
+   {
+    "bbox": [
+     527,
+     473,
+     597,
+     500
+    ],
+    "area": 1009,
+    "mean_diff": 0.7671,
+    "salience": 5.3061
+   },
+   {
+    "bbox": [
+     829,
+     456,
+     880,
+     477
+    ],
+    "area": 405,
+    "mean_diff": 0.5666,
+    "salience": 3.4021
+   }
+  ],
+  "car": "RFB-2590",
+  "angle": "左後",
+  "label": "negative"
+ },
+ {
+  "align_ok": false,
+  "inliers": 18,
+  "pair_score": null,
+  "components": [],
+  "car": "RFB-3295",
+  "angle": "右前",
+  "label": "negative"
+ },
+ {
+  "align_ok": false,
+  "inliers": 16,
+  "pair_score": null,
+  "components": [],
+  "car": "RFB-3295",
+  "angle": "右後",
+  "label": "negative"
+ },
+ {
+  "align_ok": false,
+  "inliers": 24,
+  "pair_score": null,
+  "components": [],
+  "car": "RFB-3295",
+  "angle": "左前",
+  "label": "negative"
+ },
+ {
+  "align_ok": false,
+  "inliers": 8,
+  "pair_score": null,
+  "components": [],
+  "car": "RFB-3295",
+  "angle": "左後",
+  "label": "negative"
+ },
+ {
+  "align_ok": false,
+  "inliers": 2,
+  "pair_score": null,
+  "components": [],
+  "car": "RFB5176",
+  "angle": "右前",
+  "label": "negative"
+ },
+ {
+  "align_ok": false,
+  "inliers": 16,
+  "pair_score": null,
+  "components": [],
+  "car": "RFB5176",
+  "angle": "右後",
+  "label": "negative"
+ },
+ {
+  "align_ok": false,
+  "inliers": 18,
+  "pair_score": null,
+  "components": [],
+  "car": "RFB5176",
+  "angle": "左前",
+  "label": "negative"
+ },
+ {
+  "align_ok": false,
+  "inliers": 9,
+  "pair_score": null,
+  "components": [],
+  "car": "RFB5176",
+  "angle": "左後",
+  "label": "negative"
+ },
+ {
+  "align_ok": false,
+  "inliers": 12,
+  "pair_score": null,
+  "components": [],
+  "car": "RFD-1336",
+  "angle": "右前",
+  "label": "negative"
+ },
+ {
+  "align_ok": true,
+  "inliers": 42,
+  "pair_score": 9.7444,
+  "components": [
+   {
+    "bbox": [
+     12,
+     139,
+     1268,
+     708
+    ],
+    "area": 284355,
+    "mean_diff": 0.776,
+    "salience": 9.7444
+   },
+   {
+    "bbox": [
+     431,
+     12,
+     1268,
+     236
+    ],
+    "area": 38433,
+    "mean_diff": 0.7956,
+    "salience": 8.3992
+   },
+   {
+    "bbox": [
+     834,
+     70,
+     1026,
+     115
+    ],
+    "area": 3285,
+    "mean_diff": 0.7945,
+    "salience": 6.4332
+   },
+   {
+    "bbox": [
+     759,
+     208,
+     822,
+     249
+    ],
+    "area": 1309,
+    "mean_diff": 0.8418,
+    "salience": 6.0414
+   },
+   {
+    "bbox": [
+     1158,
+     445,
+     1268,
+     471
+    ],
+    "area": 1180,
+    "mean_diff": 0.7266,
+    "salience": 5.1397
+   },
+   {
+    "bbox": [
+     334,
+     15,
+     357,
+     47
+    ],
+    "area": 440,
+    "mean_diff": 0.636,
+    "salience": 3.8711
+   }
+  ],
+  "car": "RFD-1336",
+  "angle": "右後",
+  "label": "negative"
+ },
+ {
+  "align_ok": true,
+  "inliers": 29,
+  "pair_score": 10.0689,
+  "components": [
+   {
+    "bbox": [
+     84,
+     56,
+     1002,
+     708
+    ],
+    "area": 271703,
+    "mean_diff": 0.8047,
+    "salience": 10.0689
+   },
+   {
+    "bbox": [
+     12,
+     32,
+     464,
+     172
+    ],
+    "area": 18527,
+    "mean_diff": 0.7791,
+    "salience": 7.6562
+   },
+   {
+    "bbox": [
+     12,
+     618,
+     91,
+     708
+    ],
+    "area": 3312,
+    "mean_diff": 0.8011,
+    "salience": 6.4936
+   },
+   {
+    "bbox": [
+     12,
+     12,
+     243,
+     58
+    ],
+    "area": 2987,
+    "mean_diff": 0.7858,
+    "salience": 6.2881
+   },
+   {
+    "bbox": [
+     682,
+     380,
+     715,
+     440
+    ],
+    "area": 747,
+    "mean_diff": 0.7172,
+    "salience": 4.745
+   }
+  ],
+  "car": "RFD-1336",
+  "angle": "左前",
+  "label": "negative"
+ },
+ {
+  "align_ok": true,
+  "inliers": 28,
+  "pair_score": 9.7529,
+  "components": [
+   {
+    "bbox": [
+     12,
+     12,
+     1268,
+     520
+    ],
+    "area": 259773,
+    "mean_diff": 0.7823,
+    "salience": 9.7529
+   },
+   {
+    "bbox": [
+     270,
+     477,
+     1268,
+     708
+    ],
+    "area": 87839,
+    "mean_diff": 0.7744,
+    "salience": 8.8153
+   },
+   {
+    "bbox": [
+     893,
+     231,
+     1268,
+     526
+    ],
+    "area": 10646,
+    "mean_diff": 0.8024,
+    "salience": 7.4402
+   },
+   {
+    "bbox": [
+     105,
+     351,
+     264,
+     497
+    ],
+    "area": 5012,
+    "mean_diff": 0.7916,
+    "salience": 6.7437
+   },
+   {
+    "bbox": [
+     499,
+     488,
+     653,
+     557
+    ],
+    "area": 2969,
+    "mean_diff": 0.6908,
+    "salience": 5.5238
+   },
+   {
+    "bbox": [
+     202,
+     363,
+     280,
+     461
+    ],
+    "area": 1734,
+    "mean_diff": 0.6383,
+    "salience": 4.7609
+   },
+   {
+    "bbox": [
+     316,
+     417,
+     376,
+     472
+    ],
+    "area": 1238,
+    "mean_diff": 0.6029,
+    "salience": 4.2934
+   },
+   {
+    "bbox": [
+     1248,
+     398,
+     1268,
+     491
+    ],
+    "area": 806,
+    "mean_diff": 0.6192,
+    "salience": 4.1434
+   }
+  ],
+  "car": "RFD-1336",
+  "angle": "左後",
+  "label": "negative"
+ },
+ {
+  "align_ok": false,
+  "inliers": 23,
+  "pair_score": null,
+  "components": [],
+  "car": "RFD-8522",
+  "angle": "右前",
+  "label": "negative"
+ },
+ {
+  "align_ok": true,
+  "inliers": 293,
+  "pair_score": 9.8551,
+  "components": [
+   {
+    "bbox": [
+     12,
+     298,
+     1268,
+     708
+    ],
+    "area": 223485,
+    "mean_diff": 0.8001,
+    "salience": 9.8551
+   },
+   {
+    "bbox": [
+     669,
+     12,
+     1268,
+     454
+    ],
+    "area": 106114,
+    "mean_diff": 0.849,
+    "salience": 9.8244
+   },
+   {
+    "bbox": [
+     109,
+     124,
+     533,
+     310
+    ],
+    "area": 14379,
+    "mean_diff": 0.7906,
+    "salience": 7.5689
+   },
+   {
+    "bbox": [
+     181,
+     40,
+     382,
+     145
+    ],
+    "area": 5796,
+    "mean_diff": 0.6517,
+    "salience": 5.6466
+   },
+   {
+    "bbox": [
+     411,
+     138,
+     622,
+     275
+    ],
+    "area": 2421,
+    "mean_diff": 0.7114,
+    "salience": 5.543
+   },
+   {
+    "bbox": [
+     403,
+     27,
+     517,
+     82
+    ],
+    "area": 2849,
+    "mean_diff": 0.6555,
+    "salience": 5.2143
+   },
+   {
+    "bbox": [
+     691,
+     144,
+     804,
+     201
+    ],
+    "area": 1954,
+    "mean_diff": 0.6749,
+    "salience": 5.114
+   },
+   {
+    "bbox": [
+     771,
+     234,
+     808,
+     260
+    ],
+    "area": 665,
+    "mean_diff": 0.7772,
+    "salience": 5.0516
+   }
+  ],
+  "car": "RFD-8522",
+  "angle": "右後",
+  "label": "negative"
+ },
+ {
+  "align_ok": true,
+  "inliers": 227,
+  "pair_score": 10.2752,
+  "components": [
+   {
+    "bbox": [
+     73,
+     12,
+     1268,
+     708
+    ],
+    "area": 412589,
+    "mean_diff": 0.7947,
+    "salience": 10.2752
+   },
+   {
+    "bbox": [
+     460,
+     465,
+     570,
+     501
+    ],
+    "area": 1172,
+    "mean_diff": 0.7798,
+    "salience": 5.5106
+   },
+   {
+    "bbox": [
+     1003,
+     298,
+     1041,
+     327
+    ],
+    "area": 618,
+    "mean_diff": 0.7913,
+    "salience": 5.0851
+   },
+   {
+    "bbox": [
+     376,
+     123,
+     423,
+     150
+    ],
+    "area": 761,
+    "mean_diff": 0.7664,
+    "salience": 5.0847
+   },
+   {
+    "bbox": [
+     142,
+     669,
+     187,
+     700
+    ],
+    "area": 461,
+    "mean_diff": 0.6929,
+    "salience": 4.2497
+   },
+   {
+    "bbox": [
+     559,
+     378,
+     595,
+     406
+    ],
+    "area": 411,
+    "mean_diff": 0.6845,
+    "salience": 4.12
+   },
+   {
+    "bbox": [
+     156,
+     53,
+     260,
+     98
+    ],
+    "area": 1281,
+    "mean_diff": 0.5753,
+    "salience": 4.1164
+   }
+  ],
+  "car": "RFD-8522",
+  "angle": "左前",
+  "label": "negative"
+ },
+ {
+  "align_ok": true,
+  "inliers": 45,
+  "pair_score": 10.3509,
+  "components": [
+   {
+    "bbox": [
+     12,
+     12,
+     1268,
+     708
+    ],
+    "area": 475765,
+    "mean_diff": 0.7918,
+    "salience": 10.3509
+   },
+   {
+    "bbox": [
+     12,
+     353,
+     78,
+     409
+    ],
+    "area": 1385,
+    "mean_diff": 0.7775,
+    "salience": 5.6242
+   },
+   {
+    "bbox": [
+     172,
+     396,
+     275,
+     405
+    ],
+    "area": 537,
+    "mean_diff": 0.7921,
+    "salience": 4.9794
+   }
+  ],
+  "car": "RFD-8522",
+  "angle": "左後",
+  "label": "negative"
+ },
+ {
+  "align_ok": true,
+  "inliers": 120,
+  "pair_score": 11.4656,
+  "components": [
+   {
+    "bbox": [
+     12,
+     12,
+     1264,
+     708
+    ],
+    "area": 611756,
+    "mean_diff": 0.8605,
+    "salience": 11.4656
+   },
+   {
+    "bbox": [
+     702,
+     437,
+     814,
+     460
+    ],
+    "area": 1404,
+    "mean_diff": 0.9261,
+    "salience": 6.7116
+   }
+  ],
+  "car": "RFG7213",
+  "angle": "右前",
+  "label": "negative"
+ },
+ {
+  "align_ok": true,
+  "inliers": 132,
+  "pair_score": 11.605,
+  "components": [
+   {
+    "bbox": [
+     44,
+     12,
+     1268,
+     708
+    ],
+    "area": 605713,
+    "mean_diff": 0.8716,
+    "salience": 11.605
+   },
+   {
+    "bbox": [
+     190,
+     257,
+     239,
+     291
+    ],
+    "area": 636,
+    "mean_diff": 0.733,
+    "salience": 4.7314
+   }
+  ],
+  "car": "RFG7213",
+  "angle": "右後",
+  "label": "negative"
+ },
+ {
+  "align_ok": false,
+  "inliers": 9,
+  "pair_score": null,
+  "components": [],
+  "car": "RFG7213",
+  "angle": "左前",
+  "label": "negative"
+ },
+ {
+  "align_ok": true,
+  "inliers": 105,
+  "pair_score": 11.7801,
+  "components": [
+   {
+    "bbox": [
+     12,
+     34,
+     1268,
+     708
+    ],
+    "area": 604992,
+    "mean_diff": 0.8849,
+    "salience": 11.7801
+   }
+  ],
+  "car": "RFG7213",
+  "angle": "左後",
+  "label": "negative"
+ },
+ {
+  "align_ok": false,
+  "inliers": 9,
+  "pair_score": null,
+  "components": [],
+  "car": "RFH7851",
+  "angle": "右前",
+  "label": "negative"
+ },
+ {
+  "align_ok": true,
+  "inliers": 29,
+  "pair_score": 10.8112,
+  "components": [
+   {
+    "bbox": [
+     122,
+     138,
+     1205,
+     701
+    ],
+    "area": 450723,
+    "mean_diff": 0.8304,
+    "salience": 10.8112
+   },
+   {
+    "bbox": [
+     900,
+     412,
+     1004,
+     438
+    ],
+    "area": 959,
+    "mean_diff": 0.7182,
+    "salience": 4.9309
+   }
+  ],
+  "car": "RFH7851",
+  "angle": "右後",
+  "label": "negative"
+ },
+ {
+  "align_ok": false,
+  "inliers": 12,
+  "pair_score": null,
+  "components": [],
+  "car": "RFH7851",
+  "angle": "左前",
+  "label": "negative"
+ },
+ {
+  "align_ok": true,
+  "inliers": 63,
+  "pair_score": 10.9485,
+  "components": [
+   {
+    "bbox": [
+     189,
+     47,
+     1268,
+     708
+    ],
+    "area": 521553,
+    "mean_diff": 0.8317,
+    "salience": 10.9485
+   }
+  ],
+  "car": "RFH7851",
+  "angle": "左後",
+  "label": "negative"
+ },
+ {
+  "align_ok": true,
+  "inliers": 85,
+  "pair_score": 11.8507,
+  "components": [
+   {
+    "bbox": [
+     39,
+     109,
+     1268,
+     708
+    ],
+    "area": 474152,
+    "mean_diff": 0.9068,
+    "salience": 11.8507
+   },
+   {
+    "bbox": [
+     154,
+     312,
+     339,
+     327
+    ],
+    "area": 957,
+    "mean_diff": 0.7817,
+    "salience": 5.3652
+   },
+   {
+    "bbox": [
+     100,
+     459,
+     296,
+     512
+    ],
+    "area": 2050,
+    "mean_diff": 0.6891,
+    "salience": 5.2547
+   },
+   {
+    "bbox": [
+     136,
+     390,
+     242,
+     418
+    ],
+    "area": 1032,
+    "mean_diff": 0.7237,
+    "salience": 5.0217
+   },
+   {
+    "bbox": [
+     776,
+     470,
+     819,
+     501
+    ],
+    "area": 609,
+    "mean_diff": 0.654,
+    "salience": 4.1936
+   },
+   {
+    "bbox": [
+     804,
+     435,
+     851,
+     471
+    ],
+    "area": 475,
+    "mean_diff": 0.6368,
+    "salience": 3.9246
+   }
+  ],
+  "car": "RFH7873",
+  "angle": "右前",
+  "label": "negative"
+ },
+ {
+  "align_ok": true,
+  "inliers": 28,
+  "pair_score": 11.0357,
+  "components": [
+   {
+    "bbox": [
+     133,
+     121,
+     991,
+     540
+    ],
+    "area": 219650,
+    "mean_diff": 0.8972,
+    "salience": 11.0357
+   },
+   {
+    "bbox": [
+     505,
+     366,
+     603,
+     381
+    ],
+    "area": 465,
+    "mean_diff": 0.5838,
+    "salience": 3.5857
+   }
+  ],
+  "car": "RFH7873",
+  "angle": "右後",
+  "label": "negative"
+ },
+ {
+  "align_ok": false,
+  "inliers": 11,
+  "pair_score": null,
+  "components": [],
+  "car": "RFH7873",
+  "angle": "左前",
+  "label": "negative"
+ },
+ {
+  "align_ok": false,
+  "inliers": 21,
+  "pair_score": null,
+  "components": [],
+  "car": "RFH7873",
+  "angle": "左後",
+  "label": "negative"
+ },
+ {
+  "align_ok": true,
+  "inliers": 32,
+  "pair_score": 11.5229,
+  "components": [
+   {
+    "bbox": [
+     12,
+     118,
+     1268,
+     708
+    ],
+    "area": 587902,
+    "mean_diff": 0.8674,
+    "salience": 11.5229
+   }
+  ],
+  "car": "RFH8052",
+  "angle": "右前",
+  "label": "negative"
+ },
+ {
+  "align_ok": false,
+  "inliers": 22,
+  "pair_score": null,
+  "components": [],
+  "car": "RFH8052",
+  "angle": "右後",
+  "label": "negative"
+ },
+ {
+  "align_ok": true,
+  "inliers": 57,
+  "pair_score": 10.946,
+  "components": [
+   {
+    "bbox": [
+     12,
+     12,
+     1268,
+     708
+    ],
+    "area": 615786,
+    "mean_diff": 0.8211,
+    "salience": 10.946
+   },
+   {
+    "bbox": [
+     289,
+     80,
+     352,
+     95
+    ],
+    "area": 700,
+    "mean_diff": 0.902,
+    "salience": 5.9089
+   },
+   {
+    "bbox": [
+     914,
+     265,
+     986,
+     310
+    ],
+    "area": 1028,
+    "mean_diff": 0.7191,
+    "salience": 4.9872
+   },
+   {
+    "bbox": [
+     12,
+     12,
+     95,
+     88
+    ],
+    "area": 1507,
+    "mean_diff": 0.6756,
+    "salience": 4.9437
+   },
+   {
+    "bbox": [
+     846,
+     257,
+     924,
+     324
+    ],
+    "area": 1383,
+    "mean_diff": 0.6612,
+    "salience": 4.7819
+   },
+   {
+    "bbox": [
+     821,
+     425,
+     902,
+     449
+    ],
+    "area": 442,
+    "mean_diff": 0.6223,
+    "salience": 3.7904
+   }
+  ],
+  "car": "RFH8052",
+  "angle": "左前",
+  "label": "negative"
+ },
+ {
+  "align_ok": true,
+  "inliers": 46,
+  "pair_score": 11.594,
+  "components": [
+   {
+    "bbox": [
+     12,
+     12,
+     1268,
+     708
+    ],
+    "area": 691301,
+    "mean_diff": 0.8622,
+    "salience": 11.594
+   },
+   {
+    "bbox": [
+     12,
+     455,
+     46,
+     484
+    ],
+    "area": 479,
+    "mean_diff": 0.5821,
+    "salience": 3.5927
+   },
+   {
+    "bbox": [
+     56,
+     484,
+     123,
+     540
+    ],
+    "area": 589,
+    "mean_diff": 0.5498,
+    "salience": 3.5066
+   }
+  ],
+  "car": "RFH8052",
+  "angle": "左後",
+  "label": "negative"
+ },
+ {
+  "align_ok": true,
+  "inliers": 105,
+  "pair_score": 10.7346,
+  "components": [
+   {
+    "bbox": [
+     12,
+     22,
+     1268,
+     596
+    ],
+    "area": 427909,
+    "mean_diff": 0.8279,
+    "salience": 10.7346
+   },
+   {
+    "bbox": [
+     613,
+     30,
+     1200,
+     85
+    ],
+    "area": 6040,
+    "mean_diff": 0.7967,
+    "salience": 6.936
+   },
+   {
+    "bbox": [
+     213,
+     24,
+     325,
+     57
+    ],
+    "area": 1038,
+    "mean_diff": 0.7116,
+    "salience": 4.942
+   },
+   {
+    "bbox": [
+     911,
+     115,
+     970,
+     152
+    ],
+    "area": 764,
+    "mean_diff": 0.6831,
+    "salience": 4.535
+   },
+   {
+    "bbox": [
+     700,
+     94,
+     791,
+     108
+    ],
+    "area": 406,
+    "mean_diff": 0.6338,
+    "salience": 3.8068
+   }
+  ],
+  "car": "RFH8122",
+  "angle": "右前",
+  "label": "negative"
+ },
+ {
+  "align_ok": true,
+  "inliers": 41,
+  "pair_score": 11.5471,
+  "components": [
+   {
+    "bbox": [
+     12,
+     12,
+     1268,
+     708
+    ],
+    "area": 725833,
+    "mean_diff": 0.8556,
+    "salience": 11.5471
+   },
+   {
+    "bbox": [
+     368,
+     429,
+     590,
+     462
+    ],
+    "area": 1813,
+    "mean_diff": 0.7551,
+    "salience": 5.6656
+   }
+  ],
+  "car": "RFH8122",
+  "angle": "右後",
+  "label": "negative"
+ },
+ {
+  "align_ok": true,
+  "inliers": 219,
+  "pair_score": 10.9746,
+  "components": [
+   {
+    "bbox": [
+     12,
+     56,
+     1268,
+     654
+    ],
+    "area": 551631,
+    "mean_diff": 0.8301,
+    "salience": 10.9746
+   },
+   {
+    "bbox": [
+     1142,
+     12,
+     1268,
+     57
+    ],
+    "area": 2743,
+    "mean_diff": 0.8529,
+    "salience": 6.7524
+   },
+   {
+    "bbox": [
+     111,
+     49,
+     298,
+     73
+    ],
+    "area": 1857,
+    "mean_diff": 0.7176,
+    "salience": 5.4008
+   },
+   {
+    "bbox": [
+     823,
+     12,
+     1006,
+     88
+    ],
+    "area": 4214,
+    "mean_diff": 0.6469,
+    "salience": 5.3993
+   },
+   {
+    "bbox": [
+     992,
+     12,
+     1158,
+     42
+    ],
+    "area": 1194,
+    "mean_diff": 0.7085,
+    "salience": 5.0201
+   },
+   {
+    "bbox": [
+     794,
+     326,
+     868,
+     341
+    ],
+    "area": 428,
+    "mean_diff": 0.8132,
+    "salience": 4.9273
+   },
+   {
+    "bbox": [
+     700,
+     312,
+     794,
+     336
+    ],
+    "area": 767,
+    "mean_diff": 0.7047,
+    "salience": 4.681
+   },
+   {
+    "bbox": [
+     12,
+     94,
+     118,
+     107
+    ],
+    "area": 733,
+    "mean_diff": 0.6624,
+    "salience": 4.37
+   }
+  ],
+  "car": "RFH8122",
+  "angle": "左前",
+  "label": "negative"
+ },
+ {
+  "align_ok": true,
+  "inliers": 111,
+  "pair_score": 11.0728,
+  "components": [
+   {
+    "bbox": [
+     81,
+     58,
+     1268,
+     708
+    ],
+    "area": 532383,
+    "mean_diff": 0.8398,
+    "salience": 11.0728
+   },
+   {
+    "bbox": [
+     1019,
+     56,
+     1084,
+     90
+    ],
+    "area": 1082,
+    "mean_diff": 0.8276,
+    "salience": 5.7819
+   },
+   {
+    "bbox": [
+     1186,
+     54,
+     1268,
+     114
+    ],
+    "area": 1505,
+    "mean_diff": 0.6884,
+    "salience": 5.0371
+   },
+   {
+    "bbox": [
+     1096,
+     55,
+     1180,
+     93
+    ],
+    "area": 1102,
+    "mean_diff": 0.6827,
+    "salience": 4.7823
+   },
+   {
+    "bbox": [
+     427,
+     171,
+     462,
+     192
+    ],
+    "area": 447,
+    "mean_diff": 0.7623,
+    "salience": 4.652
+   },
+   {
+    "bbox": [
+     399,
+     63,
+     425,
+     138
+    ],
+    "area": 672,
+    "mean_diff": 0.7002,
+    "salience": 4.5583
+   }
+  ],
+  "car": "RFH8122",
+  "angle": "左後",
+  "label": "negative"
+ },
+ {
+  "align_ok": false,
+  "inliers": 15,
+  "pair_score": null,
+  "components": [],
+  "car": "RFM-2791",
+  "angle": "右前",
+  "label": "negative"
+ },
+ {
+  "align_ok": true,
+  "inliers": 29,
+  "pair_score": 11.3622,
+  "components": [
+   {
+    "bbox": [
+     12,
+     103,
+     1165,
+     708
+    ],
+    "area": 395509,
+    "mean_diff": 0.8816,
+    "salience": 11.3622
+   },
+   {
+    "bbox": [
+     583,
+     474,
+     903,
+     528
+    ],
+    "area": 2247,
+    "mean_diff": 0.7882,
+    "salience": 6.0827
+   },
+   {
+    "bbox": [
+     617,
+     535,
+     653,
+     549
+    ],
+    "area": 418,
+    "mean_diff": 0.887,
+    "salience": 5.3532
+   }
+  ],
+  "car": "RFM-2791",
+  "angle": "右後",
+  "label": "negative"
+ },
+ {
+  "align_ok": false,
+  "inliers": 12,
+  "pair_score": null,
+  "components": [],
+  "car": "RFM-2791",
+  "angle": "左前",
+  "label": "negative"
+ },
+ {
+  "align_ok": false,
+  "inliers": 20,
+  "pair_score": null,
+  "components": [],
+  "car": "RFM-2791",
+  "angle": "左後",
+  "label": "negative"
+ },
+ {
+  "align_ok": false,
+  "inliers": 5,
+  "pair_score": null,
+  "components": [],
+  "car": "RCR-7661",
+  "angle": "左後",
+  "label": "positive"
+ },
+ {
+  "align_ok": false,
+  "inliers": 20,
+  "pair_score": null,
+  "components": [],
+  "car": "RCW-8382",
+  "angle": "左前",
+  "label": "positive"
+ },
+ {
+  "align_ok": true,
+  "inliers": 141,
+  "pair_score": 11.0573,
+  "components": [
+   {
+    "bbox": [
+     12,
+     12,
+     1268,
+     708
+    ],
+    "area": 641767,
+    "mean_diff": 0.8269,
+    "salience": 11.0573
+   },
+   {
+    "bbox": [
+     138,
+     366,
+     209,
+     411
+    ],
+    "area": 588,
+    "mean_diff": 0.7188,
+    "salience": 4.5836
+   }
+  ],
+  "car": "RCW-9206",
+  "angle": "左前",
+  "label": "positive"
+ },
+ {
+  "align_ok": false,
+  "inliers": 0,
+  "pair_score": null,
+  "components": [],
+  "car": "RDH-2261",
+  "angle": "左後",
+  "label": "positive"
+ },
+ {
+  "align_ok": false,
+  "inliers": 11,
+  "pair_score": null,
+  "components": [],
+  "car": "RDH-3092",
+  "angle": "左後",
+  "label": "positive"
+ },
+ {
+  "align_ok": false,
+  "inliers": 12,
+  "pair_score": null,
+  "components": [],
+  "car": "RDJ-0772",
+  "angle": "左前",
+  "label": "positive"
+ },
+ {
+  "align_ok": false,
+  "inliers": 15,
+  "pair_score": null,
+  "components": [],
+  "car": "RDJ-0793",
+  "angle": "左前",
+  "label": "positive"
+ },
+ {
+  "align_ok": false,
+  "inliers": 9,
+  "pair_score": null,
+  "components": [],
+  "car": "RDL-5171",
+  "angle": "左前",
+  "label": "positive"
+ },
+ {
+  "align_ok": false,
+  "inliers": 22,
+  "pair_score": null,
+  "components": [],
+  "car": "RDL-7836",
+  "angle": "左後",
+  "label": "positive"
+ },
+ {
+  "align_ok": true,
+  "inliers": 43,
+  "pair_score": 11.7941,
+  "components": [
+   {
+    "bbox": [
+     12,
+     223,
+     1268,
+     708
+    ],
+    "area": 506307,
+    "mean_diff": 0.8979,
+    "salience": 11.7941
+   }
+  ],
+  "car": "RDL-8265",
+  "angle": "右後",
+  "label": "positive"
+ },
+ {
+  "align_ok": false,
+  "inliers": 17,
+  "pair_score": null,
+  "components": [],
+  "car": "RDL-9262",
+  "angle": "右前",
+  "label": "positive"
+ },
+ {
+  "align_ok": false,
+  "inliers": 3,
+  "pair_score": null,
+  "components": [],
+  "car": "RDQ-1950",
+  "angle": "右後",
+  "label": "positive"
+ },
+ {
+  "align_ok": true,
+  "inliers": 39,
+  "pair_score": 12.0084,
+  "components": [
+   {
+    "bbox": [
+     12,
+     12,
+     1268,
+     708
+    ],
+    "area": 719137,
+    "mean_diff": 0.8904,
+    "salience": 12.0084
+   }
+  ],
+  "car": "RDU-6956",
+  "angle": "右前",
+  "label": "positive"
+ },
+ {
+  "align_ok": false,
+  "inliers": 20,
+  "pair_score": null,
+  "components": [],
+  "car": "RDU-9162",
+  "angle": "左前",
+  "label": "positive"
+ },
+ {
+  "align_ok": false,
+  "inliers": 8,
+  "pair_score": null,
+  "components": [],
+  "car": "RDX-1085",
+  "angle": "右前",
+  "label": "positive"
+ },
+ {
+  "align_ok": false,
+  "inliers": 6,
+  "pair_score": null,
+  "components": [],
+  "car": "RDX-2376",
+  "angle": "右後",
+  "label": "positive"
+ },
+ {
+  "align_ok": false,
+  "inliers": 15,
+  "pair_score": null,
+  "components": [],
+  "car": "RDY-6382",
+  "angle": "左前",
+  "label": "positive"
+ },
+ {
+  "align_ok": false,
+  "inliers": 16,
+  "pair_score": null,
+  "components": [],
+  "car": "RDZ-0187",
+  "angle": "右後",
+  "label": "positive"
+ },
+ {
+  "align_ok": false,
+  "inliers": 18,
+  "pair_score": null,
+  "components": [],
+  "car": "RFB-2091",
+  "angle": "右前",
+  "label": "positive"
+ },
+ {
+  "align_ok": false,
+  "inliers": 19,
+  "pair_score": null,
+  "components": [],
+  "car": "RFB-2091",
+  "angle": "左前",
+  "label": "positive"
+ },
+ {
+  "align_ok": false,
+  "inliers": 6,
+  "pair_score": null,
+  "components": [],
+  "car": "RFD-0332",
+  "angle": "右前",
+  "label": "positive"
+ }
+]

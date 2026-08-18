@@ -1,0 +1,1882 @@
+{
+ "summary": {
+  "model": "gemini-3.7-flash",
+  "review_model": "gemini-3.1-pro-preview",
+  "classified": 80,
+  "errors": 0,
+  "distribution": {
+   "乾淨": 21,
+   "普通": 56,
+   "髒汙": 3
+  },
+  "reviewed": 60,
+  "tokens": {
+   "input": 108826,
+   "output": 27208
+  }
+ },
+ "results": [
+  {
+   "order": "47351638",
+   "car": "RFP-3503",
+   "type": "front",
+   "file": "H47351638_10_20260422143326.png",
+   "assessment": {
+    "level": "乾淨",
+    "confidence": 0.95,
+    "issues": [],
+    "reasoning": "駕駛座皮椅、中控台與腳踏墊均無可見垃圾或污漬，車內整體狀態維持良好。"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 257
+   }
+  },
+  {
+   "order": "47351638",
+   "car": "RFP-3503",
+   "type": "rear",
+   "file": "H47351638_11_20260422143326.png",
+   "assessment": {
+    "level": "乾淨",
+    "confidence": 0.95,
+    "issues": [],
+    "reasoning": "後座座椅表面與腳踏空間乾淨整齊，未見垃圾、液體污漬或明顯沙土。"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 191
+   }
+  },
+  {
+   "order": "47351282",
+   "car": "RDE-7213",
+   "type": "front",
+   "file": "H47351282_10_20260422174716.png",
+   "assessment": {
+    "level": "乾淨",
+    "confidence": 0.9,
+    "issues": [],
+    "reasoning": "前座座椅與中控台可見範圍內無明顯髒污、垃圾或污漬，整體保持乾淨良好。"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 255
+   }
+  },
+  {
+   "order": "47351282",
+   "car": "RDE-7213",
+   "type": "rear",
+   "file": "H47351282_11_20260422174716.png",
+   "assessment": {
+    "level": "普通",
+    "confidence": 0.4,
+    "issues": [],
+    "reasoning": "外觀照無法確認車內。"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 311
+   },
+   "flash_assessment": {
+    "level": "普通",
+    "confidence": 0.1,
+    "issues": [
+     "照片拍攝角度為車外外觀，無法檢視車內整潔狀況"
+    ],
+    "reasoning": "上傳照片為車輛外部與擋風玻璃，無法看清車內後座座椅與地板狀態。"
+   },
+   "reviewed": true
+  },
+  {
+   "order": "47352373",
+   "car": "RFH-8062",
+   "type": "front",
+   "file": "H47352373_10_20260422214903.png",
+   "assessment": {
+    "level": "普通",
+    "confidence": 0.3,
+    "issues": [],
+    "reasoning": "外觀照無法判定車內"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 291
+   },
+   "flash_assessment": {
+    "level": "普通",
+    "confidence": 0.1,
+    "issues": [
+     "照片拍攝為車輛外觀，無法檢視車內整潔狀況"
+    ],
+    "reasoning": "上傳之照片為車輛車頭外觀而非車內照片，無法判斷車內整潔程度。"
+   },
+   "reviewed": true
+  },
+  {
+   "order": "47352373",
+   "car": "RFH-8062",
+   "type": "rear",
+   "file": "H47352373_11_20260422214903.png",
+   "assessment": {
+    "level": "普通",
+    "confidence": 0.35,
+    "issues": [],
+    "reasoning": "照片為車外觀，無法判定車內。"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 401
+   },
+   "flash_assessment": {
+    "level": "普通",
+    "confidence": 0.1,
+    "issues": [
+     "照片為車輛外觀，無法檢視車內狀況"
+    ],
+    "reasoning": "上傳照片為車輛外觀而非車內後座，無法判斷內部整潔狀況。"
+   },
+   "reviewed": true
+  },
+  {
+   "order": "47356064",
+   "car": "RFE-6691",
+   "type": "front",
+   "file": "H47356064_10_20260422212340.png",
+   "assessment": {
+    "level": "普通",
+    "confidence": 0.4,
+    "issues": [],
+    "reasoning": "外觀照無法判定車內"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 316
+   },
+   "flash_assessment": {
+    "level": "普通",
+    "confidence": 0.0,
+    "issues": [],
+    "reasoning": "照片拍攝為車輛外觀正面，完全無法檢視車內整潔狀況。"
+   },
+   "reviewed": true
+  },
+  {
+   "order": "47356064",
+   "car": "RFE-6691",
+   "type": "rear",
+   "file": "H47356064_11_20260422212340.png",
+   "assessment": {
+    "level": "普通",
+    "confidence": 0.4,
+    "issues": [],
+    "reasoning": "僅見車外觀無法判斷車內"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 368
+   },
+   "flash_assessment": {
+    "level": "普通",
+    "confidence": 0.1,
+    "issues": [
+     "照片拍攝為車輛外觀，未拍到車內後座"
+    ],
+    "reasoning": "上傳照片為車輛車頭外觀而非車內畫面，完全無法檢視車內整潔狀況。"
+   },
+   "reviewed": true
+  },
+  {
+   "order": "47349848",
+   "car": "RDY-7282",
+   "type": "front",
+   "file": "H47349848_10_20260422161829.png",
+   "assessment": {
+    "level": "普通",
+    "confidence": 0.3,
+    "issues": [
+     "非車內照片"
+    ],
+    "reasoning": "外觀照無法判定內裝"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 478
+   },
+   "flash_assessment": {
+    "level": "普通",
+    "confidence": 0.1,
+    "issues": [
+     "照片為車輛外觀，無法清楚辨識車內情況"
+    ],
+    "reasoning": "上傳之照片為車輛正面外觀照非車內照，無法有效判定車內整潔程度。"
+   },
+   "reviewed": true
+  },
+  {
+   "order": "47349848",
+   "car": "RDY-7282",
+   "type": "rear",
+   "file": "H47349848_11_20260422161829.png",
+   "assessment": {
+    "level": "普通",
+    "confidence": 0.4,
+    "issues": [
+     "非車內照片"
+    ],
+    "reasoning": "外觀照無法判定車內"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 351
+   },
+   "flash_assessment": {
+    "level": "普通",
+    "confidence": 0.0,
+    "issues": [
+     "照片為車輛外觀非車內照片"
+    ],
+    "reasoning": "上傳照片為車輛外觀，無法檢視與判定車內整潔狀況。"
+   },
+   "reviewed": true
+  },
+  {
+   "order": "47349544",
+   "car": "RFL-7931",
+   "type": "front",
+   "file": "H47349544_10_20260422174901.png",
+   "assessment": {
+    "level": "乾淨",
+    "confidence": 0.95,
+    "issues": [],
+    "reasoning": "駕駛座與副駕駛座皮質座椅乾淨無雜物，腳踏墊及中控台皆無可見髒污或垃圾。"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 317
+   }
+  },
+  {
+   "order": "47349544",
+   "car": "RFL-7931",
+   "type": "rear",
+   "file": "H47349544_11_20260422174901.png",
+   "assessment": {
+    "level": "乾淨",
+    "confidence": 0.95,
+    "issues": [],
+    "reasoning": "後座皮椅、椅背及腳踏墊整體維持良好，無明顯垃圾、污漬或髒污痕跡。"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 240
+   }
+  },
+  {
+   "order": "47345152",
+   "car": "RFX-7197",
+   "type": "front",
+   "file": "H47345152_10_20260422155622.png",
+   "assessment": {
+    "level": "普通",
+    "confidence": 0.4,
+    "issues": [
+     "非車內照片"
+    ],
+    "reasoning": "為車外照片無法判定車內。"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 260
+   },
+   "flash_assessment": {
+    "level": "普通",
+    "confidence": 0.1,
+    "issues": [],
+    "reasoning": "上傳照片為車頭外觀而非車內照片，無法判斷車內整潔狀況。"
+   },
+   "reviewed": true
+  },
+  {
+   "order": "47345152",
+   "car": "RFX-7197",
+   "type": "rear",
+   "file": "H47345152_11_20260422155623.png",
+   "assessment": {
+    "level": "普通",
+    "confidence": 0.4,
+    "issues": [
+     "非車內照片",
+     "外觀微塵"
+    ],
+    "reasoning": "非車內照片，外觀僅微塵。"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 462
+   },
+   "flash_assessment": {
+    "level": "普通",
+    "confidence": 0.1,
+    "issues": [
+     "照片拍攝內容為車輛外觀非車內座椅"
+    ],
+    "reasoning": "上傳照片為車頭外觀而非車內後座，無法有效檢視車內整潔狀態。"
+   },
+   "reviewed": true
+  },
+  {
+   "order": "47346537",
+   "car": "RFH-7921",
+   "type": "front",
+   "file": "H47346537_10_20260422123708.png",
+   "assessment": {
+    "level": "普通",
+    "confidence": 0.35,
+    "issues": [
+     "非車內照片"
+    ],
+    "reasoning": "外觀照無法判定車內。"
+   },
+   "usage": {
+    "input": 1330,
+    "output": 245
+   },
+   "flash_assessment": {
+    "level": "普通",
+    "confidence": 0.1,
+    "issues": [],
+    "reasoning": "上傳照片為車輛外觀而非車內照片，無法辨識與判斷車內實際整潔狀態。"
+   },
+   "reviewed": true
+  },
+  {
+   "order": "47346537",
+   "car": "RFH-7921",
+   "type": "rear",
+   "file": "H47346537_11_20260422123708.png",
+   "assessment": {
+    "level": "普通",
+    "confidence": 0.4,
+    "issues": [
+     "照片為車輛外觀",
+     "車頂有飲料杯"
+    ],
+    "reasoning": "此為車外照片無法確認車內狀態"
+   },
+   "usage": {
+    "input": 1330,
+    "output": 539
+   },
+   "flash_assessment": {
+    "level": "普通",
+    "confidence": 0.1,
+    "issues": [
+     "照片拍攝角度為車輛外觀，無法檢視車內整潔",
+     "車頂疑似遺留一杯橘色外帶飲料"
+    ],
+    "reasoning": "上傳照片為車身外觀而非後座車內照，無法判斷車內整潔度，且車頂似乎遺留外帶飲料杯。"
+   },
+   "reviewed": true
+  },
+  {
+   "order": "47353609",
+   "car": "RDE-2190",
+   "type": "front",
+   "file": "H47353609_10_20260422174040.png",
+   "assessment": {
+    "level": "普通",
+    "confidence": 0.3,
+    "issues": [],
+    "reasoning": "照片為車輛外觀無法判定車內"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 400
+   },
+   "flash_assessment": {
+    "level": "普通",
+    "confidence": 0.1,
+    "issues": [
+     "照片為車輛外觀，無法看清車內整潔狀態"
+    ],
+    "reasoning": "拍攝視角為車頭外觀而非車內，無法有效判斷車內整潔度。"
+   },
+   "reviewed": true
+  },
+  {
+   "order": "47353609",
+   "car": "RDE-2190",
+   "type": "rear",
+   "file": "H47353609_11_20260422174041.png",
+   "assessment": {
+    "level": "普通",
+    "confidence": 0.4,
+    "issues": [],
+    "reasoning": "外觀照無法確認車內。"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 338
+   },
+   "flash_assessment": {
+    "level": "普通",
+    "confidence": 0.1,
+    "issues": [
+     "上傳照片為車輛外觀非車內視角"
+    ],
+    "reasoning": "照片拍攝為車輛外觀車頭處，無法看見車內後座整潔狀況。"
+   },
+   "reviewed": true
+  },
+  {
+   "order": "47350647",
+   "car": "RFP-3197",
+   "type": "front",
+   "file": "H47350647_10_20260422125556.png",
+   "assessment": {
+    "level": "普通",
+    "confidence": 0.5,
+    "issues": [
+     "外觀水痕髒污"
+    ],
+    "reasoning": "此為車外照片，表面有水痕。"
+   },
+   "usage": {
+    "input": 1330,
+    "output": 338
+   },
+   "flash_assessment": {
+    "level": "普通",
+    "confidence": 0.1,
+    "issues": [
+     "照片為車輛外觀（車尾），非車內照片，無法檢視車內整潔"
+    ],
+    "reasoning": "上傳照片為車外後方視角而非車內前座照，無法評估車內整潔狀況。"
+   },
+   "reviewed": true
+  },
+  {
+   "order": "47350647",
+   "car": "RFP-3197",
+   "type": "rear",
+   "file": "H47350647_11_20260422125557.png",
+   "assessment": {
+    "level": "普通",
+    "confidence": 0.35,
+    "issues": [],
+    "reasoning": "外觀照無法判定車內"
+   },
+   "usage": {
+    "input": 1330,
+    "output": 389
+   },
+   "flash_assessment": {
+    "level": "普通",
+    "confidence": 0.3,
+    "issues": [
+     "照片拍攝為車外車門視角，無法檢視車內整潔",
+     "車門把手下方有輕微雨水痕跡"
+    ],
+    "reasoning": "照片僅拍攝到車輛外側車門與把手（有輕微水漬痕跡），未拍攝到車內座位與內裝，無法確認車內實際狀況。"
+   },
+   "reviewed": true
+  },
+  {
+   "order": "47353666",
+   "car": "RFX-1576",
+   "type": "front",
+   "file": "H47353666_10_20260422175022.png",
+   "assessment": {
+    "level": "乾淨",
+    "confidence": 0.9,
+    "issues": [],
+    "reasoning": "前座座椅、方向盤及中控台等可見區域均乾淨整齊，無可見垃圾或污漬。"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 298
+   }
+  },
+  {
+   "order": "47353666",
+   "car": "RFX-1576",
+   "type": "rear",
+   "file": "H47353666_11_20260422175022.png",
+   "assessment": {
+    "level": "乾淨",
+    "confidence": 0.9,
+    "issues": [],
+    "reasoning": "後座椅面及周圍整潔無雜物與明顯污漬，狀態良好。"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 288
+   }
+  },
+  {
+   "order": "47353806",
+   "car": "RDJ-9265",
+   "type": "front",
+   "file": "H47353806_10_20260422181851.png",
+   "assessment": {
+    "level": "乾淨",
+    "confidence": 0.85,
+    "issues": [],
+    "reasoning": "前座皮椅與中控區域整潔，無明顯垃圾或污漬，雖照片下方有局部遮擋但可見範圍內車況良好。"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 269
+   }
+  },
+  {
+   "order": "47353806",
+   "car": "RDJ-9265",
+   "type": "rear",
+   "file": "H47353806_11_20260422181851.png",
+   "assessment": {
+    "level": "乾淨",
+    "confidence": 0.9,
+    "issues": [],
+    "reasoning": "後排座椅皮面及可見踏墊範圍整潔，無明顯垃圾、污漬或殘留物。"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 178
+   }
+  },
+  {
+   "order": "47343802",
+   "car": "RFB-2179",
+   "type": "front",
+   "file": "H47343802_10_20260422152349.png",
+   "assessment": {
+    "level": "普通",
+    "confidence": 0.4,
+    "issues": [],
+    "reasoning": "視角受限無明顯髒污"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 274
+   },
+   "flash_assessment": {
+    "level": "普通",
+    "confidence": 0.2,
+    "issues": [],
+    "reasoning": "照片拍攝視角為車外前方（引擎蓋與擋風玻璃），擋風玻璃反光導致無法看清車內整潔狀況。"
+   },
+   "reviewed": true
+  },
+  {
+   "order": "47343802",
+   "car": "RFB-2179",
+   "type": "rear",
+   "file": "H47343802_11_20260422152349.png",
+   "assessment": {
+    "level": "普通",
+    "confidence": 0.4,
+    "issues": [
+     "非車內照片"
+    ],
+    "reasoning": "照片為車外觀無法判定車內"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 347
+   },
+   "flash_assessment": {
+    "level": "普通",
+    "confidence": 0.1,
+    "issues": [
+     "照片拍攝內容為車頭外觀而非車內，無法判斷車內整潔"
+    ],
+    "reasoning": "上傳照片為車輛前方外觀與車牌，完全無車內視角，無法進行車內整潔評估。"
+   },
+   "reviewed": true
+  },
+  {
+   "order": "47351961",
+   "car": "RDF-0536",
+   "type": "front",
+   "file": "H47351961_10_20260422161408.png",
+   "assessment": {
+    "level": "普通",
+    "confidence": 0.4,
+    "issues": [
+     "非車內照片"
+    ],
+    "reasoning": "非車內照無法判定"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 388
+   },
+   "flash_assessment": {
+    "level": "普通",
+    "confidence": 0.1,
+    "issues": [
+     "照片為車輛外觀，無法檢視車內狀況"
+    ],
+    "reasoning": "上傳之照片為車身外觀而非車內照片，無法判斷車內整潔程度。"
+   },
+   "reviewed": true
+  },
+  {
+   "order": "47351961",
+   "car": "RDF-0536",
+   "type": "rear",
+   "file": "H47351961_11_20260422161408.png",
+   "assessment": {
+    "level": "普通",
+    "confidence": 0.5,
+    "issues": [],
+    "reasoning": "照片為外觀無法判定車內"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 444
+   },
+   "flash_assessment": {
+    "level": "普通",
+    "confidence": 0.0,
+    "issues": [
+     "照片為車輛外觀照片，非車內照片"
+    ],
+    "reasoning": "上傳照片為車輛外部後方外觀，無法檢視與判定車內整潔狀態。"
+   },
+   "reviewed": true
+  },
+  {
+   "order": "47352789",
+   "car": "RDZ-8623",
+   "type": "front",
+   "file": "H47352789_10_20260422170847.png",
+   "assessment": {
+    "level": "乾淨",
+    "confidence": 0.95,
+    "issues": [],
+    "reasoning": "座椅與中控台乾淨無異物，腳踏墊僅有些微正常使用痕跡且無垃圾或明顯泥沙，整體維持良好。"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 332
+   }
+  },
+  {
+   "order": "47352789",
+   "car": "RDZ-8623",
+   "type": "rear",
+   "file": "H47352789_11_20260422170847.png",
+   "assessment": {
+    "level": "乾淨",
+    "confidence": 0.9,
+    "issues": [],
+    "reasoning": "後座椅面與腳踏墊乾淨整齊，未見垃圾、液體污漬或明顯泥沙。"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 203
+   }
+  },
+  {
+   "order": "47349310",
+   "car": "RDE-6107",
+   "type": "front",
+   "file": "H47349310_10_20260422093443.png",
+   "assessment": {
+    "level": "普通",
+    "confidence": 0.3,
+    "issues": [],
+    "reasoning": "外觀照無法確認車內。"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 428
+   },
+   "flash_assessment": {
+    "level": "普通",
+    "confidence": 0.1,
+    "issues": [],
+    "reasoning": "照片拍攝為車輛外觀而非車內前座，無法有效檢視車內整潔狀況。"
+   },
+   "reviewed": true
+  },
+  {
+   "order": "47349310",
+   "car": "RDE-6107",
+   "type": "rear",
+   "file": "H47349310_11_20260422093443.png",
+   "assessment": {
+    "level": "普通",
+    "confidence": 0.4,
+    "issues": [
+     "非車內照片"
+    ],
+    "reasoning": "外觀照無法判定車內。"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 376
+   },
+   "flash_assessment": {
+    "level": "普通",
+    "confidence": 0.1,
+    "issues": [
+     "照片為車輛外觀，非車內照"
+    ],
+    "reasoning": "上傳照片為停車場中的車輛外觀，無法看清車內整潔狀況。"
+   },
+   "reviewed": true
+  },
+  {
+   "order": "47352167",
+   "car": "RFL-9301",
+   "type": "front",
+   "file": "H47352167_10_20260422185941.png",
+   "assessment": {
+    "level": "普通",
+    "confidence": 0.4,
+    "issues": [],
+    "reasoning": "非車內照無法判定。"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 361
+   },
+   "flash_assessment": {
+    "level": "普通",
+    "confidence": 0.0,
+    "issues": [
+     "非車內照片（拍攝為車輛外觀）"
+    ],
+    "reasoning": "上傳照片為車輛外觀及街景，無法判斷車內前座整潔狀況。"
+   },
+   "reviewed": true
+  },
+  {
+   "order": "47352167",
+   "car": "RFL-9301",
+   "type": "rear",
+   "file": "H47352167_11_20260422185941.png",
+   "assessment": {
+    "level": "普通",
+    "confidence": 0.3,
+    "issues": [
+     "非車內照片"
+    ],
+    "reasoning": "照片為車輛外觀無法判定車內"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 351
+   },
+   "flash_assessment": {
+    "level": "普通",
+    "confidence": 0.0,
+    "issues": [
+     "提供之照片為車輛外觀，無法檢視車內狀況"
+    ],
+    "reasoning": "上傳照片為車輛外觀側面照而非車內照，無法判斷車內整潔度。"
+   },
+   "reviewed": true
+  },
+  {
+   "order": "47349788",
+   "car": "RFY-2753",
+   "type": "front",
+   "file": "H47349788_10_20260422111727.png",
+   "assessment": {
+    "level": "普通",
+    "confidence": 0.4,
+    "issues": [],
+    "reasoning": "外觀照無法確認車內"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 360
+   },
+   "flash_assessment": {
+    "level": "普通",
+    "confidence": 0.0,
+    "issues": [
+     "照片為車輛外觀，無法檢視車內狀況"
+    ],
+    "reasoning": "上傳照片為車輛外觀與停車場環境，深色隔熱紙無法透視車內，無法進行車內整潔檢查。"
+   },
+   "reviewed": true
+  },
+  {
+   "order": "47349788",
+   "car": "RFY-2753",
+   "type": "rear",
+   "file": "H47349788_11_20260422111727.png",
+   "assessment": {
+    "level": "普通",
+    "confidence": 0.3,
+    "issues": [],
+    "reasoning": "外觀照無法判定車內"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 266
+   },
+   "flash_assessment": {
+    "level": "普通",
+    "confidence": 0.0,
+    "issues": [
+     "上傳照片為車輛外觀，無法檢視車內情況"
+    ],
+    "reasoning": "照片為車輛外部拍攝，無法看清車內後座整潔程度。"
+   },
+   "reviewed": true
+  },
+  {
+   "order": "47124281",
+   "car": "RDU-9675",
+   "type": "front",
+   "file": "H47124281_10_20260422213311.png",
+   "assessment": {
+    "level": "普通",
+    "confidence": 0.4,
+    "issues": [],
+    "reasoning": "外觀照無法辨識車內。"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 430
+   },
+   "flash_assessment": {
+    "level": "乾淨",
+    "confidence": 0.1,
+    "issues": [
+     "照片拍攝視角為車外車頭，無法檢視車內整潔狀況"
+    ],
+    "reasoning": "上傳照片為車輛外觀正面照而非車內照，無法判斷車內真實整潔度。"
+   },
+   "reviewed": true
+  },
+  {
+   "order": "47124281",
+   "car": "RDU-9675",
+   "type": "rear",
+   "file": "H47124281_11_20260422213311.png",
+   "assessment": {
+    "level": "普通",
+    "confidence": 0.4,
+    "issues": [],
+    "reasoning": "照片為車輛外觀無法判定車內"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 260
+   },
+   "flash_assessment": {
+    "level": "普通",
+    "confidence": 0.1,
+    "issues": [
+     "上傳照片為車輛外觀非車內照，無法判定車內整潔狀況"
+    ],
+    "reasoning": "照片拍攝為車輛外部視角，未能清楚看見車內及後座情況，無法進行車內整潔度評估。"
+   },
+   "reviewed": true
+  },
+  {
+   "order": "47349809",
+   "car": "RFE-1553",
+   "type": "front",
+   "file": "H47349809_10_20260422123212.png",
+   "assessment": {
+    "level": "普通",
+    "confidence": 0.5,
+    "issues": [],
+    "reasoning": "僅見車外，無法判斷車內。"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 389
+   },
+   "flash_assessment": {
+    "level": "普通",
+    "confidence": 0.1,
+    "issues": [
+     "照片為車尾外觀照，無法檢視車內狀況"
+    ],
+    "reasoning": "上傳之照片為車輛後方外觀而非車內照片，無法判斷車內實際整潔程度。"
+   },
+   "reviewed": true
+  },
+  {
+   "order": "47349809",
+   "car": "RFE-1553",
+   "type": "rear",
+   "file": "H47349809_11_20260422123212.png",
+   "assessment": {
+    "level": "普通",
+    "confidence": 0.4,
+    "issues": [],
+    "reasoning": "照片為車外觀，無法辨識車內。"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 354
+   },
+   "flash_assessment": {
+    "level": "普通",
+    "confidence": 0.1,
+    "issues": [
+     "拍攝為車輛外觀，無法檢視車內狀況"
+    ],
+    "reasoning": "上傳照片為車輛外觀側面視角且車窗隔熱紙顏色深，完全無法判斷車內後座整潔程度。"
+   },
+   "reviewed": true
+  },
+  {
+   "order": "47345970",
+   "car": "RDL-8221",
+   "type": "front",
+   "file": "H47345970_10_20260422001808.png",
+   "assessment": {
+    "level": "乾淨",
+    "confidence": 0.9,
+    "issues": [],
+    "reasoning": "座椅及中控台無任何垃圾或污漬，腳踏墊僅有極輕微正常使用痕跡，整體維持乾淨良好。"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 413
+   }
+  },
+  {
+   "order": "47345970",
+   "car": "RDL-8221",
+   "type": "rear",
+   "file": "H47345970_11_20260422001809.png",
+   "assessment": {
+    "level": "乾淨",
+    "confidence": 0.92,
+    "issues": [],
+    "reasoning": "後座椅面及腳踏墊區域均無明顯垃圾、碎屑或污漬，車況保持整潔良好。"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 185
+   }
+  },
+  {
+   "order": "47353746",
+   "car": "RFY-1781",
+   "type": "front",
+   "file": "H47353746_10_20260422222957.png",
+   "assessment": {
+    "level": "乾淨",
+    "confidence": 0.95,
+    "issues": [],
+    "reasoning": "座椅、中控台及可見腳踏區域無任何垃圾、污漬或雜物，整體狀態良好乾淨。"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 226
+   }
+  },
+  {
+   "order": "47353746",
+   "car": "RFY-1781",
+   "type": "rear",
+   "file": "H47353746_11_20260422222957.png",
+   "assessment": {
+    "level": "乾淨",
+    "confidence": 0.8,
+    "issues": [],
+    "reasoning": "後座椅面未見任何垃圾或明顯髒污，整體狀態良好。"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 201
+   }
+  },
+  {
+   "order": "47348269",
+   "car": "RDE-8215",
+   "type": "front",
+   "file": "H47348269_10_20260422043342.png",
+   "assessment": {
+    "level": "普通",
+    "confidence": 0.5,
+    "issues": [
+     "照片為車輛外觀",
+     "引擎蓋有泥沙"
+    ],
+    "reasoning": "此為車外照片，無法確認車內狀況。"
+   },
+   "usage": {
+    "input": 1355,
+    "output": 456
+   },
+   "flash_assessment": {
+    "level": "普通",
+    "confidence": 0.1,
+    "issues": [
+     "上傳照片為車輛外觀，無法檢視車內整潔狀況",
+     "引擎蓋上有明顯髒污痕跡"
+    ],
+    "reasoning": "照片拍攝視角為車外全車外觀非車內前座，無法辨識車內整潔度，信心度極低。"
+   },
+   "reviewed": true
+  },
+  {
+   "order": "47348269",
+   "car": "RDE-8215",
+   "type": "rear",
+   "file": "H47348269_11_20260422043342.png",
+   "assessment": {
+    "level": "普通",
+    "confidence": 0.4,
+    "issues": [],
+    "reasoning": "非車內照無法判定"
+   },
+   "usage": {
+    "input": 1355,
+    "output": 411
+   },
+   "flash_assessment": {
+    "level": "普通",
+    "confidence": 0.1,
+    "issues": [
+     "照片為車輛外觀，無法檢視車內狀況"
+    ],
+    "reasoning": "上傳的照片為車身外觀而非後座車內照，無法判斷車內整潔度。"
+   },
+   "reviewed": true
+  },
+  {
+   "order": "47352245",
+   "car": "RDE-7552",
+   "type": "front",
+   "file": "H47352245_10_20260422152344.png",
+   "assessment": {
+    "level": "普通",
+    "confidence": 0.4,
+    "issues": [],
+    "reasoning": "照片為車輛外觀無法辨識車內"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 311
+   },
+   "flash_assessment": {
+    "level": "乾淨",
+    "confidence": 0.2,
+    "issues": [],
+    "reasoning": "照片為車輛外觀全景而非車內特寫，無法清楚檢視內裝細節，透過車窗可見範圍無明顯異常。"
+   },
+   "reviewed": true
+  },
+  {
+   "order": "47352245",
+   "car": "RDE-7552",
+   "type": "rear",
+   "file": "H47352245_11_20260422152344.png",
+   "assessment": {
+    "level": "普通",
+    "confidence": 0.5,
+    "issues": [
+     "非車內照片"
+    ],
+    "reasoning": "外觀照無法判定車內。"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 441
+   },
+   "flash_assessment": {
+    "level": "普通",
+    "confidence": 0.1,
+    "issues": [
+     "照片非車內視角（為車頭外觀照）"
+    ],
+    "reasoning": "上傳的照片為車輛外觀非車內（後座）照片，無法有效判斷車內整潔度。"
+   },
+   "reviewed": true
+  },
+  {
+   "order": "47353140",
+   "car": "RDE-0160",
+   "type": "front",
+   "file": "H47353140_10_20260422165538.png",
+   "assessment": {
+    "level": "髒汙",
+    "confidence": 0.65,
+    "issues": [
+     "遺留寶特瓶"
+    ],
+    "reasoning": "方向盤後方可見遺留垃圾"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 539
+   },
+   "flash_assessment": {
+    "level": "乾淨",
+    "confidence": 0.65,
+    "issues": [],
+    "reasoning": "光線偏暗且視角局限於方向盤與儀表板，可見範圍內無明顯髒污或垃圾，狀態良好。"
+   },
+   "reviewed": true
+  },
+  {
+   "order": "47353140",
+   "car": "RDE-0160",
+   "type": "rear",
+   "file": "H47353140_11_20260422165538.png",
+   "assessment": {
+    "level": "乾淨",
+    "confidence": 0.65,
+    "issues": [],
+    "reasoning": "可見範圍無明顯髒污。"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 187
+   },
+   "flash_assessment": {
+    "level": "乾淨",
+    "confidence": 0.6,
+    "issues": [],
+    "reasoning": "照片為方向盤特寫且光線昏暗，在可見範圍內無明顯髒污或垃圾，整體狀態良好。"
+   },
+   "reviewed": true
+  },
+  {
+   "order": "47355492",
+   "car": "RDQ-3576",
+   "type": "front",
+   "file": "H47355492_10_20260422212430.png",
+   "assessment": {
+    "level": "普通",
+    "confidence": 0.4,
+    "issues": [
+     "非車內照"
+    ],
+    "reasoning": "外觀照無法確認車內。"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 314
+   },
+   "flash_assessment": {
+    "level": "普通",
+    "confidence": 0.1,
+    "issues": [
+     "照片拍攝角度為車輛外觀車頭，無法清楚檢視車內狀況"
+    ],
+    "reasoning": "上傳照片為車外正面照而非車內照，無法判定車內整潔度。"
+   },
+   "reviewed": true
+  },
+  {
+   "order": "47355492",
+   "car": "RDQ-3576",
+   "type": "rear",
+   "file": "H47355492_11_20260422212430.png",
+   "assessment": {
+    "level": "普通",
+    "confidence": 0.4,
+    "issues": [],
+    "reasoning": "照片為車外觀，無法判定車內。"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 303
+   },
+   "flash_assessment": {
+    "level": "普通",
+    "confidence": 0.0,
+    "issues": [
+     "照片拍攝為車輛外觀，無法檢視車內狀況"
+    ],
+    "reasoning": "上傳照片為車輛外部而非車內照，無法判斷後座整潔度。"
+   },
+   "reviewed": true
+  },
+  {
+   "order": "47355511",
+   "car": "RDL-8193",
+   "type": "front",
+   "file": "H47355511_10_20260422213252.png",
+   "assessment": {
+    "level": "普通",
+    "confidence": 0.4,
+    "issues": [
+     "照片為車輛外觀"
+    ],
+    "reasoning": "此為車外照片無法判定車內"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 349
+   },
+   "flash_assessment": {
+    "level": "普通",
+    "confidence": 0.1,
+    "issues": [
+     "上傳照片為車輛外觀非車內照，無法判別車內整潔"
+    ],
+    "reasoning": "照片僅拍攝車輛前方外觀，無法看清車內前座實際整潔狀態。"
+   },
+   "reviewed": true
+  },
+  {
+   "order": "47355511",
+   "car": "RDL-8193",
+   "type": "rear",
+   "file": "H47355511_11_20260422213252.png",
+   "assessment": {
+    "level": "普通",
+    "confidence": 0.4,
+    "issues": [
+     "無車內畫面"
+    ],
+    "reasoning": "僅見外觀無法判定車內。"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 408
+   },
+   "flash_assessment": {
+    "level": "普通",
+    "confidence": 0.1,
+    "issues": [
+     "照片為車輛外觀照，未拍攝車內後座"
+    ],
+    "reasoning": "上傳照片為車輛外部全景而非車內照片，無法判斷車內整潔狀況。"
+   },
+   "reviewed": true
+  },
+  {
+   "order": "47354433",
+   "car": "RFX-8715",
+   "type": "front",
+   "file": "H47354433_10_20260422205450.png",
+   "assessment": {
+    "level": "普通",
+    "confidence": 0.4,
+    "issues": [
+     "非車內照片"
+    ],
+    "reasoning": "誤傳車外照無法判斷內裝"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 364
+   },
+   "flash_assessment": {
+    "level": "普通",
+    "confidence": 0.1,
+    "issues": [
+     "照片為車輛外觀非車內照"
+    ],
+    "reasoning": "上傳照片為車頭外觀而非車內前座照片，無法有效判斷車內整潔狀況。"
+   },
+   "reviewed": true
+  },
+  {
+   "order": "47354433",
+   "car": "RFX-8715",
+   "type": "rear",
+   "file": "H47354433_11_20260422205450.png",
+   "assessment": {
+    "level": "普通",
+    "confidence": 0.3,
+    "issues": [],
+    "reasoning": "外觀照無法確認車內。"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 324
+   },
+   "flash_assessment": {
+    "level": "普通",
+    "confidence": 0.1,
+    "issues": [
+     "照片拍攝角度為車身外觀非車內後座，無法確認車內整潔度"
+    ],
+    "reasoning": "上傳照片為車外車頭與前側視角，完全未拍攝到車內後座，無法有效判斷內部整潔狀況。"
+   },
+   "reviewed": true
+  },
+  {
+   "order": "47352286",
+   "car": "RDU-9710",
+   "type": "front",
+   "file": "H47352286_10_20260422153644.png",
+   "assessment": {
+    "level": "普通",
+    "confidence": 0.92,
+    "issues": [
+     "副駕駛座皮椅縫隙有極微量細小碎屑",
+     "駕駛座腳踏墊有些微使用痕跡與灰塵"
+    ],
+    "reasoning": "車內整體整潔無大片髒污或明顯垃圾，僅有少量灰塵與細小碎屑等輕微使用痕跡，不影響正常使用。"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 614
+   }
+  },
+  {
+   "order": "47352286",
+   "car": "RDU-9710",
+   "type": "rear",
+   "file": "H47352286_11_20260422153644.png",
+   "assessment": {
+    "level": "髒汙",
+    "confidence": 0.7,
+    "issues": [
+     "車門把手有衛生紙"
+    ],
+    "reasoning": "車門把手處遺留垃圾。"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 431
+   },
+   "flash_assessment": {
+    "level": "髒汙",
+    "confidence": 0.9,
+    "issues": [
+     "右後車門扶手置物槽遺留衛生紙"
+    ],
+    "reasoning": "後座椅面與腳踏墊整體維持良好，但右後車門把手凹槽內遺留用過之白色衛生紙垃圾。"
+   },
+   "reviewed": true
+  },
+  {
+   "order": "47353373",
+   "car": "RDF-0380",
+   "type": "front",
+   "file": "H47353373_10_20260422184950.png",
+   "assessment": {
+    "level": "普通",
+    "confidence": 0.4,
+    "issues": [],
+    "reasoning": "外觀照無法確認車內。"
+   },
+   "usage": {
+    "input": 1330,
+    "output": 364
+   },
+   "flash_assessment": {
+    "level": "普通",
+    "confidence": 0.1,
+    "issues": [
+     "照片為車身外觀，未拍到車內狀況"
+    ],
+    "reasoning": "上傳之照片為車輛外觀視角而非車內照片，無法有效檢視車內整潔程度。"
+   },
+   "reviewed": true
+  },
+  {
+   "order": "47353373",
+   "car": "RDF-0380",
+   "type": "rear",
+   "file": "H47353373_11_20260422184950.png",
+   "assessment": {
+    "level": "普通",
+    "confidence": 0.4,
+    "issues": [
+     "非車內照片"
+    ],
+    "reasoning": "非車內照無法判定"
+   },
+   "usage": {
+    "input": 1330,
+    "output": 251
+   },
+   "flash_assessment": {
+    "level": "乾淨",
+    "confidence": 0.2,
+    "issues": [],
+    "reasoning": "照片拍攝為車輛外觀而非車內後座，無法清楚檢視車內整潔狀況。"
+   },
+   "reviewed": true
+  },
+  {
+   "order": "47343095",
+   "car": "RDK-0191",
+   "type": "front",
+   "file": "H47343095_10_20260422230936.png",
+   "assessment": {
+    "level": "普通",
+    "confidence": 0.4,
+    "issues": [],
+    "reasoning": "照片過暗無法辨識。"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 239
+   },
+   "flash_assessment": {
+    "level": "普通",
+    "confidence": 0.1,
+    "issues": [
+     "照片拍攝角度為車外且環境極為昏暗，無法看清車內狀況"
+    ],
+    "reasoning": "照片為車頭外觀且光線不足，無法辨識車內整潔情況，暫定普通並大幅調低信心度。"
+   },
+   "reviewed": true
+  },
+  {
+   "order": "47343095",
+   "car": "RDK-0191",
+   "type": "rear",
+   "file": "H47343095_11_20260422230936.png",
+   "assessment": {
+    "level": "普通",
+    "confidence": 0.3,
+    "issues": [],
+    "reasoning": "照片過暗且非車內視角。"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 324
+   },
+   "flash_assessment": {
+    "level": "普通",
+    "confidence": 0.1,
+    "issues": [
+     "照片極度過暗且拍攝為車尾外觀，無法辨識車內整潔狀況"
+    ],
+    "reasoning": "照片過於昏暗且為車輛外部後方視角，完全無法看清後座內部情況。"
+   },
+   "reviewed": true
+  },
+  {
+   "order": "47347748",
+   "car": "RDK-0263",
+   "type": "front",
+   "file": "H47347748_10_20260422054929.png",
+   "assessment": {
+    "level": "乾淨",
+    "confidence": 0.95,
+    "issues": [],
+    "reasoning": "前座座椅及中控區域整潔，無可見垃圾、碎屑或污漬，維持良好狀態。"
+   },
+   "usage": {
+    "input": 1330,
+    "output": 268
+   }
+  },
+  {
+   "order": "47347748",
+   "car": "RDK-0263",
+   "type": "rear",
+   "file": "H47347748_11_20260422054929.png",
+   "assessment": {
+    "level": "髒汙",
+    "confidence": 0.75,
+    "issues": [
+     "白色碎屑",
+     "液體污漬"
+    ],
+    "reasoning": "座椅有明顯碎屑與污漬。"
+   },
+   "usage": {
+    "input": 1330,
+    "output": 315
+   },
+   "flash_assessment": {
+    "level": "髒汙",
+    "confidence": 0.95,
+    "issues": [
+     "後座椅背有明顯液體噴濺/污漬痕跡",
+     "後座中間與縫隙處有白色碎屑殘渣"
+    ],
+    "reasoning": "後座椅背有明顯液體污痕，椅縫處散落白色食物或紙質碎屑，影響觀感與衛生，須立即清潔。"
+   },
+   "reviewed": true
+  },
+  {
+   "order": "47349589",
+   "car": "RDZ-6095",
+   "type": "front",
+   "file": "H47349589_10_20260422143216.png",
+   "assessment": {
+    "level": "普通",
+    "confidence": 0.5,
+    "issues": [
+     "非車內照片"
+    ],
+    "reasoning": "非車內照片無法確認。"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 373
+   },
+   "flash_assessment": {
+    "level": "普通",
+    "confidence": 0.2,
+    "issues": [],
+    "reasoning": "照片為車外正面拍攝且擋風玻璃反光嚴重，無法有效檢視車內整潔狀況。"
+   },
+   "reviewed": true
+  },
+  {
+   "order": "47349589",
+   "car": "RDZ-6095",
+   "type": "rear",
+   "file": "H47349589_11_20260422143216.png",
+   "assessment": {
+    "level": "普通",
+    "confidence": 0.5,
+    "issues": [
+     "車門外觀水痕"
+    ],
+    "reasoning": "實為車外照，僅見水痕。"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 517
+   },
+   "flash_assessment": {
+    "level": "普通",
+    "confidence": 0.5,
+    "issues": [
+     "非車內視角（拍攝為車外門把與車身）",
+     "車門把手周圍有輕微水漬與灰塵痕跡"
+    ],
+    "reasoning": "照片實際拍攝到的是車外門把而非車內後座，表面僅有輕微雨漬灰塵。"
+   },
+   "reviewed": true
+  },
+  {
+   "order": "47347834",
+   "car": "RFL-8756",
+   "type": "front",
+   "file": "H47347834_10_20260422151012.png",
+   "assessment": {
+    "level": "普通",
+    "confidence": 0.4,
+    "issues": [],
+    "reasoning": "外觀照無法確認車內狀態"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 306
+   },
+   "flash_assessment": {
+    "level": "乾淨",
+    "confidence": 0.1,
+    "issues": [
+     "照片為車輛外觀，無法檢視車內整潔狀況"
+    ],
+    "reasoning": "上傳照片為車身外觀而非車內視角，無法有效判定車內整潔度。"
+   },
+   "reviewed": true
+  },
+  {
+   "order": "47347834",
+   "car": "RFL-8756",
+   "type": "rear",
+   "file": "H47347834_11_20260422151012.png",
+   "assessment": {
+    "level": "普通",
+    "confidence": 0.4,
+    "issues": [],
+    "reasoning": "僅見外觀無法確認車內。"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 518
+   },
+   "flash_assessment": {
+    "level": "普通",
+    "confidence": 0.1,
+    "issues": [
+     "照片為車輛外觀，無法檢視車內狀況"
+    ],
+    "reasoning": "提供的照片為車輛外部視角，無法清楚辨識車內後座的整潔程度。"
+   },
+   "reviewed": true
+  },
+  {
+   "order": "47353383",
+   "car": "RDY-7256",
+   "type": "front",
+   "file": "H47353383_10_20260422170506.png",
+   "assessment": {
+    "level": "乾淨",
+    "confidence": 0.85,
+    "issues": [],
+    "reasoning": "座椅皮質與中央鞍座區乾淨整潔無垃圾污漬，雖隔著車窗拍攝有反光，但可見範圍內狀態良好。"
+   },
+   "usage": {
+    "input": 1330,
+    "output": 388
+   }
+  },
+  {
+   "order": "47353383",
+   "car": "RDY-7256",
+   "type": "rear",
+   "file": "H47353383_11_20260422170506.png",
+   "assessment": {
+    "level": "乾淨",
+    "confidence": 0.9,
+    "issues": [],
+    "reasoning": "後座皮質座椅及腳踏空間無明顯垃圾、污漬或雜物，整體整潔狀態良好。"
+   },
+   "usage": {
+    "input": 1330,
+    "output": 214
+   }
+  },
+  {
+   "order": "47353375",
+   "car": "RFE-5903",
+   "type": "front",
+   "file": "H47353375_10_20260422174711.png",
+   "assessment": {
+    "level": "普通",
+    "confidence": 0.4,
+    "issues": [],
+    "reasoning": "外觀照無法辨識車內。"
+   },
+   "usage": {
+    "input": 1330,
+    "output": 316
+   },
+   "flash_assessment": {
+    "level": "普通",
+    "confidence": 0.1,
+    "issues": [
+     "照片為車輛外觀照，無法檢視車內整潔狀況"
+    ],
+    "reasoning": "上傳照片為車外正面照而非車內照片，無法有效判定車內整潔度。"
+   },
+   "reviewed": true
+  },
+  {
+   "order": "47353375",
+   "car": "RFE-5903",
+   "type": "rear",
+   "file": "H47353375_11_20260422174711.png",
+   "assessment": {
+    "level": "普通",
+    "confidence": 0.4,
+    "issues": [
+     "非車內照片"
+    ],
+    "reasoning": "照片為外觀無法判定車內"
+   },
+   "usage": {
+    "input": 1330,
+    "output": 403
+   },
+   "flash_assessment": {
+    "level": "普通",
+    "confidence": 0.1,
+    "issues": [
+     "非車內照片（拍攝為車輛外觀）"
+    ],
+    "reasoning": "上傳照片為車身外觀正面視角，無法看見車內後座狀況。"
+   },
+   "reviewed": true
+  },
+  {
+   "order": "47348765",
+   "car": "RFE-0090",
+   "type": "front",
+   "file": "H47348765_10_20260422085016.png",
+   "assessment": {
+    "level": "普通",
+    "confidence": 0.4,
+    "issues": [],
+    "reasoning": "照片過暗無法辨識。"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 258
+   },
+   "flash_assessment": {
+    "level": "普通",
+    "confidence": 0.1,
+    "issues": [
+     "照片嚴重模糊或被遮擋，無法辨識任何車內狀況"
+    ],
+    "reasoning": "影像完全失焦且無可見車內細節，無法有效評估整潔程度。"
+   },
+   "reviewed": true
+  },
+  {
+   "order": "47348765",
+   "car": "RFE-0090",
+   "type": "rear",
+   "file": "H47348765_11_20260422085016.png",
+   "assessment": {
+    "level": "普通",
+    "confidence": 0.4,
+    "issues": [],
+    "reasoning": "畫面過暗無法辨識細節。"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 306
+   },
+   "flash_assessment": {
+    "level": "普通",
+    "confidence": 0.1,
+    "issues": [
+     "照片完全模糊或鏡頭被遮蔽，無法辨識車內實況"
+    ],
+    "reasoning": "照片缺乏有效車內畫面與細節，無法進行整潔度判讀。"
+   },
+   "reviewed": true
+  },
+  {
+   "order": "47348546",
+   "car": "RDF-0502",
+   "type": "front",
+   "file": "H47348546_10_20260422074015.png",
+   "assessment": {
+    "level": "普通",
+    "confidence": 0.4,
+    "issues": [],
+    "reasoning": "照片為車外觀，無法判定車內。"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 343
+   },
+   "flash_assessment": {
+    "level": "普通",
+    "confidence": 0.2,
+    "issues": [
+     "照片拍攝為車外正面外觀，無法完整檢視車內整潔度"
+    ],
+    "reasoning": "上傳照片為車輛前方外觀而非車內照片，無法有效判斷車內整潔狀況。"
+   },
+   "reviewed": true
+  },
+  {
+   "order": "47348546",
+   "car": "RDF-0502",
+   "type": "rear",
+   "file": "H47348546_11_20260422074015.png",
+   "assessment": {
+    "level": "普通",
+    "confidence": 0.4,
+    "issues": [
+     "非車內照片"
+    ],
+    "reasoning": "照片為車外觀無法判斷內裝"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 439
+   },
+   "flash_assessment": {
+    "level": "普通",
+    "confidence": 0.0,
+    "issues": [
+     "照片為車輛正面外觀，無法檢視車內後座狀況"
+    ],
+    "reasoning": "上傳照片為車輛外觀非車內照，無法判斷車內整潔程度。"
+   },
+   "reviewed": true
+  },
+  {
+   "order": "47345151",
+   "car": "RDS-7392",
+   "type": "front",
+   "file": "H47345151_10_20260422211653.png",
+   "assessment": {
+    "level": "普通",
+    "confidence": 0.4,
+    "issues": [
+     "非車內照片"
+    ],
+    "reasoning": "非車內照無法判定"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 409
+   },
+   "flash_assessment": {
+    "level": "普通",
+    "confidence": 0.1,
+    "issues": [
+     "照片拍攝為車外車頭外觀，未拍到車內空間"
+    ],
+    "reasoning": "照片為車輛外部前保桿與停車場畫面，並非車內照片，無法判斷車內整潔狀況。"
+   },
+   "reviewed": true
+  },
+  {
+   "order": "47345151",
+   "car": "RDS-7392",
+   "type": "rear",
+   "file": "H47345151_11_20260422211653.png",
+   "assessment": {
+    "level": "普通",
+    "confidence": 0.3,
+    "issues": [],
+    "reasoning": "僅見車外觀無法判定"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 413
+   },
+   "flash_assessment": {
+    "level": "普通",
+    "confidence": 0.1,
+    "issues": [
+     "照片拍攝為車輛外觀與停車位，未拍攝到車內後座"
+    ],
+    "reasoning": "照片為車頭外觀與停車格視角，完全無車內影像可供檢查。"
+   },
+   "reviewed": true
+  },
+  {
+   "order": "47354130",
+   "car": "RDW-6125",
+   "type": "front",
+   "file": "H47354130_10_20260422184301.png",
+   "assessment": {
+    "level": "乾淨",
+    "confidence": 0.9,
+    "issues": [],
+    "reasoning": "前座座椅、車門內飾及中央扶手區域乾淨整齊，無任何可見垃圾、雜物或液體污漬。"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 197
+   }
+  },
+  {
+   "order": "47354130",
+   "car": "RDW-6125",
+   "type": "rear",
+   "file": "H47354130_11_20260422184301.png",
+   "assessment": {
+    "level": "乾淨",
+    "confidence": 0.4,
+    "issues": [],
+    "reasoning": "畫面暗糊無明顯髒污。"
+   },
+   "usage": {
+    "input": 1366,
+    "output": 227
+   },
+   "flash_assessment": {
+    "level": "乾淨",
+    "confidence": 0.35,
+    "issues": [],
+    "reasoning": "照片嚴重晃動模糊且光線極暗，可見範圍內未見明顯大型垃圾，但細節難以辨識。"
+   },
+   "reviewed": true
+  }
+ ]
+}

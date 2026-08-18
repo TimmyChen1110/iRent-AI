@@ -1,0 +1,993 @@
+{
+ "method": "Claude 視覺仲裁（141 組並排對照圖逐一檢視，存疑案例全解析度放大），非獨立真人標註；uncertain 案例保留待真人最終確認；2026-08-18 二次複驗：RDY-6382 以還2 補拍照確認、RDH-3092 以同區裁切對照確認、RDZ-0187 增亮後仍存疑",
+ "date": "2026-08-18",
+ "relabels": [
+  {
+   "car": "RCG2235",
+   "angle": "右前",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RCG2235",
+   "angle": "右後",
+   "original_label": "negative",
+   "relabel": "damage",
+   "note": "反光片旁縱向黑色刮痕，借車照無"
+  },
+  {
+   "car": "RCG2235",
+   "angle": "左前",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RCG2235",
+   "angle": "左後",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RCQ6760",
+   "angle": "右前",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RCQ6760",
+   "angle": "右後",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RCQ6760",
+   "angle": "左前",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RCQ6760",
+   "angle": "左後",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RCW1883",
+   "angle": "右前",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RCW1883",
+   "angle": "右後",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RCW1883",
+   "angle": "左前",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RCW1883",
+   "angle": "左後",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RCX5100",
+   "angle": "右前",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RCX5100",
+   "angle": "右後",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RCX5100",
+   "angle": "左前",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RCX5100",
+   "angle": "左後",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RDG8571",
+   "angle": "右前",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RDG8571",
+   "angle": "右後",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RDG8571",
+   "angle": "左前",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RDG8571",
+   "angle": "左後",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RDG8578",
+   "angle": "右前",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RDG8578",
+   "angle": "右後",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RDG8578",
+   "angle": "左前",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RDG8578",
+   "angle": "左後",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RDG9853",
+   "angle": "右前",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RDG9853",
+   "angle": "右後",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RDG9853",
+   "angle": "左前",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RDG9853",
+   "angle": "左後",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RDL7827",
+   "angle": "右前",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RDL7827",
+   "angle": "右後",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RDL7827",
+   "angle": "左前",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RDL7827",
+   "angle": "左後",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RDL7832",
+   "angle": "右前",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RDL7832",
+   "angle": "右後",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RDL7832",
+   "angle": "左前",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RDL7832",
+   "angle": "左後",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RDQ5916",
+   "angle": "右前",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RDQ5916",
+   "angle": "右後",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RDQ5916",
+   "angle": "左前",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RDQ5916",
+   "angle": "左後",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RDR6350",
+   "angle": "右前",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RDR6350",
+   "angle": "右後",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RDR6350",
+   "angle": "左前",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RDR6350",
+   "angle": "左後",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RDS2805",
+   "angle": "右前",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RDS2805",
+   "angle": "右後",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RDS2805",
+   "angle": "左前",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RDS2805",
+   "angle": "左後",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RDU-5572",
+   "angle": "右前",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RDU-5572",
+   "angle": "右後",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RDU-5572",
+   "angle": "左前",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RDU-5572",
+   "angle": "左後",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RDU-7390",
+   "angle": "右前",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RDU-7390",
+   "angle": "右後",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RDU-7390",
+   "angle": "左前",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RDU-7390",
+   "angle": "左後",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RDW-7085",
+   "angle": "右前",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RDW-7085",
+   "angle": "右後",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RDW-7085",
+   "angle": "左前",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RDW-7085",
+   "angle": "左後",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RDZ-9006",
+   "angle": "右前",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RDZ-9006",
+   "angle": "右後",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RDZ-9006",
+   "angle": "左前",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RDZ-9006",
+   "angle": "左後",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RDZ0155",
+   "angle": "右前",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RDZ0155",
+   "angle": "右後",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RDZ0155",
+   "angle": "左前",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RDZ0155",
+   "angle": "左後",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RDZ6950",
+   "angle": "右前",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RDZ6950",
+   "angle": "右後",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RDZ6950",
+   "angle": "左前",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RDZ6950",
+   "angle": "左後",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RDZ7922",
+   "angle": "右前",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RDZ7922",
+   "angle": "右後",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RDZ7922",
+   "angle": "左前",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RDZ7922",
+   "angle": "左後",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RFB-2590",
+   "angle": "右前",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RFB-2590",
+   "angle": "右後",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RFB-2590",
+   "angle": "左前",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RFB-2590",
+   "angle": "左後",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RFB-3295",
+   "angle": "右前",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RFB-3295",
+   "angle": "右後",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RFB-3295",
+   "angle": "左前",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RFB-3295",
+   "angle": "左後",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RFB5176",
+   "angle": "右前",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RFB5176",
+   "angle": "右後",
+   "original_label": "negative",
+   "relabel": "damage",
+   "note": "右後保桿藍色擦撞痕+凹陷，借車照乾淨（未索賠真損）"
+  },
+  {
+   "car": "RFB5176",
+   "angle": "左前",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RFB5176",
+   "angle": "左後",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RFD-1336",
+   "angle": "右前",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RFD-1336",
+   "angle": "右後",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RFD-1336",
+   "angle": "左前",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RFD-1336",
+   "angle": "左後",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RFD-8522",
+   "angle": "右前",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RFD-8522",
+   "angle": "右後",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RFD-8522",
+   "angle": "左前",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RFD-8522",
+   "angle": "左後",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RFG7213",
+   "angle": "右前",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RFG7213",
+   "angle": "右後",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RFG7213",
+   "angle": "左前",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RFG7213",
+   "angle": "左後",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RFH7851",
+   "angle": "右前",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RFH7851",
+   "angle": "右後",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RFH7851",
+   "angle": "左前",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RFH7851",
+   "angle": "左後",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RFH7873",
+   "angle": "右前",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RFH7873",
+   "angle": "右後",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RFH7873",
+   "angle": "左前",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RFH7873",
+   "angle": "左後",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RFH8052",
+   "angle": "右前",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RFH8052",
+   "angle": "右後",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RFH8052",
+   "angle": "左前",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RFH8052",
+   "angle": "左後",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RFH8122",
+   "angle": "右前",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RFH8122",
+   "angle": "右後",
+   "original_label": "negative",
+   "relabel": "damage",
+   "note": "保桿右下近輪拱深色擦痕，借車照乾淨"
+  },
+  {
+   "car": "RFH8122",
+   "angle": "左前",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RFH8122",
+   "angle": "左後",
+   "original_label": "negative",
+   "relabel": "damage",
+   "note": "保桿左下緣多道深色擦痕（放大確認），借車照乾淨"
+  },
+  {
+   "car": "RFM-2791",
+   "angle": "右前",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RFM-2791",
+   "angle": "右後",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RFM-2791",
+   "angle": "左前",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RFM-2791",
+   "angle": "左後",
+   "original_label": "negative",
+   "relabel": "clean",
+   "note": ""
+  },
+  {
+   "car": "RCR-7661",
+   "angle": "左後",
+   "original_label": "positive",
+   "relabel": "damage",
+   "note": "索賠損傷於還車照清晰可見"
+  },
+  {
+   "car": "RCW-8382",
+   "angle": "左前",
+   "original_label": "positive",
+   "relabel": "damage",
+   "note": "索賠損傷於還車照清晰可見"
+  },
+  {
+   "car": "RCW-9206",
+   "angle": "左前",
+   "original_label": "positive",
+   "relabel": "damage",
+   "note": "索賠損傷於還車照清晰可見"
+  },
+  {
+   "car": "RDH-2261",
+   "angle": "左後",
+   "original_label": "positive",
+   "relabel": "damage",
+   "note": "索賠損傷於還車照清晰可見"
+  },
+  {
+   "car": "RDH-3092",
+   "angle": "左後",
+   "original_label": "positive",
+   "relabel": "damage",
+   "note": "還車照油箱蓋左側車門後緣/鈑件交界有凹陷群（反光扭曲明顯），借車照可見部分平整但視角半遮該區"
+  },
+  {
+   "car": "RDJ-0772",
+   "angle": "左前",
+   "original_label": "positive",
+   "relabel": "damage",
+   "note": "索賠損傷於還車照清晰可見"
+  },
+  {
+   "car": "RDJ-0793",
+   "angle": "左前",
+   "original_label": "positive",
+   "relabel": "damage",
+   "note": "索賠損傷於還車照清晰可見"
+  },
+  {
+   "car": "RDL-5171",
+   "angle": "左前",
+   "original_label": "positive",
+   "relabel": "damage",
+   "note": "索賠損傷於還車照清晰可見"
+  },
+  {
+   "car": "RDL-7836",
+   "angle": "左後",
+   "original_label": "positive",
+   "relabel": "damage",
+   "note": "索賠損傷於還車照清晰可見"
+  },
+  {
+   "car": "RDL-8265",
+   "angle": "右後",
+   "original_label": "positive",
+   "relabel": "damage",
+   "note": "索賠損傷於還車照清晰可見"
+  },
+  {
+   "car": "RDL-9262",
+   "angle": "右前",
+   "original_label": "positive",
+   "relabel": "damage",
+   "note": "索賠損傷於還車照清晰可見"
+  },
+  {
+   "car": "RDQ-1950",
+   "angle": "右後",
+   "original_label": "positive",
+   "relabel": "damage",
+   "note": "索賠損傷於還車照清晰可見"
+  },
+  {
+   "car": "RDU-6956",
+   "angle": "右前",
+   "original_label": "positive",
+   "relabel": "damage",
+   "note": "索賠損傷於還車照清晰可見"
+  },
+  {
+   "car": "RDU-9162",
+   "angle": "左前",
+   "original_label": "positive",
+   "relabel": "not_comparable",
+   "note": "借車照拍攝右前側，與還車照不同側，無法比對"
+  },
+  {
+   "car": "RDX-1085",
+   "angle": "右前",
+   "original_label": "positive",
+   "relabel": "not_comparable",
+   "note": "還車照僅拍車頭中央近景，未覆蓋右前索賠部位"
+  },
+  {
+   "car": "RDX-2376",
+   "angle": "右後",
+   "original_label": "positive",
+   "relabel": "damage",
+   "note": "索賠損傷於還車照清晰可見"
+  },
+  {
+   "car": "RDY-6382",
+   "angle": "左前",
+   "original_label": "positive",
+   "relabel": "damage",
+   "note": "還2 補拍照顯示左側車門大面積淺凹陷+白色擦痕，借車照同側平整（Pro 級聯判定正確）"
+  },
+  {
+   "car": "RDZ-0187",
+   "angle": "右後",
+   "original_label": "positive",
+   "relabel": "uncertain",
+   "note": "增亮後還車照右後鈑件疑似淺凹陷但模糊；借車照正後方視角未覆蓋鈑件側面——拍攝覆蓋問題，需真人以原圖確認"
+  },
+  {
+   "car": "RFB-2091",
+   "angle": "右前",
+   "original_label": "positive",
+   "relabel": "damage",
+   "note": "索賠損傷於還車照清晰可見"
+  },
+  {
+   "car": "RFB-2091",
+   "angle": "左前",
+   "original_label": "positive",
+   "relabel": "damage",
+   "note": "索賠損傷於還車照清晰可見"
+  },
+  {
+   "car": "RFD-0332",
+   "angle": "右前",
+   "original_label": "positive",
+   "relabel": "damage",
+   "note": "索賠損傷於還車照清晰可見"
+  }
+ ]
+}

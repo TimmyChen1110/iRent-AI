@@ -1,0 +1,15 @@
+{
+ "evaluable": 138,
+ "excluded": 3,
+ "confusion": {
+  "TP": 21,
+  "FN": 1,
+  "FP": 0,
+  "TN": 116
+ },
+ "recall": 0.9545,
+ "false_positive_rate": 0.0,
+ "fn_cases": [
+  "RDH-3092 左後"
+ ]
+}

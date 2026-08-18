@@ -1,0 +1,12 @@
+# 機密：API 金鑰絕不進版控
+pipeline/.gemini_key
+pipeline/.anthropic_key
+
+# 系統雜訊
+.DS_Store
+**/.DS_Store
+__pycache__/
+*.pyc
+
+# 原始資料的重複壓縮檔（內容與同名資料夾相同）
+*.zip
