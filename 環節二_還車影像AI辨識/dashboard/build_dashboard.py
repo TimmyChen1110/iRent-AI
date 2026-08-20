@@ -28,6 +28,15 @@ def interior_url(fname):
     return "/photos/interior/" + quote(fname)
 
 
+def car_model_block():
+    """GLTFLoader + 車輛 GLB（base64 內嵌，CC0：Kenney Car Kit hatchback）。缺檔時回空字串（前端自動退回程式拼建車）。"""
+    loader, glb = HERE / "GLTFLoader.js", HERE / "car.glb"
+    if not (loader.exists() and glb.exists()):
+        return ""
+    b64 = base64.b64encode(glb.read_bytes()).decode()
+    return f"<script>{loader.read_text()}</script>\n<script>const CAR_GLB_B64=\"{b64}\";</script>"
+
+
 def thumb(path, w=480, q=55, exif=True):
     im = Image.open(path)
     if exif:
@@ -135,7 +144,8 @@ def main():
     three = (HERE / "three.min.js").read_text()
     html = (shell
             .replace("<!--DATA-->", "\n".join(f"<script>{b}</script>" for b in blocks))
-            .replace("<!--THREE-->", f"<script>{three}</script>"))
+            .replace("<!--THREE-->", f"<script>{three}</script>")
+            .replace("<!--CARMODEL-->", car_model_block()))
     out = HERE / "irent-review-dashboard.html"
     out.write_text(html)
     print(f"assembled {len(html)/1e6:.2f} MB → {out.name}")

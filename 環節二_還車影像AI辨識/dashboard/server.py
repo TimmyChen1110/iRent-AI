@@ -31,7 +31,7 @@ PIPE = HERE.parent / "pipeline"
 sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(PIPE))
 
-from build_dashboard import build_cases, build_f2cases  # noqa: E402
+from build_dashboard import build_cases, build_f2cases, car_model_block  # noqa: E402
 
 DB_PATH = HERE / "decisions.sqlite3"
 
@@ -116,7 +116,8 @@ def render_page(force=False):
         ]
         html = (shell
                 .replace("<!--DATA-->", "<script>\n" + "\n".join(blocks) + "\n</script>")
-                .replace("<!--THREE-->", "<script>" + three + "</script>"))
+                .replace("<!--THREE-->", "<script>" + three + "</script>")
+                .replace("<!--CARMODEL-->", car_model_block()))
         _page_cache["html"] = html
         return html
 

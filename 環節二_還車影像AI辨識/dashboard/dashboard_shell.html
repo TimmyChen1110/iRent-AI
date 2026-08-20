@@ -371,6 +371,7 @@
 
 <!--DATA-->
 <!--THREE-->
+<!--CARMODEL-->
 <script>
 /* ================= 資料整備 ================= */
 F2CASES.forEach(c => CASES.push(c));
@@ -1013,7 +1014,39 @@ function markerTexture(num, color) {
   return t;
 }
 
-const ZONE3D = { "左前": [-1.02, 1.15], "右前": [1.02, 1.15], "左後": [-1.02, -1.05], "右後": [1.02, -1.05] };
+/* 車頭朝 +Z、車輛左側為 +X（與 GLB 模型的 wheel-front-left 座標一致） */
+const ZONE3D = { "左前": [1.02, 1.15], "右前": [-1.02, 1.15], "左後": [1.02, -1.05], "右後": [-1.02, -1.05] };
+
+/* 真實車輛模型（Kenney Car Kit hatchback，CC0）：黏土灰 + 線框覆層。
+   載入失敗時保留程式拼建的低多邊形車。 */
+function loadCarModel(carGroup) {
+  if (typeof CAR_GLB_B64 === "undefined" || typeof THREE.GLTFLoader === "undefined") return;
+  let buf;
+  try {
+    const bin = atob(CAR_GLB_B64);
+    buf = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+  } catch (e) { return; }
+  new THREE.GLTFLoader().parse(buf.buffer, "", gltf => {
+    const sc = gltf.scene;
+    const box = new THREE.Box3().setFromObject(sc);
+    const size = box.getSize(new THREE.Vector3());
+    sc.scale.setScalar(4.0 / size.z);                       // 車長正規化為 4（配合標記座標）
+    box.setFromObject(sc);
+    const c = box.getCenter(new THREE.Vector3());
+    sc.position.set(-c.x, -box.min.y, -c.z);
+    const clay = new THREE.MeshStandardMaterial({
+      color: 0xb7bdb9, roughness: 0.55, metalness: 0.05,
+      polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1,
+    });
+    const wire = new THREE.MeshBasicMaterial({ color: 0x4d5852, wireframe: true, transparent: true, opacity: 0.22 });
+    const meshes = [];
+    sc.traverse(o => { if (o.isMesh) meshes.push(o); });
+    meshes.forEach(o => { o.material = clay; o.add(new THREE.Mesh(o.geometry, wire)); });
+    carGroup.clear();
+    carGroup.add(sc);
+  }, () => {});
+}
 
 function initThree() {
   if (T3) return true;
@@ -1025,13 +1058,16 @@ function initThree() {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(30, 1.18, 0.1, 60);
-  camera.position.set(4.4, 3.0, 5.4); camera.lookAt(0, 0.35, 0);
-  scene.add(new THREE.HemisphereLight(0xffffff, 0x5c6b62, 1.0));
+  camera.position.set(5.0, 3.3, 6.1); camera.lookAt(0, 0.45, 0);
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x4a5850, 1.15));
   const dir = new THREE.DirectionalLight(0xffffff, 0.65); dir.position.set(3, 6, 4); scene.add(dir);
   const rim = new THREE.DirectionalLight(0xa8e2c6, 0.3); rim.position.set(-4, 2, -3); scene.add(rim);
 
   const root = new THREE.Group(); scene.add(root);
-  root.add(buildCar());
+  const carGroup = new THREE.Group();
+  carGroup.add(buildCar());        // 先放程式拼建車，GLB 載入成功後替換
+  root.add(carGroup);
+  loadCarModel(carGroup);
   const shadow = new THREE.Mesh(new THREE.CircleGeometry(1, 40),
     new THREE.MeshBasicMaterial({ color: 0x10241a, transparent: true, opacity: 0.16, depthWrite: false }));
   shadow.scale.set(1.35, 2.5, 1); shadow.rotation.x = -Math.PI / 2; shadow.position.y = 0.005;
@@ -1039,7 +1075,7 @@ function initThree() {
   const markers = new THREE.Group(); root.add(markers);
 
   const reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  T3 = { renderer, scene, camera, root, markers, rotY: 0.55, targetY: 0.55, rotX: 0.0, targetX: 0.0,
+  T3 = { renderer, scene, camera, root, markers, rotY: 0.12, targetY: 0.12, rotX: 0.0, targetX: 0.0,
          auto: !reduced, lastTouch: 0, hovered: -1, ray: new THREE.Raycaster(), ptr: new THREE.Vector2() };
 
   const el = renderer.domElement;
