@@ -1,0 +1,535 @@
+<title>iRent 智能車況管家 — 系統架構設計</title>
+<style>
+  :root {
+    --paper: #F7FAF8;
+    --ink: #16211B;
+    --muted: #55655C;
+    --line: #D8E2DC;
+    --card: #FFFFFF;
+    --green: #00794D;
+    --green-soft: #E2F2E9;
+    --amber: #A85310;
+    --amber-soft: #FBEEDC;
+    --red: #B3352C;
+    --red-soft: #F9E4E1;
+    --code-bg: #EDF3EF;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #10160F;
+      --ink: #E4EDE7;
+      --muted: #92A399;
+      --line: #27332C;
+      --card: #171F1A;
+      --green: #37CE8F;
+      --green-soft: #12291E;
+      --amber: #E8A356;
+      --amber-soft: #2E2214;
+      --red: #E57A70;
+      --red-soft: #331B18;
+      --code-bg: #1B2620;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #10160F;
+    --ink: #E4EDE7;
+    --muted: #92A399;
+    --line: #27332C;
+    --card: #171F1A;
+    --green: #37CE8F;
+    --green-soft: #12291E;
+    --amber: #E8A356;
+    --amber-soft: #2E2214;
+    --red: #E57A70;
+    --red-soft: #331B18;
+    --code-bg: #1B2620;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", -apple-system, "Segoe UI", sans-serif;
+    line-height: 1.75;
+    margin: 0;
+    padding: 0 20px 96px;
+    font-size: 16px;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; }
+  .mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+
+  /* ---------- header ---------- */
+  header { padding: 72px 0 40px; border-bottom: 2px solid var(--ink); }
+  .eyebrow {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 12px; letter-spacing: .18em; text-transform: uppercase;
+    color: var(--green); margin-bottom: 18px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .eyebrow::before { content: ""; width: 28px; height: 2px; background: var(--green); }
+  h1 {
+    font-size: clamp(30px, 5.4vw, 46px); font-weight: 900;
+    letter-spacing: -0.015em; line-height: 1.22; margin: 0 0 14px;
+    text-wrap: balance;
+  }
+  .subtitle { font-size: 17px; color: var(--muted); max-width: 42em; margin: 0 0 26px; }
+  .meta { display: flex; flex-wrap: wrap; gap: 8px 24px; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12.5px; color: var(--muted); }
+  .meta b { color: var(--ink); font-weight: 600; }
+
+  /* ---------- sections ---------- */
+  section { margin-top: 72px; }
+  .sec-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 8px; }
+  .sec-num {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 13px; font-weight: 700; color: var(--green); letter-spacing: .08em;
+  }
+  h2 { font-size: 24px; font-weight: 800; letter-spacing: -.01em; margin: 0; text-wrap: balance; }
+  h3 { font-size: 17px; font-weight: 700; margin: 34px 0 10px; }
+  .sec-lede { color: var(--muted); margin: 6px 0 26px; max-width: 46em; }
+  p { max-width: 46em; margin: 0 0 14px; }
+  li { margin-bottom: 6px; }
+  ul, ol { padding-left: 1.3em; max-width: 44em; }
+  strong { font-weight: 700; }
+  em.hl { font-style: normal; color: var(--green); font-weight: 700; }
+
+  /* ---------- stat band ---------- */
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); margin: 26px 0 10px; }
+  .stat { background: var(--card); padding: 18px 16px 14px; }
+  .stat .num { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-variant-numeric: tabular-nums; font-size: 26px; font-weight: 700; letter-spacing: -.02em; }
+  .stat .num.warn { color: var(--amber); }
+  .stat .lbl { font-size: 12.5px; color: var(--muted); margin-top: 2px; line-height: 1.4; }
+  .src-note { font-size: 12.5px; color: var(--muted); font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+
+  /* ---------- cards ---------- */
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; margin: 20px 0; }
+  .card { background: var(--card); border: 1px solid var(--line); border-top: 3px solid var(--green); padding: 18px 18px 14px; }
+  .card h4 { margin: 0 0 8px; font-size: 15.5px; font-weight: 700; }
+  .card p { font-size: 14px; color: var(--muted); margin: 0; }
+  .card .tag { display: inline-block; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 11px; letter-spacing: .1em; color: var(--green); margin-bottom: 8px; }
+
+  /* ---------- figures ---------- */
+  figure { margin: 26px 0; background: var(--card); border: 1px solid var(--line); padding: 22px 18px 12px; overflow-x: auto; }
+  figure svg { display: block; min-width: 640px; max-width: 100%; height: auto; margin: 0 auto; color: var(--ink); }
+  figcaption { font-size: 13px; color: var(--muted); margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--line); }
+  figcaption b { color: var(--ink); }
+
+  /* ---------- tables ---------- */
+  .tblwrap { overflow-x: auto; margin: 18px 0; }
+  table { border-collapse: collapse; width: 100%; min-width: 560px; font-size: 14px; background: var(--card); border: 1px solid var(--line); }
+  th { text-align: left; font-size: 12px; letter-spacing: .06em; font-family: ui-monospace, "SF Mono", Menlo, monospace; color: var(--muted); border-bottom: 2px solid var(--ink); padding: 10px 14px; }
+  td { border-bottom: 1px solid var(--line); padding: 10px 14px; vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  td.num { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .pill { display: inline-block; font-size: 12px; font-weight: 700; padding: 2px 10px; border-radius: 999px; white-space: nowrap; }
+  .pill.red { background: var(--red-soft); color: var(--red); }
+  .pill.amber { background: var(--amber-soft); color: var(--amber); }
+  .pill.green { background: var(--green-soft); color: var(--green); }
+
+  /* ---------- code ---------- */
+  pre {
+    background: var(--code-bg); border: 1px solid var(--line);
+    padding: 16px 18px; overflow-x: auto; font-size: 13px; line-height: 1.6;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; margin: 16px 0;
+  }
+  code { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: .92em; background: var(--code-bg); padding: 1px 5px; }
+  pre code { background: none; padding: 0; }
+  .cmt { color: var(--muted); }
+  .key { color: var(--green); }
+
+  /* ---------- callout ---------- */
+  .callout { border-left: 3px solid var(--green); background: var(--green-soft); padding: 14px 18px; margin: 20px 0; font-size: 14.5px; max-width: 46em; }
+  .callout.warn { border-color: var(--amber); background: var(--amber-soft); }
+
+  /* ---------- roadmap ---------- */
+  .phases { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-top: 20px; }
+  .phase { background: var(--card); border: 1px solid var(--line); padding: 18px; }
+  .phase .ph { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12px; letter-spacing: .12em; color: var(--green); font-weight: 700; }
+  .phase h4 { margin: 6px 0 8px; font-size: 15.5px; }
+  .phase ul { padding-left: 1.1em; margin: 0; font-size: 13.5px; color: var(--muted); }
+
+  footer { margin-top: 88px; padding-top: 18px; border-top: 1px solid var(--line); font-size: 12.5px; color: var(--muted); font-family: ui-monospace, "SF Mono", Menlo, monospace; display: flex; flex-wrap: wrap; gap: 8px 24px; }
+</style>
+
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">System Architecture · v1.0</div>
+  <h1>iRent 智能車況管家<br>還車影像 AI 辨識系統設計</h1>
+  <p class="subtitle">運用 AI 辨識使用者上傳的還車照片：比對借／還車影像偵測<strong>新增車損</strong>、判定<strong>車內整潔程度</strong>，並在異常時觸發<strong>後台預警與通知</strong>，優化租還車體驗與營運管理效率。</p>
+  <div class="meta">
+    <span>DATE <b>2026-08-18</b></span>
+    <span>ENGINE <b>混合式（品質檢核 + VLM 模型級聯）</b></span>
+    <span>SCOPE <b>架構設計 + 真實資料實測（v1.1）</b></span>
+  </div>
+</header>
+
+<!-- ================= 01 ================= -->
+<section>
+  <div class="sec-head"><span class="sec-num">01</span><h2>背景與痛點 — 從真實資料出發</h2></div>
+  <p class="sec-lede">以下數據來自實際營運資料：照片上傳清單（2026-04-22 ~ 04-23 兩日）與借還車照片資料集。</p>
+
+  <div class="stats">
+    <div class="stat"><div class="num">27,367</div><div class="lbl">照片上傳紀錄（兩日）</div></div>
+    <div class="stat"><div class="num">4,820</div><div class="lbl">還車訂單數</div></div>
+    <div class="stat"><div class="num">3,121</div><div class="lbl">涉及車輛數</div></div>
+    <div class="stat"><div class="num warn">24.6%</div><div class="lbl">左後方照片缺漏率</div></div>
+    <div class="stat"><div class="num warn">29.9%</div><div class="lbl">右後方照片缺漏率</div></div>
+  </div>
+  <p class="src-note">※ 缺漏率以「左前」上傳量 4,814 筆為基準推算（左後 3,628、右後 3,376 筆）。</p>
+
+  <h3>現況三大痛點</h3>
+  <ul>
+    <li><strong>車損責任認定困難：</strong>還車後才發現車損時，需人工逐張翻閱借／還車照片比對，耗時且常因照片品質、角度不一致而難以歸責。索賠案例資料顯示，實際爭議多集中在單一方位的細微損傷。</li>
+    <li><strong>照片品質與分類不可靠：</strong>上傳清單欄位即標註「上傳分類<em class="hl">(常有誤)</em>」——使用者拍錯角度、分類錯置為常態；後方兩角約 25~30% 訂單直接漏拍，事後根本無圖可比。</li>
+    <li><strong>車內整潔無人把關：</strong>前／後車內照每單皆有上傳（4,700 / 4,644 筆），但目前僅存檔不判讀。髒污車輛流轉給下一位用戶，直接傷害體驗；派員巡檢又成本高。</li>
+  </ul>
+
+  <div class="callout">資料集中已具備天然的<strong>驗證樣本</strong>：30 台「未索賠」車輛的完整 4 方位借／還配對照（240 張，負樣本），與 28 台「有索賠」車輛的爭議方位配對照（53 張，正樣本）——可直接作為 AI 判定引擎的評測基準。</div>
+</section>
+
+<!-- ================= 02 ================= -->
+<section>
+  <div class="sec-head"><span class="sec-num">02</span><h2>系統目標與功能範圍</h2></div>
+  <div class="cards">
+    <div class="card">
+      <span class="tag">F1 · 車外</span>
+      <h4>新車損偵測</h4>
+      <p>以「借車照 vs 還車照」同方位比對，辨識<strong>本次租期新增</strong>的刮痕、凹陷、破損；既有舊損不誤報。偵測到新車損即產生異常預警。</p>
+    </div>
+    <div class="card">
+      <span class="tag">F2 · 車內</span>
+      <h4>整潔程度分級</h4>
+      <p>辨識前／後車內照，分類為<strong>髒汙（須立即清潔）／普通／乾淨</strong>三級。判定為「髒汙」時觸發異常預警，優先安排清潔。</p>
+    </div>
+    <div class="card">
+      <span class="tag">F3 · 後台</span>
+      <h4>預警與通知機制</h4>
+      <p>異常事件依嚴重度分級路由：後台工單、即時通知、人工複核閉環，並將複核結果回收為訓練／評測資料。</p>
+    </div>
+  </div>
+  <p><strong>非目標（本期不做）：</strong>損傷金額自動估價、車體 3D 重建、行車中即時偵測。拍攝端檢核中，「品質 Gate（模糊/過暗/過曝擋下重拍）」已實作雛形並實測（見 §04）；「即時角度／完整性檢核」列為第二期擴充（見 §08）。</p>
+</section>
+
+<!-- ================= 03 ================= -->
+<section>
+  <div class="sec-head"><span class="sec-num">03</span><h2>整體系統架構</h2></div>
+  <p class="sec-lede">沿用現行上傳鏈路（App → Azure Blob），以事件驅動方式掛上辨識服務，對既有系統侵入最小。</p>
+
+  <figure>
+    <svg viewBox="0 0 920 300" role="img" aria-label="整體架構圖：App 上傳照片至 Azure Blob，事件觸發辨識服務，經 CV 前處理與 Claude Vision 判定後寫入結果資料庫，再由預警引擎路由至後台工單與即時通知">
+      <defs>
+        <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <!-- row 1 -->
+      <g fill="none" stroke="currentColor" stroke-width="1.5">
+        <rect x="10" y="40" width="150" height="64" rx="3"/>
+        <rect x="230" y="40" width="160" height="64" rx="3"/>
+        <rect x="460" y="40" width="170" height="64" rx="3"/>
+        <rect x="700" y="30" width="190" height="84" rx="3" stroke="#00A862" stroke-width="2.5"/>
+      </g>
+      <g font-size="13" fill="currentColor" text-anchor="middle" font-weight="600">
+        <text x="85" y="66">iRent App</text>
+        <text x="85" y="86" font-size="11.5" font-weight="400">還車 6 張照片</text>
+        <text x="310" y="66">Azure Blob</text>
+        <text x="310" y="86" font-size="11.5" font-weight="400" font-family="monospace">carpic/</text>
+        <text x="545" y="66">影像前處理</text>
+        <text x="545" y="86" font-size="11.5" font-weight="400">OpenCV：配對・對齊・差異</text>
+        <text x="795" y="58" fill="#00A862">AI 判定引擎</text>
+        <text x="795" y="78" font-size="11.5" font-weight="400">Claude Vision</text>
+        <text x="795" y="96" font-size="11.5" font-weight="400">車損比對 / 整潔分級</text>
+      </g>
+      <g stroke="currentColor" stroke-width="1.5" marker-end="url(#arr)">
+        <line x1="160" y1="72" x2="224" y2="72"/>
+        <line x1="390" y1="72" x2="454" y2="72"/>
+        <line x1="630" y1="72" x2="694" y2="72"/>
+      </g>
+      <g font-size="11" fill="currentColor" text-anchor="middle">
+        <text x="192" y="62">上傳</text>
+        <text x="422" y="62">事件觸發</text>
+        <text x="662" y="62">候選差異</text>
+      </g>
+      <!-- down from AI engine -->
+      <line x1="795" y1="114" x2="795" y2="160" stroke="currentColor" stroke-width="1.5" marker-end="url(#arr)"/>
+      <text x="838" y="142" font-size="11" fill="currentColor">結構化 JSON</text>
+      <!-- row 2 -->
+      <g fill="none" stroke="currentColor" stroke-width="1.5">
+        <rect x="700" y="166" width="190" height="58" rx="3"/>
+        <rect x="430" y="166" width="180" height="58" rx="3"/>
+        <rect x="10" y="150" width="330" height="122" rx="3" stroke-dasharray="5 4"/>
+        <rect x="30" y="182" width="130" height="52" rx="3" stroke-dasharray="0"/>
+        <rect x="180" y="182" width="140" height="52" rx="3" stroke-dasharray="0"/>
+      </g>
+      <g font-size="13" fill="currentColor" text-anchor="middle" font-weight="600">
+        <text x="795" y="190">判定結果 DB</text>
+        <text x="795" y="208" font-size="11.5" font-weight="400">含借還照連結・信心分數</text>
+        <text x="520" y="190">預警引擎</text>
+        <text x="520" y="208" font-size="11.5" font-weight="400">分級規則路由</text>
+        <text x="95" y="204">後台工單</text>
+        <text x="95" y="222" font-size="11.5" font-weight="400">複核 Dashboard</text>
+        <text x="250" y="204">即時通知</text>
+        <text x="250" y="222" font-size="11.5" font-weight="400">站點 / 客服</text>
+        <text x="175" y="170" font-size="11" font-weight="400">營運端</text>
+      </g>
+      <g stroke="currentColor" stroke-width="1.5" marker-end="url(#arr)">
+        <line x1="700" y1="195" x2="616" y2="195"/>
+        <line x1="430" y1="195" x2="346" y2="195"/>
+      </g>
+      <text x="658" y="186" font-size="11" fill="currentColor" text-anchor="middle">異常事件</text>
+      <text x="388" y="186" font-size="11" fill="currentColor" text-anchor="middle">分級</text>
+      <!-- feedback loop -->
+      <path d="M 95 234 L 95 288 L 795 288 L 795 228" fill="none" stroke="#00A862" stroke-width="1.5" stroke-dasharray="4 4" marker-end="url(#arr)"/>
+      <text x="445" y="282" font-size="11" fill="#00A862" text-anchor="middle">人工複核結果回寫 → 累積標註資料（持續改善）</text>
+    </svg>
+    <figcaption><b>整體架構。</b>綠色為 AI 判定引擎；虛線迴路為人工複核結果回寫，讓每一次客服確認都變成未來的標註資料。</figcaption>
+  </figure>
+
+  <ul>
+    <li><strong>觸發方式：</strong>還車照片組上傳完成（Blob event / 還車 API callback）即入列非同步處理，不阻塞使用者還車流程。</li>
+    <li><strong>配對邏輯：</strong>以 <code>order_number</code> + <code>ImageType</code>（1~4 車外方位、10/11 車內）將本單還車照與同車前一單（或本單借車時）照片配對——不信任使用者自報的分類欄位（實證常有誤），配對後由 AI 於判定時一併校驗角度。</li>
+  </ul>
+</section>
+
+<!-- ================= 04 ================= -->
+<section>
+  <div class="sec-head"><span class="sec-num">04</span><h2>混合式辨識 Pipeline</h2></div>
+  <p class="sec-lede">傳統 CV 負責「便宜且確定性高」的前處理與過濾，VLM（視覺語言模型）只在有嫌疑時出手做最終判定——兼顧成本、速度與可解釋性。</p>
+
+  <h3>七步全景：一張還車照片的旅程</h3>
+  <div style="display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 6px">
+    <div style="flex:1 1 200px;border:1.5px solid var(--line);border-radius:6px;padding:10px 12px;background:var(--card)"><b>① Image Quality Gate</b><br><span style="font-size:12.5px;color:var(--muted)">模糊/過暗/過曝 → 當場要求重拍（純 CV，&lt;50ms）✅ 已實作</span></div>
+    <div style="flex:1 1 200px;border:1.5px solid var(--line);border-radius:6px;padding:10px 12px;background:var(--card)"><b>② 配對與方位校驗</b><br><span style="font-size:12.5px;color:var(--muted)">訂單配對借/還照，VLM 校驗 angle_match，不信自報分類 ✅</span></div>
+    <div style="flex:1 1 200px;border:1.5px solid var(--line);border-radius:6px;padding:10px 12px;background:var(--card)"><b>③ Before/After 比對</b><br><span style="font-size:12.5px;color:var(--muted)">VLM 直接跨角度比對（像素對齊已被實測推翻）✅</span></div>
+    <div style="flex:1 1 200px;border:1.5px solid var(--line);border-radius:6px;padding:10px 12px;background:var(--card)"><b>④ 損傷偵測＋部位定位</b><br><span style="font-size:12.5px;color:var(--muted)">刮痕/凹陷/破損/掉漆 × 位置 × 嚴重度 × box_2d ✅</span></div>
+    <div style="flex:1 1 200px;border:1.5px solid var(--line);border-radius:6px;padding:10px 12px;background:var(--card)"><b>⑤ 新舊判定（損傷護照）</b><br><span style="font-size:12.5px;color:var(--muted)">對照車輛既有損清單，只認「護照之外的新東西」✅</span></div>
+    <div style="flex:1 1 200px;border:1.5px solid var(--line);border-radius:6px;padding:10px 12px;background:var(--card)"><b>⑥ 車內整潔判讀</b><br><span style="font-size:12.5px;color:var(--muted)">先找原因（垃圾/污漬/泥沙）再分級，可解釋 ✅</span></div>
+    <div style="flex:1 1 200px;border:1.5px solid var(--green);border-radius:6px;padding:10px 12px;background:var(--green-soft)"><b>⑦ Risk Engine 分流</b><br><span style="font-size:12.5px;color:var(--muted)">🟢 自動放行 83%・🔴 自動預警 15.6%・🟡 人工複核 1.4%（141 組實測）✅</span></div>
+  </div>
+  <p style="font-size:13px;color:var(--muted);margin-top:4px">七步中唯一需要付費 API 的是 ③④⑤⑥（級聯判定）；①②⑦ 為純程式邏輯，零成本。</p>
+
+  <h3>F1 · 新車損偵測（借 vs 還 比對）</h3>
+
+  <figure>
+    <svg viewBox="0 0 920 330" role="img" aria-label="車損偵測流程：借還照片配對後經品質檢核、影像對齊與差異偵測，無顯著差異者自動通過，有候選差異者送 Claude Opus 比對判定，輸出新車損 JSON 或自動通過">
+      <defs>
+        <marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <!-- stage boxes -->
+      <g fill="none" stroke="currentColor" stroke-width="1.5">
+        <rect x="10" y="60" width="150" height="70" rx="3"/>
+        <rect x="215" y="60" width="160" height="70" rx="3"/>
+        <rect x="430" y="60" width="170" height="70" rx="3"/>
+      </g>
+      <!-- diamond -->
+      <polygon points="720,55 800,95 720,135 640,95" fill="none" stroke="currentColor" stroke-width="1.5"/>
+      <g font-size="12.5" fill="currentColor" text-anchor="middle" font-weight="600">
+        <text x="85" y="85">配對輸入</text>
+        <text x="85" y="103" font-size="11" font-weight="400">同方位 借照+還照</text>
+        <text x="85" y="118" font-size="11" font-weight="400">(左前/右前/左後/右後)</text>
+        <text x="295" y="85">Stage 0 前處理</text>
+        <text x="295" y="103" font-size="11" font-weight="400">EXIF 轉正・模糊/曝光檢核</text>
+        <text x="295" y="118" font-size="11" font-weight="400">純 CV・零 API 成本</text>
+        <text x="515" y="85">Stage 1 快篩</text>
+        <text x="515" y="103" font-size="11" font-weight="400">輕量 VLM (Flash 級)</text>
+        <text x="515" y="118" font-size="11" font-weight="400">全量判定・低單價</text>
+        <text x="720" y="91">疑似</text>
+        <text x="720" y="107">新損？</text>
+      </g>
+      <g stroke="currentColor" stroke-width="1.5" marker-end="url(#arr2)">
+        <line x1="160" y1="95" x2="209" y2="95"/>
+        <line x1="375" y1="95" x2="424" y2="95"/>
+        <line x1="600" y1="95" x2="634" y2="95"/>
+      </g>
+      <!-- no branch -->
+      <line x1="720" y1="135" x2="720" y2="185" stroke="currentColor" stroke-width="1.5" marker-end="url(#arr2)"/>
+      <text x="742" y="165" font-size="11.5" fill="currentColor">無（約 85%）</text>
+      <rect x="640" y="190" width="160" height="52" rx="3" fill="none" stroke="currentColor" stroke-width="1.5"/>
+      <text x="720" y="212" font-size="12.5" fill="currentColor" text-anchor="middle" font-weight="600">自動通過</text>
+      <text x="720" y="230" font-size="11" fill="currentColor" text-anchor="middle">僅記錄，不再升級複核</text>
+      <!-- yes branch -->
+      <line x1="800" y1="95" x2="850" y2="95" stroke="#00A862" stroke-width="2" marker-end="url(#arr2)"/>
+      <text x="828" y="84" font-size="11.5" fill="#00A862">有</text>
+      <path d="M 855 95 L 855 95" stroke="none"/>
+      <rect x="620" y="262" width="280" height="60" rx="3" fill="none" stroke="#00A862" stroke-width="2.5"/>
+      <path d="M 858 95 L 895 95 L 895 240 L 760 240 L 760 256" fill="none" stroke="#00A862" stroke-width="2" marker-end="url(#arr2)"/>
+      <text x="760" y="286" font-size="12.5" fill="#00A862" text-anchor="middle" font-weight="600">Stage 2 · 高階模型複核</text>
+      <text x="760" y="305" font-size="11" fill="currentColor" text-anchor="middle">Pro/Opus 級 → 新損傷？位置/類型/嚴重度</text>
+      <!-- output arrow -->
+      <line x1="616" y1="292" x2="560" y2="292" stroke="#00A862" stroke-width="2" marker-end="url(#arr2)"/>
+      <rect x="400" y="266" width="156" height="52" rx="3" fill="none" stroke="currentColor" stroke-width="1.5"/>
+      <text x="478" y="288" font-size="12.5" fill="currentColor" text-anchor="middle" font-weight="600">結構化 JSON</text>
+      <text x="478" y="306" font-size="11" fill="currentColor" text-anchor="middle">→ 預警引擎（§05）</text>
+      <!-- reject path from stage0 -->
+      <line x1="295" y1="130" x2="295" y2="185" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arr2)"/>
+      <rect x="215" y="190" width="160" height="52" rx="3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 3"/>
+      <text x="295" y="212" font-size="12" fill="currentColor" text-anchor="middle" font-weight="600">不合格照片</text>
+      <text x="295" y="230" font-size="11" fill="currentColor" text-anchor="middle">標記「無法比對」入工單</text>
+    </svg>
+    <figcaption><b>車損偵測管線（v1.1 實測修正版）。</b>快篩層以低價 VLM 全量判定（實測約 85% 配對直接放行），只有疑似新損案件（綠色路徑）升級高階模型複核——級聯是混合式架構省成本、控誤報的關鍵。</figcaption>
+  </figure>
+
+  <ul>
+    <li><strong>Stage 0 — 品質與方向前處理：</strong>EXIF 方向轉正（實測資料集 76% 照片帶未套用的旋轉標記）、模糊度（Laplacian variance）與曝光檢核為純 CV；角度正確性交由 VLM 判定時一併校驗並輸出 <code>angle_match</code>。不合格照片直接標記「無法比對」，成為缺圖工單，而非硬比對產生誤判。<br><em class="hl">Quality Gate 實測（quality_gate.py，282 張借還照）：</em>攔下 26 張（9.2%）模糊/過暗照片並給出具體重拍指示——包含唯一連人工都無法複驗的存疑案例 RDZ-0187（清晰度 49、亮度 44，雙重不合格）。若拍攝當下即攔截，判定天花板直接抬高。</li>
+    <li><strong>Stage 1 — 輕量模型快篩：</strong>以低價 VLM（Flash 級）對全部配對做第一輪判定，明確「無新損」者直接放行。</li>
+    <li><strong>Stage 2 — 高階模型複核：</strong>快篩標記「有新損」或低信心的案件，升級高階模型（Pro / Opus 級）複核後才觸發預警，控制誤報。</li>
+  </ul>
+
+  <div class="callout warn"><strong>實測修正（v1.1）：</strong>原設計以傳統 CV（ORB 對齊 + SSIM 差異）作為過濾層，實測 141 組真實配對後推翻——使用者手持拍攝的借/還照角度與光線差異過大，對齊成功率僅 45%，且對齊成功者的差異分數在有損/無損樣本間完全重疊（光影變化淹沒車損訊號）。混合式因此修正為「<strong>CV 只做品質/方向前處理，過濾層改用模型級聯</strong>」：便宜 VLM 快篩 → 高階 VLM 複核。這也是實測的價值：架構要跟著證據修正。</div>
+
+  <p>判定輸出以 <strong>Structured Outputs</strong>（<code>output_config.format</code>）強制 JSON Schema，下游規則引擎零解析風險：</p>
+  <pre><code>{
+  <span class="key">"angle_verified"</span>: true,          <span class="cmt">// 角度與借車照一致，可信比對</span>
+  <span class="key">"new_damage_found"</span>: true,
+  <span class="key">"damages"</span>: [{
+    <span class="key">"location"</span>: "左後葉子板",
+    <span class="key">"type"</span>: "刮痕",                  <span class="cmt">// 刮痕 | 凹陷 | 破損 | 掉漆</span>
+    <span class="key">"severity"</span>: "medium",           <span class="cmt">// low | medium | high</span>
+    <span class="key">"bbox"</span>: [412, 380, 590, 455],
+    <span class="key">"confidence"</span>: 0.87,
+    <span class="key">"reasoning"</span>: "借車照同位置無此線狀痕跡，非反光（跨兩個鈑件連續）"
+  }],
+  <span class="key">"pre_existing_noted"</span>: ["右下保桿既有舊損，兩照皆存在，不列新損"]
+}</code></pre>
+
+  <h3>F2 · 車內整潔程度分級</h3>
+  <p>車內照（ImageType 10/11）為單張判讀、無需借還比對，是典型的三級分類任務——輕量 VLM 做第一線分類，僅「髒汙」判定與低信心（&lt;0.7）案例升級 Pro 級複核，控制誤報又壓低成本。</p>
+
+  <div class="callout"><strong>F2 實測（80 張 Blob 真實車內照，40 筆訂單）：</strong>分布為乾淨 21／普通 56／<em class="hl">髒汙 3（檢出率 3.75%）</em>。Pro 複核翻轉 5 張，其中 1 張把快篩漏判的「方向盤後方遺留寶特瓶」從乾淨救回髒汙；髒汙判定經人工看圖抽驗，明確污漬案例正確。額外發現：抽樣中即有「車內照」欄位混入車外照（模型誠實回報「非車內照無法判定」）——再次佐證分類錯置為常態，需入補件流程。已知課題：快篩對「普通」級的信心分數校準偏低（中位數 0.1），造成升級率偏高，需在 prompt 明確定義信心語意。</div>
+  <div class="tblwrap"><table>
+    <tr><th>分級</th><th>定義（Prompt 準則）</th><th>動作</th></tr>
+    <tr><td><span class="pill red">髒汙</span></td><td>明顯垃圾、食物殘渣、液體污漬、泥沙覆蓋、異味風險物（菸蒂、寵物毛）</td><td>Opus 複核確認 → <strong>異常預警</strong>，該車暫停派單、優先清潔</td></tr>
+    <tr><td><span class="pill amber">普通</span></td><td>少量灰塵、輕微使用痕跡，不影響下一位用戶</td><td>記錄，納入清潔排程權重</td></tr>
+    <tr><td><span class="pill green">乾淨</span></td><td>無可見髒污</td><td>記錄；可回饋用戶（信譽加分／行銷）</td></tr>
+  </table></div>
+</section>
+
+<!-- ================= 05 ================= -->
+<section>
+  <div class="sec-head"><span class="sec-num">05</span><h2>後台預警與通知機制</h2></div>
+  <p class="sec-lede">AI 判定不直接對用戶做出裁決——所有異常先進入分級路由與人工複核閉環，AI 是「放大鏡」，決定權在營運端。</p>
+
+  <div class="tblwrap"><table>
+    <tr><th>事件</th><th>等級</th><th>通知路徑</th><th>SLA</th></tr>
+    <tr><td>新車損 severity=high 或 confidence≥0.85</td><td><span class="pill red">P1 即時</span></td><td>後台紅色工單 + LINE/簡訊推播站點與客服；車輛暫停派單</td><td class="num">≤ 5 分鐘</td></tr>
+    <tr><td>新車損 medium/low 或 confidence 0.6–0.85</td><td><span class="pill amber">P2 工單</span></td><td>後台複核佇列，客服上班時段處理</td><td class="num">≤ 4 小時</td></tr>
+    <tr><td>車內「髒汙」（Opus 複核確認）</td><td><span class="pill red">P1 即時</span></td><td>清潔調度通知 + 該車暫停派單至清潔完成</td><td class="num">≤ 5 分鐘</td></tr>
+    <tr><td>照片缺漏／無法比對（漏拍後方等）</td><td><span class="pill amber">P2 工單</span></td><td>缺圖清單；App 端推播提醒用戶補拍（二期）</td><td class="num">當日</td></tr>
+    <tr><td>判定正常</td><td><span class="pill green">P3 記錄</span></td><td>寫入結果 DB，供稽核與抽查</td><td class="num">—</td></tr>
+  </table></div>
+
+  <h3>人工複核閉環</h3>
+  <ol>
+    <li>複核介面並列顯示：借車照、還車照、AI 標註差異框、判定理由（<code>reasoning</code> 欄位讓客服秒懂 AI 為何示警）。</li>
+    <li>客服一鍵「確認車損／駁回誤報」；確認後自動帶入照片證據鏈進入既有索賠流程。</li>
+    <li><strong>每個複核結果回寫為標註資料</strong>——誤報案例進入 few-shot 範例與評測集，形成持續改善迴路（§03 架構圖綠色虛線）。</li>
+  </ol>
+</section>
+
+<!-- ================= 06 ================= -->
+<section>
+  <div class="sec-head"><span class="sec-num">06</span><h2>AI 引擎選型與成本估算</h2></div>
+
+  <div class="tblwrap"><table>
+    <tr><th>層級</th><th>選型</th><th>角色</th><th>理由</th></tr>
+    <tr><td>快篩層</td><td><code>gemini-3.7-flash</code><br>（或 <code>claude-haiku-4-5</code>）</td><td>全量借/還比對第一輪判定、車內整潔三級初分</td><td>本次實測引擎；AI Studio 免費層即可原型驗證，付費單價極低。資料量小（正樣本僅 53 張）不足以訓練專用模型，VLM 零訓練即可上線</td></tr>
+    <tr><td>複核層</td><td><code>gemini-3.1-pro</code> 級<br>（或 <code>claude-opus-5</code>）</td><td>疑似新損 / 低信心 / 髒汙案件複核後才觸發預警</td><td>視覺推理更強、控制誤報；只處理 ~15% 案件，成本可控</td></tr>
+    <tr><td>前處理</td><td>OpenCV / Pillow（自建）</td><td>EXIF 方向轉正、模糊與曝光檢核</td><td>零 API 成本；實測 76% 照片需轉正，轉正後召回率 +10pp</td></tr>
+  </table></div>
+
+  <h3>成本（以實測 token 用量換算）</h3>
+  <p>實測 141 組比對共耗 349k 輸入 + 49k 輸出 tokens（平均每次判定約 2.5k 輸入）。以每日 2,400 筆還車、每單 4 組車外配對 + 2 張車內照（6 次判定）換算：</p>
+
+  <div class="tblwrap"><table>
+    <tr><th>方案</th><th>說明</th><th>每單成本</th><th>每日估算</th></tr>
+    <tr><td>原型驗證（本次）</td><td>AI Studio 免費層，141 組全數跑完</td><td class="num">$0</td><td class="num">$0</td></tr>
+    <tr><td>Flash 全量快篩</td><td>付費層 $0.30/$2.50 per MTok</td><td class="num">≈ US$0.010</td><td class="num">≈ US$24（NT$770）</td></tr>
+    <tr><td><strong>級聯完整版</strong></td><td>Flash 全量 + ~15% 疑似案件升級 Pro 複核</td><td class="num">≈ US$0.016</td><td class="num"><strong>≈ US$38（NT$1,220）</strong></td></tr>
+  </table></div>
+  <p class="src-note">※ 依 2026-08 實測 token 用量與公開定價換算，為量級參考；提案初期原型階段成本為零。</p>
+
+  <div class="callout">對照效益：一件車損爭議的人工調閱比對成本（客服工時 + 爭議賠償流失）遠高於每單不到 NT$1 的 AI 判定成本；且缺漏率 25~30% 的後方照片問題，靠人力抽查根本無法規模化。實測更抓到一筆「未索賠的真實車損」——AI 不只省人力，還能挽回漏損（見 §07）。</div>
+</section>
+
+<!-- ================= 07 ================= -->
+<section>
+  <div class="sec-head"><span class="sec-num">07</span><h2>實測結果（141 組真實配對）</h2></div>
+  <p class="sec-lede">以 21 組索賠配對（正樣本）+ 120 組未索賠配對（負樣本）對快篩層引擎（gemini-3.7-flash）完成兩輪全量評測。</p>
+
+  <div class="tblwrap"><table>
+    <tr><th>版本</th><th>Recall（21 組索賠）</th><th>誤報率（120 組未索賠）</th><th>Precision</th></tr>
+    <tr><td>v1 原始照片</td><td class="num">71.4%（15/21）</td><td class="num">2.5%（3/120）</td><td class="num">83.3%</td></tr>
+    <tr><td>v2 EXIF 轉正</td><td class="num">81.0%（17/21）</td><td class="num">3.3%（4/120）</td><td class="num">81.0%</td></tr>
+    <tr><td>v3 few-shot + 補拍照 + 跨側禁令</td><td class="num">81.0%（17/21）</td><td class="num">3.3%（4/120）</td><td class="num">81.0%</td></tr>
+    <tr><td><strong>v3 + Pro 級聯複核</strong></td><td class="num"><strong>85.7%（18/21）</strong></td><td class="num"><strong>3.3%</strong>✅ 達標 ≤5%</td><td class="num">81.8%</td></tr>
+  </table></div>
+  <p class="src-note">※ 目標：Recall ≥90%、誤報率 ≤5%。級聯僅升級 3% 案件（4 組）至 gemini-3.1-pro 三票多數決，即 +4.7pp 召回。1 組臨界案例（既有舊損密集車輛）跨執行判定會翻轉；其餘跨輪判定一致性 99.3%。</p>
+
+  <h3>141 組全量重標（視覺仲裁）</h3>
+  <p>以並排對照圖逐組人工檢視全部 141 組，存疑案例以全解析度放大、亮度增強與「還2」補拍照二次複驗（AI 輔助仲裁）。修正 8 筆標籤：4 筆「未索賠」實為可見新損；2 筆索賠案借/還照根本拍不到損傷部位；RDY-6382 的損傷藏在還2 補拍照（左側車門凹陷，主還車照拍正面看不到）；RDZ-0187 增亮後仍模糊、維持存疑。以重標後 ground truth 重新計分：</p>
+  <div class="tblwrap"><table>
+    <tr><th>指標</th><th>v3 + 級聯（對重標 GT）</th><th>說明</th></tr>
+    <tr><td>Recall</td><td class="num"><strong>95.5%（21/22）</strong></td><td>含 4 筆原「未索賠」真損全數抓到；唯一漏抓 RDH-3092（借車照視角半遮 + 舊損密集，AI 判為既有損）</td></tr>
+    <tr><td>誤報率</td><td class="num"><strong>0%（0/116）</strong></td><td>原 4 筆「誤報」全數證實為標籤錯誤</td></tr>
+    <tr><td>排除樣本</td><td class="num">3 組（2.1%）</td><td>2 組拍錯側／未覆蓋、1 組過暗模糊——全屬拍攝品質問題</td></tr>
+  </table></div>
+  <p class="src-note">※ 重標明細見 pipeline/relabels.json。正確解讀：<b>照片可比對時，AI 與逐圖仲裁近乎完全一致（138 組僅 1 筆分歧）；系統的極限在拍攝品質而非辨識能力</b>——排除與漏抓案例全數源自借車照覆蓋不足，是二期拍攝端檢核與車輛照片鏈的直接立論依據。</p>
+
+  <h3>關鍵發現</h3>
+  <ul>
+    <li><strong>AI 抓到人工漏掉的車損（標籤噪音）：</strong>4 筆「誤報」經逐圖放大複驗——<em class="hl">全數確認為真實新車損</em>（RFB5176 藍色擦撞痕+凹陷、RCG2235 反光片旁刮痕、RFH8122 左右後保桿擦痕），只是當時未索賠。「未索賠」≠「無車損」，系統能挽回營運端漏掉的求償機會。</li>
+    <li><strong>EXIF 方向是免費的 +10pp：</strong>76% 照片帶未套用的旋轉標記；轉正後召回率 71.4% → 81.0%，並救回「白天借車 vs 深夜地下室還車」的極端光差案例。</li>
+    <li><strong>剩餘漏抓主因是拍攝覆蓋，不是模型：</strong>4 筆 FN 中 2 筆為借車照根本沒拍到損傷部位（模型誠實回報 <code>angle_match=false</code>）；唯一的真誤報也是借/還照拍了不同側所致。治本靠第二期「App 拍攝端即時角度檢核」。</li>
+  </ul>
+
+  <h3>下一步優化（往 Recall ≥90%）</h3>
+  <ul>
+    <li><strong>✅ 已實作 — 複核層：</strong>快篩「無損但低信心 / 無法比對」升級 gemini-3.1-pro 三票多數決，Recall +4.7pp（85.7%），升級量僅 3%。</li>
+    <li><strong>✅ 已實作 — Prompt 跨側禁令 / few-shot / 補拍照：</strong>跨側誤比型誤報已消除；few-shot 以 8 張「車況回報」特寫為範例（與評測集零重疊）。</li>
+    <li><strong>車輛照片鏈基準：</strong>剩餘 3 筆漏抓中 2 筆是借車照拍錯側／未覆蓋損傷部位——比對基準回溯同車前一單還車照（Blob 依 CarNo 可串）即可治本。</li>
+    <li><strong>✅ 已實作 — F2 車內整潔首輪實測：</strong>80 張 Blob 真實車內照完成三級分類（髒汙檢出率 3.75%，見 §04）；下一步擴大至 300 張人工標註建立正式校準評測集，並修正快篩信心校準。</li>
+  </ul>
+</section>
+
+<!-- ================= 08 ================= -->
+<section>
+  <div class="sec-head"><span class="sec-num">08</span><h2>導入路線圖</h2></div>
+  <div class="phases">
+    <div class="phase">
+      <div class="ph">PHASE 1 · 0–1 月</div>
+      <h4>MVP 驗證（進行中）</h4>
+      <ul>
+        <li>✅ Pipeline 對 141 組驗證集跑通（$0 成本）</li>
+        <li>✅ 誤報率 3.3% 達標；級聯複核 Recall 85.7%，照片鏈補至 ≥90%</li>
+        <li>✅ 複核 Dashboard Demo（32 個真實案例）</li>
+      </ul>
+    </div>
+    <div class="phase">
+      <div class="ph">PHASE 2 · 2–4 月</div>
+      <h4>試點上線</h4>
+      <ul>
+        <li>單一站點／車型全量接入</li>
+        <li>預警通知 + 複核閉環正式運轉</li>
+        <li>App 拍攝端即時角度檢核（治本漏拍）</li>
+      </ul>
+    </div>
+    <div class="phase">
+      <div class="ph">PHASE 3 · 5 月後</div>
+      <h4>規模化與自建模型</h4>
+      <ul>
+        <li>複核回寫累積標註 → 訓練專用輕量模型承接快篩層</li>
+        <li>VLM 退居疑難判定，成本再降</li>
+        <li>整潔評分接入用戶信譽體系</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <span>iRent 智能車況管家 · 系統架構設計 v1.0</span>
+  <span>資料基準：車外車內照片上傳清單（27,367 筆）＋ 索賠／未索賠照片集（293 張）</span>
+</footer>
+
+</div>

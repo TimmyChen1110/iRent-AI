@@ -1,0 +1,70 @@
+[
+ {
+  "car": "RDE-0081",
+  "prev": "47348258",
+  "curr": "47350426",
+  "itype": "1",
+  "guess": "左前",
+  "votes": [
+   {
+    "angle_match": false,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.0,
+    "pre_existing_notes": "照片拍攝角度不同（第一張為左後方，第二張為正前方），無法進行有效比對"
+   }
+  ],
+  "liable_order": null
+ },
+ {
+  "car": "RDE-0081",
+  "prev": "47348258",
+  "curr": "47350426",
+  "itype": "2",
+  "guess": "右前",
+  "votes": [
+   {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.85,
+    "pre_existing_notes": ""
+   }
+  ],
+  "liable_order": null
+ },
+ {
+  "car": "RDE-0081",
+  "prev": "47348258",
+  "curr": "47350426",
+  "itype": "3",
+  "guess": "左後",
+  "votes": [
+   {
+    "angle_match": false,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.0,
+    "pre_existing_notes": ""
+   }
+  ],
+  "liable_order": null
+ },
+ {
+  "car": "RDE-0081",
+  "prev": "47348258",
+  "curr": "47350426",
+  "itype": "4",
+  "guess": "右後",
+  "votes": [
+   {
+    "angle_match": false,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.0,
+    "pre_existing_notes": "前單照片為右前車頭視角，本單照片為車尾後方視角，拍攝方位完全不同無法進行比對。"
+   }
+  ],
+  "liable_order": null
+ }
+]

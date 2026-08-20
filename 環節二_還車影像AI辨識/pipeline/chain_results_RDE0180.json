@@ -1,0 +1,274 @@
+[
+ {
+  "car": "RDE-0180",
+  "prev": "47348313",
+  "curr": "47351663",
+  "itype": "1",
+  "guess": "左前",
+  "votes": [
+   {
+    "angle_match": false,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.0,
+    "pre_existing_notes": "兩張照片拍攝方位完全不同（基準照為左後方視角，本單還車照為右前方視角），無法進行比對。"
+   },
+   {
+    "angle_match": false,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.0,
+    "pre_existing_notes": "第一張為左後方視角，第二張為右前方視角，拍攝方位完全不同無法比對。"
+   },
+   {
+    "angle_match": false,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.0,
+    "pre_existing_notes": ""
+   }
+  ],
+  "liable_order": null
+ },
+ {
+  "car": "RDE-0180",
+  "prev": "47348313",
+  "curr": "47351663",
+  "itype": "2",
+  "guess": "右前",
+  "votes": [
+   {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.95,
+    "pre_existing_notes": ""
+   },
+   {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.9,
+    "pre_existing_notes": ""
+   },
+   {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.9,
+    "pre_existing_notes": ""
+   }
+  ],
+  "liable_order": null
+ },
+ {
+  "car": "RDE-0180",
+  "prev": "47348313",
+  "curr": "47351663",
+  "itype": "3",
+  "guess": "左後",
+  "votes": [
+   {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.9,
+    "pre_existing_notes": ""
+   },
+   {
+    "angle_match": false,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.5,
+    "pre_existing_notes": ""
+   },
+   {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.9,
+    "pre_existing_notes": ""
+   }
+  ],
+  "liable_order": null
+ },
+ {
+  "car": "RDE-0180",
+  "prev": "47348313",
+  "curr": "47351663",
+  "itype": "4",
+  "guess": "右後",
+  "votes": [
+   {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.9,
+    "pre_existing_notes": ""
+   },
+   {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.9,
+    "pre_existing_notes": ""
+   },
+   {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.9,
+    "pre_existing_notes": ""
+   }
+  ],
+  "liable_order": null
+ },
+ {
+  "car": "RDE-0180",
+  "prev": "47351663",
+  "curr": "47353795",
+  "itype": "1",
+  "guess": "左前",
+  "votes": [
+   {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.9,
+    "pre_existing_notes": ""
+   },
+   {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.9,
+    "pre_existing_notes": ""
+   },
+   {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.9,
+    "pre_existing_notes": ""
+   }
+  ],
+  "liable_order": null
+ },
+ {
+  "car": "RDE-0180",
+  "prev": "47351663",
+  "curr": "47353795",
+  "itype": "2",
+  "guess": "右前",
+  "votes": [
+   {
+    "angle_match": true,
+    "new_damage_found": true,
+    "damages": [
+     {
+      "location": "右後保險桿（反光片旁）",
+      "type": "刮痕",
+      "severity": "medium",
+      "confidence": 0.85,
+      "reasoning": "本單照片中右後保險桿反光片旁可見明顯白色擦刮痕跡，基準照中該區域表面平整完好無此痕跡。"
+     }
+    ],
+    "no_damage_confidence": 0.0,
+    "pre_existing_notes": ""
+   },
+   {
+    "angle_match": true,
+    "new_damage_found": true,
+    "damages": [
+     {
+      "location": "後保險桿左上方（靠近左尾燈下方）",
+      "type": "刮痕",
+      "severity": "medium",
+      "confidence": 0.85,
+      "reasoning": "第二張照片左後保桿上方有明顯多道白色擦刮痕，對比第一張同位置表面完好無此痕跡。"
+     }
+    ],
+    "no_damage_confidence": 0.0,
+    "pre_existing_notes": ""
+   },
+   {
+    "angle_match": true,
+    "new_damage_found": true,
+    "damages": [
+     {
+      "location": "後保桿右側（反光片附近）",
+      "type": "刮痕",
+      "severity": "medium",
+      "confidence": 0.88,
+      "reasoning": "基準照中右後反光片下方及保桿轉角表面完好，本單還車照中可見明顯的白色擦傷與刮痕。"
+     }
+    ],
+    "no_damage_confidence": 0.0,
+    "pre_existing_notes": ""
+   }
+  ],
+  "liable_order": "47353795"
+ },
+ {
+  "car": "RDE-0180",
+  "prev": "47351663",
+  "curr": "47353795",
+  "itype": "3",
+  "guess": "左後",
+  "votes": [
+   {
+    "angle_match": false,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.0,
+    "pre_existing_notes": "照片拍攝角度不同（第一張為右前視角，第二張為右後視角），無法有效進行比對。"
+   },
+   {
+    "angle_match": false,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.0,
+    "pre_existing_notes": ""
+   },
+   {
+    "angle_match": false,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.0,
+    "pre_existing_notes": ""
+   }
+  ],
+  "liable_order": null
+ },
+ {
+  "car": "RDE-0180",
+  "prev": "47351663",
+  "curr": "47353795",
+  "itype": "4",
+  "guess": "右後",
+  "votes": [
+   {
+    "angle_match": false,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.0,
+    "pre_existing_notes": "第一張為左前方視角，第二張為左後方視角，拍攝方位不同無法比對。"
+   },
+   {
+    "angle_match": false,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.0,
+    "pre_existing_notes": "兩張照片拍攝方位明顯不同（基準照為左前方視角，本單還車照為車尾/左後方視角），無法進行有效比對。"
+   },
+   {
+    "angle_match": false,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.0,
+    "pre_existing_notes": ""
+   }
+  ],
+  "liable_order": null
+ }
+]

@@ -1,0 +1,138 @@
+[
+ {
+  "car": "RDE-0182",
+  "prev": "47349481",
+  "curr": "47352514",
+  "itype": "1",
+  "guess": "左前",
+  "votes": [
+   {
+    "angle_match": false,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.0,
+    "pre_existing_notes": "兩張照片拍攝角度完全不同（第一張為正後方，第二張為左前方），無法進行車況損傷比對。"
+   }
+  ],
+  "liable_order": null
+ },
+ {
+  "car": "RDE-0182",
+  "prev": "47349481",
+  "curr": "47352514",
+  "itype": "2",
+  "guess": "右前",
+  "votes": [
+   {
+    "angle_match": false,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.0,
+    "pre_existing_notes": ""
+   }
+  ],
+  "liable_order": null
+ },
+ {
+  "car": "RDE-0182",
+  "prev": "47349481",
+  "curr": "47352514",
+  "itype": "3",
+  "guess": "左後",
+  "votes": [
+   {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.92,
+    "pre_existing_notes": ""
+   }
+  ],
+  "liable_order": null
+ },
+ {
+  "car": "RDE-0182",
+  "prev": "47349481",
+  "curr": "47352514",
+  "itype": "4",
+  "guess": "右後",
+  "votes": [
+   {
+    "angle_match": false,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.6,
+    "pre_existing_notes": ""
+   }
+  ],
+  "liable_order": null
+ },
+ {
+  "car": "RDE-0182",
+  "prev": "47352514",
+  "curr": "47353280",
+  "itype": "1",
+  "guess": "左前",
+  "votes": [
+   {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.85,
+    "pre_existing_notes": ""
+   }
+  ],
+  "liable_order": null
+ },
+ {
+  "car": "RDE-0182",
+  "prev": "47352514",
+  "curr": "47353280",
+  "itype": "2",
+  "guess": "右前",
+  "votes": [
+   {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.9,
+    "pre_existing_notes": ""
+   }
+  ],
+  "liable_order": null
+ },
+ {
+  "car": "RDE-0182",
+  "prev": "47352514",
+  "curr": "47353280",
+  "itype": "3",
+  "guess": "左後",
+  "votes": [
+   {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.95,
+    "pre_existing_notes": ""
+   }
+  ],
+  "liable_order": null
+ },
+ {
+  "car": "RDE-0182",
+  "prev": "47352514",
+  "curr": "47353280",
+  "itype": "4",
+  "guess": "右後",
+  "votes": [
+   {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.85,
+    "pre_existing_notes": "後保險桿上緣及左側有細微刮痕與舊損"
+   }
+  ],
+  "liable_order": null
+ }
+]

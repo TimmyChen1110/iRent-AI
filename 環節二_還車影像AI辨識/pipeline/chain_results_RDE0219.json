@@ -1,0 +1,70 @@
+[
+ {
+  "car": "RDE-0219",
+  "prev": "47352934",
+  "curr": "47354814",
+  "itype": "1",
+  "guess": "左前",
+  "votes": [
+   {
+    "angle_match": false,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.0,
+    "pre_existing_notes": "基準照為全黑畫面，無法辨識車況與進行有效比對"
+   }
+  ],
+  "liable_order": null
+ },
+ {
+  "car": "RDE-0219",
+  "prev": "47352934",
+  "curr": "47354814",
+  "itype": "2",
+  "guess": "右前",
+  "votes": [
+   {
+    "angle_match": false,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.0,
+    "pre_existing_notes": "基準照片（第一張）全黑無法辨識，無法進行有效比對。"
+   }
+  ],
+  "liable_order": null
+ },
+ {
+  "car": "RDE-0219",
+  "prev": "47352934",
+  "curr": "47354814",
+  "itype": "3",
+  "guess": "左後",
+  "votes": [
+   {
+    "angle_match": false,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.0,
+    "pre_existing_notes": "前一單還車照（基準照）為全黑影像，無法進行車況比對"
+   }
+  ],
+  "liable_order": null
+ },
+ {
+  "car": "RDE-0219",
+  "prev": "47352934",
+  "curr": "47354814",
+  "itype": "4",
+  "guess": "右後",
+  "votes": [
+   {
+    "angle_match": false,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.0,
+    "pre_existing_notes": "基準照片全黑無法辨識，無法進行比對。"
+   }
+  ],
+  "liable_order": null
+ }
+]

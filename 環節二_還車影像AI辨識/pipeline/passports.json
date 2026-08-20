@@ -25,7 +25,9 @@
     },
     "evidence_case": "RCG2235-右後",
     "verified": true,
-    "liable_order": "BATCH-2026-04"
+    "liable_order": "BATCH-2026-04",
+    "part": "後保險桿",
+    "part_confidence": 0.95
    },
    {
     "id": "D-002",
@@ -45,7 +47,9 @@
     },
     "evidence_case": "RCG2235-右後",
     "verified": false,
-    "liable_order": "前期（觀測期前）"
+    "liable_order": "前期（觀測期前）",
+    "part": "後保險桿",
+    "part_confidence": 0.95
    },
    {
     "id": "D-003",
@@ -65,7 +69,9 @@
     },
     "evidence_case": "RCG2235-左後",
     "verified": false,
-    "liable_order": "前期（觀測期前）"
+    "liable_order": "前期（觀測期前）",
+    "part": "後保險桿",
+    "part_confidence": 0.95
    }
   ],
   "open_new": 1,
@@ -93,7 +99,9 @@
     },
     "evidence_case": "RCQ6760-左後",
     "verified": false,
-    "liable_order": "前期（觀測期前）"
+    "liable_order": "前期（觀測期前）",
+    "part": "後保險桿",
+    "part_confidence": 0.95
    }
   ],
   "open_new": 0,
@@ -121,7 +129,9 @@
     },
     "evidence_case": "RCW1883-右後",
     "verified": false,
-    "liable_order": "前期（觀測期前）"
+    "liable_order": "前期（觀測期前）",
+    "part": "後保險桿",
+    "part_confidence": 0.95
    }
   ],
   "open_new": 0,
@@ -149,7 +159,9 @@
     },
     "evidence_case": "RDG8571-右後",
     "verified": false,
-    "liable_order": "前期（觀測期前）"
+    "liable_order": "前期（觀測期前）",
+    "part": "後保險桿",
+    "part_confidence": 0.98
    },
    {
     "id": "D-002",
@@ -169,7 +181,9 @@
     },
     "evidence_case": "RDG8571-左後",
     "verified": false,
-    "liable_order": "前期（觀測期前）"
+    "liable_order": "前期（觀測期前）",
+    "part": "後保險桿",
+    "part_confidence": 0.95
    }
   ],
   "open_new": 0,
@@ -197,7 +211,9 @@
     },
     "evidence_case": "RDG9853-右後",
     "verified": false,
-    "liable_order": "前期（觀測期前）"
+    "liable_order": "前期（觀測期前）",
+    "part": "後保險桿",
+    "part_confidence": 0.95
    },
    {
     "id": "D-002",
@@ -217,7 +233,9 @@
     },
     "evidence_case": "RDG9853-左前",
     "verified": false,
-    "liable_order": "前期（觀測期前）"
+    "liable_order": "前期（觀測期前）",
+    "part": "引擎蓋",
+    "part_confidence": 0.95
    }
   ],
   "open_new": 0,
@@ -245,7 +263,9 @@
     },
     "evidence_case": "RDL7832-右前",
     "verified": false,
-    "liable_order": "前期（觀測期前）"
+    "liable_order": "前期（觀測期前）",
+    "part": "前保險桿",
+    "part_confidence": 0.95
    },
    {
     "id": "D-002",
@@ -265,7 +285,9 @@
     },
     "evidence_case": "RDL7832-右後",
     "verified": false,
-    "liable_order": "前期（觀測期前）"
+    "liable_order": "前期（觀測期前）",
+    "part": "後保險桿",
+    "part_confidence": 0.95
    },
    {
     "id": "D-003",
@@ -285,7 +307,9 @@
     },
     "evidence_case": "RDL7832-左前",
     "verified": false,
-    "liable_order": "前期（觀測期前）"
+    "liable_order": "前期（觀測期前）",
+    "part": "前保險桿",
+    "part_confidence": 0.95
    }
   ],
   "open_new": 0,
@@ -313,7 +337,9 @@
     },
     "evidence_case": "RDQ5916-左前",
     "verified": false,
-    "liable_order": "前期（觀測期前）"
+    "liable_order": "前期（觀測期前）",
+    "part": "前保險桿",
+    "part_confidence": 0.95
    }
   ],
   "open_new": 0,
@@ -343,7 +369,9 @@
     },
     "evidence_case": "RDR6350-左後",
     "verified": false,
-    "liable_order": "前期（觀測期前）"
+    "liable_order": "前期（觀測期前）",
+    "part": "後保險桿",
+    "part_confidence": 0.95
    }
   ],
   "open_new": 0,
@@ -371,7 +399,9 @@
     },
     "evidence_case": "RDU-7390-右前",
     "verified": false,
-    "liable_order": "前期（觀測期前）"
+    "liable_order": "前期（觀測期前）",
+    "part": "引擎蓋",
+    "part_confidence": 0.95
    },
    {
     "id": "D-002",
@@ -391,7 +421,9 @@
     },
     "evidence_case": "RDU-7390-左前",
     "verified": false,
-    "liable_order": "前期（觀測期前）"
+    "liable_order": "前期（觀測期前）",
+    "part": "前保險桿",
+    "part_confidence": 0.85
    }
   ],
   "open_new": 0,
@@ -421,7 +453,9 @@
     },
     "evidence_case": "RDW-7085-右前",
     "verified": false,
-    "liable_order": "前期（觀測期前）"
+    "liable_order": "前期（觀測期前）",
+    "part": "前保險桿",
+    "part_confidence": 0.95
    },
    {
     "id": "D-002",
@@ -441,7 +475,9 @@
     },
     "evidence_case": "RDW-7085-右後",
     "verified": false,
-    "liable_order": "前期（觀測期前）"
+    "liable_order": "前期（觀測期前）",
+    "part": "後保險桿",
+    "part_confidence": 0.95
    },
    {
     "id": "D-003",
@@ -461,7 +497,9 @@
     },
     "evidence_case": "RDW-7085-左前",
     "verified": false,
-    "liable_order": "前期（觀測期前）"
+    "liable_order": "前期（觀測期前）",
+    "part": "前保險桿",
+    "part_confidence": 0.95
    }
   ],
   "open_new": 0,
@@ -489,7 +527,9 @@
     },
     "evidence_case": "RDZ-9006-右後",
     "verified": false,
-    "liable_order": "前期（觀測期前）"
+    "liable_order": "前期（觀測期前）",
+    "part": "後保險桿",
+    "part_confidence": 0.95
    },
    {
     "id": "D-002",
@@ -509,7 +549,9 @@
     },
     "evidence_case": "RDZ-9006-左前",
     "verified": false,
-    "liable_order": "前期（觀測期前）"
+    "liable_order": "前期（觀測期前）",
+    "part": "前保險桿",
+    "part_confidence": 0.95
    },
    {
     "id": "D-003",
@@ -529,7 +571,9 @@
     },
     "evidence_case": "RDZ-9006-左後",
     "verified": false,
-    "liable_order": "前期（觀測期前）"
+    "liable_order": "前期（觀測期前）",
+    "part": "左後葉子板",
+    "part_confidence": 0.85
    }
   ],
   "open_new": 0,
@@ -557,7 +601,9 @@
     },
     "evidence_case": "RDZ7922-右前",
     "verified": false,
-    "liable_order": "前期（觀測期前）"
+    "liable_order": "前期（觀測期前）",
+    "part": "前保險桿",
+    "part_confidence": 0.95
    },
    {
     "id": "D-002",
@@ -577,7 +623,9 @@
     },
     "evidence_case": "RDZ7922-右後",
     "verified": false,
-    "liable_order": "前期（觀測期前）"
+    "liable_order": "前期（觀測期前）",
+    "part": "後保險桿",
+    "part_confidence": 0.95
    },
    {
     "id": "D-003",
@@ -597,7 +645,9 @@
     },
     "evidence_case": "RDZ7922-左前",
     "verified": false,
-    "liable_order": "前期（觀測期前）"
+    "liable_order": "前期（觀測期前）",
+    "part": "前保險桿",
+    "part_confidence": 0.95
    }
   ],
   "open_new": 0,
@@ -628,7 +678,9 @@
     },
     "evidence_case": "RFB-2590-右後",
     "verified": false,
-    "liable_order": "前期（觀測期前）"
+    "liable_order": "前期（觀測期前）",
+    "part": "後保險桿",
+    "part_confidence": 0.85
    }
   ],
   "open_new": 0,
@@ -663,7 +715,9 @@
     },
     "evidence_case": "RFB5176-右後",
     "verified": true,
-    "liable_order": "BATCH-2026-04"
+    "liable_order": "BATCH-2026-04",
+    "part": "後保險桿",
+    "part_confidence": 0.98
    }
   ],
   "open_new": 1,
@@ -691,7 +745,9 @@
     },
     "evidence_case": "RFH7873-右後",
     "verified": false,
-    "liable_order": "前期（觀測期前）"
+    "liable_order": "前期（觀測期前）",
+    "part": "後保險桿",
+    "part_confidence": 0.95
    }
   ],
   "open_new": 0,
@@ -719,7 +775,9 @@
     },
     "evidence_case": "RFH8122-右前",
     "verified": false,
-    "liable_order": "前期（觀測期前）"
+    "liable_order": "前期（觀測期前）",
+    "part": "前保險桿",
+    "part_confidence": 0.95
    },
    {
     "id": "D-002",
@@ -744,7 +802,9 @@
     },
     "evidence_case": "RFH8122-右後",
     "verified": true,
-    "liable_order": "BATCH-2026-04"
+    "liable_order": "BATCH-2026-04",
+    "part": "後保險桿",
+    "part_confidence": 0.95
    },
    {
     "id": "D-003",
@@ -769,7 +829,9 @@
     },
     "evidence_case": "RFH8122-左後",
     "verified": true,
-    "liable_order": "BATCH-2026-04"
+    "liable_order": "BATCH-2026-04",
+    "part": "後保險桿",
+    "part_confidence": 0.95
    }
   ],
   "open_new": 2,
@@ -797,7 +859,9 @@
     },
     "evidence_case": "RFM-2791-左前",
     "verified": false,
-    "liable_order": "前期（觀測期前）"
+    "liable_order": "前期（觀測期前）",
+    "part": "其他",
+    "part_confidence": 0.5
    },
    {
     "id": "D-002",
@@ -817,7 +881,9 @@
     },
     "evidence_case": "RFM-2791-左後",
     "verified": false,
-    "liable_order": "前期（觀測期前）"
+    "liable_order": "前期（觀測期前）",
+    "part": "後保險桿",
+    "part_confidence": 0.95
    }
   ],
   "open_new": 0,
@@ -852,7 +918,9 @@
     },
     "evidence_case": "RCR-7661-左後",
     "verified": true,
-    "liable_order": "BATCH-2026-04"
+    "liable_order": "BATCH-2026-04",
+    "part": "後保險桿",
+    "part_confidence": 0.85
    },
    {
     "id": "D-002",
@@ -877,7 +945,9 @@
     },
     "evidence_case": "RCR-7661-左後",
     "verified": true,
-    "liable_order": "BATCH-2026-04"
+    "liable_order": "BATCH-2026-04",
+    "part": "左後葉子板",
+    "part_confidence": 0.85
    },
    {
     "id": "D-003",
@@ -902,7 +972,9 @@
     },
     "evidence_case": "RCR-7661-左後",
     "verified": true,
-    "liable_order": "BATCH-2026-04"
+    "liable_order": "BATCH-2026-04",
+    "part": "輪圈/輪胎",
+    "part_confidence": 0.95
    },
    {
     "id": "D-004",
@@ -922,7 +994,9 @@
     },
     "evidence_case": "RCR-7661-左後",
     "verified": false,
-    "liable_order": "前期（觀測期前）"
+    "liable_order": "前期（觀測期前）",
+    "part": "後保險桿",
+    "part_confidence": 0.85
    }
   ],
   "open_new": 3,
@@ -955,7 +1029,9 @@
     },
     "evidence_case": "RCW-8382-左前",
     "verified": true,
-    "liable_order": "BATCH-2026-04"
+    "liable_order": "BATCH-2026-04",
+    "part": "前保險桿",
+    "part_confidence": 0.85
    }
   ],
   "open_new": 1,
@@ -988,7 +1064,9 @@
     },
     "evidence_case": "RCW-9206-左前",
     "verified": true,
-    "liable_order": "BATCH-2026-04"
+    "liable_order": "BATCH-2026-04",
+    "part": "前保險桿",
+    "part_confidence": 0.95
    }
   ],
   "open_new": 1,
@@ -1021,7 +1099,9 @@
     },
     "evidence_case": "RDH-2261-左後",
     "verified": true,
-    "liable_order": "BATCH-2026-04"
+    "liable_order": "BATCH-2026-04",
+    "part": "後保險桿",
+    "part_confidence": 0.85
    }
   ],
   "open_new": 1,
@@ -1049,7 +1129,9 @@
     },
     "evidence_case": "RDH-3092-左後",
     "verified": false,
-    "liable_order": "前期（觀測期前）"
+    "liable_order": "前期（觀測期前）",
+    "part": "左後葉子板",
+    "part_confidence": 0.95
    }
   ],
   "open_new": 0,
@@ -1082,7 +1164,9 @@
     },
     "evidence_case": "RDJ-0772-左前",
     "verified": true,
-    "liable_order": "BATCH-2026-04"
+    "liable_order": "BATCH-2026-04",
+    "part": "前保險桿",
+    "part_confidence": 0.85
    }
   ],
   "open_new": 1,
@@ -1115,7 +1199,9 @@
     },
     "evidence_case": "RDJ-0793-左前",
     "verified": true,
-    "liable_order": "BATCH-2026-04"
+    "liable_order": "BATCH-2026-04",
+    "part": "前保險桿",
+    "part_confidence": 0.85
    }
   ],
   "open_new": 1,
@@ -1148,7 +1234,9 @@
     },
     "evidence_case": "RDL-5171-左前",
     "verified": true,
-    "liable_order": "BATCH-2026-04"
+    "liable_order": "BATCH-2026-04",
+    "part": "前保險桿",
+    "part_confidence": 0.95
    },
    {
     "id": "D-002",
@@ -1173,7 +1261,9 @@
     },
     "evidence_case": "RDL-5171-左前",
     "verified": true,
-    "liable_order": "BATCH-2026-04"
+    "liable_order": "BATCH-2026-04",
+    "part": "引擎蓋",
+    "part_confidence": 0.95
    }
   ],
   "open_new": 2,
@@ -1206,7 +1296,9 @@
     },
     "evidence_case": "RDL-7836-左後",
     "verified": true,
-    "liable_order": "BATCH-2026-04"
+    "liable_order": "BATCH-2026-04",
+    "part": "後保險桿",
+    "part_confidence": 0.95
    }
   ],
   "open_new": 1,
@@ -1239,7 +1331,9 @@
     },
     "evidence_case": "RDL-8265-右後",
     "verified": true,
-    "liable_order": "47350036"
+    "liable_order": "47350036",
+    "part": "後車廂蓋",
+    "part_confidence": 0.98
    }
   ],
   "open_new": 1,
@@ -1275,7 +1369,9 @@
     },
     "evidence_case": "RDL-9262-右前",
     "verified": true,
-    "liable_order": "BATCH-2026-04"
+    "liable_order": "BATCH-2026-04",
+    "part": "前保險桿",
+    "part_confidence": 0.95
    }
   ],
   "open_new": 1,
@@ -1308,7 +1404,9 @@
     },
     "evidence_case": "RDQ-1950-右後",
     "verified": true,
-    "liable_order": "47354729"
+    "liable_order": "47354729",
+    "part": "後保險桿",
+    "part_confidence": 0.92
    }
   ],
   "open_new": 1,
@@ -1343,7 +1441,9 @@
     },
     "evidence_case": "RDU-6956-右前",
     "verified": true,
-    "liable_order": "BATCH-2026-04"
+    "liable_order": "BATCH-2026-04",
+    "part": "前保險桿",
+    "part_confidence": 0.98
    }
   ],
   "open_new": 1,
@@ -1376,7 +1476,9 @@
     },
     "evidence_case": "RDX-1085-右前",
     "verified": false,
-    "liable_order": "BATCH-2026-04"
+    "liable_order": "BATCH-2026-04",
+    "part": "前保險桿",
+    "part_confidence": 0.95
    }
   ],
   "open_new": 1,
@@ -1409,7 +1511,9 @@
     },
     "evidence_case": "RDX-2376-右後",
     "verified": true,
-    "liable_order": "BATCH-2026-04"
+    "liable_order": "BATCH-2026-04",
+    "part": "後保險桿",
+    "part_confidence": 0.85
    },
    {
     "id": "D-002",
@@ -1429,7 +1533,9 @@
     },
     "evidence_case": "RDX-2376-右後",
     "verified": true,
-    "liable_order": "BATCH-2026-04"
+    "liable_order": "BATCH-2026-04",
+    "part": "右後葉子板",
+    "part_confidence": 0.95
    }
   ],
   "open_new": 2,
@@ -1457,7 +1563,9 @@
     },
     "evidence_case": "RDY-6382-左前",
     "verified": true,
-    "liable_order": "47353046"
+    "liable_order": "47353046",
+    "part": "左前門",
+    "part_confidence": 0.6
    }
   ],
   "open_new": 1,
@@ -1487,7 +1595,9 @@
     },
     "evidence_case": "RDZ-0187-右後",
     "verified": false,
-    "liable_order": "前期（觀測期前）"
+    "liable_order": "前期（觀測期前）",
+    "part": "後保險桿",
+    "part_confidence": 0.95
    }
   ],
   "open_new": 0,
@@ -1522,7 +1632,9 @@
     },
     "evidence_case": "RFB-2091-右前",
     "verified": true,
-    "liable_order": "BATCH-2026-04"
+    "liable_order": "BATCH-2026-04",
+    "part": "引擎蓋",
+    "part_confidence": 0.98
    },
    {
     "id": "D-002",
@@ -1547,7 +1659,9 @@
     },
     "evidence_case": "RFB-2091-左前",
     "verified": true,
-    "liable_order": "BATCH-2026-04"
+    "liable_order": "BATCH-2026-04",
+    "part": "引擎蓋",
+    "part_confidence": 0.9
    },
    {
     "id": "D-003",
@@ -1572,7 +1686,9 @@
     },
     "evidence_case": "RFB-2091-左前",
     "verified": true,
-    "liable_order": "BATCH-2026-04"
+    "liable_order": "BATCH-2026-04",
+    "part": "車燈",
+    "part_confidence": 0.85
    }
   ],
   "open_new": 3,
@@ -1605,7 +1721,9 @@
     },
     "evidence_case": "RFD-0332-右前",
     "verified": true,
-    "liable_order": "47351031"
+    "liable_order": "47351031",
+    "part": "前保險桿",
+    "part_confidence": 0.85
    }
   ],
   "open_new": 1,

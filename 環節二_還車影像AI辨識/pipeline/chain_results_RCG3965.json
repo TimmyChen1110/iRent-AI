@@ -1,0 +1,70 @@
+[
+ {
+  "car": "RCG-3965",
+  "prev": "47330280",
+  "curr": "47353307",
+  "itype": "1",
+  "guess": "左前",
+  "votes": [
+   {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.78,
+    "pre_existing_notes": ""
+   }
+  ],
+  "liable_order": null
+ },
+ {
+  "car": "RCG-3965",
+  "prev": "47330280",
+  "curr": "47353307",
+  "itype": "2",
+  "guess": "右前",
+  "votes": [
+   {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.85,
+    "pre_existing_notes": ""
+   }
+  ],
+  "liable_order": null
+ },
+ {
+  "car": "RCG-3965",
+  "prev": "47330280",
+  "curr": "47353307",
+  "itype": "3",
+  "guess": "左後",
+  "votes": [
+   {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.9,
+    "pre_existing_notes": ""
+   }
+  ],
+  "liable_order": null
+ },
+ {
+  "car": "RCG-3965",
+  "prev": "47330280",
+  "curr": "47353307",
+  "itype": "4",
+  "guess": "右後",
+  "votes": [
+   {
+    "angle_match": false,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.0,
+    "pre_existing_notes": ""
+   }
+  ],
+  "liable_order": null
+ }
+]

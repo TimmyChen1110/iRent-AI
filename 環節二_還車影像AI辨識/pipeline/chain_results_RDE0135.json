@@ -1,0 +1,138 @@
+[
+ {
+  "car": "RDE-0135",
+  "prev": "47347175",
+  "curr": "47353590",
+  "itype": "1",
+  "guess": "左前",
+  "votes": [
+   {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.9,
+    "pre_existing_notes": ""
+   }
+  ],
+  "liable_order": null
+ },
+ {
+  "car": "RDE-0135",
+  "prev": "47347175",
+  "curr": "47353590",
+  "itype": "2",
+  "guess": "右前",
+  "votes": [
+   {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.95,
+    "pre_existing_notes": ""
+   }
+  ],
+  "liable_order": null
+ },
+ {
+  "car": "RDE-0135",
+  "prev": "47347175",
+  "curr": "47353590",
+  "itype": "3",
+  "guess": "左後",
+  "votes": [
+   {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.9,
+    "pre_existing_notes": "後保險桿左側下緣反光片下方有既有擦痕/擦傷"
+   }
+  ],
+  "liable_order": null
+ },
+ {
+  "car": "RDE-0135",
+  "prev": "47347175",
+  "curr": "47353590",
+  "itype": "4",
+  "guess": "右後",
+  "votes": [
+   {
+    "angle_match": false,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.5,
+    "pre_existing_notes": ""
+   }
+  ],
+  "liable_order": null
+ },
+ {
+  "car": "RDE-0135",
+  "prev": "47353590",
+  "curr": "47355533",
+  "itype": "1",
+  "guess": "左前",
+  "votes": [
+   {
+    "angle_match": false,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.5,
+    "pre_existing_notes": ""
+   }
+  ],
+  "liable_order": null
+ },
+ {
+  "car": "RDE-0135",
+  "prev": "47353590",
+  "curr": "47355533",
+  "itype": "2",
+  "guess": "右前",
+  "votes": [
+   {
+    "angle_match": false,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.5,
+    "pre_existing_notes": ""
+   }
+  ],
+  "liable_order": null
+ },
+ {
+  "car": "RDE-0135",
+  "prev": "47353590",
+  "curr": "47355533",
+  "itype": "3",
+  "guess": "左後",
+  "votes": [
+   {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.88,
+    "pre_existing_notes": "左後保險桿反光片上方邊角有微小擦傷舊痕，兩張照片皆存在"
+   }
+  ],
+  "liable_order": null
+ },
+ {
+  "car": "RDE-0135",
+  "prev": "47353590",
+  "curr": "47355533",
+  "itype": "4",
+  "guess": "右後",
+  "votes": [
+   {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.85,
+    "pre_existing_notes": ""
+   }
+  ],
+  "liable_order": null
+ }
+]

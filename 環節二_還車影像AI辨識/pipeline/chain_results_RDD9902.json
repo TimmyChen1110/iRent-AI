@@ -1,0 +1,206 @@
+[
+ {
+  "car": "RDD-9902",
+  "prev": "47347414",
+  "curr": "47348355",
+  "itype": "1",
+  "guess": "左前",
+  "votes": [
+   {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.85,
+    "pre_existing_notes": ""
+   }
+  ],
+  "liable_order": null
+ },
+ {
+  "car": "RDD-9902",
+  "prev": "47347414",
+  "curr": "47348355",
+  "itype": "2",
+  "guess": "右前",
+  "votes": [
+   {
+    "angle_match": false,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.0,
+    "pre_existing_notes": ""
+   }
+  ],
+  "liable_order": null
+ },
+ {
+  "car": "RDD-9902",
+  "prev": "47347414",
+  "curr": "47348355",
+  "itype": "3",
+  "guess": "左後",
+  "votes": [
+   {
+    "angle_match": false,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.0,
+    "pre_existing_notes": "兩張照片拍攝方位完全不同（第一張為左前方車頭，第二張為左後方車尾），無法進行比對。"
+   }
+  ],
+  "liable_order": null
+ },
+ {
+  "car": "RDD-9902",
+  "prev": "47347414",
+  "curr": "47348355",
+  "itype": "4",
+  "guess": "右後",
+  "votes": [
+   {
+    "angle_match": false,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.0,
+    "pre_existing_notes": ""
+   }
+  ],
+  "liable_order": null
+ },
+ {
+  "car": "RDD-9902",
+  "prev": "47348355",
+  "curr": "47348534",
+  "itype": "1",
+  "guess": "左前",
+  "votes": [
+   {
+    "angle_match": false,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.0,
+    "pre_existing_notes": "第一張為車側照片，第二張為車頭正面照片，拍攝方位不一致無法比對"
+   }
+  ],
+  "liable_order": null
+ },
+ {
+  "car": "RDD-9902",
+  "prev": "47348355",
+  "curr": "47348534",
+  "itype": "2",
+  "guess": "右前",
+  "votes": [
+   {
+    "angle_match": false,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.0,
+    "pre_existing_notes": ""
+   }
+  ],
+  "liable_order": null
+ },
+ {
+  "car": "RDD-9902",
+  "prev": "47348355",
+  "curr": "47348534",
+  "itype": "3",
+  "guess": "左後",
+  "votes": [
+   {
+    "angle_match": false,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.0,
+    "pre_existing_notes": "第一張為左後方視角（包含左側車身），第二張為右後方視角（包含右側車身），兩張照片拍攝方位不同，無法進行有效比對。"
+   }
+  ],
+  "liable_order": null
+ },
+ {
+  "car": "RDD-9902",
+  "prev": "47348355",
+  "curr": "47348534",
+  "itype": "4",
+  "guess": "右後",
+  "votes": [
+   {
+    "angle_match": false,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.0,
+    "pre_existing_notes": ""
+   }
+  ],
+  "liable_order": null
+ },
+ {
+  "car": "RDD-9902",
+  "prev": "47348534",
+  "curr": "47353386",
+  "itype": "1",
+  "guess": "左前",
+  "votes": [
+   {
+    "angle_match": false,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.9,
+    "pre_existing_notes": ""
+   }
+  ],
+  "liable_order": null
+ },
+ {
+  "car": "RDD-9902",
+  "prev": "47348534",
+  "curr": "47353386",
+  "itype": "2",
+  "guess": "右前",
+  "votes": [
+   {
+    "angle_match": false,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.0,
+    "pre_existing_notes": ""
+   }
+  ],
+  "liable_order": null
+ },
+ {
+  "car": "RDD-9902",
+  "prev": "47348534",
+  "curr": "47353386",
+  "itype": "3",
+  "guess": "左後",
+  "votes": [
+   {
+    "angle_match": false,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.5,
+    "pre_existing_notes": "第一張照片為車輛右後方視角，第二張照片為車輛左後方視角，拍攝方位不一致無法有效完整比對。"
+   }
+  ],
+  "liable_order": null
+ },
+ {
+  "car": "RDD-9902",
+  "prev": "47348534",
+  "curr": "47353386",
+  "itype": "4",
+  "guess": "右後",
+  "votes": [
+   {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.9,
+    "pre_existing_notes": "右後保險桿轉角處有擦傷刮痕（兩張照片均可見）"
+   }
+  ],
+  "liable_order": null
+ }
+]

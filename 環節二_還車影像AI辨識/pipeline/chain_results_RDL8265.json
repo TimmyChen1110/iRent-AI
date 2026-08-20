@@ -1,0 +1,126 @@
+[
+ {
+  "car": "RDL-8265",
+  "prev": "47350036",
+  "curr": "47350063",
+  "itype": "1",
+  "guess": "左前",
+  "votes": [
+   {
+    "angle_match": false,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.3,
+    "pre_existing_notes": "兩張照片拍攝方位不同（基準照為右前側/副駕側，本單照為左前側/駕駛側），無法進行有效比對。"
+   },
+   {
+    "angle_match": false,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.5,
+    "pre_existing_notes": ""
+   },
+   {
+    "angle_match": false,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.5,
+    "pre_existing_notes": "第一張為車輛右前側/右側身視角（影像旋轉90度），第二張為車輛左前側視角，拍攝方位不同無法比對。"
+   }
+  ],
+  "liable_order": null
+ },
+ {
+  "car": "RDL-8265",
+  "prev": "47350036",
+  "curr": "47350063",
+  "itype": "2",
+  "guess": "右前",
+  "votes": [
+   {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.85,
+    "pre_existing_notes": ""
+   },
+   {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.8,
+    "pre_existing_notes": ""
+   },
+   {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.85,
+    "pre_existing_notes": ""
+   }
+  ],
+  "liable_order": null
+ },
+ {
+  "car": "RDL-8265",
+  "prev": "47350036",
+  "curr": "47350063",
+  "itype": "3",
+  "guess": "左後",
+  "votes": [
+   {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.9,
+    "pre_existing_notes": "後保桿及尾門處有微小既有擦痕"
+   },
+   {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.9,
+    "pre_existing_notes": "後保險桿局部有輕微細小點狀舊痕"
+   },
+   {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.9,
+    "pre_existing_notes": ""
+   }
+  ],
+  "liable_order": null
+ },
+ {
+  "car": "RDL-8265",
+  "prev": "47350036",
+  "curr": "47350063",
+  "itype": "4",
+  "guess": "右後",
+  "votes": [
+   {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.85,
+    "pre_existing_notes": ""
+   },
+   {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.9,
+    "pre_existing_notes": ""
+   },
+   {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.85,
+    "pre_existing_notes": ""
+   }
+  ],
+  "liable_order": null
+ }
+]

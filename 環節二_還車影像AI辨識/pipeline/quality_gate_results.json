@@ -1,0 +1,288 @@
+{
+ "n": 282,
+ "thresholds": {
+  "blur_min": 60.0,
+  "dark_max": 55.0,
+  "bright_min": 235.0,
+  "clip_max": 0.35
+ },
+ "sharpness_pctile": {
+  "p1": 49.2,
+  "p5": 92.0,
+  "p50": 710.9
+ },
+ "brightness_pctile": {
+  "p1": 37.8,
+  "p5": 45.7,
+  "p50": 113.0
+ },
+ "fail_count": 26,
+ "fail_pct": 9.2,
+ "fails": [
+  {
+   "file": "RDS2805右前 借.jfif",
+   "pass": false,
+   "reasons": [
+    "照片過暗（亮度 34 < 55），請開閃光或移到亮處重拍"
+   ],
+   "sharpness": 348.2,
+   "brightness": 33.6,
+   "highlight_clip": 0.0
+  },
+  {
+   "file": "RDS2805右前 還.jfif",
+   "pass": false,
+   "reasons": [
+    "照片過暗（亮度 48 < 55），請開閃光或移到亮處重拍"
+   ],
+   "sharpness": 536.4,
+   "brightness": 47.9,
+   "highlight_clip": 0.001
+  },
+  {
+   "file": "RDS2805右後 借.jfif",
+   "pass": false,
+   "reasons": [
+    "照片過暗（亮度 42 < 55），請開閃光或移到亮處重拍"
+   ],
+   "sharpness": 158.3,
+   "brightness": 42.1,
+   "highlight_clip": 0.0
+  },
+  {
+   "file": "RDS2805右後 還.jfif",
+   "pass": false,
+   "reasons": [
+    "照片過暗（亮度 38 < 55），請開閃光或移到亮處重拍"
+   ],
+   "sharpness": 77.0,
+   "brightness": 37.8,
+   "highlight_clip": 0.0
+  },
+  {
+   "file": "RDS2805左前 借.jfif",
+   "pass": false,
+   "reasons": [
+    "照片過暗（亮度 46 < 55），請開閃光或移到亮處重拍"
+   ],
+   "sharpness": 350.8,
+   "brightness": 45.7,
+   "highlight_clip": 0.004
+  },
+  {
+   "file": "RDS2805左前 還.jfif",
+   "pass": false,
+   "reasons": [
+    "照片過暗（亮度 50 < 55），請開閃光或移到亮處重拍"
+   ],
+   "sharpness": 730.8,
+   "brightness": 49.6,
+   "highlight_clip": 0.001
+  },
+  {
+   "file": "RDS2805左後 借.jfif",
+   "pass": false,
+   "reasons": [
+    "照片過暗（亮度 51 < 55），請開閃光或移到亮處重拍"
+   ],
+   "sharpness": 485.4,
+   "brightness": 50.6,
+   "highlight_clip": 0.003
+  },
+  {
+   "file": "RDS2805左後 還.jfif",
+   "pass": false,
+   "reasons": [
+    "照片模糊（清晰度 46 < 60），請對焦後重拍",
+    "照片過暗（亮度 44 < 55），請開閃光或移到亮處重拍"
+   ],
+   "sharpness": 45.7,
+   "brightness": 43.9,
+   "highlight_clip": 0.009
+  },
+  {
+   "file": "RDZ0155左後 還.jfif",
+   "pass": false,
+   "reasons": [
+    "照片過暗（亮度 50 < 55），請開閃光或移到亮處重拍"
+   ],
+   "sharpness": 218.2,
+   "brightness": 50.1,
+   "highlight_clip": 0.007
+  },
+  {
+   "file": "RFB-3295右後 還.jpg",
+   "pass": false,
+   "reasons": [
+    "照片過暗（亮度 40 < 55），請開閃光或移到亮處重拍"
+   ],
+   "sharpness": 83.5,
+   "brightness": 39.9,
+   "highlight_clip": 0.0
+  },
+  {
+   "file": "RFB-3295左前 還.jpg",
+   "pass": false,
+   "reasons": [
+    "照片過暗（亮度 50 < 55），請開閃光或移到亮處重拍"
+   ],
+   "sharpness": 80.3,
+   "brightness": 50.4,
+   "highlight_clip": 0.005
+  },
+  {
+   "file": "RFB-3295左後 還.jpg",
+   "pass": false,
+   "reasons": [
+    "照片過暗（亮度 46 < 55），請開閃光或移到亮處重拍"
+   ],
+   "sharpness": 133.6,
+   "brightness": 46.2,
+   "highlight_clip": 0.001
+  },
+  {
+   "file": "RFB5176右前 還.jpg",
+   "pass": false,
+   "reasons": [
+    "照片過暗（亮度 44 < 55），請開閃光或移到亮處重拍"
+   ],
+   "sharpness": 80.2,
+   "brightness": 44.3,
+   "highlight_clip": 0.0
+  },
+  {
+   "file": "RFB5176右後 還.jpg",
+   "pass": false,
+   "reasons": [
+    "照片模糊（清晰度 60 < 60），請對焦後重拍",
+    "照片過暗（亮度 49 < 55），請開閃光或移到亮處重拍"
+   ],
+   "sharpness": 59.7,
+   "brightness": 49.5,
+   "highlight_clip": 0.0
+  },
+  {
+   "file": "RFB5176左前 還.jpg",
+   "pass": false,
+   "reasons": [
+    "照片模糊（清晰度 53 < 60），請對焦後重拍",
+    "照片過暗（亮度 44 < 55），請開閃光或移到亮處重拍"
+   ],
+   "sharpness": 52.9,
+   "brightness": 44.2,
+   "highlight_clip": 0.0
+  },
+  {
+   "file": "RFB5176左後 還.jpg",
+   "pass": false,
+   "reasons": [
+    "照片過暗（亮度 45 < 55），請開閃光或移到亮處重拍"
+   ],
+   "sharpness": 61.9,
+   "brightness": 44.9,
+   "highlight_clip": 0.0
+  },
+  {
+   "file": "RFD-8522右前 還.jpg",
+   "pass": false,
+   "reasons": [
+    "照片過暗（亮度 45 < 55），請開閃光或移到亮處重拍"
+   ],
+   "sharpness": 89.2,
+   "brightness": 44.7,
+   "highlight_clip": 0.0
+  },
+  {
+   "file": "RFH7851右後 借.jfif",
+   "pass": false,
+   "reasons": [
+    "照片過暗（亮度 46 < 55），請開閃光或移到亮處重拍"
+   ],
+   "sharpness": 75.2,
+   "brightness": 46.0,
+   "highlight_clip": 0.0
+  },
+  {
+   "file": "RFH7851左後 借.jfif",
+   "pass": false,
+   "reasons": [
+    "照片過暗（亮度 50 < 55），請開閃光或移到亮處重拍"
+   ],
+   "sharpness": 96.7,
+   "brightness": 49.7,
+   "highlight_clip": 0.0
+  },
+  {
+   "file": "RFM-2791左後 還.jpg",
+   "pass": false,
+   "reasons": [
+    "照片過暗（亮度 45 < 55），請開閃光或移到亮處重拍"
+   ],
+   "sharpness": 96.2,
+   "brightness": 44.9,
+   "highlight_clip": 0.0
+  },
+  {
+   "file": "RDH-2261 左後 借.jpg",
+   "pass": false,
+   "reasons": [
+    "照片模糊（清晰度 28 < 60），請對焦後重拍",
+    "照片過暗（亮度 15 < 55），請開閃光或移到亮處重拍"
+   ],
+   "sharpness": 27.5,
+   "brightness": 15.5,
+   "highlight_clip": 0.0
+  },
+  {
+   "file": "RDJ-0772左前 借.jpg",
+   "pass": false,
+   "reasons": [
+    "照片過暗（亮度 50 < 55），請開閃光或移到亮處重拍"
+   ],
+   "sharpness": 228.0,
+   "brightness": 49.9,
+   "highlight_clip": 0.001
+  },
+  {
+   "file": "RDJ-0772左前 還.jpg",
+   "pass": false,
+   "reasons": [
+    "照片過暗（亮度 53 < 55），請開閃光或移到亮處重拍"
+   ],
+   "sharpness": 113.2,
+   "brightness": 53.1,
+   "highlight_clip": 0.0
+  },
+  {
+   "file": "RDL-8265 右後 借.jpg",
+   "pass": false,
+   "reasons": [
+    "照片過暗（亮度 45 < 55），請開閃光或移到亮處重拍"
+   ],
+   "sharpness": 326.8,
+   "brightness": 44.9,
+   "highlight_clip": 0.001
+  },
+  {
+   "file": "RDQ-1950 右後 借.jpg",
+   "pass": false,
+   "reasons": [
+    "照片過暗（亮度 42 < 55），請開閃光或移到亮處重拍"
+   ],
+   "sharpness": 132.6,
+   "brightness": 41.8,
+   "highlight_clip": 0.001
+  },
+  {
+   "file": "RDZ-0187 右後 還.jpg",
+   "pass": false,
+   "reasons": [
+    "照片模糊（清晰度 49 < 60），請對焦後重拍",
+    "照片過暗（亮度 44 < 55），請開閃光或移到亮處重拍"
+   ],
+   "sharpness": 49.2,
+   "brightness": 44.0,
+   "highlight_clip": 0.0
+  }
+ ]
+}

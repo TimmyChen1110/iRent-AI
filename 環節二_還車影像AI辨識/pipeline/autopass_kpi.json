@@ -1,0 +1,23 @@
+{
+ "n": 141,
+ "flash_escalated_to_pro": {
+  "count": 4,
+  "pct": 2.8
+ },
+ "auto_pass": {
+  "count": 117,
+  "pct": 83.0
+ },
+ "auto_alert_p1": {
+  "count": 22,
+  "pct": 15.6
+ },
+ "human_review": {
+  "count": 2,
+  "pct": 1.4
+ },
+ "human_or_alert_pct": 17.0,
+ "auto_pass_missed_vs_truth": [
+  "RDH-3092 左後"
+ ]
+}

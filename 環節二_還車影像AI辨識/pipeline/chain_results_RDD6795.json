@@ -1,0 +1,70 @@
+[
+ {
+  "car": "RDD-6795",
+  "prev": "47352304",
+  "curr": "47354057",
+  "itype": "1",
+  "guess": "左前",
+  "votes": [
+   {
+    "angle_match": false,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.3,
+    "pre_existing_notes": ""
+   }
+  ],
+  "liable_order": null
+ },
+ {
+  "car": "RDD-6795",
+  "prev": "47352304",
+  "curr": "47354057",
+  "itype": "2",
+  "guess": "右前",
+  "votes": [
+   {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.85,
+    "pre_existing_notes": ""
+   }
+  ],
+  "liable_order": null
+ },
+ {
+  "car": "RDD-6795",
+  "prev": "47352304",
+  "curr": "47354057",
+  "itype": "3",
+  "guess": "左後",
+  "votes": [
+   {
+    "angle_match": false,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.0,
+    "pre_existing_notes": ""
+   }
+  ],
+  "liable_order": null
+ },
+ {
+  "car": "RDD-6795",
+  "prev": "47352304",
+  "curr": "47354057",
+  "itype": "4",
+  "guess": "右後",
+  "votes": [
+   {
+    "angle_match": false,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.0,
+    "pre_existing_notes": "照片拍攝角度不一致（基準照為左後/車尾視角，本單還車照為左前視角），無法進行有效比對。"
+   }
+  ],
+  "liable_order": null
+ }
+]
