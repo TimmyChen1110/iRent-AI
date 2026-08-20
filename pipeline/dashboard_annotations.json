@@ -1,0 +1,545 @@
+{
+ "RCG2235-右後": {
+  "findings": [
+   {
+    "box_2d": [
+     656,
+     673,
+     727,
+     691
+    ],
+    "label": "刮痕",
+    "severity": "medium",
+    "confidence": 0.92,
+    "description": "後保險桿右側反光片旁稜線處新增一條擦傷刮痕"
+   }
+  ],
+  "summary": "比對發現還車照中後保險桿右側新增一處明顯垂直擦傷刮痕。"
+ },
+ "RFB5176-右後": {
+  "findings": [
+   {
+    "box_2d": [
+     476,
+     416,
+     529,
+     611
+    ],
+    "label": "刮痕",
+    "severity": "medium",
+    "confidence": 0.95,
+    "description": "後保險桿右側有明顯藍色擦傷痕跡"
+   },
+   {
+    "box_2d": [
+     531,
+     217,
+     564,
+     296
+    ],
+    "label": "破損",
+    "severity": "low",
+    "confidence": 0.88,
+    "description": "後保險桿拖車孔蓋邊緣裂開移位"
+   }
+  ],
+  "summary": "還車時後保險桿右後方新增明顯藍色擦傷及拖車孔蓋移位痕跡。"
+ },
+ "RFH8122-右後": {
+  "findings": [
+   {
+    "box_2d": [
+     689,
+     406,
+     708,
+     458
+    ],
+    "label": "刮痕",
+    "severity": "medium",
+    "confidence": 0.94,
+    "description": "後保險桿右下側反光片旁新增擦傷刮痕"
+   }
+  ],
+  "summary": "比對發現還車時後保險桿右側下緣（反光片右側）新增擦傷刮痕。"
+ },
+ "RFH8122-左後": {
+  "findings": [
+   {
+    "box_2d": [
+     734,
+     331,
+     769,
+     363
+    ],
+    "label": "刮痕",
+    "severity": "medium",
+    "confidence": 0.92,
+    "description": "後保險桿左側邊緣（左後輪後方）新增黑色擦傷刮痕"
+   }
+  ],
+  "summary": "比對發現後保險桿左側輪拱後方新增一處擦傷刮痕。"
+ },
+ "RCR-7661-左後": {
+  "findings": [
+   {
+    "box_2d": [
+     458,
+     47,
+     536,
+     574
+    ],
+    "label": "刮痕與凹陷",
+    "severity": "high",
+    "confidence": 0.96,
+    "description": "左後葉子板輪拱上方大面積擦撞刮痕與鈑件凹陷"
+   },
+   {
+    "box_2d": [
+     508,
+     527,
+     706,
+     950
+    ],
+    "label": "破損與擦傷",
+    "severity": "high",
+    "confidence": 0.98,
+    "description": "左後保險桿嚴重擦撞磨損且接縫處脫開變形"
+   },
+   {
+    "box_2d": [
+     590,
+     173,
+     742,
+     438
+    ],
+    "label": "刮痕",
+    "severity": "medium",
+    "confidence": 0.9,
+    "description": "左後輪圈擦傷黑痕"
+   }
+  ],
+  "summary": "還車時車輛左後側（葉子板、保險桿及輪圈）新增嚴重擦撞造成的凹陷、大面積刮傷及保桿脫位損壞。"
+ },
+ "RCW-8382-左前": {
+  "findings": [
+   {
+    "box_2d": [
+     329,
+     88,
+     637,
+     595
+    ],
+    "label": "凹陷",
+    "severity": "high",
+    "confidence": 0.98,
+    "description": "引擎蓋前緣嚴重撞擊凹折變形"
+   },
+   {
+    "box_2d": [
+     463,
+     94,
+     738,
+     504
+    ],
+    "label": "破損",
+    "severity": "high",
+    "confidence": 0.98,
+    "description": "前保險桿上方擠壓變形且近大燈處破裂"
+   }
+  ],
+  "summary": "還車時發現車頭正面發生嚴重碰撞，引擎蓋前緣凹折翹起且前保險桿破裂變形。"
+ },
+ "RCW-9206-左前": {
+  "findings": [
+   {
+    "box_2d": [
+     538,
+     210,
+     591,
+     240
+    ],
+    "label": "破損",
+    "severity": "medium",
+    "confidence": 0.95,
+    "description": "右前大燈下方保險桿表面有垂直裂痕破損"
+   }
+  ],
+  "summary": "還車時發現右前大燈下方保險桿處新增一處裂痕破損。"
+ },
+ "RDH-2261-左後": {
+  "findings": [
+   {
+    "box_2d": [
+     472,
+     358,
+     654,
+     669
+    ],
+    "label": "嚴重撞傷破損",
+    "severity": "high",
+    "confidence": 0.99,
+    "description": "左後保險桿與葉子板處嚴重撞擊碎裂破損，表面被白色膠帶黏貼"
+   }
+  ],
+  "summary": "還車照左後方保險桿與葉子板處新增嚴重撞擊破裂損傷，借車照完好。"
+ },
+ "RDJ-0772-左前": {
+  "findings": [
+   {
+    "box_2d": [
+     287,
+     187,
+     725,
+     816
+    ],
+    "label": "嚴重碰撞變形破裂",
+    "severity": "high",
+    "confidence": 0.99,
+    "description": "右前車頭（引擎蓋、右大燈、前保險桿及葉子板）嚴重撞擊凹陷變形破裂與刮損"
+   }
+  ],
+  "summary": "還車時右前車頭（引擎蓋、大燈、前保桿）新增嚴重碰撞變形與破裂毀損。"
+ },
+ "RDJ-0793-左前": {
+  "findings": [
+   {
+    "box_2d": [
+     632,
+     170,
+     918,
+     523
+    ],
+    "label": "凹陷破損",
+    "severity": "high",
+    "confidence": 0.98,
+    "description": "右前保險桿及葉子板處嚴重撞擊凹陷、變形與破裂"
+   }
+  ],
+  "summary": "還車照發現右前方保險桿與葉子板有明顯新增之嚴重撞擊凹陷與破損。"
+ },
+ "RDL-5171-左前": {
+  "findings": [
+   {
+    "box_2d": [
+     426,
+     210,
+     553,
+     790
+    ],
+    "label": "凹陷",
+    "severity": "high",
+    "confidence": 0.98,
+    "description": "引擎蓋前緣嚴重擠壓變形隆起"
+   },
+   {
+    "box_2d": [
+     521,
+     337,
+     723,
+     870
+    ],
+    "label": "破損",
+    "severity": "high",
+    "confidence": 0.99,
+    "description": "前保險桿、水箱護罩及下進氣壩嚴重撞擊破裂變形"
+   },
+   {
+    "box_2d": [
+     508,
+     144,
+     576,
+     216
+    ],
+    "label": "凹陷",
+    "severity": "medium",
+    "confidence": 0.92,
+    "description": "右前葉子板前端接合處擠壓變形"
+   }
+  ],
+  "summary": "還車時車頭發生嚴重撞擊事故，前保險桿與下氣壩破裂碎損，引擎蓋及右前葉子板嚴重凹陷變形。"
+ },
+ "RDL-7836-左後": {
+  "findings": [
+   {
+    "box_2d": [
+     438,
+     138,
+     724,
+     904
+    ],
+    "label": "嚴重撞擊毀損",
+    "severity": "high",
+    "confidence": 0.98,
+    "description": "後保險桿嚴重撞擊凹陷、脫落變形"
+   }
+  ],
+  "summary": "還車照發現後保險桿左側至中間有嚴重撞擊導致的大面積凹陷與卡榫脫落損壞。"
+ },
+ "RDL-8265-右後": {
+  "findings": [
+   {
+    "box_2d": [
+     584,
+     400,
+     633,
+     518
+    ],
+    "label": "凹陷",
+    "severity": "high",
+    "confidence": 0.95,
+    "description": "後尾門 iRent 標誌處鈑金凹陷變形"
+   }
+  ],
+  "summary": "還車時發現後尾門 iRent 標誌處有新增的明顯撞擊凹陷。"
+ },
+ "RDL-9262-右前": {
+  "findings": [
+   {
+    "box_2d": [
+     471,
+     625,
+     545,
+     804
+    ],
+    "label": "刮痕",
+    "severity": "medium",
+    "confidence": 0.95,
+    "description": "左前保險桿大燈下方處有新增黃色擦傷刮痕"
+   }
+  ],
+  "summary": "還車時比借車時在左前保險桿處新增一處黃色擦碰刮痕。"
+ },
+ "RDQ-1950-右後": {
+  "findings": [
+   {
+    "box_2d": [
+     483,
+     160,
+     834,
+     620
+    ],
+    "label": "嚴重凹陷/擦傷",
+    "severity": "high",
+    "confidence": 0.98,
+    "description": "後尾門右下方與後保險桿右側大面積撞擊嚴重凹陷變形及刮傷"
+   }
+  ],
+  "summary": "還車照發現車尾右側後保險桿與尾門有明顯新增的嚴重撞擊凹陷與刮損。"
+ },
+ "RDU-6956-右前": {
+  "findings": [
+   {
+    "box_2d": [
+     525,
+     311,
+     808,
+     819
+    ],
+    "label": "破損/脫開",
+    "severity": "high",
+    "confidence": 0.98,
+    "description": "左前保險桿嚴重破裂且卡榫斷裂脫開外翻"
+   }
+  ],
+  "summary": "還車時發現左前方保險桿有嚴重破裂與脫落損傷。"
+ },
+ "RDX-1085-右前": {
+  "findings": [
+   {
+    "box_2d": [
+     377,
+     81,
+     515,
+     217
+    ],
+    "label": "刮痕",
+    "severity": "medium",
+    "confidence": 0.92,
+    "description": "前保險桿右下側（車牌右方視角左側）有明顯擦傷刮痕及異物附著"
+   }
+  ],
+  "summary": "還車時前保險桿右前方下緣處檢測到新增擦傷痕跡。"
+ },
+ "RDX-2376-右後": {
+  "findings": [
+   {
+    "box_2d": [
+     710,
+     474,
+     737,
+     513
+    ],
+    "label": "刮痕",
+    "severity": "medium",
+    "confidence": 0.92,
+    "description": "右後輪拱上方鈑金刮痕"
+   }
+  ],
+  "summary": "還車照於右後輪拱上方鈑金新增一道明顯刮痕。"
+ },
+ "RDY-6382-左前": {
+  "findings": [],
+  "summary": "經比對借還車照片，未發現車身外觀有新增的刮痕、凹陷或破損等車損。"
+ },
+ "RFB-2091-右前": {
+  "findings": [
+   {
+    "box_2d": [
+     207,
+     0,
+     484,
+     856
+    ],
+    "label": "凹陷變形",
+    "severity": "high",
+    "confidence": 0.99,
+    "description": "引擎蓋前段嚴重撞擊凹陷變形隆起"
+   }
+  ],
+  "summary": "還車時發現車頭引擎蓋有嚴重撞擊凹陷變形。"
+ },
+ "RFB-2091-左前": {
+  "findings": [
+   {
+    "box_2d": [
+     361,
+     383,
+     526,
+     998
+    ],
+    "label": "嚴重凹陷變形",
+    "severity": "high",
+    "confidence": 0.99,
+    "description": "引擎蓋嚴重撞擊扭曲隆起變形"
+   },
+   {
+    "box_2d": [
+     479,
+     343,
+     587,
+     782
+    ],
+    "label": "破裂破損",
+    "severity": "high",
+    "confidence": 0.98,
+    "description": "右前大燈組撞擊破裂位移"
+   },
+   {
+    "box_2d": [
+     535,
+     347,
+     760,
+     752
+    ],
+    "label": "嚴重凹陷破損",
+    "severity": "high",
+    "confidence": 0.99,
+    "description": "右前保險桿嚴重撞擊凹陷變形"
+   },
+   {
+    "box_2d": [
+     537,
+     715,
+     737,
+     998
+    ],
+    "label": "破損碎裂",
+    "severity": "high",
+    "confidence": 0.98,
+    "description": "前進氣格柵/水箱護罩撞擊碎裂"
+   }
+  ],
+  "summary": "還車時右前方至前車頭有嚴重車禍撞擊損傷，包含引擎蓋、右前大燈、前保險桿及水箱護罩嚴重破損變形。"
+ },
+ "RFD-0332-右前": {
+  "findings": [
+   {
+    "box_2d": [
+     430,
+     185,
+     529,
+     864
+    ],
+    "label": "凹陷",
+    "severity": "high",
+    "confidence": 0.98,
+    "description": "引擎蓋左前側嚴重撞擊折曲凹陷"
+   },
+   {
+    "box_2d": [
+     524,
+     185,
+     815,
+     870
+    ],
+    "label": "破損",
+    "severity": "high",
+    "confidence": 0.98,
+    "description": "前保險桿左側嚴重擦傷凹陷與卡榫脫開位移"
+   },
+   {
+    "box_2d": [
+     308,
+     834,
+     542,
+     1000
+    ],
+    "label": "凹陷",
+    "severity": "high",
+    "confidence": 0.95,
+    "description": "左前葉子板擠壓變形翹起"
+   }
+  ],
+  "summary": "還車時車輛左前方發生嚴重碰撞，引擎蓋、前保險桿及左前葉子板均有顯著凹陷、刮傷與結構移位受損。"
+ },
+ "F2-RDE-0160-front": {
+  "findings": [],
+  "summary": "車內方向盤及儀表台區域乾淨整潔，未發現明顯髒污或遺留垃圾。"
+ },
+ "F2-RDU-9710-rear": {
+  "findings": [
+   {
+    "box_2d": [
+     237,
+     723,
+     252,
+     826
+    ],
+    "label": "遺留垃圾",
+    "severity": "low",
+    "confidence": 0.95,
+    "description": "右後車門內側把手置物槽遺留白色衛生紙"
+   }
+  ],
+  "summary": "車內後座整體乾淨，僅右後門把手置物槽處有一團遺留的白色衛生紙需清理。"
+ },
+ "F2-RDK-0263-rear": {
+  "findings": [
+   {
+    "box_2d": [
+     488,
+     511,
+     527,
+     597
+    ],
+    "label": "食物殘渣",
+    "severity": "medium",
+    "confidence": 0.93,
+    "description": "後座中間至右側椅背底部有散落的白色碎屑"
+   },
+   {
+    "box_2d": [
+     434,
+     76,
+     663,
+     314
+    ],
+    "label": "液體污漬",
+    "severity": "medium",
+    "confidence": 0.88,
+    "description": "後座左側椅背表面有明顯液體水漬浸潤痕跡"
+   }
+  ],
+  "summary": "後座檢測到白色散落碎屑及左側椅背大面積液體浸潤水漬，建議清理。"
+ }
+}
