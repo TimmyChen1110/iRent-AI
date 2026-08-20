@@ -45,9 +45,9 @@
 
 ```bash
 pip install google-genai pillow opencv-python pydantic
-echo "你的GEMINI_KEY" > pipeline/.gemini_key   # 金鑰已被 .gitignore 排除
+echo "你的GEMINI_KEY" > 環節二_還車影像AI辨識/pipeline/.gemini_key   # 金鑰已被 .gitignore 排除
 
-cd pipeline
+cd 環節二_還車影像AI辨識/pipeline
 python3 build_pairs.py                          # 建立借/還配對
 python3 run_eval_gemini.py --model gemini-3.7-flash --tag v3 --fewshot --include-alt
 python3 run_cascade.py eval_results_gemini_37_flash_v3.json   # Pro 級聯複核
