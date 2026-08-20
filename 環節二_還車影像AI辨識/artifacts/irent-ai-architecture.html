@@ -294,7 +294,7 @@
 <!-- ================= 04 ================= -->
 <section>
   <div class="sec-head"><span class="sec-num">04</span><h2>混合式辨識 Pipeline</h2></div>
-  <p class="sec-lede">傳統 CV 負責「便宜且確定性高」的前處理與過濾，VLM（視覺語言模型）只在有嫌疑時出手做最終判定——兼顧成本、速度與可解釋性。</p>
+  <p class="sec-lede">混合式的分工原則：<strong>CV 管「看得清楚嗎」，VLM 管「看到了什麼」</strong>。傳統 CV 負責便宜且確定性高的前處理與品質把關（EXIF 轉正、模糊/曝光檢核），語意判斷交給 VLM，並以「輕量快篩 → 高階複核」的模型級聯控制成本與誤報。<em class="hl">注意：原設計由 CV 擔任「過濾層」，經 141 組實測推翻後改為 VLM 快篩</em>（見本節下方實測修正）。</p>
 
   <h3>七步全景：一張還車照片的旅程</h3>
   <div style="display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 6px">
