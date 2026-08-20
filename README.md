@@ -16,24 +16,29 @@
 
 關鍵工程發現：76% 照片帶未套用的 EXIF 旋轉（轉正 +10pp recall）；傳統 CV 差異偵測（ORB+SSIM）被實測推翻（手持照對齊成功率僅 45%），架構因此修正為 **VLM 模型級聯**（Flash 全量快篩 → 疑似案件升級 Pro 三票多數決）。
 
-## 專案結構
+## 專案結構（對應比賽三環節）
 
 ```
-├── iRent - 運用 AI 打造 iRent 智能車況管家…/   # 原始資料集
-│   ├── 沒有進行索賠/           # 負樣本：30 台車 × 4 方位借/還配對（240 張）
-│   ├── 進行索賠資料/           # 正樣本：28 台車爭議方位配對（53 張）
-│   ├── 車外車內照片上傳清單.xlsx  # 真實上傳 log：27,367 筆 / 4,820 單
-│   └── 取車/還車流程圖.png
-├── pipeline/                    # 辨識與評測程式
-│   ├── build_pairs.py           # 檔名解析 → 借/還配對（120 負 + 21 正）
-│   ├── run_eval_gemini.py       # 車損判定評測（EXIF 轉正、few-shot、還2、斷點續跑）
-│   ├── run_cascade.py           # Pro 級聯複核（低信心/無法比對升級、多數決）
-│   ├── classify_interior.py     # F2 車內整潔三級分類（Blob 下載 80 張實測）
-│   ├── analyze_eval.py          # 混淆矩陣 / FP·FN 個案 / 門檻掃描
-│   ├── cv_prefilter.py          # 傳統 CV 方案（實測後推翻，保留為證據）
-│   ├── relabels.json            # 141 組逐圖重標結果（含二次複驗依據）
-│   └── eval_results_*.json      # 各輪評測完整結果
-└── Timmy_Project_Report/        # 簡報（presentation.pptx）、講稿、Demo script、Q&A
+├── 環節一_拍攝即時防呆/          # 拍照當下的品質檢核（規劃中，見資料夾 README）
+├── 環節二_還車影像AI辨識/        # ★ 本次主要交付
+│   ├── pipeline/                # 辨識與評測程式
+│   │   ├── build_pairs.py       # 檔名解析 → 借/還配對（120 負 + 21 正）
+│   │   ├── run_eval_gemini.py   # 車損判定評測（EXIF 轉正、few-shot、還2、斷點續跑）
+│   │   ├── run_cascade.py       # Pro 級聯複核（低信心/無法比對升級、多數決）
+│   │   ├── classify_interior.py # F2 車內整潔三級分類（Blob 下載 80 張實測）
+│   │   ├── annotate_damage.py   # 損傷/髒污視覺標註（紅框+中文說明）
+│   │   ├── batch_annotate.py    # Dashboard 標註框批次產生
+│   │   ├── analyze_eval.py      # 混淆矩陣 / FP·FN 個案 / 門檻掃描
+│   │   ├── cv_prefilter.py      # 傳統 CV 方案（實測後推翻，保留為證據）
+│   │   ├── relabels.json        # 141 組逐圖重標結果（含二次複驗依據）
+│   │   └── eval_results_*.json  # 各輪評測完整結果
+│   └── Timmy_Project_Report/    # 簡報（presentation.pptx）、講稿、Demo script、Q&A
+├── 環節三_營運通知與整備/        # 複核後台已具雛形，流程設計中（見資料夾 README）
+└── iRent - 運用 AI 打造 iRent 智能車況管家…/   # 共用原始資料集
+    ├── 沒有進行索賠/            # 負樣本：30 台車 × 4 方位借/還配對（240 張）
+    ├── 進行索賠資料/            # 正樣本：28 台車爭議方位配對（53 張）
+    ├── 車外車內照片上傳清單.xlsx  # 真實上傳 log：27,367 筆 / 4,820 單
+    └── 取車/還車流程圖.png
 ```
 
 ## 快速開始

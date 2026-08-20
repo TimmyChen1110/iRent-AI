@@ -14,7 +14,7 @@ import re
 import sys
 from pathlib import Path
 
-DATA_ROOT = Path(__file__).resolve().parent.parent / "iRent - 運用 AI 打造 iRent 智能車況管家：優化租還車體驗與營運效率"
+DATA_ROOT = Path(__file__).resolve().parents[2] / "iRent - 運用 AI 打造 iRent 智能車況管家：優化租還車體驗與營運效率"
 NEG_DIR = DATA_ROOT / "沒有進行索賠"
 POS_DIR = DATA_ROOT / "進行索賠資料"
 OUT = Path(__file__).resolve().parent / "pairs.json"

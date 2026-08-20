@@ -101,7 +101,7 @@ def prep_image(path: str, max_w: int = 1280) -> bytes:
 
 
 # Few-shot 損傷樣態參考照：取自「車況回報」特寫（該 8 台車無借/還配對，與評測集零重疊）
-DATA_ROOT = HERE.parent / "iRent - 運用 AI 打造 iRent 智能車況管家：優化租還車體驗與營運效率"
+DATA_ROOT = HERE.parents[1] / "iRent - 運用 AI 打造 iRent 智能車況管家：優化租還車體驗與營運效率"
 FEWSHOT = [
     DATA_ROOT / "進行索賠資料" / "RDA-7093 車況回報.jfif",
     DATA_ROOT / "進行索賠資料" / "RDE-9932 車況回報.jfif",
