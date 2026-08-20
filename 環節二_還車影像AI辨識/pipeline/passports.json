@@ -1,0 +1,1617 @@
+{
+ "RCG2235": {
+  "car": "RCG2235",
+  "records": [
+   {
+    "id": "D-001",
+    "kind": "new",
+    "status": "open",
+    "angle": "右後",
+    "location": "右後保險桿（右後反光片右側）",
+    "type": "刮痕",
+    "severity": "medium",
+    "confidence": 0.85,
+    "box_2d": [
+     656,
+     673,
+     727,
+     691
+    ],
+    "reasoning": "還車照中右後反光片右側折線處出現一條明顯的縱向黑色刮痕/擦傷，借車照中該位置表面完整無此痕跡。",
+    "first_seen": {
+     "order": "BATCH-2026-04",
+     "time": "2026-04（資料集批次）",
+     "source": "還車判定"
+    },
+    "evidence_case": "RCG2235-右後",
+    "verified": true,
+    "liable_order": "BATCH-2026-04"
+   },
+   {
+    "id": "D-002",
+    "kind": "pre_existing",
+    "status": "open",
+    "angle": "右後",
+    "location": "後保桿右下底緣有輕微舊擦痕。",
+    "type": "既有損傷",
+    "severity": "record",
+    "confidence": null,
+    "box_2d": null,
+    "reasoning": "後保桿右下底緣有輕微舊擦痕。",
+    "first_seen": {
+     "order": "早於觀測期",
+     "time": "借車照已存在",
+     "source": "借車照登錄"
+    },
+    "evidence_case": "RCG2235-右後",
+    "verified": false,
+    "liable_order": "前期（觀測期前）"
+   },
+   {
+    "id": "D-003",
+    "kind": "pre_existing",
+    "status": "open",
+    "angle": "左後",
+    "location": "後保險桿左下角反光片下方邊緣有些微既有擦痕，後保桿表面有既有輕微髒污痕跡",
+    "type": "既有損傷",
+    "severity": "record",
+    "confidence": null,
+    "box_2d": null,
+    "reasoning": "後保險桿左下角反光片下方邊緣有些微既有擦痕，後保桿表面有既有輕微髒污痕跡",
+    "first_seen": {
+     "order": "早於觀測期",
+     "time": "借車照已存在",
+     "source": "借車照登錄"
+    },
+    "evidence_case": "RCG2235-左後",
+    "verified": false,
+    "liable_order": "前期（觀測期前）"
+   }
+  ],
+  "open_new": 1,
+  "pre_existing": 2,
+  "real_orders": {}
+ },
+ "RCQ6760": {
+  "car": "RCQ6760",
+  "records": [
+   {
+    "id": "D-001",
+    "kind": "pre_existing",
+    "status": "open",
+    "angle": "左後",
+    "location": "後保險桿左側黑色下護板處有既有擦傷刮痕",
+    "type": "既有損傷",
+    "severity": "record",
+    "confidence": null,
+    "box_2d": null,
+    "reasoning": "後保險桿左側黑色下護板處有既有擦傷刮痕",
+    "first_seen": {
+     "order": "早於觀測期",
+     "time": "借車照已存在",
+     "source": "借車照登錄"
+    },
+    "evidence_case": "RCQ6760-左後",
+    "verified": false,
+    "liable_order": "前期（觀測期前）"
+   }
+  ],
+  "open_new": 0,
+  "pre_existing": 1,
+  "real_orders": {}
+ },
+ "RCW1883": {
+  "car": "RCW1883",
+  "records": [
+   {
+    "id": "D-001",
+    "kind": "pre_existing",
+    "status": "open",
+    "angle": "右後",
+    "location": "後保險桿右下緣（反光片下方）有既有的白色磨損擦傷痕跡",
+    "type": "既有損傷",
+    "severity": "record",
+    "confidence": null,
+    "box_2d": null,
+    "reasoning": "後保險桿右下緣（反光片下方）有既有的白色磨損擦傷痕跡",
+    "first_seen": {
+     "order": "早於觀測期",
+     "time": "借車照已存在",
+     "source": "借車照登錄"
+    },
+    "evidence_case": "RCW1883-右後",
+    "verified": false,
+    "liable_order": "前期（觀測期前）"
+   }
+  ],
+  "open_new": 0,
+  "pre_existing": 1,
+  "real_orders": {}
+ },
+ "RDG8571": {
+  "car": "RDG8571",
+  "records": [
+   {
+    "id": "D-001",
+    "kind": "pre_existing",
+    "status": "open",
+    "angle": "右後",
+    "location": "右後保險桿下緣（反光片下方邊緣）有既有擦傷掉漆痕跡",
+    "type": "既有損傷",
+    "severity": "record",
+    "confidence": null,
+    "box_2d": null,
+    "reasoning": "右後保險桿下緣（反光片下方邊緣）有既有擦傷掉漆痕跡",
+    "first_seen": {
+     "order": "早於觀測期",
+     "time": "借車照已存在",
+     "source": "借車照登錄"
+    },
+    "evidence_case": "RDG8571-右後",
+    "verified": false,
+    "liable_order": "前期（觀測期前）"
+   },
+   {
+    "id": "D-002",
+    "kind": "pre_existing",
+    "status": "open",
+    "angle": "左後",
+    "location": "後保險桿左下緣（左側反光片下方）有輕微既有擦痕",
+    "type": "既有損傷",
+    "severity": "record",
+    "confidence": null,
+    "box_2d": null,
+    "reasoning": "後保險桿左下緣（左側反光片下方）有輕微既有擦痕",
+    "first_seen": {
+     "order": "早於觀測期",
+     "time": "借車照已存在",
+     "source": "借車照登錄"
+    },
+    "evidence_case": "RDG8571-左後",
+    "verified": false,
+    "liable_order": "前期（觀測期前）"
+   }
+  ],
+  "open_new": 0,
+  "pre_existing": 2,
+  "real_orders": {}
+ },
+ "RDG9853": {
+  "car": "RDG9853",
+  "records": [
+   {
+    "id": "D-001",
+    "kind": "pre_existing",
+    "status": "open",
+    "angle": "右後",
+    "location": "後保險桿右下緣（反光片旁）有既有擦傷刮痕，尾門銘牌上方有既有淡痕",
+    "type": "既有損傷",
+    "severity": "record",
+    "confidence": null,
+    "box_2d": null,
+    "reasoning": "後保險桿右下緣（反光片旁）有既有擦傷刮痕，尾門銘牌上方有既有淡痕",
+    "first_seen": {
+     "order": "早於觀測期",
+     "time": "借車照已存在",
+     "source": "借車照登錄"
+    },
+    "evidence_case": "RDG9853-右後",
+    "verified": false,
+    "liable_order": "前期（觀測期前）"
+   },
+   {
+    "id": "D-002",
+    "kind": "pre_existing",
+    "status": "open",
+    "angle": "左前",
+    "location": "引擎蓋中央處有既有輕微點狀髒污",
+    "type": "既有損傷",
+    "severity": "record",
+    "confidence": null,
+    "box_2d": null,
+    "reasoning": "引擎蓋中央處有既有輕微點狀髒污",
+    "first_seen": {
+     "order": "早於觀測期",
+     "time": "借車照已存在",
+     "source": "借車照登錄"
+    },
+    "evidence_case": "RDG9853-左前",
+    "verified": false,
+    "liable_order": "前期（觀測期前）"
+   }
+  ],
+  "open_new": 0,
+  "pre_existing": 2,
+  "real_orders": {}
+ },
+ "RDL7832": {
+  "car": "RDL7832",
+  "records": [
+   {
+    "id": "D-001",
+    "kind": "pre_existing",
+    "status": "open",
+    "angle": "右前",
+    "location": "前保桿左側（畫面右側）霧燈飾條上方有既有黃褐色擦傷痕跡",
+    "type": "既有損傷",
+    "severity": "record",
+    "confidence": null,
+    "box_2d": null,
+    "reasoning": "前保桿左側（畫面右側）霧燈飾條上方有既有黃褐色擦傷痕跡",
+    "first_seen": {
+     "order": "早於觀測期",
+     "time": "借車照已存在",
+     "source": "借車照登錄"
+    },
+    "evidence_case": "RDL7832-右前",
+    "verified": false,
+    "liable_order": "前期（觀測期前）"
+   },
+   {
+    "id": "D-002",
+    "kind": "pre_existing",
+    "status": "open",
+    "angle": "右後",
+    "location": "右後保險桿側面邊緣處有數點既有的小刮痕與掉漆點",
+    "type": "既有損傷",
+    "severity": "record",
+    "confidence": null,
+    "box_2d": null,
+    "reasoning": "右後保險桿側面邊緣處有數點既有的小刮痕與掉漆點",
+    "first_seen": {
+     "order": "早於觀測期",
+     "time": "借車照已存在",
+     "source": "借車照登錄"
+    },
+    "evidence_case": "RDL7832-右後",
+    "verified": false,
+    "liable_order": "前期（觀測期前）"
+   },
+   {
+    "id": "D-003",
+    "kind": "pre_existing",
+    "status": "open",
+    "angle": "左前",
+    "location": "左前保桿下緣角落有既有擦傷擦痕",
+    "type": "既有損傷",
+    "severity": "record",
+    "confidence": null,
+    "box_2d": null,
+    "reasoning": "左前保桿下緣角落有既有擦傷擦痕",
+    "first_seen": {
+     "order": "早於觀測期",
+     "time": "借車照已存在",
+     "source": "借車照登錄"
+    },
+    "evidence_case": "RDL7832-左前",
+    "verified": false,
+    "liable_order": "前期（觀測期前）"
+   }
+  ],
+  "open_new": 0,
+  "pre_existing": 3,
+  "real_orders": {}
+ },
+ "RDQ5916": {
+  "car": "RDQ5916",
+  "records": [
+   {
+    "id": "D-001",
+    "kind": "pre_existing",
+    "status": "open",
+    "angle": "左前",
+    "location": "前保桿右下方（霧燈下方與下唇處）有既有擦傷掉漆痕跡",
+    "type": "既有損傷",
+    "severity": "record",
+    "confidence": null,
+    "box_2d": null,
+    "reasoning": "前保桿右下方（霧燈下方與下唇處）有既有擦傷掉漆痕跡",
+    "first_seen": {
+     "order": "早於觀測期",
+     "time": "借車照已存在",
+     "source": "借車照登錄"
+    },
+    "evidence_case": "RDQ5916-左前",
+    "verified": false,
+    "liable_order": "前期（觀測期前）"
+   }
+  ],
+  "open_new": 0,
+  "pre_existing": 1,
+  "real_orders": {
+   "47341241": "2026-04-22 13:15"
+  }
+ },
+ "RDR6350": {
+  "car": "RDR6350",
+  "records": [
+   {
+    "id": "D-001",
+    "kind": "pre_existing",
+    "status": "open",
+    "angle": "左後",
+    "location": "後保險桿及車身表面有雨水漬痕與泥沙髒污，兩照比對無明顯新增車損。",
+    "type": "既有損傷",
+    "severity": "record",
+    "confidence": null,
+    "box_2d": null,
+    "reasoning": "後保險桿及車身表面有雨水漬痕與泥沙髒污，兩照比對無明顯新增車損。",
+    "first_seen": {
+     "order": "早於觀測期",
+     "time": "借車照已存在",
+     "source": "借車照登錄"
+    },
+    "evidence_case": "RDR6350-左後",
+    "verified": false,
+    "liable_order": "前期（觀測期前）"
+   }
+  ],
+  "open_new": 0,
+  "pre_existing": 1,
+  "real_orders": {}
+ },
+ "RDU-7390": {
+  "car": "RDU-7390",
+  "records": [
+   {
+    "id": "D-001",
+    "kind": "pre_existing",
+    "status": "open",
+    "angle": "右前",
+    "location": "引擎蓋表面有少許微小髒污斑點，兩照皆相同存在",
+    "type": "既有損傷",
+    "severity": "record",
+    "confidence": null,
+    "box_2d": null,
+    "reasoning": "引擎蓋表面有少許微小髒污斑點，兩照皆相同存在",
+    "first_seen": {
+     "order": "早於觀測期",
+     "time": "借車照已存在",
+     "source": "借車照登錄"
+    },
+    "evidence_case": "RDU-7390-右前",
+    "verified": false,
+    "liable_order": "前期（觀測期前）"
+   },
+   {
+    "id": "D-002",
+    "kind": "pre_existing",
+    "status": "open",
+    "angle": "左前",
+    "location": "左前輪拱上方邊緣及前保險桿處有微小舊擦痕與髒污點，兩照皆已存在",
+    "type": "既有損傷",
+    "severity": "record",
+    "confidence": null,
+    "box_2d": null,
+    "reasoning": "左前輪拱上方邊緣及前保險桿處有微小舊擦痕與髒污點，兩照皆已存在",
+    "first_seen": {
+     "order": "早於觀測期",
+     "time": "借車照已存在",
+     "source": "借車照登錄"
+    },
+    "evidence_case": "RDU-7390-左前",
+    "verified": false,
+    "liable_order": "前期（觀測期前）"
+   }
+  ],
+  "open_new": 0,
+  "pre_existing": 2,
+  "real_orders": {
+   "47344100": "2026-04-22 13:59"
+  }
+ },
+ "RDW-7085": {
+  "car": "RDW-7085",
+  "records": [
+   {
+    "id": "D-001",
+    "kind": "pre_existing",
+    "status": "open",
+    "angle": "右前",
+    "location": "左前霧燈上方保桿處有細微舊刮痕與點狀小掉漆，兩張照片皆存在",
+    "type": "既有損傷",
+    "severity": "record",
+    "confidence": null,
+    "box_2d": null,
+    "reasoning": "左前霧燈上方保桿處有細微舊刮痕與點狀小掉漆，兩張照片皆存在",
+    "first_seen": {
+     "order": "早於觀測期",
+     "time": "借車照已存在",
+     "source": "借車照登錄"
+    },
+    "evidence_case": "RDW-7085-右前",
+    "verified": false,
+    "liable_order": "前期（觀測期前）"
+   },
+   {
+    "id": "D-002",
+    "kind": "pre_existing",
+    "status": "open",
+    "angle": "右後",
+    "location": "右後保桿下緣處有細微黑痕與髒污",
+    "type": "既有損傷",
+    "severity": "record",
+    "confidence": null,
+    "box_2d": null,
+    "reasoning": "右後保桿下緣處有細微黑痕與髒污",
+    "first_seen": {
+     "order": "早於觀測期",
+     "time": "借車照已存在",
+     "source": "借車照登錄"
+    },
+    "evidence_case": "RDW-7085-右後",
+    "verified": false,
+    "liable_order": "前期（觀測期前）"
+   },
+   {
+    "id": "D-003",
+    "kind": "pre_existing",
+    "status": "open",
+    "angle": "左前",
+    "location": "前保險桿下唇邊緣有輕微既有磨損擦痕",
+    "type": "既有損傷",
+    "severity": "record",
+    "confidence": null,
+    "box_2d": null,
+    "reasoning": "前保險桿下唇邊緣有輕微既有磨損擦痕",
+    "first_seen": {
+     "order": "早於觀測期",
+     "time": "借車照已存在",
+     "source": "借車照登錄"
+    },
+    "evidence_case": "RDW-7085-左前",
+    "verified": false,
+    "liable_order": "前期（觀測期前）"
+   }
+  ],
+  "open_new": 0,
+  "pre_existing": 3,
+  "real_orders": {}
+ },
+ "RDZ-9006": {
+  "car": "RDZ-9006",
+  "records": [
+   {
+    "id": "D-001",
+    "kind": "pre_existing",
+    "status": "open",
+    "angle": "右後",
+    "location": "後保險桿右下角（反光片下方邊緣）存在既有擦傷刮痕",
+    "type": "既有損傷",
+    "severity": "record",
+    "confidence": null,
+    "box_2d": null,
+    "reasoning": "後保險桿右下角（反光片下方邊緣）存在既有擦傷刮痕",
+    "first_seen": {
+     "order": "早於觀測期",
+     "time": "借車照已存在",
+     "source": "借車照登錄"
+    },
+    "evidence_case": "RDZ-9006-右後",
+    "verified": false,
+    "liable_order": "前期（觀測期前）"
+   },
+   {
+    "id": "D-002",
+    "kind": "pre_existing",
+    "status": "open",
+    "angle": "左前",
+    "location": "前保險桿左側大燈下方有輕微點狀髒污與細微舊痕",
+    "type": "既有損傷",
+    "severity": "record",
+    "confidence": null,
+    "box_2d": null,
+    "reasoning": "前保險桿左側大燈下方有輕微點狀髒污與細微舊痕",
+    "first_seen": {
+     "order": "早於觀測期",
+     "time": "借車照已存在",
+     "source": "借車照登錄"
+    },
+    "evidence_case": "RDZ-9006-左前",
+    "verified": false,
+    "liable_order": "前期（觀測期前）"
+   },
+   {
+    "id": "D-003",
+    "kind": "pre_existing",
+    "status": "open",
+    "angle": "左後",
+    "location": "油箱蓋周圍及後保險桿表面有少許微小使用痕跡與髒污",
+    "type": "既有損傷",
+    "severity": "record",
+    "confidence": null,
+    "box_2d": null,
+    "reasoning": "油箱蓋周圍及後保險桿表面有少許微小使用痕跡與髒污",
+    "first_seen": {
+     "order": "早於觀測期",
+     "time": "借車照已存在",
+     "source": "借車照登錄"
+    },
+    "evidence_case": "RDZ-9006-左後",
+    "verified": false,
+    "liable_order": "前期（觀測期前）"
+   }
+  ],
+  "open_new": 0,
+  "pre_existing": 3,
+  "real_orders": {}
+ },
+ "RDZ7922": {
+  "car": "RDZ7922",
+  "records": [
+   {
+    "id": "D-001",
+    "kind": "pre_existing",
+    "status": "open",
+    "angle": "右前",
+    "location": "前保險桿右下方邊緣有既有擦傷刮痕",
+    "type": "既有損傷",
+    "severity": "record",
+    "confidence": null,
+    "box_2d": null,
+    "reasoning": "前保險桿右下方邊緣有既有擦傷刮痕",
+    "first_seen": {
+     "order": "早於觀測期",
+     "time": "借車照已存在",
+     "source": "借車照登錄"
+    },
+    "evidence_case": "RDZ7922-右前",
+    "verified": false,
+    "liable_order": "前期（觀測期前）"
+   },
+   {
+    "id": "D-002",
+    "kind": "pre_existing",
+    "status": "open",
+    "angle": "右後",
+    "location": "右後保桿側邊近輪拱處有微細舊刮痕",
+    "type": "既有損傷",
+    "severity": "record",
+    "confidence": null,
+    "box_2d": null,
+    "reasoning": "右後保桿側邊近輪拱處有微細舊刮痕",
+    "first_seen": {
+     "order": "早於觀測期",
+     "time": "借車照已存在",
+     "source": "借車照登錄"
+    },
+    "evidence_case": "RDZ7922-右後",
+    "verified": false,
+    "liable_order": "前期（觀測期前）"
+   },
+   {
+    "id": "D-003",
+    "kind": "pre_existing",
+    "status": "open",
+    "angle": "左前",
+    "location": "右前保險桿下緣（鍍鉻飾條下方）有一處既有擦傷掉漆痕跡，借車照已存在",
+    "type": "既有損傷",
+    "severity": "record",
+    "confidence": null,
+    "box_2d": null,
+    "reasoning": "右前保險桿下緣（鍍鉻飾條下方）有一處既有擦傷掉漆痕跡，借車照已存在",
+    "first_seen": {
+     "order": "早於觀測期",
+     "time": "借車照已存在",
+     "source": "借車照登錄"
+    },
+    "evidence_case": "RDZ7922-左前",
+    "verified": false,
+    "liable_order": "前期（觀測期前）"
+   }
+  ],
+  "open_new": 0,
+  "pre_existing": 3,
+  "real_orders": {
+   "47350120": "2026-04-22 10:42",
+   "47353661": "2026-04-22 19:54"
+  }
+ },
+ "RFB-2590": {
+  "car": "RFB-2590",
+  "records": [
+   {
+    "id": "D-001",
+    "kind": "pre_existing",
+    "status": "open",
+    "angle": "右後",
+    "location": "右尾燈下方後保桿/尾門邊緣縫隙處有一道紅褐色刮痕，兩張照片皆清晰可見，屬既有舊損。",
+    "type": "既有損傷",
+    "severity": "record",
+    "confidence": null,
+    "box_2d": null,
+    "reasoning": "右尾燈下方後保桿/尾門邊緣縫隙處有一道紅褐色刮痕，兩張照片皆清晰可見，屬既有舊損。",
+    "first_seen": {
+     "order": "早於觀測期",
+     "time": "借車照已存在",
+     "source": "借車照登錄"
+    },
+    "evidence_case": "RFB-2590-右後",
+    "verified": false,
+    "liable_order": "前期（觀測期前）"
+   }
+  ],
+  "open_new": 0,
+  "pre_existing": 1,
+  "real_orders": {
+   "47343822": "2026-04-22 01:20"
+  }
+ },
+ "RFB5176": {
+  "car": "RFB5176",
+  "records": [
+   {
+    "id": "D-001",
+    "kind": "new",
+    "status": "open",
+    "angle": "右後",
+    "location": "右後保險桿",
+    "type": "刮痕",
+    "severity": "medium",
+    "confidence": 0.95,
+    "box_2d": [
+     476,
+     416,
+     529,
+     611
+    ],
+    "reasoning": "還車照右後保險桿側面有明顯藍色擦撞痕跡與黑色刮痕，借車照該處完好無痕。",
+    "first_seen": {
+     "order": "BATCH-2026-04",
+     "time": "2026-04（資料集批次）",
+     "source": "還車判定"
+    },
+    "evidence_case": "RFB5176-右後",
+    "verified": true,
+    "liable_order": "BATCH-2026-04"
+   }
+  ],
+  "open_new": 1,
+  "pre_existing": 0,
+  "real_orders": {}
+ },
+ "RFH7873": {
+  "car": "RFH7873",
+  "records": [
+   {
+    "id": "D-001",
+    "kind": "pre_existing",
+    "status": "open",
+    "angle": "右後",
+    "location": "右後保險桿右下角（反光片下方邊緣）有既有刮擦痕跡，借還車照片皆可見。",
+    "type": "既有損傷",
+    "severity": "record",
+    "confidence": null,
+    "box_2d": null,
+    "reasoning": "右後保險桿右下角（反光片下方邊緣）有既有刮擦痕跡，借還車照片皆可見。",
+    "first_seen": {
+     "order": "早於觀測期",
+     "time": "借車照已存在",
+     "source": "借車照登錄"
+    },
+    "evidence_case": "RFH7873-右後",
+    "verified": false,
+    "liable_order": "前期（觀測期前）"
+   }
+  ],
+  "open_new": 0,
+  "pre_existing": 1,
+  "real_orders": {}
+ },
+ "RFH8122": {
+  "car": "RFH8122",
+  "records": [
+   {
+    "id": "D-001",
+    "kind": "pre_existing",
+    "status": "open",
+    "angle": "右前",
+    "location": "左前保險桿近輪拱處有細微舊刮痕，兩張照片皆存在",
+    "type": "既有損傷",
+    "severity": "record",
+    "confidence": null,
+    "box_2d": null,
+    "reasoning": "左前保險桿近輪拱處有細微舊刮痕，兩張照片皆存在",
+    "first_seen": {
+     "order": "早於觀測期",
+     "time": "借車照已存在",
+     "source": "借車照登錄"
+    },
+    "evidence_case": "RFH8122-右前",
+    "verified": false,
+    "liable_order": "前期（觀測期前）"
+   },
+   {
+    "id": "D-002",
+    "kind": "new",
+    "status": "open",
+    "angle": "右後",
+    "location": "右後保桿側邊下緣（右後輪後方）",
+    "type": "刮痕",
+    "severity": "medium",
+    "confidence": 0.9,
+    "box_2d": [
+     689,
+     406,
+     708,
+     458
+    ],
+    "reasoning": "還車照在右後保桿靠近右後輪拱處出現數道明顯黑色擦痕與掉漆，借車照同位置平整乾淨無此痕跡。",
+    "first_seen": {
+     "order": "BATCH-2026-04",
+     "time": "2026-04（資料集批次）",
+     "source": "還車判定"
+    },
+    "evidence_case": "RFH8122-右後",
+    "verified": true,
+    "liable_order": "BATCH-2026-04"
+   },
+   {
+    "id": "D-003",
+    "kind": "new",
+    "status": "open",
+    "angle": "左後",
+    "location": "後保險桿左側下緣（左後輪後方）",
+    "type": "刮痕",
+    "severity": "low",
+    "confidence": 0.85,
+    "box_2d": [
+     734,
+     331,
+     769,
+     363
+    ],
+    "reasoning": "還車照在左後輪後方的後保桿下緣處出現數道明顯深色擦傷痕跡，借車照對應位置完好無此痕跡",
+    "first_seen": {
+     "order": "BATCH-2026-04",
+     "time": "2026-04（資料集批次）",
+     "source": "還車判定"
+    },
+    "evidence_case": "RFH8122-左後",
+    "verified": true,
+    "liable_order": "BATCH-2026-04"
+   }
+  ],
+  "open_new": 2,
+  "pre_existing": 1,
+  "real_orders": {}
+ },
+ "RFM-2791": {
+  "car": "RFM-2791",
+  "records": [
+   {
+    "id": "D-001",
+    "kind": "pre_existing",
+    "status": "open",
+    "angle": "左前",
+    "location": "車身表面有少許輕微灰塵髒污痕跡，無明顯既有損傷",
+    "type": "既有損傷",
+    "severity": "record",
+    "confidence": null,
+    "box_2d": null,
+    "reasoning": "車身表面有少許輕微灰塵髒污痕跡，無明顯既有損傷",
+    "first_seen": {
+     "order": "早於觀測期",
+     "time": "借車照已存在",
+     "source": "借車照登錄"
+    },
+    "evidence_case": "RFM-2791-左前",
+    "verified": false,
+    "liable_order": "前期（觀測期前）"
+   },
+   {
+    "id": "D-002",
+    "kind": "pre_existing",
+    "status": "open",
+    "angle": "左後",
+    "location": "借車照中左後保險桿左下方邊角處有既有輕微擦痕",
+    "type": "既有損傷",
+    "severity": "record",
+    "confidence": null,
+    "box_2d": null,
+    "reasoning": "借車照中左後保險桿左下方邊角處有既有輕微擦痕",
+    "first_seen": {
+     "order": "早於觀測期",
+     "time": "借車照已存在",
+     "source": "借車照登錄"
+    },
+    "evidence_case": "RFM-2791-左後",
+    "verified": false,
+    "liable_order": "前期（觀測期前）"
+   }
+  ],
+  "open_new": 0,
+  "pre_existing": 2,
+  "real_orders": {
+   "47355737": "2026-04-22 21:34"
+  }
+ },
+ "RCR-7661": {
+  "car": "RCR-7661",
+  "records": [
+   {
+    "id": "D-001",
+    "kind": "new",
+    "status": "open",
+    "angle": "左後",
+    "location": "左後葉子板與左後保險桿",
+    "type": "破損",
+    "severity": "high",
+    "confidence": 0.99,
+    "box_2d": [
+     458,
+     47,
+     536,
+     574
+    ],
+    "reasoning": "還車照中左後保險桿與葉子板交接處嚴重變形卡榫脫開外凸，且伴隨大面積黑色擦撞刮痕與凹陷，借車照中該處僅有微小舊傷痕。",
+    "first_seen": {
+     "order": "BATCH-2026-04",
+     "time": "2026-04（資料集批次）",
+     "source": "還車判定"
+    },
+    "evidence_case": "RCR-7661-左後",
+    "verified": true,
+    "liable_order": "BATCH-2026-04"
+   },
+   {
+    "id": "D-002",
+    "kind": "new",
+    "status": "open",
+    "angle": "左後",
+    "location": "左後車門及下緣",
+    "type": "凹陷",
+    "severity": "high",
+    "confidence": 0.95,
+    "box_2d": [
+     508,
+     527,
+     706,
+     950
+    ],
+    "reasoning": "還車照與補拍照顯示左後車門下半部有明顯大面積凹痕與刮擦受損痕跡，借車照無此損傷。",
+    "first_seen": {
+     "order": "BATCH-2026-04",
+     "time": "2026-04（資料集批次）",
+     "source": "還車判定"
+    },
+    "evidence_case": "RCR-7661-左後",
+    "verified": true,
+    "liable_order": "BATCH-2026-04"
+   },
+   {
+    "id": "D-003",
+    "kind": "new",
+    "status": "open",
+    "angle": "左後",
+    "location": "左後輪圈",
+    "type": "刮痕",
+    "severity": "medium",
+    "confidence": 0.9,
+    "box_2d": [
+     590,
+     173,
+     742,
+     438
+    ],
+    "reasoning": "還車照顯示左後輪圈有多處明顯深色擦刮痕跡，借車照中輪圈乾淨完好。",
+    "first_seen": {
+     "order": "BATCH-2026-04",
+     "time": "2026-04（資料集批次）",
+     "source": "還車判定"
+    },
+    "evidence_case": "RCR-7661-左後",
+    "verified": true,
+    "liable_order": "BATCH-2026-04"
+   },
+   {
+    "id": "D-004",
+    "kind": "pre_existing",
+    "status": "open",
+    "angle": "左後",
+    "location": "左後葉子板與後保桿縫隙處有一小處既有微小點狀掉漆與細刮痕",
+    "type": "既有損傷",
+    "severity": "record",
+    "confidence": null,
+    "box_2d": null,
+    "reasoning": "左後葉子板與後保桿縫隙處有一小處既有微小點狀掉漆與細刮痕",
+    "first_seen": {
+     "order": "早於觀測期",
+     "time": "借車照已存在",
+     "source": "借車照登錄"
+    },
+    "evidence_case": "RCR-7661-左後",
+    "verified": false,
+    "liable_order": "前期（觀測期前）"
+   }
+  ],
+  "open_new": 3,
+  "pre_existing": 1,
+  "real_orders": {}
+ },
+ "RCW-8382": {
+  "car": "RCW-8382",
+  "records": [
+   {
+    "id": "D-001",
+    "kind": "new",
+    "status": "open",
+    "angle": "左前",
+    "location": "前保險桿及引擎蓋前端",
+    "type": "破損",
+    "severity": "high",
+    "confidence": 0.99,
+    "box_2d": [
+     329,
+     88,
+     637,
+     595
+    ],
+    "reasoning": "還車照中前保險桿近左大燈處嚴重破裂裂開、前端車體鈑件嚴重凹陷擠壓變形，借車照中該處平整完好。",
+    "first_seen": {
+     "order": "BATCH-2026-04",
+     "time": "2026-04（資料集批次）",
+     "source": "還車判定"
+    },
+    "evidence_case": "RCW-8382-左前",
+    "verified": true,
+    "liable_order": "BATCH-2026-04"
+   }
+  ],
+  "open_new": 1,
+  "pre_existing": 0,
+  "real_orders": {}
+ },
+ "RCW-9206": {
+  "car": "RCW-9206",
+  "records": [
+   {
+    "id": "D-001",
+    "kind": "new",
+    "status": "open",
+    "angle": "左前",
+    "location": "右前保桿（大燈下方）",
+    "type": "破損",
+    "severity": "medium",
+    "confidence": 0.92,
+    "box_2d": [
+     538,
+     210,
+     591,
+     240
+    ],
+    "reasoning": "還車照右側大燈（畫面左側）下方的前保桿處有一條明顯垂直向下延伸的斷裂痕跡，借車照對應位置表面平整完好。",
+    "first_seen": {
+     "order": "BATCH-2026-04",
+     "time": "2026-04（資料集批次）",
+     "source": "還車判定"
+    },
+    "evidence_case": "RCW-9206-左前",
+    "verified": true,
+    "liable_order": "BATCH-2026-04"
+   }
+  ],
+  "open_new": 1,
+  "pre_existing": 0,
+  "real_orders": {}
+ },
+ "RDH-2261": {
+  "car": "RDH-2261",
+  "records": [
+   {
+    "id": "D-001",
+    "kind": "new",
+    "status": "open",
+    "angle": "左後",
+    "location": "左後保險桿及左後葉子板",
+    "type": "破損",
+    "severity": "high",
+    "confidence": 0.98,
+    "box_2d": [
+     472,
+     358,
+     654,
+     669
+    ],
+    "reasoning": "還車照中左後保險桿及葉子板有明顯破裂破損並貼有大量白色膠帶固定，借車照中該部位車身線條完整無破損。",
+    "first_seen": {
+     "order": "BATCH-2026-04",
+     "time": "2026-04（資料集批次）",
+     "source": "還車判定"
+    },
+    "evidence_case": "RDH-2261-左後",
+    "verified": true,
+    "liable_order": "BATCH-2026-04"
+   }
+  ],
+  "open_new": 1,
+  "pre_existing": 0,
+  "real_orders": {}
+ },
+ "RDH-3092": {
+  "car": "RDH-3092",
+  "records": [
+   {
+    "id": "D-001",
+    "kind": "pre_existing",
+    "status": "open",
+    "angle": "左後",
+    "location": "左後葉子板（油箱蓋左前方與後門接縫處）有既有凹陷與板金變形",
+    "type": "既有損傷",
+    "severity": "record",
+    "confidence": null,
+    "box_2d": null,
+    "reasoning": "左後葉子板（油箱蓋左前方與後門接縫處）有既有凹陷與板金變形",
+    "first_seen": {
+     "order": "早於觀測期",
+     "time": "借車照已存在",
+     "source": "借車照登錄"
+    },
+    "evidence_case": "RDH-3092-左後",
+    "verified": false,
+    "liable_order": "前期（觀測期前）"
+   }
+  ],
+  "open_new": 0,
+  "pre_existing": 1,
+  "real_orders": {}
+ },
+ "RDJ-0772": {
+  "car": "RDJ-0772",
+  "records": [
+   {
+    "id": "D-001",
+    "kind": "new",
+    "status": "open",
+    "angle": "左前",
+    "location": "右前保桿、右前大燈、右前葉子板及引擎蓋右側",
+    "type": "破損",
+    "severity": "high",
+    "confidence": 1.0,
+    "box_2d": [
+     287,
+     187,
+     725,
+     816
+    ],
+    "reasoning": "還車照右前方遭受嚴重撞擊，導致保險桿破裂扭曲、大燈碎裂、葉子板嚴重擠壓變形隆起，借車照該處完好無損",
+    "first_seen": {
+     "order": "BATCH-2026-04",
+     "time": "2026-04（資料集批次）",
+     "source": "還車判定"
+    },
+    "evidence_case": "RDJ-0772-左前",
+    "verified": true,
+    "liable_order": "BATCH-2026-04"
+   }
+  ],
+  "open_new": 1,
+  "pre_existing": 0,
+  "real_orders": {}
+ },
+ "RDJ-0793": {
+  "car": "RDJ-0793",
+  "records": [
+   {
+    "id": "D-001",
+    "kind": "new",
+    "status": "open",
+    "angle": "左前",
+    "location": "右前保險桿及右前葉子板",
+    "type": "凹陷",
+    "severity": "high",
+    "confidence": 0.98,
+    "box_2d": [
+     632,
+     170,
+     918,
+     523
+    ],
+    "reasoning": "還車照右前保桿與葉子板接縫處嚴重撞擊凹陷變形、卡榫脫落裂開，借車照中該處完好平整。",
+    "first_seen": {
+     "order": "BATCH-2026-04",
+     "time": "2026-04（資料集批次）",
+     "source": "還車判定"
+    },
+    "evidence_case": "RDJ-0793-左前",
+    "verified": true,
+    "liable_order": "BATCH-2026-04"
+   }
+  ],
+  "open_new": 1,
+  "pre_existing": 0,
+  "real_orders": {}
+ },
+ "RDL-5171": {
+  "car": "RDL-5171",
+  "records": [
+   {
+    "id": "D-001",
+    "kind": "new",
+    "status": "open",
+    "angle": "左前",
+    "location": "前保險桿與水箱護罩",
+    "type": "破損",
+    "severity": "high",
+    "confidence": 0.99,
+    "box_2d": [
+     426,
+     210,
+     553,
+     790
+    ],
+    "reasoning": "還車照中前保險桿與水箱護罩明顯遭撞擊碎裂、斷裂變形，借車照時為完好狀態。",
+    "first_seen": {
+     "order": "BATCH-2026-04",
+     "time": "2026-04（資料集批次）",
+     "source": "還車判定"
+    },
+    "evidence_case": "RDL-5171-左前",
+    "verified": true,
+    "liable_order": "BATCH-2026-04"
+   },
+   {
+    "id": "D-002",
+    "kind": "new",
+    "status": "open",
+    "angle": "左前",
+    "location": "引擎蓋",
+    "type": "凹陷",
+    "severity": "high",
+    "confidence": 0.98,
+    "box_2d": [
+     521,
+     337,
+     723,
+     870
+    ],
+    "reasoning": "還車照中引擎蓋前緣因撞擊隆起並凹陷變形，借車照平整無損。",
+    "first_seen": {
+     "order": "BATCH-2026-04",
+     "time": "2026-04（資料集批次）",
+     "source": "還車判定"
+    },
+    "evidence_case": "RDL-5171-左前",
+    "verified": true,
+    "liable_order": "BATCH-2026-04"
+   }
+  ],
+  "open_new": 2,
+  "pre_existing": 0,
+  "real_orders": {}
+ },
+ "RDL-7836": {
+  "car": "RDL-7836",
+  "records": [
+   {
+    "id": "D-001",
+    "kind": "new",
+    "status": "open",
+    "angle": "左後",
+    "location": "後保險桿及後尾門",
+    "type": "破損",
+    "severity": "high",
+    "confidence": 0.99,
+    "box_2d": [
+     438,
+     138,
+     724,
+     904
+    ],
+    "reasoning": "還車照中後保險桿左側大面積凹陷脫落、嚴重變形破損，借車照時完全完好。",
+    "first_seen": {
+     "order": "BATCH-2026-04",
+     "time": "2026-04（資料集批次）",
+     "source": "還車判定"
+    },
+    "evidence_case": "RDL-7836-左後",
+    "verified": true,
+    "liable_order": "BATCH-2026-04"
+   }
+  ],
+  "open_new": 1,
+  "pre_existing": 0,
+  "real_orders": {}
+ },
+ "RDL-8265": {
+  "car": "RDL-8265",
+  "records": [
+   {
+    "id": "D-001",
+    "kind": "new",
+    "status": "open",
+    "angle": "右後",
+    "location": "後行李箱蓋右側（iRent字樣上方）",
+    "type": "凹陷",
+    "severity": "medium",
+    "confidence": 0.95,
+    "box_2d": [
+     584,
+     400,
+     633,
+     518
+    ],
+    "reasoning": "還車照中尾門右側iRent字標上方有明顯鈑金凹折壓痕，借車照對應處平整完好。",
+    "first_seen": {
+     "order": "47350036",
+     "time": "2026-04-22 12:30",
+     "source": "還車判定（真實訂單）"
+    },
+    "evidence_case": "RDL-8265-右後",
+    "verified": true,
+    "liable_order": "47350036"
+   }
+  ],
+  "open_new": 1,
+  "pre_existing": 0,
+  "real_orders": {
+   "47350063": "2026-04-22 19:07",
+   "47350036": "2026-04-22 12:30"
+  }
+ },
+ "RDL-9262": {
+  "car": "RDL-9262",
+  "records": [
+   {
+    "id": "D-001",
+    "kind": "new",
+    "status": "open",
+    "angle": "右前",
+    "location": "右前保險桿",
+    "type": "刮痕",
+    "severity": "medium",
+    "confidence": 0.95,
+    "box_2d": [
+     471,
+     625,
+     545,
+     804
+    ],
+    "reasoning": "還車照中右前保桿飾板旁有明顯黃色擦撞刮痕與殘漆，借車照對應位置乾淨無損傷",
+    "first_seen": {
+     "order": "BATCH-2026-04",
+     "time": "2026-04（資料集批次）",
+     "source": "還車判定"
+    },
+    "evidence_case": "RDL-9262-右前",
+    "verified": true,
+    "liable_order": "BATCH-2026-04"
+   }
+  ],
+  "open_new": 1,
+  "pre_existing": 0,
+  "real_orders": {}
+ },
+ "RDQ-1950": {
+  "car": "RDQ-1950",
+  "records": [
+   {
+    "id": "D-001",
+    "kind": "new",
+    "status": "open",
+    "angle": "右後",
+    "location": "後保險桿右側及尾門右下緣",
+    "type": "凹陷",
+    "severity": "high",
+    "confidence": 0.99,
+    "box_2d": [
+     483,
+     160,
+     834,
+     620
+    ],
+    "reasoning": "還車照右後保桿與尾門處有大面積嚴重撞擊凹陷變形與刮痕擦傷，借車照該區域表面平整完好。",
+    "first_seen": {
+     "order": "47354729",
+     "time": "2026-04-22 21:34",
+     "source": "還車判定（真實訂單）"
+    },
+    "evidence_case": "RDQ-1950-右後",
+    "verified": true,
+    "liable_order": "47354729"
+   }
+  ],
+  "open_new": 1,
+  "pre_existing": 0,
+  "real_orders": {
+   "47354729": "2026-04-22 21:34"
+  }
+ },
+ "RDU-6956": {
+  "car": "RDU-6956",
+  "records": [
+   {
+    "id": "D-001",
+    "kind": "new",
+    "status": "open",
+    "angle": "右前",
+    "location": "左前保險桿",
+    "type": "破損",
+    "severity": "high",
+    "confidence": 0.99,
+    "box_2d": [
+     525,
+     311,
+     808,
+     819
+    ],
+    "reasoning": "還車照中左前大燈下方保險桿嚴重破裂斷開且卡榫脫落變形，借車照中該處完好無損。",
+    "first_seen": {
+     "order": "BATCH-2026-04",
+     "time": "2026-04（資料集批次）",
+     "source": "還車判定"
+    },
+    "evidence_case": "RDU-6956-右前",
+    "verified": true,
+    "liable_order": "BATCH-2026-04"
+   }
+  ],
+  "open_new": 1,
+  "pre_existing": 0,
+  "real_orders": {}
+ },
+ "RDX-1085": {
+  "car": "RDX-1085",
+  "records": [
+   {
+    "id": "D-001",
+    "kind": "new",
+    "status": "open",
+    "angle": "右前",
+    "location": "前保桿右側下緣（車牌右方/畫面左側）",
+    "type": "刮痕",
+    "severity": "medium",
+    "confidence": 0.88,
+    "box_2d": [
+     377,
+     81,
+     515,
+     217
+    ],
+    "reasoning": "還車照中前保桿右下緣與下氣壩邊緣有明顯黑色擦傷與刮痕痕跡，借車照同區域未見此損傷。",
+    "first_seen": {
+     "order": "BATCH-2026-04",
+     "time": "2026-04（資料集批次）",
+     "source": "還車判定"
+    },
+    "evidence_case": "RDX-1085-右前",
+    "verified": false,
+    "liable_order": "BATCH-2026-04"
+   }
+  ],
+  "open_new": 1,
+  "pre_existing": 0,
+  "real_orders": {}
+ },
+ "RDX-2376": {
+  "car": "RDX-2376",
+  "records": [
+   {
+    "id": "D-001",
+    "kind": "new",
+    "status": "open",
+    "angle": "右後",
+    "location": "右後保桿與葉子板接縫處",
+    "type": "破損",
+    "severity": "medium",
+    "confidence": 0.95,
+    "box_2d": [
+     710,
+     474,
+     737,
+     513
+    ],
+    "reasoning": "還車照中右後保險桿卡榫明顯脫落外擴並產生大縫隙，借車照中接縫完全密合平整。",
+    "first_seen": {
+     "order": "BATCH-2026-04",
+     "time": "2026-04（資料集批次）",
+     "source": "還車判定"
+    },
+    "evidence_case": "RDX-2376-右後",
+    "verified": true,
+    "liable_order": "BATCH-2026-04"
+   },
+   {
+    "id": "D-002",
+    "kind": "new",
+    "status": "open",
+    "angle": "右後",
+    "location": "右後葉子板輪拱上方",
+    "type": "刮痕",
+    "severity": "low",
+    "confidence": 0.85,
+    "box_2d": null,
+    "reasoning": "還車照右後輪拱上方車身處出現一條黑色刮痕，借車照同位置漆面完整無痕。",
+    "first_seen": {
+     "order": "BATCH-2026-04",
+     "time": "2026-04（資料集批次）",
+     "source": "還車判定"
+    },
+    "evidence_case": "RDX-2376-右後",
+    "verified": true,
+    "liable_order": "BATCH-2026-04"
+   }
+  ],
+  "open_new": 2,
+  "pre_existing": 0,
+  "real_orders": {}
+ },
+ "RDY-6382": {
+  "car": "RDY-6382",
+  "records": [
+   {
+    "id": "D-001",
+    "kind": "new",
+    "status": "open",
+    "angle": "左前",
+    "location": "左側車門（左前門與左後門）",
+    "type": "凹陷",
+    "severity": "high",
+    "confidence": 0.95,
+    "box_2d": null,
+    "reasoning": "還車補拍照中左側車門出現大面積明顯凹陷與刮痕，借車照中同區域車身平整且反光正常，無此損傷。",
+    "first_seen": {
+     "order": "47353046",
+     "time": "2026-04-22 18:59",
+     "source": "還車判定（真實訂單）"
+    },
+    "evidence_case": "RDY-6382-左前",
+    "verified": true,
+    "liable_order": "47353046"
+   }
+  ],
+  "open_new": 1,
+  "pre_existing": 0,
+  "real_orders": {
+   "47353046": "2026-04-22 18:59"
+  }
+ },
+ "RDZ-0187": {
+  "car": "RDZ-0187",
+  "records": [
+   {
+    "id": "D-001",
+    "kind": "pre_existing",
+    "status": "open",
+    "angle": "右後",
+    "location": "借車照中右後保險桿邊角處可見細微使用痕跡",
+    "type": "既有損傷",
+    "severity": "record",
+    "confidence": null,
+    "box_2d": null,
+    "reasoning": "借車照中右後保險桿邊角處可見細微使用痕跡",
+    "first_seen": {
+     "order": "早於觀測期",
+     "time": "借車照已存在",
+     "source": "借車照登錄"
+    },
+    "evidence_case": "RDZ-0187-右後",
+    "verified": false,
+    "liable_order": "前期（觀測期前）"
+   }
+  ],
+  "open_new": 0,
+  "pre_existing": 1,
+  "real_orders": {
+   "47350104": "2026-04-22 12:54"
+  }
+ },
+ "RFB-2091": {
+  "car": "RFB-2091",
+  "records": [
+   {
+    "id": "D-001",
+    "kind": "new",
+    "status": "open",
+    "angle": "右前",
+    "location": "引擎蓋",
+    "type": "凹陷",
+    "severity": "high",
+    "confidence": 0.99,
+    "box_2d": [
+     207,
+     0,
+     484,
+     856
+    ],
+    "reasoning": "還車照中引擎蓋嚴重撞擊凹折隆起變形，借車照完全平整完好。",
+    "first_seen": {
+     "order": "BATCH-2026-04",
+     "time": "2026-04（資料集批次）",
+     "source": "還車判定"
+    },
+    "evidence_case": "RFB-2091-右前",
+    "verified": true,
+    "liable_order": "BATCH-2026-04"
+   },
+   {
+    "id": "D-002",
+    "kind": "new",
+    "status": "open",
+    "angle": "左前",
+    "location": "引擎蓋及前保桿",
+    "type": "凹陷",
+    "severity": "high",
+    "confidence": 0.99,
+    "box_2d": [
+     361,
+     383,
+     526,
+     998
+    ],
+    "reasoning": "引擎蓋嚴重隆起變形折損，前保險桿嚴重凹陷擠壓破損，借車照中均完整無損。",
+    "first_seen": {
+     "order": "BATCH-2026-04",
+     "time": "2026-04（資料集批次）",
+     "source": "還車判定"
+    },
+    "evidence_case": "RFB-2091-左前",
+    "verified": true,
+    "liable_order": "BATCH-2026-04"
+   },
+   {
+    "id": "D-003",
+    "kind": "new",
+    "status": "open",
+    "angle": "左前",
+    "location": "右前大燈與水箱護罩",
+    "type": "破損",
+    "severity": "high",
+    "confidence": 0.99,
+    "box_2d": [
+     479,
+     343,
+     587,
+     782
+    ],
+    "reasoning": "車頭水箱護罩與右前大燈周圍部件遭撞擊破裂變形，借車照中完好。",
+    "first_seen": {
+     "order": "BATCH-2026-04",
+     "time": "2026-04（資料集批次）",
+     "source": "還車判定"
+    },
+    "evidence_case": "RFB-2091-左前",
+    "verified": true,
+    "liable_order": "BATCH-2026-04"
+   }
+  ],
+  "open_new": 3,
+  "pre_existing": 0,
+  "real_orders": {}
+ },
+ "RFD-0332": {
+  "car": "RFD-0332",
+  "records": [
+   {
+    "id": "D-001",
+    "kind": "new",
+    "status": "open",
+    "angle": "右前",
+    "location": "引擎蓋及左前保桿、大燈周邊",
+    "type": "凹陷",
+    "severity": "high",
+    "confidence": 0.99,
+    "box_2d": [
+     430,
+     185,
+     529,
+     864
+    ],
+    "reasoning": "還車照中引擎蓋嚴重撞擊擠壓變形隆起、前保險桿凹陷擦傷且與葉子板卡榫脫開破損，借車照中該區域完好無損。",
+    "first_seen": {
+     "order": "47351031",
+     "time": "2026-04-22 15:25",
+     "source": "還車判定（真實訂單）"
+    },
+    "evidence_case": "RFD-0332-右前",
+    "verified": true,
+    "liable_order": "47351031"
+   }
+  ],
+  "open_new": 1,
+  "pre_existing": 0,
+  "real_orders": {
+   "47351031": "2026-04-22 15:25"
+  }
+ }
+}
