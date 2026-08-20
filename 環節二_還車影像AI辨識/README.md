@@ -20,7 +20,11 @@
 ## 內容
 
 - `pipeline/` — 全部程式與評測結果（用法見根目錄 README「快速開始」）
-- `dashboard/` — 複核後台原始碼：`dashboard_shell.html`（UI 模板）+ `build_dashboard.py`（一鍵組裝）
+- `dashboard/` — 複核後台原始碼：`dashboard_shell.html`（UI 模板）+ `build_dashboard.py`（一鍵組裝單檔版）+ `server.py`（server 版）
+  - **單檔版**：直接雙擊 `irent-review-dashboard.html`，零依賴離線可用（demo 保底）
+  - **Server 版**：`uvicorn server:app --host 0.0.0.0 --port 8000` → http://localhost:8000
+    ——複核決策存 SQLite 全隊共享（5 秒自動同步）、照片由 server 供圖、「AI 重判」按鈕現場呼叫 Gemini。
+    需 `pip3 install fastapi uvicorn pillow`；資料含車牌照片，僅限 localhost／隊內區網
 - `artifacts/` — 線上文件備份（架構設計 HTML）
 - `Timmy_Project_Report/` — 14 頁簡報 pptx、逐頁講稿、Demo script、Q&A
 

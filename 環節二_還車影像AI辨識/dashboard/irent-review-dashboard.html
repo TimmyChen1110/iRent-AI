@@ -2672,9 +2672,19 @@ const OPS = {
   interiorReal: 24, interiorMis: 56, chainCars: 1126, chainScanned: 15, chainHits: 1,
 };
 
+/* server 版（uvicorn server:app）注入 SERVER_MODE=true：照片走 /photos/ URL、複核決策全隊共享 */
+const SERVER = (typeof SERVER_MODE !== "undefined") && SERVER_MODE;
+function imgSrc(v) { return v && v.startsWith("/photos/") ? v : "data:image/jpeg;base64," + v; }
+
 const LS_KEY = "irent-review-demo-v1";
 let decisions = {};
-try { decisions = JSON.parse(localStorage.getItem(LS_KEY) || "{}"); } catch (e) {}
+async function loadDecisions() {
+  if (SERVER) {
+    try { decisions = await (await fetch("/api/decisions")).json(); } catch (e) { decisions = {}; }
+  } else {
+    try { decisions = JSON.parse(localStorage.getItem(LS_KEY) || "{}"); } catch (e) {}
+  }
+}
 let filter = "all";
 let currentId = null;
 let viewMode = "ops";
@@ -2694,7 +2704,7 @@ const DECISION_META = {
   retake:  { cls: "retake",  ico: "⟳", label: "已要求補件 — 已推播用戶補拍" },
 };
 
-function save() { localStorage.setItem(LS_KEY, JSON.stringify(decisions)); }
+function save() { if (!SERVER) localStorage.setItem(LS_KEY, JSON.stringify(decisions)); }
 function counts() {
   const c = { all: CASES.length, P1: 0, P2: 0, P3: 0, done: 0 };
   for (const cs of CASES) { c[cs.level]++; if (decisions[cs.id]) c.done++; }
@@ -2778,7 +2788,7 @@ function renderList() {
     const thumb = cs.f2 ? cs.photo : cs.ret;
     return `<button class="item lv-${cs.level.toLowerCase()}" aria-current="${cs.id === currentId}" onclick="selectCase('${cs.id}')">
       <span class="stripe"></span>
-      <img class="thumb" src="data:image/jpeg;base64,${thumb}" alt="" loading="lazy">
+      <img class="thumb" src="${imgSrc(thumb)}" alt="" loading="lazy">
       <span class="mid">
         <span class="t1"><span class="plate">${cs.car}</span><span class="angle">${cs.angle}</span>
           ${cs.f2 ? `<span class="badge f2tag">車內</span>` : ""}</span>
@@ -2913,14 +2923,15 @@ function renderDetail() {
       <span class="badge ${cs.level.toLowerCase()}">${LEVEL_META[cs.level].ico} ${LEVEL_META[cs.level].label}</span>
       <span class="badge soft">${truthLbl}</span>
       <span class="spacer"></span>
+      ${SERVER ? `<button class="btn" onclick="rejudge('${cs.id}', this)">⟲ AI 重判</button>` : ""}
       ${actionArea(cs)}
     </div>
     <div class="photos">
       <div class="photo d-card"><div class="cap"><span class="before">借車照</span><span class="t">比對基準</span></div>
-        <div class="imgwrap zoomable"><img src="data:image/jpeg;base64,${cs.pickup}" alt="${cs.car} ${cs.angle} 借車照"></div>
+        <div class="imgwrap zoomable"><img src="${imgSrc(cs.pickup)}" alt="${cs.car} ${cs.angle} 借車照"></div>
         <div class="zoom-hint">滑過照片 → 借/還同座標放大鏡</div></div>
       <div class="photo d-card"><div class="cap"><span class="after">還車照</span><span class="t">${annN ? "AI 標註 " + annN + " 處" : "本次判定"}</span></div>
-        <div class="imgwrap zoomable"><img src="data:image/jpeg;base64,${cs.ret}" alt="${cs.car} ${cs.angle} 還車照">${annBoxes(cs)}</div></div>
+        <div class="imgwrap zoomable"><img src="${imgSrc(cs.ret)}" alt="${cs.car} ${cs.angle} 還車照">${annBoxes(cs)}</div></div>
     </div>
     <div class="d-card verdict">${head}<div class="v-sub">${sub}</div>${dmgs}${pre}</div>`;
   armLens();
@@ -2972,7 +2983,7 @@ function renderF2Detail(el, cs) {
     </div>
     <div class="photos" style="grid-template-columns:1fr;max-width:560px">
       <div class="photo d-card"><div class="cap"><span class="after">還車車內照</span><span class="t">${annN ? "AI 標註 " + annN + " 處" : "單照判讀"}</span></div>
-        <div class="imgwrap"><img src="data:image/jpeg;base64,${cs.photo}" alt="${cs.car} ${cs.angle} 車內照">${annBoxes(cs)}</div></div>
+        <div class="imgwrap"><img src="${imgSrc(cs.photo)}" alt="${cs.car} ${cs.angle} 車內照">${annBoxes(cs)}</div></div>
     </div>
     <div class="d-card verdict">${head}<div class="v-sub">${sub}</div>${confBar(a.confidence)}${scoreHtml}${issues}
       <div class="dmg"><div class="why">${a.reasoning}</div></div>${review}</div>`;
@@ -3155,7 +3166,7 @@ function renderPassportList() {
     const cse = CASES.find(c => c.car === car && !c.f2);
     return `<button class="item ${p.open_new ? "lv-p1" : "lv-p3"}" aria-current="${car === currentCar}" onclick="selectCar('${car}')">
       <span class="stripe"></span>
-      ${cse ? `<img class="thumb" src="data:image/jpeg;base64,${cse.ret}" alt="" loading="lazy">` : `<span class="thumb mono" style="display:flex;align-items:center;justify-content:center;color:var(--faint);font-size:11px">N/A</span>`}
+      ${cse ? `<img class="thumb" src="${imgSrc(cse.ret)}" alt="" loading="lazy">` : `<span class="thumb mono" style="display:flex;align-items:center;justify-content:center;color:var(--faint);font-size:11px">N/A</span>`}
       <span class="mid">
         <span class="t1"><span class="plate">${car}</span></span>
         <span class="desc">${Object.keys(p.real_orders || {}).length ? Object.keys(p.real_orders).length + " 筆真實訂單可歸責" : "資料集批次"}</span>
@@ -3470,8 +3481,32 @@ function setMode(m) {
 }
 function setFilter(f) { viewMode = "cases"; filter = f; renderAll(); }
 function selectCase(id) { currentId = id; renderList(); renderDetail(); }
-function decide(id, kind) { decisions[id] = kind; save(); advance(id); renderAll(); }
-function undoDecision(id) { delete decisions[id]; save(); renderAll(); }
+function decide(id, kind) {
+  decisions[id] = kind; save(); advance(id); renderAll();
+  if (SERVER) fetch("/api/decision", { method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ case_id: id, decision: kind }) }).catch(() => {});
+}
+function undoDecision(id) {
+  delete decisions[id]; save(); renderAll();
+  if (SERVER) fetch("/api/decision/" + encodeURIComponent(id), { method: "DELETE" }).catch(() => {});
+}
+
+async function rejudge(id, btn) {
+  btn.disabled = true; btn.textContent = "AI 重判中…（約 10 秒）";
+  try {
+    const r = await fetch("/api/rejudge", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ case_id: id }) });
+    const j = await r.json();
+    if (r.ok && j.assessment) {
+      const cs = CASES.find(c => c.id === id);
+      cs.assessment = j.assessment;
+      renderAll();
+    } else {
+      btn.disabled = false; btn.textContent = "⟲ AI 重判";
+      alert(j.detail || j.error || "重判失敗");
+    }
+  } catch (e) { btn.disabled = false; btn.textContent = "⟲ AI 重判"; alert("重判失敗：" + e); }
+}
 function advance(id) {
   const vis = visible();
   const i = vis.findIndex(c => c.id === id);
@@ -3496,5 +3531,18 @@ document.addEventListener("keydown", e => {
   else if (e.key === "2" && currentId && !decisions[currentId]) decide(currentId, "reject");
   else if (e.key === "3" && currentId && !decisions[currentId]) decide(currentId, "retake");
 });
-renderAll();
+
+(async function initApp() {
+  await loadDecisions();
+  renderAll();
+  if (SERVER) {
+    // 每 5 秒同步一次全隊複核狀態；有變化才重繪
+    setInterval(async () => {
+      try {
+        const d = await (await fetch("/api/decisions")).json();
+        if (JSON.stringify(d) !== JSON.stringify(decisions)) { decisions = d; renderAll(); }
+      } catch (e) {}
+    }, 5000);
+  }
+})();
 </script>

@@ -11,3 +11,4 @@ __pycache__/
 # 原始資料的重複壓縮檔（內容與同名資料夾相同）
 *.zip
 **/chain_photos/
+**/decisions.sqlite3

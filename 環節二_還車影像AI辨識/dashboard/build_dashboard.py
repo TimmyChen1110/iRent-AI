@@ -12,11 +12,20 @@ import json
 import re
 import subprocess
 from pathlib import Path
+from urllib.parse import quote
 
 from PIL import Image, ImageOps
 
 HERE = Path(__file__).resolve().parent
 PIPE = HERE.parent / "pipeline"
+
+
+def pair_url(path):
+    return "/photos/pair/" + quote(Path(path).name)
+
+
+def interior_url(fname):
+    return "/photos/interior/" + quote(fname)
 
 
 def thumb(path, w=480, q=55, exif=True):
@@ -30,7 +39,8 @@ def thumb(path, w=480, q=55, exif=True):
     return base64.b64encode(buf.getvalue()).decode()
 
 
-def build_cases():
+def build_cases(embed=True):
+    """embed=True 時照片轉 base64 內嵌（單檔版）；False 時給 /photos/ URL（server 版）。"""
     pairs = {(p["car"], p["angle"]): p
              for p in json.loads((PIPE / "pairs.json").read_text())["pairs"]}
     data = json.loads((PIPE / "eval_results_v2_exif.json").read_text())["results"]
@@ -66,14 +76,15 @@ def build_cases():
             "car": r["car"], "angle": r["angle"], "level": lv, "kind": kind,
             "truth": "claimed" if r["label"] == "positive" else "unclaimed",
             "assessment": r["assessment"],
-            "pickup": thumb(p["pickup"]), "ret": thumb(p["return"]),
+            "pickup": thumb(p["pickup"]) if embed else pair_url(p["pickup"]),
+            "ret": thumb(p["return"]) if embed else pair_url(p["return"]),
         })
     order = {"P1": 0, "P2": 1, "P3": 2}
     cases.sort(key=lambda c: (order[c["level"]], c["car"]))
     return cases
 
 
-def build_f2cases():
+def build_f2cases(embed=True):
     data = json.loads((PIPE / "interior_results.json").read_text())["results"]
     by = {r["file"]: r for r in data}
     scores = {}
@@ -108,7 +119,7 @@ def build_f2cases():
                 "score": (scores.get(r["file"]) or {}).get("score"),
                 "score_items": (scores.get(r["file"]) or {}).get("issues"),
             },
-            "photo": thumb(PIPE / "interior_photos" / r["file"], exif=False),
+            "photo": thumb(PIPE / "interior_photos" / r["file"], exif=False) if embed else interior_url(r["file"]),
         })
     return out
 
