@@ -15,6 +15,7 @@
 | 部位定位 | 護照 59 筆損傷歸到 17 類固定部位（part_tagger.py）；**前後保險桿占 76%**（熱點分析第一手數據） |
 | Cleanliness Score | AI 盤點問題（11 類×3 級）→ 程式端加權計分 0–100，可解釋可調（cleanliness_score.py） |
 | Photo-chain | 跨訂單車況鏈（photo_chain.py）：掃 15 台多訂單車即抓到 **RDE-0180 跨單新損**（右後保險桿刮痕，3 票一致＋人工證實，未在索賠清單）——責任精準回溯到訂單 #47353795 |
+| 現場實測入口 | **任意照片即時判定，不綁資料集**：CLI `judge_photos.py 借照 還照`（或 `--interior 車內照`）＋ 監理台「現場實測」分頁拖拉上傳——跑完整鏈路 Quality Gate → Flash 快篩 → 臨界升級 Pro 多數決 → 視覺標註，單案約 3–60 秒 |
 | 成本 | 原型 $0（Gemini 免費額度）；全量上線估 NT$1,200／日 |
 
 ## 內容
@@ -23,8 +24,12 @@
 - `dashboard/` — 複核後台原始碼：`dashboard_shell.html`（UI 模板）+ `build_dashboard.py`（一鍵組裝單檔版）+ `server.py`（server 版）
   - **單檔版**：直接雙擊 `irent-review-dashboard.html`，零依賴離線可用（demo 保底）
   - **Server 版**：`uvicorn server:app --host 0.0.0.0 --port 8000` → http://localhost:8000
-    ——複核決策存 SQLite 全隊共享（5 秒自動同步）、照片由 server 供圖、「AI 重判」按鈕現場呼叫 Gemini。
-    需 `pip3 install fastapi uvicorn pillow`；資料含車牌照片，僅限 localhost／隊內區網
+    ——複核決策存 SQLite 全隊共享（5 秒自動同步）、照片由 server 供圖、「AI 重判」按鈕現場呼叫 Gemini、
+    「現場實測」分頁：拖拉任意借/還照（或車內照）→ `POST /api/judge` 即時跑完整鏈路並回標註圖
+    （上傳照片只落暫存目錄，判定後即刪除，不進 repo），判定結果可一鍵**存入案件佇列**
+    （縮圖存 SQLite 全隊共享）→ 出現在「案件複核」分頁走人工複核——現場判定到複核閉環；
+    品質檢核秒回分段顯示；內建區網 QR，評審手機掃碼即開、現場拍現場判。
+    需 `pip3 install fastapi uvicorn pillow pillow-heif python-multipart qrcode`；資料含車牌照片，僅限 localhost／隊內區網
 - `artifacts/` — 線上文件備份（架構設計 HTML）
 - `Timmy_Project_Report/` — 14 頁簡報 pptx、逐頁講稿、Demo script、Q&A
 

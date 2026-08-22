@@ -15,15 +15,21 @@
 
 注意：資料含真實車牌照片，僅限 localhost / 隊內區網，勿部署公網。
 """
+import base64
+import io
 import json
 import sqlite3
 import sys
+import tempfile
 import threading
+import uuid
 from datetime import datetime
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
+from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import FileResponse, HTMLResponse
+from PIL import Image, ImageOps
 from pydantic import BaseModel
 
 HERE = Path(__file__).resolve().parent
@@ -43,6 +49,8 @@ def db():
     conn = sqlite3.connect(DB_PATH)
     conn.execute("CREATE TABLE IF NOT EXISTS decisions("
                  "case_id TEXT PRIMARY KEY, decision TEXT, decided_at TEXT)")
+    conn.execute("CREATE TABLE IF NOT EXISTS live_cases("
+                 "case_id TEXT PRIMARY KEY, created_at TEXT, data TEXT)")
     return conn
 
 
@@ -198,6 +206,192 @@ def rejudge(req: RejudgeReq):
         raise HTTPException(502, "Gemini 未回傳有效結果")
     return {"case_id": req.case_id, "assessment": resp.parsed.model_dump(),
             "judged_at": datetime.now().isoformat(timespec="seconds")}
+
+
+# ---------- 現場實測：任意照片即時判定（POST /api/judge，multipart 上傳） ----------
+ALLOWED_SUFFIX = {".jpg", ".jpeg", ".png", ".jfif", ".webp", ".heic", ".heif"}
+
+
+async def _save_uploads(td, need):
+    """上傳檔存進暫存目錄，回 (路徑 dict, 原始 bytes dict)。"""
+    paths, raw = {}, {}
+    for name, f in need:
+        suffix = Path(f.filename or "").suffix.lower()
+        p = Path(td) / (name + (suffix if suffix in ALLOWED_SUFFIX else ".jpg"))
+        raw[name] = await f.read()
+        p.write_bytes(raw[name])
+        paths[name] = p
+    return paths, raw
+
+
+@app.post("/api/gate")
+async def api_gate(mode: str = Form("pair"),
+                   pickup: UploadFile | None = File(None),
+                   ret: UploadFile | None = File(None),
+                   interior: UploadFile | None = File(None)):
+    """只跑 Quality Gate（純 CV、<1 秒、零 API）——前端先呼叫這支即時顯示品質檢核，
+    通過才續打 /api/judge，讓「檢核→判定」有分段回饋。"""
+    import judge_photos  # noqa: PLC0415
+    need = [("pickup", pickup), ("ret", ret)] if mode == "pair" else [("interior", interior)]
+    for name, f in need:
+        if f is None:
+            raise HTTPException(400, f"缺少 {name} 照片")
+    with tempfile.TemporaryDirectory(prefix="irent-gate-") as td:
+        paths, _ = await _save_uploads(td, need)
+        try:
+            names = {"pickup": "pickup", "ret": "return", "interior": "photo"}
+            gates = judge_photos._run_gate({names[k]: p for k, p in paths.items()},
+                                           interior=(mode != "pair"))
+        except Exception as e:
+            raise HTTPException(400, f"照片無法讀取：{str(e)[:120]}")
+    return {"gate": gates, "gate_pass": all(g["pass"] for g in gates.values())}
+
+
+@app.get("/api/qr")
+def api_qr(request: Request):
+    """回傳「手機掃碼直開」用的區網網址 QR（base64 PNG）。"""
+    import qrcode  # noqa: PLC0415
+    import socket  # noqa: PLC0415
+    try:  # 取本機區網 IP（UDP 不實際發包）
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
+    except OSError:
+        ip = "localhost"
+    url = f"http://{ip}:{request.url.port or 8000}"
+    img = qrcode.make(url, box_size=6, border=2)
+    buf = io.BytesIO()
+    img.save(buf, "PNG")
+    return {"url": url, "png_b64": base64.b64encode(buf.getvalue()).decode()}
+
+
+@app.post("/api/judge")
+async def api_judge(mode: str = Form("pair"),
+                    pickup: UploadFile | None = File(None),
+                    ret: UploadFile | None = File(None),
+                    interior: UploadFile | None = File(None),
+                    skip_gate: bool = Form(False)):
+    """現場實測：跑完整鏈路（Quality Gate → 級聯判定 → 視覺標註）。
+    上傳照片只寫進暫存目錄（with 區塊結束即刪除），不進 repo。"""
+    if not (PIPE / ".gemini_key").exists():
+        raise HTTPException(503, "此機器沒有 pipeline/.gemini_key，無法呼叫 Gemini")
+    import judge_photos  # noqa: PLC0415  延遲載入：不啟用此功能時 server 照常跑
+
+    need = [("pickup", pickup), ("ret", ret)] if mode == "pair" else [("interior", interior)]
+    for name, f in need:
+        if f is None:
+            raise HTTPException(400, f"缺少 {name} 照片")
+
+    logs = []
+    with tempfile.TemporaryDirectory(prefix="irent-judge-") as td:
+        # raw bytes 留在記憶體供「存入案件佇列」縮圖用（下次判定即覆蓋）
+        paths, raw = await _save_uploads(td, need)
+
+        def run():
+            with _rejudge_lock:  # 免費層 RPM 低，一次一件（與 AI 重判共用鎖）
+                if mode == "pair":
+                    return judge_photos.judge_pair(paths["pickup"], paths["ret"], client=_client(),
+                                                   skip_gate=skip_gate, log=logs.append)
+                return judge_photos.judge_interior(paths["interior"], client=_client(),
+                                                   skip_gate=skip_gate, log=logs.append)
+
+        try:
+            result, img = await run_in_threadpool(run)
+        except Exception as e:
+            raise HTTPException(502, f"判定失敗：{str(e)[:200]}")
+
+    # 暫存路徑對前端沒有意義，拿掉；標註圖直接以 base64 回傳
+    for k in ("pickup", "return", "photo"):
+        result.pop(k, None)
+    result["logs"] = logs
+    if img is not None:
+        if img.width > 1280:
+            img = img.resize((1280, int(img.height * 1280 / img.width)))
+        buf = io.BytesIO()
+        img.save(buf, "JPEG", quality=82)
+        result["annotated_b64"] = base64.b64encode(buf.getvalue()).decode()
+    # 供「存入案件佇列」：只留最近一次判定（照片 bytes 僅存記憶體）
+    result["judge_id"] = uuid.uuid4().hex[:12]
+    _last_judge.clear()
+    _last_judge.update({"id": result["judge_id"], "mode": mode, "raw": raw, "result": result})
+    return result
+
+
+# ---------- 現場實測 → 案件佇列（縮圖存 SQLite，全隊共享） ----------
+_last_judge = {}
+
+
+def _thumb_b64(data: bytes, w=480, q=55):
+    im = ImageOps.exif_transpose(Image.open(io.BytesIO(data))).convert("RGB")
+    if im.width > w:
+        im = im.resize((w, int(im.height * w / im.width)))
+    buf = io.BytesIO()
+    im.save(buf, "JPEG", quality=q)
+    return base64.b64encode(buf.getvalue()).decode()
+
+
+class LiveCaseReq(BaseModel):
+    judge_id: str
+
+
+@app.post("/api/live_case")
+def save_live_case(req: LiveCaseReq):
+    if _last_judge.get("id") != req.judge_id:
+        raise HTTPException(410, "此判定已過期（之後又判了新案），請重新判定後再存")
+    if _last_judge.get("saved_as"):
+        return _last_judge["saved_as"]  # 重複點擊 → 回同一案件
+    r = _last_judge["result"]
+    fin = r.get("final")
+    if not fin:
+        raise HTTPException(400, "品質不合格案件沒有判定結果，不入佇列")
+    now = datetime.now()
+    live_id = "LIVE-" + now.strftime("%m%d-%H%M%S")
+    if r["mode"] == "pair":
+        ann = {"findings": [{"box_2d": d["box_2d"], "label": d["type"], "severity": d["severity"],
+                             "confidence": d["confidence"],
+                             "description": f'{d["location"]}：{d["reasoning"]}'}
+                            for d in fin["damages"] if len(d.get("box_2d") or []) == 4],
+               "summary": ""}
+        case = {"id": live_id, "live": True, "car": "LIVE", "angle": now.strftime("%m/%d %H:%M"),
+                "level": r["level"], "kind": r["kind"], "truth": "live", "assessment": fin,
+                "pickup": _thumb_b64(_last_judge["raw"]["pickup"]),
+                "ret": _thumb_b64(_last_judge["raw"]["ret"])}
+    else:
+        ann = {"findings": [f for f in fin["findings"] if len(f.get("box_2d") or []) == 4],
+               "summary": ""}
+        case = {"id": live_id, "live": True, "f2": True, "car": "LIVE",
+                "angle": now.strftime("%m/%d %H:%M"),
+                "level": r["level"], "kind": r["kind"], "truth": "live",
+                "assessment": {"level": fin["level"], "confidence": fin["confidence"],
+                               "issues": [f["label"] for f in fin["findings"]],
+                               "reasoning": fin["reasoning"]},
+                "photo": _thumb_b64(_last_judge["raw"]["interior"])}
+    payload = {"case": case, "ann": ann}
+    with db() as conn:
+        conn.execute("INSERT OR REPLACE INTO live_cases VALUES (?,?,?)",
+                     (live_id, now.isoformat(timespec="seconds"),
+                      json.dumps(payload, ensure_ascii=False)))
+    _last_judge["saved_as"] = payload
+    return payload
+
+
+@app.get("/api/live_cases")
+def get_live_cases(ids: int = 0):
+    with db() as conn:
+        if ids:  # 輕量輪詢用：只回 id 清單
+            return [row[0] for row in conn.execute(
+                "SELECT case_id FROM live_cases ORDER BY created_at DESC")]
+        return [json.loads(row[0]) for row in conn.execute(
+            "SELECT data FROM live_cases ORDER BY created_at DESC")]
+
+
+@app.delete("/api/live_case/{case_id}")
+def delete_live_case(case_id: str):
+    with db() as conn:
+        conn.execute("DELETE FROM live_cases WHERE case_id=?", (case_id,))
+        conn.execute("DELETE FROM decisions WHERE case_id=?", (case_id,))
+    return {"ok": True}
 
 
 if __name__ == "__main__":

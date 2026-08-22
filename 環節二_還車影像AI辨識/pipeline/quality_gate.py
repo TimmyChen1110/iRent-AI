@@ -27,6 +27,12 @@ DARK_MAX = 55.0      # 平均亮度；低於此值 → 過暗
 BRIGHT_MIN = 235.0   # 過曝：平均亮度高於此值
 CLIP_MAX = 0.35      # 過曝：≥250 的像素占比高於此值
 
+# 車內照專用門檻（80 張車內照分位數校準）：車內天生比車外暗（亮度 p10=47 vs 車外門檻 55，
+# 用車外門檻會誤擋 12.5%），且皮椅/塑膠平滑無紋理、Laplacian 天生低（p5=16，最低 1.4 但
+# AI 仍判得動）——只擋真正無法判讀的尾巴（各 ~p1，合計約 4%）
+INT_BLUR_MIN = 8.0
+INT_DARK_MAX = 15.0
+
 
 def measure(path, max_w=1280):
     """回傳 (sharpness, brightness, highlight_clip)。與判定 pipeline 相同的前處理。"""
@@ -40,14 +46,16 @@ def measure(path, max_w=1280):
     return sharp, bright, clip
 
 
-def gate(path):
-    """回傳 (通過?, 原因列表, 數值)。原因供 App 端顯示重拍提示。"""
+def gate(path, interior=False):
+    """回傳 (通過?, 原因列表, 數值)。原因供 App 端顯示重拍提示。
+    interior=True 時改用車內照門檻（車內天生較暗、表面平滑，車外門檻會誤擋 12.5%）。"""
+    blur_min, dark_max = (INT_BLUR_MIN, INT_DARK_MAX) if interior else (BLUR_MIN, DARK_MAX)
     sharp, bright, clip = measure(path)
     reasons = []
-    if sharp < BLUR_MIN:
-        reasons.append(f"照片模糊（清晰度 {sharp:.0f} < {BLUR_MIN:.0f}），請對焦後重拍")
-    if bright < DARK_MAX:
-        reasons.append(f"照片過暗（亮度 {bright:.0f} < {DARK_MAX:.0f}），請開閃光或移到亮處重拍")
+    if sharp < blur_min:
+        reasons.append(f"照片模糊（清晰度 {sharp:.0f} < {blur_min:.0f}），請對焦後重拍")
+    if bright < dark_max:
+        reasons.append(f"照片過暗（亮度 {bright:.0f} < {dark_max:.0f}），請開閃光或移到亮處重拍")
     if bright > BRIGHT_MIN or clip > CLIP_MAX:
         reasons.append("照片過曝，請避開強光直射重拍")
     return not reasons, reasons, {"sharpness": round(sharp, 1),

@@ -44,7 +44,7 @@
 ## 快速開始
 
 ```bash
-pip install google-genai pillow opencv-python pydantic
+pip install google-genai pillow pillow-heif opencv-python pydantic
 echo "你的GEMINI_KEY" > 環節二_還車影像AI辨識/pipeline/.gemini_key   # 金鑰已被 .gitignore 排除
 
 cd 環節二_還車影像AI辨識/pipeline
@@ -52,6 +52,7 @@ python3 build_pairs.py                          # 建立借/還配對
 python3 run_eval_gemini.py --model gemini-3.7-flash --tag v3 --fewshot --include-alt
 python3 run_cascade.py eval_results_gemini_37_flash_v3.json   # Pro 級聯複核
 python3 classify_interior.py                    # F2 車內整潔分類
+python3 judge_photos.py 借車照.jpg 還車照.jpg     # 現場實測：任意照片即時判定（--interior 車內照）
 ```
 
 免費額度建議 `--rpm 8` 節流；中斷可直接重跑（斷點續跑）。

@@ -1,4 +1,5 @@
 <title>iRent 車況監理台</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
   /* 車隊監理台 — 深色營運 console，單一主題（刻意選擇；所有顏色皆明確上色） */
   :root {
@@ -155,6 +156,7 @@
     display: inline-flex; align-items: center; gap: 6px;
   }
   .btn:hover { background: var(--panel3); border-color: var(--faint); }
+  .btn:disabled { opacity: .4; cursor: not-allowed; filter: grayscale(.6); }
   .btn.danger { background: var(--red); border-color: var(--red); color: #2A0B08; }
   .btn.danger:hover { filter: brightness(1.1); }
 
@@ -336,6 +338,34 @@
   .parts-table td { padding: 6px 8px; border-top: 1px solid var(--line); }
 
   .foot { padding: 10px 22px 30px; color: var(--faint); font-size: 11.5px; max-width: 1100px; }
+
+  /* 窄螢幕（手機掃碼開現場實測用）：藏右上狀態列、分頁改單行橫向捲動 */
+  @media (max-width: 940px) {
+    .topbar { flex-wrap: wrap; gap: 8px; }
+    .top-right { display: none; }
+    .tabs { overflow-x: auto; max-width: 100%; }
+    .tab { white-space: nowrap; }
+  }
+
+  /* 現場實測 */
+  .live-wrap { max-width: 1100px; display: flex; flex-direction: column; gap: 13px; }
+  .live-drops { display: grid; grid-template-columns: 1fr; gap: 14px; }
+  .drop { position: relative; border: 1.5px dashed var(--line2); border-radius: 6px; background: var(--panel); min-height: 300px; display: flex; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; transition: border-color .15s, background .15s; }
+  .drop:hover, .drop.over { border-color: var(--acc); background: var(--acc-soft); }
+  .drop img { max-width: 100%; max-height: 68vh; display: block; }
+  .drop .hint { color: var(--muted); font-size: 13px; text-align: center; padding: 20px; line-height: 1.9; }
+  .drop .hint b { display: block; color: var(--ink); font-size: 14px; }
+  .drop .slotcap { position: absolute; top: 8px; left: 8px; font-size: 11px; font-weight: 700; letter-spacing: .08em; padding: 3px 8px; border-radius: 3px; background: rgba(0,0,0,.55); color: var(--acc-ink); }
+  .live-ctl { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .steplog { font-family: ui-monospace, Menlo, monospace; font-size: 12.5px; color: var(--muted); line-height: 2; }
+  .steplog .on { color: var(--acc-ink); }
+  .gate-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+  .gate-card { border: 1px solid var(--line); border-radius: 5px; padding: 10px 12px; background: var(--panel2); font-size: 12.5px; }
+  .gate-card .g-head { display: flex; justify-content: space-between; font-weight: 700; margin-bottom: 6px; }
+  .gate-card .g-m { color: var(--muted); font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; }
+  .gate-card .g-bad { color: var(--red); margin-top: 4px; }
+  .spin { display: inline-block; width: 13px; height: 13px; border: 2px solid var(--line2); border-top-color: var(--acc); border-radius: 50%; animation: lspin .8s linear infinite; vertical-align: -2px; }
+  @keyframes lspin { to { transform: rotate(360deg); } }
 </style>
 
 <div class="topbar">
@@ -436,7 +466,8 @@ function renderTabs() {
   document.getElementById("tabs").innerHTML = `
     <button class="tab" role="tab" aria-selected="${viewMode === "ops"}" onclick="setMode('ops')">營運總覽</button>
     <button class="tab" role="tab" aria-selected="${viewMode === "cases"}" onclick="setMode('cases')">案件複核<span class="cnt">${CASES.length}</span></button>
-    <button class="tab" role="tab" aria-selected="${viewMode === "passport"}" onclick="setMode('passport')">車輛損傷護照<span class="cnt">${Object.keys(PASSPORTS).length}</span></button>`;
+    <button class="tab" role="tab" aria-selected="${viewMode === "passport"}" onclick="setMode('passport')">車輛損傷護照<span class="cnt">${Object.keys(PASSPORTS).length}</span></button>
+    <button class="tab" role="tab" aria-selected="${viewMode === "live"}" onclick="setMode('live')">現場實測<span class="cnt">LIVE</span></button>`;
 }
 
 function renderStats() {
@@ -463,9 +494,12 @@ function renderFilters() {
   if (viewMode !== "cases") { el.innerHTML = ""; return; }
   const c = counts();
   const f2n = CASES.filter(cs => cs.f2).length;
+  const liveN = CASES.filter(cs => cs.live).length;
   const defs = [
     ["all", "全部", c.all], ["P1", "P1", c.P1], ["P2", "P2", c.P2], ["P3", "P3", c.P3],
-    ["f2", "車內", f2n], ["todo", "未複核", c.all - c.done], ["done", "已複核", c.done],
+    ["f2", "車內", f2n],
+    ...(liveN ? [["live", "現場", liveN]] : []),
+    ["todo", "未複核", c.all - c.done], ["done", "已複核", c.done],
   ];
   el.innerHTML = defs.map(([k, lbl, n]) =>
     `<button class="chip" aria-pressed="${filter === k}" onclick="setFilter('${k}')">${lbl}<span class="n">${n}</span></button>`).join("");
@@ -477,6 +511,7 @@ function visible() {
     if (filter === "done") return !!decisions[cs.id];
     if (filter === "todo") return !decisions[cs.id];
     if (filter === "f2") return !!cs.f2;
+    if (filter === "live") return !!cs.live;
     return cs.level === filter;
   });
 }
@@ -505,7 +540,7 @@ function renderList() {
       <img class="thumb" src="${imgSrc(thumb)}" alt="" loading="lazy">
       <span class="mid">
         <span class="t1"><span class="plate">${cs.car}</span><span class="angle">${cs.angle}</span>
-          ${cs.f2 ? `<span class="badge f2tag">車內</span>` : ""}</span>
+          ${cs.f2 ? `<span class="badge f2tag">車內</span>` : ""}${cs.live ? `<span class="badge f2tag">現場</span>` : ""}</span>
         <span class="desc">${summaryText(cs)}</span>
       </span>
       <span class="right">
@@ -603,6 +638,7 @@ function actionArea(cs) {
 
 function renderDetail() {
   if (viewMode === "ops") { renderOps(); return; }
+  if (viewMode === "live") { renderLive(); return; }
   if (viewMode === "passport") { renderPassportDetail(); return; }
   const cs = CASES.find(c => c.id === currentId);
   const el = document.getElementById("detail");
@@ -628,7 +664,8 @@ function renderDetail() {
       <div class="why">${d.reasoning}</div>
     </div>`).join("");
   const pre = a.pre_existing_notes ? `<div class="note"><b>既有舊損備註：</b>${a.pre_existing_notes}（兩照皆存在，不列入本次求償）</div>` : "";
-  const truthLbl = cs.truth === "claimed" ? "資料集標註：實際有索賠" : "資料集標註：當時未索賠";
+  const truthLbl = cs.truth === "claimed" ? "資料集標註：實際有索賠"
+    : cs.truth === "live" ? "現場實測案件" : "資料集標註：當時未索賠";
   const annN = ANN[cs.id] && ANN[cs.id].findings.length;
 
   el.innerHTML = `
@@ -637,7 +674,8 @@ function renderDetail() {
       <span class="badge ${cs.level.toLowerCase()}">${LEVEL_META[cs.level].ico} ${LEVEL_META[cs.level].label}</span>
       <span class="badge soft">${truthLbl}</span>
       <span class="spacer"></span>
-      ${SERVER ? `<button class="btn" onclick="rejudge('${cs.id}', this)">⟲ AI 重判</button>` : ""}
+      ${cs.live ? `<button class="btn" onclick="deleteLiveCase('${cs.id}')">✕ 刪除案件</button>` : ""}
+      ${SERVER && !cs.live ? `<button class="btn" onclick="rejudge('${cs.id}', this)">⟲ AI 重判</button>` : ""}
       ${actionArea(cs)}
     </div>
     <div class="photos">
@@ -692,7 +730,9 @@ function renderF2Detail(el, cs) {
       <span class="plate">${cs.car}</span><span class="angle">${cs.angle}</span>
       <span class="badge ${cs.level.toLowerCase()}">${LEVEL_META[cs.level].ico} ${LEVEL_META[cs.level].label}</span>
       <span class="badge f2tag">F2 車內整潔分級</span>
+      ${cs.live ? `<span class="badge soft">現場實測案件</span>` : ""}
       <span class="spacer"></span>
+      ${cs.live ? `<button class="btn" onclick="deleteLiveCase('${cs.id}')">✕ 刪除案件</button>` : ""}
       ${actionArea(cs)}
     </div>
     <div class="photos" style="grid-template-columns:1fr;max-width:560px">
@@ -1218,9 +1258,255 @@ function setViz(v) {
 
 function jumpToCase(id) { viewMode = "cases"; filter = "all"; currentId = id; renderAll(); }
 
+/* ================= 現場實測（任意照片即時判定，需 server 版） ================= */
+const LIVE = { mode: "pair", files: {}, urls: {}, busy: false, result: null, error: null, t0: 0, timer: null };
+
+/* --- 現場判定 → 案件佇列（存 SQLite，全隊共享） --- */
+const liveLoaded = new Set();
+function addLiveCase(payload) {
+  if (liveLoaded.has(payload.case.id)) return;
+  liveLoaded.add(payload.case.id);
+  ANN[payload.case.id] = payload.ann;
+  CASES.unshift(payload.case);
+}
+function removeLiveCaseLocal(id) {
+  liveLoaded.delete(id); delete ANN[id]; delete decisions[id];
+  const i = CASES.findIndex(c => c.id === id);
+  if (i >= 0) CASES.splice(i, 1);
+  if (currentId === id) currentId = null;
+}
+async function loadLiveCases() {
+  if (!SERVER) return;
+  try {
+    const list = await (await fetch("/api/live_cases")).json();
+    list.reverse().forEach(p => addLiveCase(p)); // 最新的最後 unshift → 排最上面
+  } catch (e) {}
+}
+async function syncLiveCases() { // 5 秒輪詢：隊友新增/刪除的現場案件
+  try {
+    const ids = await (await fetch("/api/live_cases?ids=1")).json();
+    const idSet = new Set(ids);
+    let changed = false;
+    for (const id of [...liveLoaded]) if (!idSet.has(id)) { removeLiveCaseLocal(id); changed = true; }
+    if (ids.some(id => !liveLoaded.has(id))) { await loadLiveCases(); changed = true; }
+    return changed;
+  } catch (e) { return false; }
+}
+async function saveLiveCase(btn) {
+  btn.disabled = true; btn.textContent = "存入中…";
+  try {
+    const r = await fetch("/api/live_case", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ judge_id: LIVE.result.judge_id }) });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.detail || "存入失敗");
+    addLiveCase(j);
+    jumpToCase(j.case.id); // 直接跳到案件複核 → 閉環：現場判定 → 佇列 → 人工複核
+  } catch (e) { btn.disabled = false; btn.textContent = "⊕ 存入案件佇列"; alert(e.message || e); }
+}
+async function deleteLiveCase(id) {
+  if (!confirm("刪除此現場實測案件？（全隊都會移除）")) return;
+  try { await fetch("/api/live_case/" + encodeURIComponent(id), { method: "DELETE" }); } catch (e) {}
+  removeLiveCaseLocal(id);
+  renderAll();
+}
+
+function setLiveMode(m) { LIVE.mode = m; LIVE.result = null; LIVE.error = null; LIVE.gate = null; renderLive(); }
+function liveSet(k, file) {
+  if (!file || !file.type.startsWith("image/")) return;
+  if (LIVE.urls[k]) URL.revokeObjectURL(LIVE.urls[k]);
+  LIVE.files[k] = file; LIVE.urls[k] = URL.createObjectURL(file);
+  LIVE.result = null; LIVE.error = null; LIVE.gate = null; renderLive();
+}
+function liveFile(input, k) { liveSet(k, input.files[0]); }
+function liveDrop(e, k) { e.preventDefault(); e.currentTarget.classList.remove("over"); liveSet(k, e.dataTransfer.files[0]); }
+function liveReset() {
+  Object.values(LIVE.urls).forEach(u => URL.revokeObjectURL(u));
+  LIVE.files = {}; LIVE.urls = {}; LIVE.result = null; LIVE.error = null; LIVE.gate = null; renderLive();
+}
+
+function liveFormData() {
+  const fd = new FormData();
+  fd.append("mode", LIVE.mode);
+  if (LIVE.mode === "pair") { fd.append("pickup", LIVE.files.pickup); fd.append("ret", LIVE.files.ret); }
+  else fd.append("interior", LIVE.files.interior);
+  return fd;
+}
+
+async function runLiveJudge(skipGate) {
+  LIVE.result = null; LIVE.error = null; LIVE.t0 = Date.now();
+  try {
+    // 段 1：Quality Gate（純 CV、<1 秒）先回，立刻把品質卡片畫出來
+    if (!skipGate) {
+      LIVE.gate = null; LIVE.busy = "gate"; renderLive();
+      const rg = await fetch("/api/gate", { method: "POST", body: liveFormData() });
+      const g = await rg.json();
+      if (!rg.ok) throw new Error(g.detail || "品質檢核失敗");
+      LIVE.gate = g;
+      if (!g.gate_pass) { LIVE.busy = false; renderLive(); return; } // 擋下 → 顯示重拍原因＋強制判定
+    } else if (!LIVE.gate) {
+      LIVE.gate = null; // 強制判定但沒 gate 結果（不該發生），照常續跑
+    }
+    // 段 2：AI 判定（gate 已看過 → skip_gate 續跑，完整 gate 數值仍會回在結果裡）
+    LIVE.busy = "judge"; renderLive();
+    LIVE.timer = setInterval(() => {
+      const el = document.getElementById("live-elapsed");
+      if (el) el.textContent = ((Date.now() - LIVE.t0) / 1000).toFixed(0) + " 秒";
+    }, 500);
+    const fd = liveFormData();
+    fd.append("skip_gate", "true");
+    const r = await fetch("/api/judge", { method: "POST", body: fd });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.detail || "判定失敗");
+    LIVE.result = j;
+  } catch (e) { LIVE.error = String(e.message || e); }
+  clearInterval(LIVE.timer);
+  LIVE.busy = false; renderLive();
+}
+
+function liveGateHtml(j) {
+  const names = { pickup: "借車照", return: "還車照", photo: "車內照" };
+  return `<div class="gate-grid">` + Object.entries(j.gate).map(([k, g]) => `
+    <div class="gate-card">
+      <div class="g-head"><span>${names[k] || k}</span><span style="color:${g.pass ? "var(--ok)" : "var(--red)"}">${g.pass ? "✓ 通過" : "✗ 未通過"}</span></div>
+      <div class="g-m">清晰度 ${g.sharpness} ・ 亮度 ${g.brightness} ・ 過曝 ${(g.highlight_clip * 100).toFixed(1)}%</div>
+      ${g.reasons.map(r => `<div class="g-bad">${r}</div>`).join("")}
+    </div>`).join("") + `</div>`;
+}
+
+function liveVerdictHtml(j) {
+  const a = j.final;
+  let head, sub, rows = "";
+  if (j.mode === "interior") {
+    if (a.level === "髒汙") { head = `<h3 class="crit"><span class="ico">⚠</span>髒汙 — 須立即清潔</h3>`; sub = "建議：該車暫停派單，通知清潔調度優先處理。"; }
+    else if (a.level === "乾淨") { head = `<h3 class="ok"><span class="ico">✓</span>乾淨</h3>`; sub = "狀態良好，可回饋用戶信譽加分。"; }
+    else { head = `<h3 class="ok"><span class="ico">✓</span>普通</h3>`; sub = "輕微使用痕跡，納入清潔排程權重。"; }
+    rows = confBar(a.confidence) + (a.findings || []).map((f, i) => `
+      <div class="dmg"><div class="l1"><span class="num">${i + 1}</span>${f.label}<span class="sev ${f.severity}">${f.severity.toUpperCase()}</span></div>
+        ${confBar(f.confidence)}<div class="why">${f.description}</div></div>`).join("")
+      + `<div class="dmg"><div class="why">${a.reasoning}</div></div>`;
+  } else if (!a.angle_match) {
+    head = `<h3 class="warn"><span class="ico">◐</span>無法有效比對</h3>`;
+    sub = "兩張照片非同一方位或損傷部位未入鏡 — 請改用同一方位的兩張照片。";
+  } else if (a.new_damage_found) {
+    head = `<h3 class="crit"><span class="ico">⚠</span>偵測到新增車損</h3>`;
+    sub = "以下損傷存在於還車照、但借車照對應位置無此痕跡：";
+    rows = a.damages.map((d, i) => `
+      <div class="dmg"><div class="l1"><span class="num">${i + 1}</span>${d.location} · ${d.type}<span class="sev ${d.severity}">${d.severity.toUpperCase()}</span></div>
+        ${confBar(d.confidence)}<div class="why">${d.reasoning}</div></div>`).join("");
+  } else {
+    head = `<h3 class="ok"><span class="ico">✓</span>未發現新增車損</h3>`;
+    sub = "借/還照比對一致。";
+    rows = confBar(a.no_damage_confidence);
+  }
+  const pre = a.pre_existing_notes ? `<div class="note"><b>既有舊損備註：</b>${a.pre_existing_notes}（兩照皆存在，不列入本次求償）</div>` : "";
+  const casc = j.cascade
+    ? `<div class="note"><b>級聯複核：</b>快篩臨界（${j.cascade.reason}）→ ${j.cascade.model} ${j.cascade.votes ? j.cascade.votes.length + " 票 [" + j.cascade.votes.map(v => v ? "有損" : "無損").join("、") + "]" : "複核"} → ${j.cascade.flipped ? "翻轉" : "維持"}快篩結論</div>`
+    : `<div class="note"><b>級聯：</b>快篩信心充足，未升級複核（對應實測 97.2% 案件停在快篩層）</div>`;
+  return `<div class="d-card verdict">${head}<div class="v-sub">${sub}</div>${rows}${pre}${casc}</div>`;
+}
+
+function liveResultHtml(j) {
+  const steps = `<div class="d-card"><div class="steplog">${(j.logs || []).map(l => `<div class="on">${l}</div>`).join("")}
+    <div>完成 ・ 耗時 ${j.elapsed_s} 秒 ・ 判讀模型 ${(j.screening || {}).model || "—"}</div></div></div>`;
+  const gate = `<div class="d-card"><div class="v-sub" style="margin-bottom:8px"><b>① Quality Gate（純 CV，零 API 成本）</b></div>${liveGateHtml(j)}</div>`;
+  if (j.verdict === "retake") {
+    return steps + gate + `
+      <div class="d-card verdict"><h3 class="warn"><span class="ico">◐</span>品質不合格 — 請重拍</h3>
+        <div class="v-sub">實際系統中此照片會在 App 拍攝當下被即時擋下並顯示重拍原因（環節一）。</div>
+        <div class="actions" style="margin-top:10px"><button class="btn" onclick="runLiveJudge(true)">仍要強制判定（跳過品質檢核）</button></div></div>`;
+  }
+  const ann = j.annotated_b64 ? "data:image/jpeg;base64," + j.annotated_b64 : null;
+  const nAnn = ((j.final || {}).damages || (j.final || {}).findings || []).length;
+  const photos = j.mode === "pair"
+    ? `<div class="photos">
+        <div class="photo d-card"><div class="cap"><span class="before">借車照</span><span class="t">比對基準</span></div>
+          <div class="imgwrap"><img src="${LIVE.urls.pickup}" alt="借車照"></div></div>
+        <div class="photo d-card"><div class="cap"><span class="after">還車照</span><span class="t">${nAnn ? "AI 標註 " + nAnn + " 處" : "本次判定"}</span></div>
+          <div class="imgwrap"><img src="${ann || LIVE.urls.ret}" alt="還車照（AI 標註）"></div></div></div>`
+    : `<div class="photos" style="grid-template-columns:1fr;max-width:560px">
+        <div class="photo d-card"><div class="cap"><span class="after">車內照</span><span class="t">${nAnn ? "AI 標註 " + nAnn + " 處" : "單照判讀"}</span></div>
+          <div class="imgwrap"><img src="${ann || LIVE.urls.interior}" alt="車內照（AI 標註）"></div></div></div>`;
+  const lv = LEVEL_META[j.level] ? `<span class="badge ${j.level.toLowerCase()}">${LEVEL_META[j.level].ico} ${LEVEL_META[j.level].label}</span>` : "";
+  const saveBtn = j.final && j.judge_id
+    ? `<span class="spacer"></span><button class="btn danger" onclick="saveLiveCase(this)">⊕ 存入案件佇列</button>` : "";
+  return steps + gate + `<div class="d-card d-head"><span class="plate">現場實測</span>${lv}<span class="badge soft">${j.kind}</span>${saveBtn}</div>` + photos + liveVerdictHtml(j);
+}
+
+function renderLive() {
+  const el = document.getElementById("detail");
+  if (!SERVER) {
+    el.innerHTML = `<div class="d-card verdict"><h3 class="warn"><span class="ico">◐</span>現場實測需要 server 版</h3>
+      <div class="v-sub">單檔版無法呼叫 AI。請在有 pipeline/.gemini_key 的機器上啟動：</div>
+      <div class="steplog" style="margin-top:8px">cd 環節二_還車影像AI辨識/dashboard<br>uvicorn server:app --host 0.0.0.0 --port 8000</div>
+      <div class="v-sub" style="margin-top:8px">然後開 http://localhost:8000 → 現場實測。CLI 版：python3 pipeline/judge_photos.py 借車照 還車照</div></div>`;
+    return;
+  }
+  const slots = LIVE.mode === "pair"
+    ? [["pickup", "借車照", "比對基準"], ["ret", "還車照", "找新增損傷"]]
+    : [["interior", "車內照", "整潔分級"]];
+  const ready = slots.every(([k]) => LIVE.files[k]);
+  const drops = slots.map(([k, lbl, hint]) => `
+    <div class="drop ${""}" ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')"
+         ondrop="liveDrop(event,'${k}')" onclick="document.getElementById('lf_${k}').click()">
+      <span class="slotcap">${lbl}</span>
+      ${LIVE.urls[k] ? `<img src="${LIVE.urls[k]}" alt="${lbl}">` : `<div class="hint"><b>＋ ${lbl}</b>點擊選取或拖入照片<br><span style="font-size:11.5px">${hint}</span></div>`}
+      <input type="file" id="lf_${k}" accept="image/*" hidden onchange="liveFile(this,'${k}')">
+    </div>`).join("");
+
+  el.innerHTML = `
+    <div class="d-card d-head">
+      <span class="plate">現場實測</span><span class="badge soft">任意照片・即時判定・不綁資料集</span>
+      <span class="spacer"></span>
+      <div class="live-ctl">
+        <button class="chip" aria-pressed="${LIVE.mode === "pair"}" onclick="setLiveMode('pair')">車損比對（借/還兩張）</button>
+        <button class="chip" aria-pressed="${LIVE.mode === "interior"}" onclick="setLiveMode('interior')">車內整潔（單張）</button>
+      </div>
+    </div>
+    <div class="d-card" style="padding:14px">
+      <div class="live-drops ${LIVE.mode === "interior" ? "single" : ""}">${drops}</div>
+      <div class="live-ctl" style="margin-top:12px">
+        <button class="btn danger" ${ready && !LIVE.busy ? "" : "disabled"} onclick="runLiveJudge(false)">▶ 開始判定</button>
+        <button class="btn" ${LIVE.busy ? "disabled" : ""} onclick="liveReset()">清除重來</button>
+        <span style="color:var(--faint);font-size:11.5px">鏈路：Quality Gate → Flash 快篩 → 臨界升級 Pro 多數決 → 視覺標註 ・ 照片僅暫存於記憶體，判定後即刪除</span>
+      </div>
+    </div>
+    ${LIVE.gate && !LIVE.result ? `<div class="d-card"><div class="v-sub" style="margin-bottom:8px"><b>① Quality Gate（純 CV，零 API 成本）${LIVE.gate.gate_pass ? " — 通過" : " — 未通過"}</b></div>${liveGateHtml({ gate: LIVE.gate.gate })}</div>` : ""}
+    ${LIVE.gate && !LIVE.gate.gate_pass && !LIVE.busy && !LIVE.result ? `
+      <div class="d-card verdict"><h3 class="warn"><span class="ico">◐</span>品質不合格 — 請重拍</h3>
+        <div class="v-sub">實際系統中此照片會在 App 拍攝當下被即時擋下並顯示重拍原因（環節一）。換照片重試，或跳過檢核強制判定。</div>
+        <div class="actions" style="margin-top:10px"><button class="btn" onclick="runLiveJudge(true)">仍要強制判定（跳過品質檢核）</button></div></div>` : ""}
+    ${LIVE.busy === "gate" ? `<div class="d-card verdict"><h3><span class="spin"></span>&nbsp;① 品質檢核中…</h3>
+      <div class="v-sub">純 CV 檢核（清晰度／曝光），不到 1 秒。</div></div>` : ""}
+    ${LIVE.busy === "judge" ? `<div class="d-card verdict"><h3><span class="spin"></span>&nbsp;② AI 判定中…</h3>
+      <div class="v-sub">Flash 快篩（約 10 秒）→ 臨界案件升級 Pro 多數決（最多再 40 秒）→ 視覺標註</div>
+      <div class="steplog">已耗時 <span id="live-elapsed" class="mono">0 秒</span></div></div>` : ""}
+    ${LIVE.error ? `<div class="d-card verdict"><h3 class="crit"><span class="ico">✕</span>判定失敗</h3><div class="v-sub">${LIVE.error}</div></div>` : ""}
+    ${LIVE.result ? liveResultHtml(LIVE.result) : ""}
+    ${qrCardHtml()}`;
+  loadQr();
+}
+
+/* --- 手機掃碼直開（評審現場用手機拍、直接上傳） --- */
+function qrCardHtml() {
+  if (!LIVE.qr) return "";
+  return `<div class="d-card" style="display:flex;align-items:center;gap:16px;padding:12px 16px">
+    <img src="data:image/png;base64,${LIVE.qr.png_b64}" alt="監理台 QR" style="width:110px;height:110px;border-radius:4px;background:#fff;padding:4px">
+    <div><div style="font-weight:700;margin-bottom:4px">手機掃碼直開</div>
+      <div style="font-size:12.5px;color:var(--muted);line-height:1.8">同一 Wi-Fi 下用手機掃碼 → 開「現場實測」→ 直接用相機拍借/還照上傳，現場拍現場判。<br>
+      <span class="mono" style="color:var(--acc-ink)">${LIVE.qr.url}</span></div></div></div>`;
+}
+async function loadQr() {
+  if (!SERVER || LIVE.qr || LIVE.qrLoading) return;
+  LIVE.qrLoading = true;
+  try {
+    const r = await fetch("/api/qr");
+    if (r.ok) { LIVE.qr = await r.json(); if (viewMode === "live") renderLive(); }
+  } catch (e) {}
+}
+
 /* ================= 事件 ================= */
 function renderAll() {
-  document.getElementById("main").classList.toggle("full", viewMode === "ops");
+  document.getElementById("main").classList.toggle("full", viewMode === "ops" || viewMode === "live");
   renderTabs(); renderStats(); renderFilters(); renderList(); renderDetail();
 }
 function setMode(m) {
@@ -1264,7 +1550,7 @@ function advance(id) {
 }
 document.addEventListener("keydown", e => {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
-  if (viewMode === "ops") return;
+  if (viewMode === "ops" || viewMode === "live") return;
   if (viewMode === "passport") {
     const cars = Object.keys(PASSPORTS).sort((a, b) => PASSPORTS[b].open_new - PASSPORTS[a].open_new || a.localeCompare(b));
     const ci = cars.indexOf(currentCar);
@@ -1283,14 +1569,17 @@ document.addEventListener("keydown", e => {
 
 (async function initApp() {
   await loadDecisions();
+  await loadLiveCases();
   renderAll();
   if (SERVER) {
-    // 每 5 秒同步一次全隊複核狀態；有變化才重繪
+    // 每 5 秒同步一次全隊複核狀態與現場案件；有變化才重繪
     setInterval(async () => {
+      let changed = await syncLiveCases();
       try {
         const d = await (await fetch("/api/decisions")).json();
-        if (JSON.stringify(d) !== JSON.stringify(decisions)) { decisions = d; renderAll(); }
+        if (JSON.stringify(d) !== JSON.stringify(decisions)) { decisions = d; changed = true; }
       } catch (e) {}
+      if (changed) renderAll();
     }, 5000);
   }
 })();
