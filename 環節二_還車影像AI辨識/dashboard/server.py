@@ -528,18 +528,58 @@ async def api_gate(mode: str = Form("pair"),
     return {"gate": gates, "gate_pass": all(g["pass"] for g in gates.values())}
 
 
+def lan_ip() -> str:
+    """取「手機掃碼連得到」的區網 IP。
+
+    ⚠️ 不能用「UDP connect 8.8.8.8 看 getsockname」那招：開著 VPN 時
+    預設路由走 tunnel（utun*），會回傳 10.x 之類的隧道位址，
+    手機在 Wi-Fi/熱點上根本連不到——QR 掃了開不起來就是這個原因。
+    改為優先掃實體網卡（en0/en1…）上的私有位址。
+    """
+    import socket  # noqa: PLC0415
+    try:
+        import psutil  # noqa: PLC0415
+        addrs = psutil.net_if_addrs()
+    except ImportError:
+        addrs = None
+
+    def private(a: str) -> bool:
+        return (a.startswith("192.168.") or a.startswith("10.")
+                or any(a.startswith(f"172.{i}.") for i in range(16, 32)))
+
+    if addrs:
+        # 實體網卡優先，且排除 VPN/虛擬介面
+        for name in sorted(addrs, key=lambda n: (not n.startswith("en"), n)):
+            if name.startswith(("utun", "tun", "tap", "ppp", "awdl", "llw", "bridge")):
+                continue
+            for a in addrs[name]:
+                if getattr(a, "family", None) == socket.AF_INET and private(a.address):
+                    return a.address
+
+    # 沒有 psutil 時退回 ifconfig 解析（macOS/Linux 皆可）
+    import re
+    import subprocess  # noqa: PLC0415
+    try:
+        out = subprocess.run(["ifconfig"], capture_output=True, text=True, timeout=3).stdout
+    except (OSError, subprocess.SubprocessError):
+        return "localhost"
+    iface = None
+    for line in out.splitlines():
+        m = re.match(r"^([a-z0-9]+):", line)
+        if m:
+            iface = m.group(1)
+        elif iface and iface.startswith("en") and line.strip().startswith("inet "):
+            a = line.split()[1]
+            if private(a):
+                return a
+    return "localhost"
+
+
 @app.get("/api/qr")
 def api_qr(request: Request):
     """回傳「手機掃碼直開」用的區網網址 QR（base64 PNG）。"""
     import qrcode  # noqa: PLC0415
-    import socket  # noqa: PLC0415
-    try:  # 取本機區網 IP（UDP 不實際發包）
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.connect(("8.8.8.8", 80))
-        ip = s.getsockname()[0]
-        s.close()
-    except OSError:
-        ip = "localhost"
+    ip = lan_ip()
     url = f"http://{ip}:{request.url.port or 8000}"
     img = qrcode.make(url, box_size=6, border=2)
     buf = io.BytesIO()

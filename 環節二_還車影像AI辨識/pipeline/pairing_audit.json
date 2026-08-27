@@ -1,0 +1,1371 @@
+[
+ {
+  "car": "RCG2235",
+  "angle": "右前",
+  "pickup_plates": [
+   "RCG 2235"
+  ],
+  "return_plates": [],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RCG2235",
+  "angle": "右後",
+  "pickup_plates": [],
+  "return_plates": [
+   "RCG2235"
+  ],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RCG2235",
+  "angle": "左前",
+  "pickup_plates": [
+   "RČG2235"
+  ],
+  "return_plates": [
+   "RČG2235"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RCG2235",
+  "angle": "左後",
+  "pickup_plates": [
+   "RCG-2235"
+  ],
+  "return_plates": [
+   "RCG-2235"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RCQ6760",
+  "angle": "右前",
+  "pickup_plates": [
+   "RCB.6760"
+  ],
+  "return_plates": [
+   "8C06760"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RCQ6760",
+  "angle": "右後",
+  "pickup_plates": [],
+  "return_plates": [
+   "RCA 6760"
+  ],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RCQ6760",
+  "angle": "左前",
+  "pickup_plates": [
+   "RCA.6760"
+  ],
+  "return_plates": [
+   "RČØ6760"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RCQ6760",
+  "angle": "左後",
+  "pickup_plates": [
+   "RCA-6760"
+  ],
+  "return_plates": [
+   "RC8-6760"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RCW1883",
+  "angle": "右前",
+  "pickup_plates": [
+   "RCW 1883"
+  ],
+  "return_plates": [
+   "RCK 1883"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RCW1883",
+  "angle": "右後",
+  "pickup_plates": [
+   "RCW1883"
+  ],
+  "return_plates": [
+   "RCW 1883"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RCW1883",
+  "angle": "左前",
+  "pickup_plates": [
+   "RCN 1883"
+  ],
+  "return_plates": [
+   "RCV 1883"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RCW1883",
+  "angle": "左後",
+  "pickup_plates": [
+   "RCW-1883"
+  ],
+  "return_plates": [
+   "RCI 1883"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RCX5100",
+  "angle": "右前",
+  "pickup_plates": [
+   "RCX5100"
+  ],
+  "return_plates": [
+   "RCX5100"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RCX5100",
+  "angle": "右後",
+  "pickup_plates": [
+   "RCX5100"
+  ],
+  "return_plates": [
+   "RCX5100"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RCX5100",
+  "angle": "左前",
+  "pickup_plates": [
+   "RCX5100"
+  ],
+  "return_plates": [
+   "RCX5100"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RCX5100",
+  "angle": "左後",
+  "pickup_plates": [
+   "TH 100r",
+   "t8 WU03",
+   "RCX5100"
+  ],
+  "return_plates": [
+   "RCX5100"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RDG8571",
+  "angle": "右前",
+  "pickup_plates": [
+   "RDG-8571"
+  ],
+  "return_plates": [],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RDG8571",
+  "angle": "右後",
+  "pickup_plates": [],
+  "return_plates": [],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RDG8571",
+  "angle": "左前",
+  "pickup_plates": [],
+  "return_plates": [],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RDG8571",
+  "angle": "左後",
+  "pickup_plates": [
+   "RDG-8571"
+  ],
+  "return_plates": [],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RDG8578",
+  "angle": "右前",
+  "pickup_plates": [
+   "ROG 8578"
+  ],
+  "return_plates": [],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RDG8578",
+  "angle": "右後",
+  "pickup_plates": [
+   "RDG8578"
+  ],
+  "return_plates": [
+   "RDG-8578"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RDG8578",
+  "angle": "左前",
+  "pickup_plates": [
+   "ROG-857"
+  ],
+  "return_plates": [
+   "RDG 8578"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RDG8578",
+  "angle": "左後",
+  "pickup_plates": [
+   "RDG8578"
+  ],
+  "return_plates": [
+   "RDG 8578"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RDG9853",
+  "angle": "右前",
+  "pickup_plates": [
+   "RDG9853"
+  ],
+  "return_plates": [
+   "RDG9853"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RDG9853",
+  "angle": "右後",
+  "pickup_plates": [
+   "RDG9853"
+  ],
+  "return_plates": [
+   "RÓG-9853"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RDG9853",
+  "angle": "左前",
+  "pickup_plates": [
+   "RDG-9853"
+  ],
+  "return_plates": [
+   "RDG-9853"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RDG9853",
+  "angle": "左後",
+  "pickup_plates": [
+   "RDG-9853"
+  ],
+  "return_plates": [
+   "RDG-9853"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RDL7827",
+  "angle": "右前",
+  "pickup_plates": [
+   "ROL-7827"
+  ],
+  "return_plates": [
+   "1HDL.78327"
+  ],
+  "verdict": "conflict"
+ },
+ {
+  "car": "RDL7827",
+  "angle": "右後",
+  "pickup_plates": [
+   "RDL7827"
+  ],
+  "return_plates": [
+   "RDL-7827"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RDL7827",
+  "angle": "左前",
+  "pickup_plates": [
+   "ROL.7827"
+  ],
+  "return_plates": [
+   "RDL:7827"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RDL7827",
+  "angle": "左後",
+  "pickup_plates": [
+   "RDL:7827"
+  ],
+  "return_plates": [
+   "RDL:7827"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RDL7832",
+  "angle": "右前",
+  "pickup_plates": [
+   "RÖL7832"
+  ],
+  "return_plates": [
+   "ROL-7832"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RDL7832",
+  "angle": "右後",
+  "pickup_plates": [],
+  "return_plates": [
+   "RDL-7832"
+  ],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RDL7832",
+  "angle": "左前",
+  "pickup_plates": [],
+  "return_plates": [
+   "ENC9928",
+   "RDL-7832"
+  ],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RDL7832",
+  "angle": "左後",
+  "pickup_plates": [
+   "ROL:785"
+  ],
+  "return_plates": [
+   "RDL:7832"
+  ],
+  "verdict": "conflict"
+ },
+ {
+  "car": "RDQ5916",
+  "angle": "右前",
+  "pickup_plates": [],
+  "return_plates": [],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RDQ5916",
+  "angle": "右後",
+  "pickup_plates": [
+   "R085916"
+  ],
+  "return_plates": [],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RDQ5916",
+  "angle": "左前",
+  "pickup_plates": [],
+  "return_plates": [
+   "R0059"
+  ],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RDQ5916",
+  "angle": "左後",
+  "pickup_plates": [
+   "RDA59/6"
+  ],
+  "return_plates": [
+   "RD859/6"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RDR6350",
+  "angle": "右前",
+  "pickup_plates": [],
+  "return_plates": [],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RDR6350",
+  "angle": "右後",
+  "pickup_plates": [],
+  "return_plates": [],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RDR6350",
+  "angle": "左前",
+  "pickup_plates": [],
+  "return_plates": [
+   "ROR. 6350"
+  ],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RDR6350",
+  "angle": "左後",
+  "pickup_plates": [
+   "RDR-6350"
+  ],
+  "return_plates": [
+   "RDR:6550"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RDS2805",
+  "angle": "右前",
+  "pickup_plates": [
+   "ROS2805"
+  ],
+  "return_plates": [
+   "ROS2805"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RDS2805",
+  "angle": "右後",
+  "pickup_plates": [
+   "RDS-2805"
+  ],
+  "return_plates": [
+   "EDS2805)"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RDS2805",
+  "angle": "左前",
+  "pickup_plates": [
+   "LRDS2805"
+  ],
+  "return_plates": [
+   "RDS-2805"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RDS2805",
+  "angle": "左後",
+  "pickup_plates": [
+   "RDS-2805"
+  ],
+  "return_plates": [
+   "RDS:2805"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RDU-5572",
+  "angle": "右前",
+  "pickup_plates": [
+   "RDU5572"
+  ],
+  "return_plates": [
+   "*H100040 %",
+   "IMRE 2800 F"
+  ],
+  "verdict": "conflict"
+ },
+ {
+  "car": "RDU-5572",
+  "angle": "右後",
+  "pickup_plates": [
+   "RDU5572"
+  ],
+  "return_plates": [
+   "RDU 5572"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RDU-5572",
+  "angle": "左前",
+  "pickup_plates": [
+   "ROU 5572"
+  ],
+  "return_plates": [],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RDU-5572",
+  "angle": "左後",
+  "pickup_plates": [
+   "RDU5572"
+  ],
+  "return_plates": [
+   "RDU5572",
+   "/ WGR 576",
+   "8E =129",
+   "FE0HE (C29",
+   "GMME 2800"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RDU-7390",
+  "angle": "右前",
+  "pickup_plates": [
+   "ROL750"
+  ],
+  "return_plates": [
+   "RÕU:7390",
+   "EAG-7138"
+  ],
+  "verdict": "conflict"
+ },
+ {
+  "car": "RDU-7390",
+  "angle": "右後",
+  "pickup_plates": [
+   "RDU:7390"
+  ],
+  "return_plates": [
+   "RDU7390"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RDU-7390",
+  "angle": "左前",
+  "pickup_plates": [
+   "ROU:7390"
+  ],
+  "return_plates": [
+   "RỞU 739g"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RDU-7390",
+  "angle": "左後",
+  "pickup_plates": [
+   "RDU7390"
+  ],
+  "return_plates": [
+   "RDU:7390"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RDW-7085",
+  "angle": "右前",
+  "pickup_plates": [],
+  "return_plates": [],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RDW-7085",
+  "angle": "右後",
+  "pickup_plates": [],
+  "return_plates": [
+   "HUN-70851"
+  ],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RDW-7085",
+  "angle": "左前",
+  "pickup_plates": [],
+  "return_plates": [],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RDW-7085",
+  "angle": "左後",
+  "pickup_plates": [],
+  "return_plates": [],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RDZ-9006",
+  "angle": "右前",
+  "pickup_plates": [],
+  "return_plates": [],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RDZ-9006",
+  "angle": "右後",
+  "pickup_plates": [],
+  "return_plates": [],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RDZ-9006",
+  "angle": "左前",
+  "pickup_plates": [],
+  "return_plates": [],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RDZ-9006",
+  "angle": "左後",
+  "pickup_plates": [],
+  "return_plates": [],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RDZ0155",
+  "angle": "右前",
+  "pickup_plates": [
+   "RDZ0155"
+  ],
+  "return_plates": [
+   "R0Z0155"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RDZ0155",
+  "angle": "右後",
+  "pickup_plates": [
+   "RDZ:0155"
+  ],
+  "return_plates": [],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RDZ0155",
+  "angle": "左前",
+  "pickup_plates": [
+   "RDZ-0155"
+  ],
+  "return_plates": [],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RDZ0155",
+  "angle": "左後",
+  "pickup_plates": [
+   "RDZ-0155"
+  ],
+  "return_plates": [
+   "RDZ:0155"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RDZ6950",
+  "angle": "右前",
+  "pickup_plates": [
+   "RDZ:6950"
+  ],
+  "return_plates": [
+   "RÖZ-6950"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RDZ6950",
+  "angle": "右後",
+  "pickup_plates": [
+   "ROZ1950"
+  ],
+  "return_plates": [
+   "POZ6950"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RDZ6950",
+  "angle": "左前",
+  "pickup_plates": [
+   "RDZ:6950"
+  ],
+  "return_plates": [
+   "RDZ-6950"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RDZ6950",
+  "angle": "左後",
+  "pickup_plates": [
+   "RDZ-6950"
+  ],
+  "return_plates": [
+   "05692CL"
+  ],
+  "verdict": "conflict"
+ },
+ {
+  "car": "RDZ7922",
+  "angle": "右前",
+  "pickup_plates": [
+   "RDZ7922"
+  ],
+  "return_plates": [],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RDZ7922",
+  "angle": "右後",
+  "pickup_plates": [
+   "R0E7912"
+  ],
+  "return_plates": [],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RDZ7922",
+  "angle": "左前",
+  "pickup_plates": [],
+  "return_plates": [],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RDZ7922",
+  "angle": "左後",
+  "pickup_plates": [
+   "ROZ7922"
+  ],
+  "return_plates": [],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RFB-2590",
+  "angle": "右前",
+  "pickup_plates": [
+   "RFB2590"
+  ],
+  "return_plates": [
+   "0652B--F"
+  ],
+  "verdict": "conflict"
+ },
+ {
+  "car": "RFB-2590",
+  "angle": "右後",
+  "pickup_plates": [
+   "RFB2590"
+  ],
+  "return_plates": [
+   "RF92590"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RFB-2590",
+  "angle": "左前",
+  "pickup_plates": [
+   "RFB2590"
+  ],
+  "return_plates": [
+   "RFB2590"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RFB-2590",
+  "angle": "左後",
+  "pickup_plates": [],
+  "return_plates": [
+   "RFĐ-2590"
+  ],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RFB-3295",
+  "angle": "右前",
+  "pickup_plates": [
+   "RFB3295"
+  ],
+  "return_plates": [],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RFB-3295",
+  "angle": "右後",
+  "pickup_plates": [
+   "RFB-3295"
+  ],
+  "return_plates": [
+   "RFB3295"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RFB-3295",
+  "angle": "左前",
+  "pickup_plates": [
+   "RFB3295"
+  ],
+  "return_plates": [],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RFB-3295",
+  "angle": "左後",
+  "pickup_plates": [
+   "RFB-3295"
+  ],
+  "return_plates": [
+   "RFB3295"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RFB5176",
+  "angle": "右前",
+  "pickup_plates": [],
+  "return_plates": [],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RFB5176",
+  "angle": "右後",
+  "pickup_plates": [],
+  "return_plates": [],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RFB5176",
+  "angle": "左前",
+  "pickup_plates": [],
+  "return_plates": [],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RFB5176",
+  "angle": "左後",
+  "pickup_plates": [
+   "RF8516 me"
+  ],
+  "return_plates": [],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RFD-1336",
+  "angle": "右前",
+  "pickup_plates": [],
+  "return_plates": [],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RFD-1336",
+  "angle": "右後",
+  "pickup_plates": [],
+  "return_plates": [
+   "HFO1 1336"
+  ],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RFD-1336",
+  "angle": "左前",
+  "pickup_plates": [],
+  "return_plates": [
+   "RFO 1336"
+  ],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RFD-1336",
+  "angle": "左後",
+  "pickup_plates": [],
+  "return_plates": [
+   "RFD1336"
+  ],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RFD-8522",
+  "angle": "右前",
+  "pickup_plates": [
+   "8F08522"
+  ],
+  "return_plates": [
+   "RFD8522"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RFD-8522",
+  "angle": "右後",
+  "pickup_plates": [
+   "HRFD0 652"
+  ],
+  "return_plates": [
+   "PF08522"
+  ],
+  "verdict": "conflict"
+ },
+ {
+  "car": "RFD-8522",
+  "angle": "左前",
+  "pickup_plates": [
+   "RFD85222"
+  ],
+  "return_plates": [
+   "RFD8522"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RFD-8522",
+  "angle": "左後",
+  "pickup_plates": [
+   "RFD8522"
+  ],
+  "return_plates": [
+   "RFD8522"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RFG7213",
+  "angle": "右前",
+  "pickup_plates": [
+   "PF G7213"
+  ],
+  "return_plates": [
+   "IRFG7213"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RFG7213",
+  "angle": "右後",
+  "pickup_plates": [
+   "RFG7213"
+  ],
+  "return_plates": [
+   "PFG7213"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RFG7213",
+  "angle": "左前",
+  "pickup_plates": [],
+  "return_plates": [],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RFG7213",
+  "angle": "左後",
+  "pickup_plates": [
+   "RFG-72/3"
+  ],
+  "return_plates": [
+   "RFG72/3"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RFH7851",
+  "angle": "右前",
+  "pickup_plates": [
+   "RFH7851"
+  ],
+  "return_plates": [
+   "(FH7851"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RFH7851",
+  "angle": "右後",
+  "pickup_plates": [
+   "RFH785/"
+  ],
+  "return_plates": [
+   "RFH785J"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RFH7851",
+  "angle": "左前",
+  "pickup_plates": [
+   "RFH7851"
+  ],
+  "return_plates": [
+   "RFH7851"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RFH7851",
+  "angle": "左後",
+  "pickup_plates": [
+   "RFH7851"
+  ],
+  "return_plates": [
+   "RFH7851"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RFH7873",
+  "angle": "右前",
+  "pickup_plates": [],
+  "return_plates": [
+   "FA7873"
+  ],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RFH7873",
+  "angle": "右後",
+  "pickup_plates": [],
+  "return_plates": [
+   "FA7873"
+  ],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RFH7873",
+  "angle": "左前",
+  "pickup_plates": [],
+  "return_plates": [],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RFH7873",
+  "angle": "左後",
+  "pickup_plates": [],
+  "return_plates": [
+   "RFA-7873"
+  ],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RFH8052",
+  "angle": "右前",
+  "pickup_plates": [
+   "-RFH8052"
+  ],
+  "return_plates": [
+   "FH8052,"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RFH8052",
+  "angle": "右後",
+  "pickup_plates": [
+   "RFH8052"
+  ],
+  "return_plates": [
+   "H-8052"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RFH8052",
+  "angle": "左前",
+  "pickup_plates": [
+   "RFH-8052"
+  ],
+  "return_plates": [
+   "RFH8052"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RFH8052",
+  "angle": "左後",
+  "pickup_plates": [
+   "RFH8052"
+  ],
+  "return_plates": [
+   "RFH8052"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RFH8122",
+  "angle": "右前",
+  "pickup_plates": [],
+  "return_plates": [
+   "RFH8122"
+  ],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RFH8122",
+  "angle": "右後",
+  "pickup_plates": [
+   "RFH8122"
+  ],
+  "return_plates": [],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RFH8122",
+  "angle": "左前",
+  "pickup_plates": [
+   "END 6279"
+  ],
+  "return_plates": [
+   "RFH8122"
+  ],
+  "verdict": "conflict"
+ },
+ {
+  "car": "RFH8122",
+  "angle": "左後",
+  "pickup_plates": [
+   "RFH81Z2"
+  ],
+  "return_plates": [],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RFM-2791",
+  "angle": "右前",
+  "pickup_plates": [],
+  "return_plates": [],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RFM-2791",
+  "angle": "右後",
+  "pickup_plates": [],
+  "return_plates": [],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RFM-2791",
+  "angle": "左前",
+  "pickup_plates": [],
+  "return_plates": [],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RFM-2791",
+  "angle": "左後",
+  "pickup_plates": [],
+  "return_plates": [],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RCR-7661",
+  "angle": "左後",
+  "pickup_plates": [],
+  "return_plates": [],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RCW-8382",
+  "angle": "左前",
+  "pickup_plates": [
+   "RCV 8382"
+  ],
+  "return_plates": [],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RCW-9206",
+  "angle": "左前",
+  "pickup_plates": [
+   "RCW-9206"
+  ],
+  "return_plates": [
+   "RCN 9206"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RDH-2261",
+  "angle": "左後",
+  "pickup_plates": [],
+  "return_plates": [
+   "RDH.226"
+  ],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RDH-3092",
+  "angle": "左後",
+  "pickup_plates": [
+   "RDH-309"
+  ],
+  "return_plates": [
+   "RDH3092"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RDJ-0772",
+  "angle": "左前",
+  "pickup_plates": [],
+  "return_plates": [],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RDJ-0793",
+  "angle": "左前",
+  "pickup_plates": [],
+  "return_plates": [],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RDL-5171",
+  "angle": "左前",
+  "pickup_plates": [
+   "ROL 5171"
+  ],
+  "return_plates": [
+   "RDL-5171"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RDL-7836",
+  "angle": "左後",
+  "pickup_plates": [
+   "RDL7836"
+  ],
+  "return_plates": [
+   "RDL:7836"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RDL-8265",
+  "angle": "右後",
+  "pickup_plates": [
+   "RDL 8265"
+  ],
+  "return_plates": [
+   "RDL8265",
+   "EMP 0636"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RDL-9262",
+  "angle": "右前",
+  "pickup_plates": [
+   "08X1E"
+  ],
+  "return_plates": [
+   "RÓL-9262"
+  ],
+  "verdict": "conflict"
+ },
+ {
+  "car": "RDQ-1950",
+  "angle": "右後",
+  "pickup_plates": [],
+  "return_plates": [],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RDU-6956",
+  "angle": "右前",
+  "pickup_plates": [
+   "RÖU-6956"
+  ],
+  "return_plates": [
+   "U6956"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RDU-9162",
+  "angle": "左前",
+  "pickup_plates": [
+   "RDU-9 162"
+  ],
+  "return_plates": [],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RDX-1085",
+  "angle": "右前",
+  "pickup_plates": [],
+  "return_plates": [
+   "RDX-1085"
+  ],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RDX-2376",
+  "angle": "右後",
+  "pickup_plates": [],
+  "return_plates": [
+   "R0X 23 GT"
+  ],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RDY-6382",
+  "angle": "左前",
+  "pickup_plates": [
+   "RDY6382"
+  ],
+  "return_plates": [
+   "RDY•6382"
+  ],
+  "verdict": "match"
+ },
+ {
+  "car": "RDZ-0187",
+  "angle": "右後",
+  "pickup_plates": [
+   "RDZ-0187"
+  ],
+  "return_plates": [],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RFB-2091",
+  "angle": "右前",
+  "pickup_plates": [],
+  "return_plates": [],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RFB-2091",
+  "angle": "左前",
+  "pickup_plates": [],
+  "return_plates": [],
+  "verdict": "unknown"
+ },
+ {
+  "car": "RFD-0332",
+  "angle": "右前",
+  "pickup_plates": [
+   "RFD-03321"
+  ],
+  "return_plates": [],
+  "verdict": "unknown"
+ }
+]
