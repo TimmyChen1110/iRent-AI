@@ -13,6 +13,8 @@
     --red: #B3352C;
     --red-soft: #F9E4E1;
     --code-bg: #EDF3EF;
+    --blue: #2A5DB0;
+    --blue-soft: #E7EEF9;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
@@ -28,6 +30,8 @@
       --red: #E57A70;
       --red-soft: #331B18;
       --code-bg: #1B2620;
+      --blue: #7FA9E8;
+      --blue-soft: #16202F;
     }
   }
   :root[data-theme="dark"] {
@@ -43,6 +47,8 @@
     --red: #E57A70;
     --red-soft: #331B18;
     --code-bg: #1B2620;
+    --blue: #7FA9E8;
+    --blue-soft: #16202F;
   }
 
   * { box-sizing: border-box; }
@@ -148,18 +154,52 @@
   .phase ul { padding-left: 1.1em; margin: 0; font-size: 13.5px; color: var(--muted); }
 
   footer { margin-top: 88px; padding-top: 18px; border-top: 1px solid var(--line); font-size: 12.5px; color: var(--muted); font-family: ui-monospace, "SF Mono", Menlo, monospace; display: flex; flex-wrap: wrap; gap: 8px 24px; }
+
+  /* --- 實測證據區塊：判決卡 / A-B 對照 / 分布條 / 案例解剖 --- */
+  .verdicts { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; margin: 24px 0; }
+  .vc { border: 1px solid var(--line); background: var(--card); padding: 14px 16px; border-top: 3px solid var(--muted); }
+  .vc.lost { border-top-color: var(--red); }
+  .vc.kept { border-top-color: var(--green); }
+  .vc .vh { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 11px; letter-spacing: .1em; color: var(--muted); }
+  .vc .vt { font-weight: 700; font-size: 15px; margin: 4px 0 6px; }
+  .vc .vr { font-size: 13.5px; color: var(--muted); line-height: 1.6; }
+  .vc .vnum { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-variant-numeric: tabular-nums;
+              font-size: 15px; font-weight: 700; color: var(--ink); }
+
+  .dist { margin: 18px 0 8px; }
+  .dist .bar { display: flex; height: 30px; border: 1px solid var(--line); overflow: hidden; }
+  .dist .seg { display: flex; align-items: center; justify-content: center;
+               font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 11.5px; font-weight: 700; color: #fff; }
+  .dist .s1 { background: #B3352C; }
+  .dist .s2 { background: #C9822B; }
+  .dist .s3 { background: #2A7A56; }
+  .dist .s4 { background: #1F4F7A; }
+  .dist .legend { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 8px; font-size: 12.5px; color: var(--muted); }
+  .dist .legend i { display: inline-block; width: 10px; height: 10px; margin-right: 5px; vertical-align: -1px; }
+
+  .anat { border: 1px solid var(--line); background: var(--card); margin: 22px 0; }
+  .anat > div { padding: 13px 17px; border-bottom: 1px solid var(--line); }
+  .anat > div:last-child { border-bottom: 0; }
+  .anat .aq { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 11px;
+              letter-spacing: .1em; color: var(--muted); margin-bottom: 5px; }
+  .anat .said { background: var(--red-soft); }
+  .anat .truth { background: var(--green-soft); }
+  .anat .quote { font-size: 14px; line-height: 1.7; }
+
+  .callout.data { border-color: var(--blue); background: var(--blue-soft); }
+  .mini { font-size: 13px; color: var(--muted); margin-top: 6px; }
 </style>
 
 <div class="wrap">
 
 <header>
-  <div class="eyebrow">System Architecture · v1.0</div>
+  <div class="eyebrow">System Architecture · v2.0 · 含四次 A/B 驗證</div>
   <h1>iRent 智能車況管家<br>還車影像 AI 辨識系統設計</h1>
   <p class="subtitle">運用 AI 辨識使用者上傳的還車照片：比對借／還車影像偵測<strong>新增車損</strong>、判定<strong>車內整潔程度</strong>，並在異常時觸發<strong>後台預警與通知</strong>，優化租還車體驗與營運管理效率。</p>
   <div class="meta">
-    <span>DATE <b>2026-08-18</b></span>
+    <span>DATE <b>2026-08-27</b></span>
     <span>ENGINE <b>混合式（品質檢核 + VLM 模型級聯）</b></span>
-    <span>SCOPE <b>架構設計 + 真實資料實測（v1.1）</b></span>
+    <span>SCOPE <b>架構設計 + 141 組實測 + 四次 A/B 方法論驗證</b></span>
   </div>
 </header>
 
@@ -493,9 +533,146 @@
   </ul>
 </section>
 
-<!-- ================= 08 ================= -->
+
+<!-- ================= 08 方法論驗證 ================= -->
 <section>
-  <div class="sec-head"><span class="sec-num">08</span><h2>導入路線圖</h2></div>
+  <div class="sec-head"><span class="sec-num">08</span><h2>方法論驗證：四次 A/B 與一個反直覺結論</h2></div>
+  <p class="sec-lede">我們沒有只驗證「系統會動」，而是驗證「每一個設計決定是否真的更好」。依一份完整的
+    Prompt 架構規格重寫判定層，跑滿 141 組真實配對做 A/B——<strong>四次全部落敗</strong>。
+    以下是量測過程與結論，含全部負面結果。</p>
+
+  <div class="verdicts">
+    <div class="vc kept">
+      <div class="vh">BASELINE · 採用中</div>
+      <div class="vt">現行判定 prompt</div>
+      <div class="vr">Recall <span class="vnum">95.5%</span><br>誤報 <span class="vnum">0%</span><br>
+        <span class="mini">n=138（人工逐圖重標）</span></div>
+    </div>
+    <div class="vc lost">
+      <div class="vh">實驗 A · 落敗</div>
+      <div class="vt">規格版完整重寫</div>
+      <div class="vr">Recall 100%／誤報 <span class="vnum">3.5%</span><br>
+        <span class="mini">多抓 1 筆真損，代價是 4 筆誤告用戶</span></div>
+    </div>
+    <div class="vc lost">
+      <div class="vh">實驗 B · 落敗</div>
+      <div class="vt">只移植「既有損舉證」</div>
+      <div class="vr">Recall 95.5%／誤報 <span class="vnum">3.5%</span><br>
+        <span class="mini">召回持平，精確度反降</span></div>
+    </div>
+    <div class="vc lost">
+      <div class="vh">實驗 C · 落敗（最差）</div>
+      <div class="vt">只加「排除理由」欄位</div>
+      <div class="vr">Recall <span class="vnum">81.8%</span>／誤報 2.6%<br>
+        <span class="mini">7 組翻轉全是退步，0 改善</span></div>
+    </div>
+  </div>
+
+  <div class="callout warn">
+    <strong>★ 最重要的結論：要求模型解釋自己的推理，會讓推理本身變差。</strong><br>
+    實驗 C 只加了一個欄位——要求模型說明「你憑什麼排除反光／水痕」。它完全不碰任何判定準則，
+    純粹要求把已經做過的思考寫出來，結果 Recall 掉了 <b>13.7pp</b>。
+    合理推測：強迫為每筆痕跡產出「排除理由」，等於誘導模型去論證「這是真損」，
+    於是對本該低調處理的模糊痕跡也編出說詞（誤報 +3），同時把注意力從「比對」移到「說明」（漏抓 +3）。
+    <br><br>
+    因此本系統的可解釋性一律由<strong>判定之後</strong>的層產生（規則表理由、客服說明），
+    而不是在判定當下要求模型自我解釋。這正是估價與文案層是純加分、而四次 prompt 改寫全部落敗的分野。
+  </div>
+
+  <h3>幻覺長什麼樣子：逐張看圖複驗</h3>
+  <p>四次實驗的誤報不是「判斷偏鬆」，而是<em class="hl">高信心杜撰</em>。我們對每一筆都調出原圖人工複驗。
+    以 RDL7827-左前 為例（三個不同版本的 prompt 都在這張照片上編出同樣的損傷）：</p>
+  <div class="anat">
+    <div class="said">
+      <div class="aq">模型輸出 · confidence 0.92</div>
+      <div class="quote">「還車照中左前輪後方至車門下緣的側裙處可見<b>大範圍塑膠件破裂、斷裂外翻與立體變形</b>，
+        邊緣撕裂不規則並向上突起；借車照中該處線條平整完好。」</div>
+    </div>
+    <div class="truth">
+      <div class="aq">人工調圖複驗 · 事實</div>
+      <div class="quote">該處<b>完好無損</b>。輪拱下方為斜角視角下的陰影，模型把陰影與輪拱輪廓幻覺成結構性破裂，
+        並主動聲稱借車照該處乾淨以強化敘事。</div>
+    </div>
+    <div>
+      <div class="aq">為何這是最危險的失敗模式</div>
+      <div class="quote">敘述具體、位置明確、信心 0.92——客服看不出破綻，會直接對用戶開單求償。
+        <b>能靠信心門檻過濾的誤報不可怕，可怕的是這種。</b>實測門檻掃描確認：要把誤報壓到 0%，
+        Recall 得從 100% 崩到 63.6%，沒有任何操作點優於現行版本。</div>
+    </div>
+  </div>
+
+  <h3>規格門檻為何不可照抄：1,476 筆實測分布</h3>
+  <p>規格要求「上次沒拍清楚的部位不得對用戶主張」，並設定基準照觀測品質 ≥0.8 才可自動處置。
+    我們對全部 141 張借車照逐分區評分，得到 1,476 筆觀測品質——</p>
+  <div class="dist">
+    <div class="bar">
+      <div class="seg s1" style="flex:13">&lt;0.5　13%</div>
+      <div class="seg s2" style="flex:22">0.5–0.65　22%</div>
+      <div class="seg s3" style="flex:64.9">0.65–0.8　64.9%</div>
+      <div class="seg s4" style="flex:0.1" title="≥0.8：0.1%"></div>
+    </div>
+    <div class="legend">
+      <span><i class="s1" style="background:#B3352C"></i>不得主張</span>
+      <span><i class="s2" style="background:#C9822B"></i>信心折損</span>
+      <span><i class="s3" style="background:#2A7A56"></i>可用</span>
+      <span><i class="s4" style="background:#1F4F7A"></i>規格認定「可自動處置」＝ <b>0.1%</b>（2/1,476）</span>
+    </div>
+  </div>
+  <p class="src-note">※ 規格的門檻預設基準照是「營運人員入隊時的高品質完整拍攝」；本資料集是用戶手持手機拍攝，
+    觀測品質中位數 0.65、<b>最大值僅 0.75</b>。照抄規格＝自動處置永遠不會發生。</p>
+
+  <div class="callout data">
+    <strong>連帶推翻的第二個預設：相乘式加權在數學上不可用。</strong>
+    規格的「偵測信心 × 基準品質」因 prior_q 上限 0.75，乘積永遠 ≤0.74，<b>達不到 0.85 的自動處置門檻</b>——
+    27 筆偵測全數降級（含 21 筆確認真損），只擋到 1 筆誤報。改為兩道獨立門檻
+    （信心 ≥0.85 <em>且</em> 品質 ≥0.70）後，自動處置從 0 件回到 13 件，保護語意完全保留。
+    <div class="mini">誠實限制：本資料集上這層降了 9 筆真損、抓到 0 筆誤報——它<b>沒有提升準確率</b>。
+      其價值是結構性的：用戶申訴時能證明「借車照確實拍得到該部位」。</div>
+  </div>
+
+  <h3>工程定質</h3>
+  <div class="cards">
+    <div class="card">
+      <span class="tag">SINGLE SOURCE OF TRUTH</span>
+      <h4>判定結果單一來源</h4>
+      <p>Dashboard／標註／護照／KPI 一律讀 <code>results_config.py</code>。曾因後台讀未級聯結果、
+        標註讀級聯結果，造成 5 組判定相反、3 組「判無損卻有標註框」。</p>
+    </div>
+    <div class="card">
+      <span class="tag">REGRESSION TESTS</span>
+      <h4>142 項零 API 測試</h4>
+      <p>覆蓋 P1/P2/P3 分流、級聯升級條件、平手取有損、估價級距與材質規則。
+        改壞了不會報錯、只會靜靜分錯級的邏輯，全部鎖住。</p>
+    </div>
+    <div class="card">
+      <span class="tag">PARALLEL A/B</span>
+      <h4>實驗與正式並存</h4>
+      <p>四次改寫全部寫入獨立結果檔，從未覆蓋既有實測數字。落敗的版本連同原因保留在程式碼中，
+        避免日後重走同一條路。</p>
+    </div>
+    <div class="card">
+      <span class="tag">RULES OVER MODEL</span>
+      <h4>估價不交給模型</h4>
+      <p>同一種損傷必須永遠得到同一個報價，才能對用戶解釋、被稽核。
+        故估價層是純規則表、零 API：損傷×尺寸×材質 → 維修動作＋級距＋金額區間。</p>
+    </div>
+  </div>
+
+  <h3>營運價值</h3>
+  <div class="stats">
+    <div class="stat"><div class="num">83.0%</div><div class="lbl">自動放行<br>無需人看</div></div>
+    <div class="stat"><div class="num warn">15.6%</div><div class="lbl">自動預警<br>直接開單</div></div>
+    <div class="stat"><div class="num">1.4%</div><div class="lbl">真正需人工<br>逐案複核</div></div>
+    <div class="stat"><div class="num">163k–525k</div><div class="lbl">22 件可索賠案件<br>估價合計（NT$）</div></div>
+  </div>
+  <p class="src-note">※ 估價由規則表產生，級距為示意值需依維修合約替換。系統同時會算出「不值得追」的案件——
+    一道估價 300 元的細刮痕，啟動索賠要耗掉客服半小時加爭議風險，正確的營運決策是放掉。
+    <b>能算出不值得追，也是系統價值。</b></p>
+</section>
+
+<!-- ================= 09 ================= -->
+<section>
+  <div class="sec-head"><span class="sec-num">09</span><h2>導入路線圖</h2></div>
   <div class="phases">
     <div class="phase">
       <div class="ph">PHASE 1 · 0–1 月</div>
@@ -528,7 +705,7 @@
 </section>
 
 <footer>
-  <span>iRent 智能車況管家 · 系統架構設計 v1.0</span>
+  <span>iRent 智能車況管家 · 系統架構設計 v2.0</span>
   <span>資料基準：車外車內照片上傳清單（27,367 筆）＋ 索賠／未索賠照片集（293 張）</span>
 </footer>
 

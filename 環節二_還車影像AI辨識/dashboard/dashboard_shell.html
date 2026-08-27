@@ -393,6 +393,49 @@
     .gcheck{margin-top:8px;padding:6px 9px;border-radius:5px;font-size:11px}
     .gcheck.ok{background:#16281c;color:#8fe0ac}
     .gcheck.bad{background:#2c1a1f;color:#ff9aab}
+
+    /* 方法論驗證分頁 */
+    .mwrap{max-width:1180px;margin:0 auto;padding:4px 2px 40px}
+    .mhead h2{margin:0 0 6px;font-size:19px;letter-spacing:.01em}
+    .mhead p{margin:0 0 20px;color:var(--dim);font-size:13.5px;line-height:1.75;max-width:70em}
+    .mgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-bottom:20px}
+    .mcard{border:1px solid var(--line);background:var(--panel);padding:14px 16px;border-top:3px solid var(--dim)}
+    .mcard.kept{border-top-color:#3fb27f}
+    .mcard.lost{border-top-color:#c0503f}
+    .mtag{font-family:ui-monospace,Menlo,monospace;font-size:10.5px;letter-spacing:.11em;color:var(--dim)}
+    .mname{font-weight:700;font-size:14.5px;margin:4px 0 9px}
+    .mrow{display:flex;justify-content:space-between;font-size:12.5px;padding:2px 0;color:var(--dim)}
+    .mrow b{font-family:ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums;color:var(--fg)}
+    .mrow b.good{color:#3fb27f}
+    .mrow b.bad{color:#e08b7d}
+    .mnote{font-size:11.5px;color:var(--dim);line-height:1.6;margin-top:8px;
+           border-top:1px solid var(--line);padding-top:7px}
+    .mfind{border:1px solid #6b4a1f;background:#241c10;padding:15px 18px;margin-bottom:20px}
+    .mfh{font-weight:700;font-size:14.5px;color:#f0b458;margin-bottom:7px}
+    .mfind p{margin:0 0 8px;font-size:13px;line-height:1.8;color:#dcd2c0;max-width:78em}
+    .mfind p.mfp{margin-bottom:0;color:#b9ae9c}
+    .mfind b.bad{color:#ff9c8a}
+    .msplit{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:12px;margin-bottom:20px}
+    .mbox{border:1px solid var(--line);background:var(--panel);padding:15px 17px}
+    .mbox h3{margin:0 0 4px;font-size:14.5px}
+    .msub{font-size:12.5px;color:var(--dim);line-height:1.7;margin:6px 0}
+    .msub b.bad{color:#e08b7d}
+    .mq{padding:10px 13px;margin:9px 0;font-size:12.5px;line-height:1.75;border-left:3px solid}
+    .mq.said{border-color:#c0503f;background:#2a1a17}
+    .mq.truth{border-color:#3fb27f;background:#152420}
+    .mqh{font-family:ui-monospace,Menlo,monospace;font-size:10.5px;letter-spacing:.1em;
+         color:var(--dim);margin-bottom:4px}
+    .mbar{display:flex;height:26px;border:1px solid var(--line);overflow:hidden;margin:10px 0 6px}
+    .mseg{display:flex;align-items:center;justify-content:center;font-family:ui-monospace,Menlo,monospace;
+          font-size:11px;font-weight:700;color:#fff}
+    .mseg.s1{background:#c0392b}.mseg.s2{background:#c9822b}.mseg.s3{background:#2a7a56}
+    .mleg{display:flex;flex-wrap:wrap;gap:12px;font-size:11.5px;color:var(--dim);margin-bottom:4px}
+    .mleg i{display:inline-block;width:9px;height:9px;margin-right:4px}
+    .mgrid4{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+    .mq2{border:1px solid var(--line);background:var(--panel);padding:13px 15px;border-top:2px solid #3fb27f}
+    .mqt{font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:.11em;color:#3fb27f;margin-bottom:5px}
+    .mq2 b{font-size:13.5px}
+    .mq2 p{margin:5px 0 0;font-size:11.8px;color:var(--dim);line-height:1.65}
 </style>
 
 <div class="topbar">
@@ -494,6 +537,7 @@ function renderTabs() {
     <button class="tab" role="tab" aria-selected="${viewMode === "ops"}" onclick="setMode('ops')">營運總覽</button>
     <button class="tab" role="tab" aria-selected="${viewMode === "cases"}" onclick="setMode('cases')">案件複核<span class="cnt">${CASES.length}</span></button>
     <button class="tab" role="tab" aria-selected="${viewMode === "passport"}" onclick="setMode('passport')">車輛損傷護照<span class="cnt">${Object.keys(PASSPORTS).length}</span></button>
+    <button class="tab" role="tab" aria-selected="${viewMode === "method"}" onclick="setMode('method')">方法論驗證<span class="cnt">4 A/B</span></button>
     <button class="tab" role="tab" aria-selected="${viewMode === "live"}" onclick="setMode('live')">現場實測<span class="cnt">LIVE</span></button>`;
 }
 
@@ -683,6 +727,7 @@ function actionArea(cs) {
 
 function renderDetail() {
   if (viewMode === "ops") { renderOps(); return; }
+  if (viewMode === "method") { renderMethod(); return; }
   if (viewMode === "live") { renderLive(); return; }
   if (viewMode === "passport") { renderPassportDetail(); return; }
   const cs = CASES.find(c => c.id === currentId);
@@ -899,6 +944,117 @@ function hotCarSvg(cnt) {
     <text class="ts" x="120" y="16" text-anchor="middle" fill="var(--faint)" font-size="10.5">FRONT</text>
     <text class="ts" x="120" y="414" text-anchor="middle" fill="var(--faint)" font-size="10.5">REAR</text>
   </svg>`;
+}
+
+
+// ---------- 方法論驗證分頁：四次 A/B 與負面結果 ----------
+// 評審最常問的是「你怎麼知道這樣比較好」。這一頁把四次改寫的完整結果攤開，
+// 包含全部落敗的版本——量測過程本身就是交付物。
+const AB_RUNS = [
+  { tag: "BASELINE", name: "現行判定 prompt", state: "kept",
+    recall: "95.5%", fpr: "0%", prec: "100%",
+    note: "採用中。141 組對照人工逐圖重標（n=138）。" },
+  { tag: "實驗 A", name: "規格版完整重寫", state: "lost",
+    recall: "100%", fpr: "3.5%", prec: "84.6%",
+    note: "先描述後判斷／主動排除混淆源／UV 座標。多抓 1 筆真損，代價是 4 筆誤告用戶。" },
+  { tag: "實驗 B", name: "只移植「既有損舉證」", state: "lost",
+    recall: "95.5%", fpr: "3.5%", prec: "84.0%",
+    note: "強制說明「在借車照哪裡看到它」。救回 RDH-3092，卻漏掉 RCG2235。" },
+  { tag: "實驗 C", name: "只加「排除理由」欄位", state: "lost",
+    recall: "81.8%", fpr: "2.6%", prec: "85.7%",
+    note: "四次中最差。7 組翻轉全是退步、0 改善。" },
+];
+
+function renderMethod() {
+  const el = document.getElementById("detail");
+  const cards = AB_RUNS.map(r => `
+    <div class="mcard ${r.state}">
+      <div class="mtag">${r.tag}${r.state === "kept" ? " · 採用中" : " · 落敗"}</div>
+      <div class="mname">${r.name}</div>
+      <div class="mrow"><span>Recall</span><b class="${r.state === "kept" ? "good" : ""}">${r.recall}</b></div>
+      <div class="mrow"><span>誤報率</span><b class="${r.fpr === "0%" ? "good" : "bad"}">${r.fpr}</b></div>
+      <div class="mrow"><span>Precision</span><b>${r.prec}</b></div>
+      <div class="mnote">${r.note}</div>
+    </div>`).join("");
+
+  el.innerHTML = `
+  <div class="mwrap">
+    <div class="mhead">
+      <h2>方法論驗證 · 四次 A/B 全部落敗</h2>
+      <p>依一份完整的 Prompt 架構規格重寫判定層，每次都跑滿 141 組真實配對做對照。
+         四次改寫沒有一次贏過現行版本——<b>這一頁把負面結果也攤開，因為量測過程本身就是交付物。</b></p>
+    </div>
+
+    <div class="mgrid">${cards}</div>
+
+    <div class="mfind">
+      <div class="mfh">★ 最重要的發現：要求模型解釋自己的推理，會讓推理本身變差</div>
+      <p>實驗 C 只加了一個欄位——要求模型說明「你憑什麼排除反光／水痕」。
+         它完全不碰任何判定準則，純粹要求把已經做過的思考寫出來，結果 Recall 掉了
+         <b class="bad">13.7pp</b>。合理推測：強迫為每筆痕跡產出「排除理由」，等於誘導模型論證
+         「這是真損」，於是對本該低調處理的模糊痕跡也編出說詞（誤報 +3），
+         同時把注意力從「比對」移到「說明」（漏抓 +3）。</p>
+      <p class="mfp">因此本系統的可解釋性一律由<b>判定之後</b>的層產生（估價規則表的理由、客服說明文案），
+         而不是在判定當下要求模型自我解釋。這正是估價與文案層是純加分、
+         而四次 prompt 改寫全部落敗的分野。</p>
+    </div>
+
+    <div class="msplit">
+      <div class="mbox">
+        <h3>幻覺長什麼樣子</h3>
+        <p class="msub">誤報不是「判斷偏鬆」，而是高信心杜撰。每一筆都調出原圖人工複驗。</p>
+        <div class="mq said">
+          <div class="mqh">模型輸出 · confidence 0.92</div>
+          左前輪後方側裙處可見<b>大範圍塑膠件破裂、斷裂外翻與立體變形</b>，
+          邊緣撕裂不規則並向上突起；借車照中該處線條平整完好。
+        </div>
+        <div class="mq truth">
+          <div class="mqh">人工調圖複驗 · 事實</div>
+          該處<b>完好無損</b>。輪拱下方為斜角視角下的陰影，模型把陰影幻覺成結構性破裂，
+          並主動聲稱借車照該處乾淨以強化敘事。
+        </div>
+        <p class="msub">敘述具體、位置明確、信心 0.92——客服看不出破綻。
+          <b>能靠信心門檻過濾的誤報不可怕，可怕的是這種。</b>
+          實測門檻掃描：要把誤報壓到 0%，Recall 得從 100% 崩到 63.6%。</p>
+      </div>
+
+      <div class="mbox">
+        <h3>規格門檻為何不可照抄</h3>
+        <p class="msub">規格要求基準照觀測品質 ≥0.8 才可自動處置。我們對全部 141 張借車照
+          逐分區評分，得到 1,476 筆實測——</p>
+        <div class="mbar">
+          <div class="mseg s1" style="flex:13">13%</div>
+          <div class="mseg s2" style="flex:22">22%</div>
+          <div class="mseg s3" style="flex:64.9">64.9%</div>
+        </div>
+        <div class="mleg">
+          <span><i style="background:#c0392b"></i>&lt;0.5 不得主張</span>
+          <span><i style="background:#c9822b"></i>0.5–0.65 折損</span>
+          <span><i style="background:#2a7a56"></i>0.65–0.8 可用</span>
+        </div>
+        <p class="msub">規格認定「可自動處置」的 ≥0.8 只占 <b class="bad">0.1%</b>（2/1,476）——
+          照抄規格＝自動處置永遠不會發生。門檻改以資料集分位數校準。</p>
+        <p class="msub">連帶推翻第二個預設：<b>相乘式加權在數學上不可用</b>。
+          prior_q 上限 0.75，乘積永遠 ≤0.74，達不到 0.85 門檻，27 筆偵測全數降級。
+          改為兩道獨立門檻後，自動處置從 0 件回到 13 件。</p>
+      </div>
+    </div>
+
+    <div class="mgrid4">
+      <div class="mq2"><div class="mqt">SINGLE SOURCE OF TRUTH</div>
+        <b>判定結果單一來源</b><p>後台／標註／護照／KPI 一律讀同一份結果。曾因來源不一致造成
+        5 組判定相反、3 組「判無損卻有標註框」。</p></div>
+      <div class="mq2"><div class="mqt">REGRESSION TESTS</div>
+        <b>142 項零 API 測試</b><p>覆蓋分流、級聯升級條件、平手取有損、估價級距與材質規則。
+        改壞了不會報錯、只會靜靜分錯級的邏輯全部鎖住。</p></div>
+      <div class="mq2"><div class="mqt">PARALLEL A/B</div>
+        <b>實驗與正式並存</b><p>四次改寫全部寫入獨立結果檔，從未覆蓋既有實測數字。
+        落敗版本連同原因保留在程式碼中。</p></div>
+      <div class="mq2"><div class="mqt">RULES OVER MODEL</div>
+        <b>估價不交給模型</b><p>同一種損傷必須永遠得到同一個報價才能對用戶解釋、被稽核。
+        故估價層是純規則表、零 API。</p></div>
+    </div>
+  </div>`;
 }
 
 function renderOps() {
@@ -1554,7 +1710,7 @@ async function loadQr() {
 
 /* ================= 事件 ================= */
 function renderAll() {
-  document.getElementById("main").classList.toggle("full", viewMode === "ops" || viewMode === "live");
+  document.getElementById("main").classList.toggle("full", viewMode === "ops" || viewMode === "live" || viewMode === "method");
   renderTabs(); renderStats(); renderFilters(); renderList(); renderDetail();
 }
 function setMode(m) {
@@ -1685,7 +1841,7 @@ function advance(id) {
 }
 document.addEventListener("keydown", e => {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
-  if (viewMode === "ops" || viewMode === "live") return;
+  if (viewMode === "ops" || viewMode === "live" || viewMode === "method") return;
   if (viewMode === "passport") {
     const cars = Object.keys(PASSPORTS).sort((a, b) => PASSPORTS[b].open_new - PASSPORTS[a].open_new || a.localeCompare(b));
     const ci = cars.indexOf(currentCar);

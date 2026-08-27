@@ -30,37 +30,37 @@
   }
  },
  "B": {
-  "file": "eval_results_gemini_37_flash_v4.json",
+  "file": "eval_results_gemini_37_flash_v5.json",
   "vs_原始索賠標籤": {
    "n": 141,
    "skipped_uncertain": 0,
    "confusion": {
-    "TP": 19,
-    "FN": 2,
-    "FP": 7,
-    "TN": 113
+    "TP": 16,
+    "FN": 5,
+    "FP": 5,
+    "TN": 115
    },
-   "recall": 0.9048,
-   "false_positive_rate": 0.0583,
-   "precision": 0.7308
+   "recall": 0.7619,
+   "false_positive_rate": 0.0417,
+   "precision": 0.7619
   },
   "vs_人工重標": {
    "n": 138,
    "skipped_uncertain": 3,
    "confusion": {
-    "TP": 21,
-    "FN": 1,
-    "FP": 4,
-    "TN": 112
+    "TP": 18,
+    "FN": 4,
+    "FP": 3,
+    "TN": 113
    },
-   "recall": 0.9545,
-   "false_positive_rate": 0.0345,
-   "precision": 0.84
+   "recall": 0.8182,
+   "false_positive_rate": 0.0259,
+   "precision": 0.8571
   }
  },
- "n_flips": 6,
- "flips_improved": 1,
- "flips_regressed": 5,
+ "n_flips": 7,
+ "flips_improved": 0,
+ "flips_regressed": 7,
  "flips": [
   {
    "case": "RCG2235-右後",
@@ -69,16 +69,7 @@
    "A": true,
    "B": false,
    "verdict": "退步",
-   "B_reasoning": "右後保險桿反光片旁及底部擦刮痕為借車時已存在的舊損。"
-  },
-  {
-   "case": "RDH-3092-左後",
-   "label": "positive",
-   "truth": "真損",
-   "A": false,
-   "B": true,
-   "verdict": "改善",
-   "B_reasoning": "還車照中油箱蓋左前側、輪拱上方鈑件有明顯大面積凹折變形與刮痕，而借車照同位置鈑件完整平順無任何凹陷。"
+   "B_reasoning": "右後保險桿反光片右側及下緣處有細長擦刮痕，在借車照中已存在。"
   },
   {
    "case": "RDL7827-左前",
@@ -87,7 +78,7 @@
    "A": false,
    "B": true,
    "verdict": "退步",
-   "B_reasoning": "還車照中左前輪後方至車門下緣的側裙處可見明顯擦傷與變形反光，而借車照中該處線條平整無痕跡。"
+   "B_reasoning": "借車照中該處側裙線條完整平整，還車照中明顯可見側裙下緣出現撕裂、凸起變形與破損痕跡。"
   },
   {
    "case": "RDU-5572-右前",
@@ -96,7 +87,7 @@
    "A": false,
    "B": true,
    "verdict": "退步",
-   "B_reasoning": "還車照中右大燈下方與黑色導流飾板之間出現明顯的多道擦刮痕與漆面磨損，借車照對應位置表面平整完好。"
+   "B_reasoning": "還車照右前保桿表面出現多條明顯擦刮痕跡，借車照同位置漆面完整無損。"
   },
   {
    "case": "RDW-7085-左前",
@@ -105,16 +96,34 @@
    "A": false,
    "B": true,
    "verdict": "退步",
-   "B_reasoning": "還車照中前保險桿下方突出的下唇稜線處有一道橫向刮擦掉漆痕跡，借車照對應處漆面完整光滑無此擦痕。"
+   "B_reasoning": "還車照在前保桿下唇處有明顯擦刮與掉漆痕跡，借車照同位置平整完好無刮痕。"
   },
   {
-   "case": "RFH8052-右後",
-   "label": "negative",
-   "truth": "無損",
-   "A": false,
-   "B": true,
+   "case": "RDX-1085-右前",
+   "label": "positive",
+   "truth": "存疑",
+   "A": true,
+   "B": false,
    "verdict": "退步",
-   "B_reasoning": "還車照中後尾門車牌右方有明顯鈑金內凹變形與陰影折痕，借車照對應區域表面平整無凹折。"
+   "B_reasoning": "借車照拍攝角度為車輛左前側（完整拍入左前輪與左側車身），還車照主要拍攝車輛前保桿偏右側；還車照右前保桿下緣擦傷處在借車照中並未入鏡，拍攝方位不一致無法有效比對。"
+  },
+  {
+   "case": "RDY-6382-左前",
+   "label": "positive",
+   "truth": "真損",
+   "A": true,
+   "B": false,
+   "verdict": "退步",
+   "B_reasoning": ""
+  },
+  {
+   "case": "RFH8122-左後",
+   "label": "negative",
+   "truth": "真損",
+   "A": true,
+   "B": false,
+   "verdict": "退步",
+   "B_reasoning": ""
   }
  ],
  "errors_A": [
@@ -128,31 +137,41 @@
   {
    "case": "RCG2235-右後",
    "kind": "漏抓FN",
-   "detail": "右後保險桿反光片旁及底部擦刮痕為借車時已存在的舊損。"
+   "detail": "右後保險桿反光片右側及下緣處有細長擦刮痕，在借車照中已存在。"
+  },
+  {
+   "case": "RDH-3092-左後",
+   "kind": "漏抓FN",
+   "detail": "左後葉子板（油箱蓋前方至輪拱上方處）有一處明顯凹陷帶摺痕，借車照中已清晰可見，為既有舊損。"
   },
   {
    "case": "RDL7827-左前",
    "kind": "誤報FP",
-   "detail": "還車照中左前輪後方至車門下緣的側裙處可見明顯擦傷與變形反光，而借車照中該處線條平整無痕跡。"
+   "detail": "借車照中該處側裙線條完整平整，還車照中明顯可見側裙下緣出現撕裂、凸起變形與破損痕跡。"
   },
   {
    "case": "RDU-5572-右前",
    "kind": "誤報FP",
-   "detail": "還車照中右大燈下方與黑色導流飾板之間出現明顯的多道擦刮痕與漆面磨損，借車照對應位置表面平整完好。"
+   "detail": "還車照右前保桿表面出現多條明顯擦刮痕跡，借車照同位置漆面完整無損。"
   },
   {
    "case": "RDW-7085-左前",
    "kind": "誤報FP",
-   "detail": "還車照中前保險桿下方突出的下唇稜線處有一道橫向刮擦掉漆痕跡，借車照對應處漆面完整光滑無此擦痕。"
+   "detail": "還車照在前保桿下唇處有明顯擦刮與掉漆痕跡，借車照同位置平整完好無刮痕。"
   },
   {
-   "case": "RFH8052-右後",
-   "kind": "誤報FP",
-   "detail": "還車照中後尾門車牌右方有明顯鈑金內凹變形與陰影折痕，借車照對應區域表面平整無凹折。"
+   "case": "RDY-6382-左前",
+   "kind": "漏抓FN",
+   "detail": ""
+  },
+  {
+   "case": "RFH8122-左後",
+   "kind": "漏抓FN",
+   "detail": ""
   }
  ],
  "v2_field_quality": {
-  "n_damages": 29,
+  "n_damages": 24,
   "有observation": 0,
   "有有效panel": 0,
   "panel幻覺被丟棄": 0,
@@ -160,10 +179,10 @@
   "有ruled_out": 0,
   "平均ruled_out項數": 0.0,
   "全部勾滿比例": 0.0,
-  "有排除理由": 29,
+  "有排除理由": 24,
   "信心分布": {
-   "≥0.9": 26,
-   "0.75-0.89": 3,
+   "≥0.9": 20,
+   "0.75-0.89": 4,
    "0.6-0.74": 0,
    "<0.6": 0
   }
