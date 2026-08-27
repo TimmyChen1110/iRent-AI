@@ -13,13 +13,14 @@ from google.genai import errors
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from run_eval_gemini import get_client, prep_image, Throttle  # noqa: E402
 from annotate_damage import analyze, EXT_SYSTEM, INT_SYSTEM    # noqa: E402
+from results_config import FINAL_RESULTS, INTERIOR_RESULTS   # noqa: E402
 
 HERE = Path(__file__).resolve().parent
 MODEL = "gemini-3.7-flash"
 
 pairs = {(p["car"], p["angle"]): p for p in json.loads((HERE / "pairs.json").read_text())["pairs"]}
-casc = json.loads((HERE / "eval_results_gemini_37_flash_v3_cascaded.json").read_text())["results"]
-interior = json.loads((HERE / "interior_results.json").read_text())["results"]
+casc = json.loads(FINAL_RESULTS.read_text())["results"]
+interior = json.loads(INTERIOR_RESULTS.read_text())["results"]
 
 jobs = []  # (case_id, mode, args)
 for r in casc:

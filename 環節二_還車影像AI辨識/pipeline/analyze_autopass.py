@@ -15,11 +15,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from run_cascade import needs_escalation  # noqa: E402
+from results_config import SCREEN_RESULTS, FINAL_RESULTS  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
 
-flash = json.loads((HERE / "eval_results_gemini_37_flash_v3.json").read_text())["results"]
-final = json.loads((HERE / "eval_results_gemini_37_flash_v3_cascaded.json").read_text())["results"]
+flash = json.loads(SCREEN_RESULTS.read_text())["results"]
+final = json.loads(FINAL_RESULTS.read_text())["results"]
 relabels = {(r["car"], r["angle"]): r
             for r in json.loads((HERE / "relabels.json").read_text())["relabels"]}
 

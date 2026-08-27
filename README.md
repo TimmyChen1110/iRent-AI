@@ -8,8 +8,8 @@
 
 | 指標 | 數值 |
 |---|---|
-| 車損偵測（141 組借/還配對） | 快篩 Recall 81% → Pro 級聯 85.7%、誤報 3.3% |
-| 141 組逐圖重標後（可判定 138 組） | **Recall 95.5%（21/22）、誤報 0%** |
+| 車損偵測（141 組全量，對照**原始索賠標籤**） | 快篩 Recall 81% → Pro 級聯 **85.7%**、誤報 3.3% ← 系統對外指標 |
+| 同一批結果對照**逐圖人工重標**（排除 3 組無法判定，n=138） | Recall 95.5%（21/22）、誤報 0% ← 說明「4 筆 FP 其實是真車損、原標籤有噪音」|
 | 標籤噪音發現 | 4 筆「未索賠」樣本經放大複驗證實為真實新損（AI 抓到人工漏掉的車損） |
 | 車內整潔（80 張 Blob 真實車內照） | 乾淨 21／普通 56／髒汙 3（3.75% 檢出，人工抽驗確認） |
 | API 成本 | $0（Gemini 免費額度）；全量上線估 NT$1,200／日 |
@@ -43,11 +43,20 @@
 
 ## 快速開始
 
-```bash
-pip install google-genai pillow pillow-heif opencv-python pydantic
-echo "你的GEMINI_KEY" > 環節二_還車影像AI辨識/pipeline/.gemini_key   # 金鑰已被 .gitignore 排除
+> 完整安裝步驟、驗證指令與常見問題見 **[環節二_還車影像AI辨識/SETUP.md](環節二_還車影像AI辨識/SETUP.md)**。
+> Python 需 **3.12 或 3.13**（3.14 上 opencv / pillow-heif 無 wheel）。
 
-cd 環節二_還車影像AI辨識/pipeline
+```bash
+cd 環節二_還車影像AI辨識
+python3.13 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+echo "你的GEMINI_KEY" > pipeline/.gemini_key   # 金鑰已被 .gitignore 排除
+
+# 驗證安裝（零 API 成本）
+python -m pytest tests/ -q                      # 39 passed
+python pipeline/quality_gate.py                 # 282 張檢核，攔下 26 張（9.2%）
+
+cd pipeline
 python3 build_pairs.py                          # 建立借/還配對
 python3 run_eval_gemini.py --model gemini-3.7-flash --tag v3 --fewshot --include-alt
 python3 run_cascade.py eval_results_gemini_37_flash_v3.json   # Pro 級聯複核

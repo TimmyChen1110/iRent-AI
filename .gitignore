@@ -12,3 +12,9 @@ __pycache__/
 *.zip
 **/chain_photos/
 **/decisions.sqlite3
+
+# Python 虛擬環境（見 環節二/requirements.txt）
+.venv/
+**/.venv/
+.pytest_cache/
+**/.pytest_cache/

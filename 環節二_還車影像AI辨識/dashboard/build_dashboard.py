@@ -11,6 +11,7 @@ import io
 import json
 import re
 import subprocess
+import sys
 from pathlib import Path
 from urllib.parse import quote
 
@@ -18,6 +19,9 @@ from PIL import Image, ImageOps
 
 HERE = Path(__file__).resolve().parent
 PIPE = HERE.parent / "pipeline"
+sys.path.insert(0, str(PIPE))
+
+from results_config import FINAL_RESULTS, INTERIOR_RESULTS  # noqa: E402
 
 
 def pair_url(path):
@@ -52,7 +56,7 @@ def build_cases(embed=True):
     """embed=True 時照片轉 base64 內嵌（單檔版）；False 時給 /photos/ URL（server 版）。"""
     pairs = {(p["car"], p["angle"]): p
              for p in json.loads((PIPE / "pairs.json").read_text())["pairs"]}
-    data = json.loads((PIPE / "eval_results_v2_exif.json").read_text())["results"]
+    data = json.loads(FINAL_RESULTS.read_text())["results"]
 
     def level(a):
         if not a["angle_match"]:
@@ -94,7 +98,7 @@ def build_cases(embed=True):
 
 
 def build_f2cases(embed=True):
-    data = json.loads((PIPE / "interior_results.json").read_text())["results"]
+    data = json.loads(INTERIOR_RESULTS.read_text())["results"]
     by = {r["file"]: r for r in data}
     scores = {}
     sf = PIPE / "cleanliness_scores.json"

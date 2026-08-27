@@ -1527,7 +1527,7 @@ function undoDecision(id) {
 }
 
 async function rejudge(id, btn) {
-  btn.disabled = true; btn.textContent = "AI 重判中…（約 10 秒）";
+  btn.disabled = true; btn.textContent = "AI 重判中…（快篩約 10 秒，臨界案件升級複核較久）";
   try {
     const r = await fetch("/api/rejudge", { method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ case_id: id }) });
@@ -1535,6 +1535,13 @@ async function rejudge(id, btn) {
     if (r.ok && j.assessment) {
       const cs = CASES.find(c => c.id === id);
       cs.assessment = j.assessment;
+      // 重判走完整鏈路，分級與標註框一併更新，否則畫面會停在舊的 P 級與舊的框
+      if (j.level) { cs.level = j.level; cs.kind = j.kind; }
+      if (j.annotation) {
+        // 全站標註疊加層讀的是 ANN（ANNOTATIONS 的別名），改這裡才會生效
+        if (j.annotation.findings.length) ANN[id] = j.annotation;
+        else delete ANN[id];
+      }
       renderAll();
     } else {
       btn.disabled = false; btn.textContent = "⟲ AI 重判";

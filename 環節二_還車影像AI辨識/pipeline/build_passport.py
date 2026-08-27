@@ -12,14 +12,18 @@
 """
 import json
 import re
+import sys
 import zipfile
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
 HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE))
+from results_config import FINAL_RESULTS  # noqa: E402
+
 DATA = HERE.parents[1] / "iRent - 運用 AI 打造 iRent 智能車況管家：優化租還車體驗與營運效率"
 
-casc = json.loads((HERE / "eval_results_gemini_37_flash_v3_cascaded.json").read_text())["results"]
+casc = json.loads(FINAL_RESULTS.read_text())["results"]
 ann = json.loads((HERE / "dashboard_annotations.json").read_text())
 relabels = {(r["car"], r["angle"]): r for r in json.loads((HERE / "relabels.json").read_text())["relabels"]}
 
@@ -97,8 +101,42 @@ for car, p in passports.items():
     p["pre_existing"] = sum(1 for r in p["records"] if r["kind"] == "pre_existing")
     p["real_orders"] = orders.get(car.replace("-", ""), {})
 
+# 保留 part_tagger.py 標好的部位標籤：本腳本會整份重建 passports.json，
+# 若不回填，重跑一次就會抹掉 59 筆部位標籤（約 60 次 API 呼叫的成果），
+# 且 Dashboard 護照分頁的部位統計表會整個空掉。
+# 來源優先序：part_progress.jsonl（權威快取）→ 既有 passports.json（快取遺失時的備援）。
+def _restore_parts(passports):
+    tags = {}
+    prev = HERE / "passports.json"
+    if prev.exists():  # 備援：從上一版護照撈（快取被清時仍不致遺失）
+        try:
+            for car, pp in json.loads(prev.read_text()).items():
+                for rec in pp.get("records", []):
+                    if rec.get("part"):
+                        tags[(car, rec["id"])] = (rec["part"], rec.get("part_confidence"))
+        except (json.JSONDecodeError, AttributeError):
+            pass
+    prog = HERE / "part_progress.jsonl"
+    if prog.exists():  # 權威來源：覆蓋備援
+        for line in prog.read_text().splitlines():
+            if not line.strip():
+                continue
+            r = json.loads(line)
+            tags[(r["car"], r["rec_id"])] = (r["part"], r.get("confidence"))
+    n = 0
+    for car, pp in passports.items():
+        for rec in pp["records"]:
+            t = tags.get((car, rec["id"]))
+            if t:
+                rec["part"], rec["part_confidence"] = t
+                n += 1
+    return n
+
+
+_n_parts = _restore_parts(passports)
+
 (HERE / "passports.json").write_text(json.dumps(passports, ensure_ascii=False, indent=1))
-print(f"{len(passports)} 台車建立護照")
+print(f"{len(passports)} 台車建立護照，回填 {_n_parts} 筆部位標籤")
 for car, p in sorted(passports.items(), key=lambda kv: -kv[1]["open_new"]):
     tag = f"（{len(p['real_orders'])} 筆真實訂單）" if p["real_orders"] else ""
     print(f"  {car:9s} 新損 {p['open_new']} 筆 / 既有損 {p['pre_existing']} 筆 {tag}")

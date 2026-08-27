@@ -23,6 +23,7 @@ import sys
 import tempfile
 import threading
 import uuid
+from collections import OrderedDict
 from datetime import datetime
 from pathlib import Path
 
@@ -143,13 +144,8 @@ def reload_data():
 
 
 # ---------- AI 現場重判（需 pipeline/.gemini_key，免費層約 10 秒） ----------
-REJUDGE_SYSTEM = """你是 iRent 共享汽車的車況比對專家。你會收到同一台車、同一方位的借車照與還車照。
-任務：判斷還車照中是否存在借車照沒有的【新增車損】。
-準則：
-1. 光線反射、水痕、髒污、倒影不是車損。
-2. 借車照已存在的損傷不算新增，記在 pre_existing_notes。
-3. 兩張照片明顯非同一方位時 angle_match = false。
-4. no_damage_confidence 誠實反映把握程度。"""
+# 判定標準不在此重寫：一律走 judge_photos.judge_pair()（Quality Gate → Flash 快篩
+# → 臨界升級 Pro 多數決 → box_2d 標註），與現場實測、離線評測完全同一套規則。
 
 _rejudge_lock = threading.Lock()
 _gclient = None
@@ -170,7 +166,14 @@ class RejudgeReq(BaseModel):
 
 
 @app.post("/api/rejudge")
-def rejudge(req: RejudgeReq):
+async def rejudge(req: RejudgeReq):
+    """對資料集內既有案件重跑判定。
+
+    走與現場實測、離線評測完全相同的鏈路（judge_photos.judge_pair）——
+    曾經這裡自帶一套簡化 prompt（4 條準則 vs 正式的 8 條）、不跑級聯、不回
+    box_2d，導致同一案件「AI 重判」的結果與 Dashboard 原判定不一致，
+    而原因是 prompt 不同、不是模型不穩，無法向評審解釋。
+    """
     key = PIPE / ".gemini_key"
     if not key.exists():
         raise HTTPException(503, "此機器沒有 pipeline/.gemini_key，無法呼叫 Gemini")
@@ -178,33 +181,34 @@ def rejudge(req: RejudgeReq):
     if not pair:
         raise HTTPException(404, f"找不到案件 {req.case_id}（車內照不支援重判）")
 
-    from google.genai import types  # noqa: PLC0415
-    from run_eval_gemini import prep_image, Assessment  # noqa: PLC0415
+    import judge_photos  # noqa: PLC0415  延遲載入
 
-    with _rejudge_lock:  # 免費層 RPM 低，一次一件
-        try:
-            resp = _client().models.generate_content(
-                model="gemini-3.7-flash",
-                contents=[
-                    f"方位：{pair['angle']}。",
-                    "第一張＝借車照：",
-                    types.Part.from_bytes(data=prep_image(pair["pickup"]), mime_type="image/jpeg"),
-                    "第二張＝還車照：",
-                    types.Part.from_bytes(data=prep_image(pair["return"]), mime_type="image/jpeg"),
-                    "請判斷是否有新增損傷。",
-                ],
-                config=types.GenerateContentConfig(
-                    system_instruction=REJUDGE_SYSTEM,
-                    response_mime_type="application/json",
-                    response_schema=Assessment,
-                    temperature=0.1,
-                ),
-            )
-        except Exception as e:
-            raise HTTPException(502, f"Gemini 呼叫失敗：{str(e)[:200]}")
-    if not resp.parsed:
-        raise HTTPException(502, "Gemini 未回傳有效結果")
-    return {"case_id": req.case_id, "assessment": resp.parsed.model_dump(),
+    def run():
+        with _rejudge_lock:  # 免費層 RPM 低，一次一件（與現場實測共用鎖）
+            # 資料集照片已知可讀，跳過 Quality Gate 直接判（gate 數值仍會回在結果內）
+            return judge_photos.judge_pair(pair["pickup"], pair["return"],
+                                           client=_client(), skip_gate=True)
+
+    try:
+        result, _img = await run_in_threadpool(run)
+    except Exception as e:
+        raise HTTPException(502, f"重判失敗：{str(e)[:200]}")
+
+    final = result.get("final")
+    if not final:
+        raise HTTPException(502, "未取得有效判定結果")
+    # 標註框同步更新（box_2d 已隨判定取得，零額外 API），前端據此重畫疊加層
+    ann = {"findings": [{"box_2d": d["box_2d"], "label": d["type"], "severity": d["severity"],
+                         "confidence": d["confidence"],
+                         "description": f'{d["location"]}：{d["reasoning"]}'}
+                        for d in final["damages"] if len(d.get("box_2d") or []) == 4],
+           "summary": ""}
+    return {"case_id": req.case_id,
+            "assessment": final,
+            "level": result["level"], "kind": result["kind"],
+            "cascade": result.get("cascade"),
+            "annotation": ann,
+            "elapsed_s": result.get("elapsed_s"),
             "judged_at": datetime.now().isoformat(timespec="seconds")}
 
 
@@ -313,13 +317,25 @@ async def api_judge(mode: str = Form("pair"),
         result["annotated_b64"] = base64.b64encode(buf.getvalue()).decode()
     # 供「存入案件佇列」：只留最近一次判定（照片 bytes 僅存記憶體）
     result["judge_id"] = uuid.uuid4().hex[:12]
-    _last_judge.clear()
-    _last_judge.update({"id": result["judge_id"], "mode": mode, "raw": raw, "result": result})
+    _remember_judge({"id": result["judge_id"], "mode": mode, "raw": raw, "result": result})
     return result
 
 
 # ---------- 現場實測 → 案件佇列（縮圖存 SQLite，全隊共享） ----------
-_last_judge = {}
+# 以 judge_id 為 key 的有限容量暫存（照片 bytes 僅存記憶體）。
+# 曾是單筆全域 dict——兩人同時用「現場實測」時，後判者會覆蓋前judge者的
+# 照片，前者按「存入案件佇列」不是拿到 410 就是存進別人的照片。
+# 現場 demo（評審手機掃碼 + 隊友電腦操作）必然併發，故改為多筆並加鎖。
+_JUDGE_CACHE_MAX = 20
+_judges = OrderedDict()          # judge_id -> {"mode","raw","result","saved_as"}
+_judges_lock = threading.Lock()
+
+
+def _remember_judge(entry: dict):
+    with _judges_lock:
+        _judges[entry["id"]] = entry
+        while len(_judges) > _JUDGE_CACHE_MAX:
+            _judges.popitem(last=False)   # 淘汰最舊的一筆
 
 
 def _thumb_b64(data: bytes, w=480, q=55):
@@ -337,11 +353,13 @@ class LiveCaseReq(BaseModel):
 
 @app.post("/api/live_case")
 def save_live_case(req: LiveCaseReq):
-    if _last_judge.get("id") != req.judge_id:
-        raise HTTPException(410, "此判定已過期（之後又判了新案），請重新判定後再存")
-    if _last_judge.get("saved_as"):
-        return _last_judge["saved_as"]  # 重複點擊 → 回同一案件
-    r = _last_judge["result"]
+    with _judges_lock:
+        entry = _judges.get(req.judge_id)
+    if entry is None:
+        raise HTTPException(410, "此判定已過期（暫存已滿或 server 重啟），請重新判定後再存")
+    if entry.get("saved_as"):
+        return entry["saved_as"]  # 重複點擊 → 回同一案件
+    r = entry["result"]
     fin = r.get("final")
     if not fin:
         raise HTTPException(400, "品質不合格案件沒有判定結果，不入佇列")
@@ -355,8 +373,8 @@ def save_live_case(req: LiveCaseReq):
                "summary": ""}
         case = {"id": live_id, "live": True, "car": "LIVE", "angle": now.strftime("%m/%d %H:%M"),
                 "level": r["level"], "kind": r["kind"], "truth": "live", "assessment": fin,
-                "pickup": _thumb_b64(_last_judge["raw"]["pickup"]),
-                "ret": _thumb_b64(_last_judge["raw"]["ret"])}
+                "pickup": _thumb_b64(entry["raw"]["pickup"]),
+                "ret": _thumb_b64(entry["raw"]["ret"])}
     else:
         ann = {"findings": [f for f in fin["findings"] if len(f.get("box_2d") or []) == 4],
                "summary": ""}
@@ -366,13 +384,13 @@ def save_live_case(req: LiveCaseReq):
                 "assessment": {"level": fin["level"], "confidence": fin["confidence"],
                                "issues": [f["label"] for f in fin["findings"]],
                                "reasoning": fin["reasoning"]},
-                "photo": _thumb_b64(_last_judge["raw"]["interior"])}
+                "photo": _thumb_b64(entry["raw"]["interior"])}
     payload = {"case": case, "ann": ann}
     with db() as conn:
         conn.execute("INSERT OR REPLACE INTO live_cases VALUES (?,?,?)",
                      (live_id, now.isoformat(timespec="seconds"),
                       json.dumps(payload, ensure_ascii=False)))
-    _last_judge["saved_as"] = payload
+    entry["saved_as"] = payload
     return payload
 
 
