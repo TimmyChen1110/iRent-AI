@@ -426,3 +426,54 @@ class TestGrounding:
         case = {"damages": [{"estimate_twd": [1500, 5000]}]}
         g = verify_grounding(_out(body="預估 1,500 至 5,000 元"), case)
         assert g["passed"]
+
+
+class TestSeverityBand:
+    """換件級距（D）須受 severity 調節——見 classify_repair docstring。
+
+    現行判定的「破損」同時涵蓋「大燈碎裂、卡榫脫落」與「一條裂痕、接縫變寬」。
+    只看類型會讓後者也報 12,000–40,000 元的換件價。
+    """
+
+    def test_高嚴重度破損維持換件D(self):
+        r = classify_repair("破損", panel="FB", severity="high")
+        assert r["band"] == "D" and r["repair_action"] == "換件"
+
+    def test_中嚴重度破損降為修補C(self):
+        r = classify_repair("破損", panel="FB", severity="medium")
+        assert r["band"] == "C"
+        assert r["estimate_twd"][1] < 40000
+
+    def test_未給嚴重度維持原規則(self):
+        assert classify_repair("破損", panel="FB")["band"] == "D"
+
+    def test_非D級距不受影響(self):
+        # 小刮痕不會因為 severity=high 就升級
+        assert classify_repair("scratch", size_cm=3, panel="FD_L", severity="high")["band"] == "A"
+
+    def test_assess會帶入severity(self):
+        out = assess({"type": "破損", "severity": "medium"}, panel="FB", weighted_confidence=0.9)
+        assert out["band"] == "C"
+
+
+class TestMaterialSpecificRepair:
+    """非鈑件材質的刮痕不可套用鈑件維修邏輯。
+
+    曾產生「左後輪圈：刮痕修復（整片烤漆）」這種現場人員看不懂的派工單——
+    輪圈是鋁圈，不能像鈑件那樣烤漆。
+    """
+
+    def test_輪圈刮痕走輪圈整新(self):
+        r = classify_repair("刮痕", panel="WHL_RL")
+        assert r["material"] == "鋁圈" and "輪圈" in r["repair_action"]
+        assert "烤漆" not in r["repair_action"]
+
+    def test_玻璃與燈殼不烤漆(self):
+        for panel in ("WG_FL", "HL_L", "WS"):
+            assert "烤漆" not in classify_repair("刮痕", panel=panel)["repair_action"]
+
+    def test_鈑金仍走烤漆(self):
+        assert "烤漆" in classify_repair("刮痕", size_cm=30, panel="FD_L")["repair_action"]
+
+    def test_塑膠保桿走保桿修補(self):
+        assert classify_repair("刮痕", panel="FB")["repair_action"] == "保桿修補烤漆"

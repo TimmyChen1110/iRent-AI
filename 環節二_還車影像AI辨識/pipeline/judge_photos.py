@@ -142,7 +142,9 @@ def judge_pair(pickup, ret, client=None, votes=3, rpm=8, skip_gate=False, log=la
     預設關閉——多一次 API 呼叫，且現場 demo 以速度優先。
     """
     t0 = time.time()
-    result = {"mode": "pair", "pickup": str(pickup), "return": str(ret)}
+    # angle 一併帶回：下游估價要靠它把「左後保桿」這種自由文字推成分區代碼，
+    # 沒有分區就查不到材質，塑膠保桿的刮痕會被算成鈑金整片烤漆（貴三倍）。
+    result = {"mode": "pair", "pickup": str(pickup), "return": str(ret), "angle": angle}
 
     # ① Quality Gate
     gates = _run_gate({"pickup": pickup, "return": ret})

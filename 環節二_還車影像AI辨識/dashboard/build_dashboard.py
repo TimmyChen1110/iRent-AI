@@ -52,6 +52,34 @@ def thumb(path, w=480, q=55, exif=True):
     return base64.b64encode(buf.getvalue()).decode()
 
 
+def _pricing(a: dict, angle: str) -> dict | None:
+    """S6：對判定結果算出維修動作、級距與估價區間（disposition.py，零 API）。
+
+    判定回答「有沒有損傷」，這層回答「所以要花多少錢、值不值得追」。
+    失敗回 None——估價是加值，不能拖垮 Dashboard 產出。
+    """
+    if not (a or {}).get("new_damage_found"):
+        return None
+    try:
+        import disposition                       # noqa: PLC0415
+        from diff_new_damage import panel_of     # noqa: PLC0415
+        items, lo, hi = [], 0, 0
+        for d in a.get("damages") or []:
+            it = disposition.assess(d, panel=panel_of(d, angle))
+            it["location"] = d.get("location")
+            items.append(it)
+            if it.get("claimable"):
+                lo += it["estimate_twd"][0]
+                hi += it["estimate_twd"][1]
+        return {"items": items, "total_estimate_twd": [lo, hi],
+                "claimable_count": sum(1 for i in items if i.get("claimable")),
+                "waived_count": sum(1 for i in items
+                                    if i.get("disposition") == "waive_not_worth_claiming"),
+                "note": "級距示意區間，實際以維修廠估價為準"}
+    except Exception:
+        return None
+
+
 def build_cases(embed=True):
     """embed=True 時照片轉 base64 內嵌（單檔版）；False 時給 /photos/ URL（server 版）。"""
     pairs = {(p["car"], p["angle"]): p
@@ -89,6 +117,8 @@ def build_cases(embed=True):
             "car": r["car"], "angle": r["angle"], "level": lv, "kind": kind,
             "truth": "claimed" if r["label"] == "positive" else "unclaimed",
             "assessment": r["assessment"],
+            # S6 估價與處置（純規則零 API）——客服複核時真正需要的是「所以要花多少錢」
+            "pricing": _pricing(r["assessment"], r["angle"]),
             "pickup": thumb(p["pickup"]) if embed else pair_url(p["pickup"]),
             "ret": thumb(p["return"]) if embed else pair_url(p["return"]),
         })

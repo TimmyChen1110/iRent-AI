@@ -59,6 +59,13 @@ REPAIR_RULES = [
     ("glass_crack", None, None, "換件", "D"),
     ("rim_curb", None, None, "輪圈整新", "B"),
     ("tire_damage", None, None, "換胎", "C"),
+    # 鋁圈／玻璃／燈殼上的刮痕不能用鈑件邏輯處理（曾產生「輪圈：整片烤漆」這種
+    # 現場人員看不懂的派工單）。這幾條放在 scratch 通則之後、依材質攔截。
+    ("scratch", None, "鋁圈", "輪圈整新", "B"),
+    ("scuff", None, "鋁圈", "輪圈整新", "B"),
+    ("scratch", None, "玻璃", "玻璃拋光／換件評估", "B"),
+    ("scratch", None, "燈殼", "燈殼拋光／換件評估", "B"),
+    ("scratch", None, "橡膠", "輪胎檢查", "A"),
 ]
 
 # 破漆會使凹陷升級（規格：dent 伴隨破漆 → 鈑金＋烤漆 C）
@@ -71,8 +78,13 @@ BAND_ORDER = {"A": 0, "B": 1, "C": 2, "D": 3}
 
 
 def classify_repair(damage_type: str, size_cm=None, panel=None,
-                    depth=None) -> dict:
-    """損傷 → 維修動作 + 級距 + 估價區間。"""
+                    depth=None, severity=None) -> dict:
+    """損傷 → 維修動作 + 級距 + 估價區間。
+
+    severity（low/medium/high）用來調節換件類損傷的級距：現行判定的「破損」一詞
+    同時涵蓋「大燈碎裂、卡榫脫落」（確實要換件，級距 D）與「一條裂痕、接縫變寬」
+    （可修補，級距 C）。只看類型會讓後者也報 12,000–40,000 元。
+    """
     code = damage_type if damage_type in DAMAGE_ZH else LEGACY_TYPE_TO_CODE.get(damage_type, "scratch")
     material = PANEL_MATERIAL.get(panel or "", None)
 
@@ -81,6 +93,10 @@ def classify_repair(damage_type: str, size_cm=None, panel=None,
         action, band = "鈑金＋烤漆", "C"
     else:
         action, band = _lookup(code, size_cm, material)
+
+    # 換件級距（D）遇到非 high 嚴重度 → 降一級並改為修補，避免小裂痕報出換件價
+    if band == "D" and severity in ("low", "medium"):
+        action, band = "板件修補／局部更換", "C"
 
     lo, hi = PRICE_BANDS[band]["range"]
     return {
@@ -156,6 +172,7 @@ def assess(damage: dict, panel=None, weighted_confidence=None,
         size_cm=damage.get("estimated_size_cm"),
         panel=panel or damage.get("panel"),
         depth=damage.get("depth_assessment"),
+        severity=damage.get("severity"),
     )
     conf = weighted_confidence if weighted_confidence is not None else damage.get("confidence", 0)
     return decide(conf, repair, coverage_blocked=coverage_blocked)

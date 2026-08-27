@@ -126,6 +126,32 @@ SYSTEM_V4 = SYSTEM.replace(
 )
 
 
+# ---------- v5：只加 ruled_out_basis（可解釋性，不動判定準則） ----------
+# v4 落敗的原因是「既有損對稱舉證」那一項（模型杜撰 clear 證據 → 漏檢 + 誤報）。
+# 但 ruled_out_basis 在 v2 全量測試中表現良好（全部勾滿 100% → 0%，每筆有具體理由）。
+# 兩者在 v4 是綁在一起測的，無法歸因。此處【只加 ruled_out_basis】單獨驗證：
+# 若 FPR 維持 0%、Recall 不降，就採用（複核後台需要這個理由欄位）；一降就不用。
+
+class DamageV5(Damage):
+    ruled_out_basis: str = Field(description="你憑什麼排除反光／水痕／髒污？各用幾個字說明判別依據，例如「水痕：痕跡邊緣銳利不隨水珠分布；反光：換角度仍在」。只列你真的排除掉的，不要空泛地全部宣稱一遍")
+
+
+class AssessmentV5(BaseModel):
+    angle_match: bool = Field(description="兩張照片是否為同一車輛的同一方位、可有效比對")
+    new_damage_found: bool = Field(description="還車照中是否有借車照沒有的新損傷")
+    damages: list[DamageV5] = Field(description="新損傷清單，無則空陣列")
+    no_damage_confidence: float = Field(description="0~1：判定「無新損」的信心。new_damage_found 為 true 時填 0；照片品質差、有可疑但不確定的區域時應調低")
+    pre_existing_notes: str = Field(description="兩張照片皆存在的既有損傷簡述，無則空字串")
+
+
+# 現行 SYSTEM 逐字保留，只在準則 2 補一句要求說明排除依據。
+SYSTEM_V5 = SYSTEM.replace(
+    "2. 以下不是車損，嚴禁誤報：光線反射、水痕雨漬、灰塵泥沙髒污、樹影/物體倒影、影像壓縮雜訊、拍攝角度造成的變形。",
+    "2. 以下不是車損，嚴禁誤報：光線反射、水痕雨漬、灰塵泥沙髒污、樹影/物體倒影、影像壓縮雜訊、拍攝角度造成的變形。\n"
+    "   每筆新損都要在 ruled_out_basis 說明你憑什麼排除這些可能——只列你真的排除掉的，不要空泛地全部宣稱一遍。",
+)
+
+
 def get_client() -> genai.Client:
     key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
     if not key:
@@ -176,7 +202,7 @@ FEWSHOT = [
 
 
 def judge(client: genai.Client, model: str, pair: dict, fewshot=False, include_alt=False,
-          v4=False) -> dict:
+          v4=False, v5=False) -> dict:
     """v4=True 改用 SYSTEM_V4 + AssessmentV4（既有損對稱舉證 + ruled_out_basis）。
     預設 False——現行實測數字由預設路徑產生，不可動。"""
     img = lambda p, w=1280: types.Part.from_bytes(data=prep_image(str(p), w), mime_type="image/jpeg")
@@ -198,9 +224,9 @@ def judge(client: genai.Client, model: str, pair: dict, fewshot=False, include_a
         model=model,
         contents=contents,
         config=types.GenerateContentConfig(
-            system_instruction=SYSTEM_V4 if v4 else SYSTEM,
+            system_instruction=SYSTEM_V5 if v5 else SYSTEM_V4 if v4 else SYSTEM,
             response_mime_type="application/json",
-            response_schema=AssessmentV4 if v4 else Assessment,
+            response_schema=AssessmentV5 if v5 else AssessmentV4 if v4 else Assessment,
             temperature=0.1,
         ),
     )
@@ -217,11 +243,12 @@ def judge(client: genai.Client, model: str, pair: dict, fewshot=False, include_a
 
 
 def judge_with_retry(client, model, pair, throttle, retries=4, fewshot=False, include_alt=False,
-                     v4=False):
+                     v4=False, v5=False):
     for i in range(retries):
         throttle.wait()
         try:
-            return judge(client, model, pair, fewshot=fewshot, include_alt=include_alt, v4=v4)
+            return judge(client, model, pair, fewshot=fewshot, include_alt=include_alt,
+                         v4=v4, v5=v5)
         except errors.APIError as e:
             if e.code in (429, 500, 503):
                 time.sleep(20 * (i + 1))
@@ -273,7 +300,9 @@ def main():
     ap.add_argument("--list-models", action="store_true")
     ap.add_argument("--fewshot", action="store_true", help="附上損傷樣態參考照")
     ap.add_argument("--v4", action="store_true",
-                    help="用 SYSTEM_V4（既有損對稱舉證 + ruled_out_basis），預設用現行 SYSTEM")
+                    help="用 SYSTEM_V4（既有損對稱舉證 + ruled_out_basis）——已證實落敗，僅供對照")
+    ap.add_argument("--v5", action="store_true",
+                    help="用 SYSTEM_V5（只加 ruled_out_basis，不動判定準則）")
     ap.add_argument("--include-alt", action="store_true", help="還2 補拍照一併判讀")
     ap.add_argument("--tag", default="", help="輸出檔名後綴（版本標記）")
     args = ap.parse_args()
@@ -313,7 +342,7 @@ def main():
     with ThreadPoolExecutor(max_workers=args.workers) as ex:
         futs = {ex.submit(judge_with_retry, client, args.model, p, throttle,
                           fewshot=args.fewshot, include_alt=args.include_alt,
-                          v4=args.v4): p for p in todo}
+                          v4=args.v4, v5=args.v5): p for p in todo}
         for i, fut in enumerate(as_completed(futs)):
             r = fut.result()
             results.append(r)

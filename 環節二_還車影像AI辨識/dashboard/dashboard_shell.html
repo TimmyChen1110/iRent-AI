@@ -366,6 +366,33 @@
   .gate-card .g-bad { color: var(--red); margin-top: 4px; }
   .spin { display: inline-block; width: 13px; height: 13px; border: 2px solid var(--line2); border-top-color: var(--acc); border-radius: 50%; animation: lspin .8s linear infinite; vertical-align: -2px; }
   @keyframes lspin { to { transform: rotate(360deg); } }
+
+    /* 估價與處置（S6）＋ 多對象文案（S7） */
+    .pricing{margin-top:10px;padding:12px 14px}
+    .pricing h4{margin:0 0 8px;font-size:13px;letter-spacing:.02em}
+    .pricing .muted{color:var(--dim);font-weight:400;font-size:11px}
+    .ptab{width:100%;border-collapse:collapse;font-size:12px}
+    .ptab th{text-align:left;color:var(--dim);font-weight:500;padding:4px 8px 4px 0;
+             border-bottom:1px solid var(--line);white-space:nowrap}
+    .ptab td{padding:6px 8px 6px 0;border-bottom:1px solid var(--line);vertical-align:middle}
+    .ptab td.num{white-space:nowrap;font-variant-numeric:tabular-nums}
+    .band{display:inline-block;min-width:18px;text-align:center;border-radius:4px;
+          padding:1px 5px;font-weight:700;font-size:11px}
+    .band.bA{background:#1f3a2b;color:#7fdca4}
+    .band.bB{background:#2b3450;color:#8fb4ff}
+    .band.bC{background:#4a3520;color:#ffc47a}
+    .band.bD{background:#4a2330;color:#ff9aab}
+    .ptotal{margin-top:8px;font-size:12px}
+    .ptotal b{font-variant-numeric:tabular-nums}
+    .notifyout{margin-top:10px}
+    .nblock{border-left:2px solid var(--line);padding:6px 0 6px 10px;margin:8px 0}
+    .nblock h5{margin:0 0 4px;font-size:12px;letter-spacing:.02em}
+    .nblock p{margin:4px 0;font-size:12px;line-height:1.6}
+    .nblock ul{margin:4px 0;padding-left:18px;font-size:12px;line-height:1.6}
+    .ntitle{font-weight:600;font-size:12px;margin-bottom:2px}
+    .gcheck{margin-top:8px;padding:6px 9px;border-radius:5px;font-size:11px}
+    .gcheck.ok{background:#16281c;color:#8fe0ac}
+    .gcheck.bad{background:#2c1a1f;color:#ff9aab}
 </style>
 
 <div class="topbar">
@@ -682,6 +709,7 @@ function renderDetail() {
       <div class="why">${d.reasoning}</div>
     </div>`).join("");
   const pre = a.pre_existing_notes ? `<div class="note"><b>既有舊損備註：</b>${a.pre_existing_notes}（兩照皆存在，不列入本次求償）</div>` : "";
+  const priceBox = pricingCard(cs);
   const truthLbl = cs.truth === "claimed" ? "資料集標註：實際有索賠"
     : cs.truth === "live" ? "現場實測案件" : "資料集標註：當時未索賠";
   const annN = ANN[cs.id] && ANN[cs.id].findings.length;
@@ -703,7 +731,8 @@ function renderDetail() {
       <div class="photo d-card"><div class="cap"><span class="after">還車照</span><span class="t">${annN ? "AI 標註 " + annN + " 處" : "本次判定"}</span></div>
         <div class="imgwrap zoomable"><img src="${imgSrc(cs.ret)}" alt="${cs.car} ${cs.angle} 還車照">${annBoxes(cs)}</div></div>
     </div>
-    <div class="d-card verdict">${head}<div class="v-sub">${sub}</div>${dmgs}${pre}</div>`;
+    <div class="d-card verdict">${head}<div class="v-sub">${sub}</div>${dmgs}${pre}</div>
+    ${priceBox}`;
   armLens();
 }
 
@@ -1417,10 +1446,11 @@ function liveVerdictHtml(j) {
     rows = confBar(a.no_damage_confidence);
   }
   const pre = a.pre_existing_notes ? `<div class="note"><b>既有舊損備註：</b>${a.pre_existing_notes}（兩照皆存在，不列入本次求償）</div>` : "";
+  const priceBox = pricingCard({ pricing: j.pricing });
   const casc = j.cascade
     ? `<div class="note"><b>級聯複核：</b>快篩臨界（${j.cascade.reason}）→ ${j.cascade.model} ${j.cascade.votes ? j.cascade.votes.length + " 票 [" + j.cascade.votes.map(v => v ? "有損" : "無損").join("、") + "]" : "複核"} → ${j.cascade.flipped ? "翻轉" : "維持"}快篩結論</div>`
     : `<div class="note"><b>級聯：</b>快篩信心充足，未升級複核（對應實測 97.2% 案件停在快篩層）</div>`;
-  return `<div class="d-card verdict">${head}<div class="v-sub">${sub}</div>${rows}${pre}${casc}</div>`;
+  return `<div class="d-card verdict">${head}<div class="v-sub">${sub}</div>${rows}${pre}${priceBox}${casc}</div>`;
 }
 
 function liveResultHtml(j) {
@@ -1544,6 +1574,84 @@ function undoDecision(id) {
   delete decisions[id]; save(); renderAll();
   if (SERVER) fetch("/api/decision/" + encodeURIComponent(id), { method: "DELETE" })
     .then(() => refreshLabels()).then(() => renderStats()).catch(() => {});
+}
+
+
+// ---------- 估價與處置（S6，純規則零 API）＋ 多對象文案（S7，按需呼叫） ----------
+// 判定回答「有沒有損傷」，這兩層回答「所以要花多少錢、誰該收到什麼通知」——
+// 客服複核時真正需要的是後者。估價由 server 端 disposition.py 產生，前端只負責顯示。
+const BAND_LABEL = { A: "低", B: "中", C: "高", D: "極高" };
+const DISPO_LABEL = {
+  auto_action: ["自動處置", "p1"],
+  human_review: ["人工複核", "p2"],
+  record_only: ["僅記錄", "p3"],
+  waive_not_worth_claiming: ["不值得索賠", "p3"],
+  pre_existing: ["既有損", "p3"],
+};
+
+function money(v) { return "NT$" + Number(v).toLocaleString(); }
+
+function pricingCard(cs) {
+  const p = cs && cs.pricing;
+  if (!p || p.error || !p.items || !p.items.length) return "";
+  const rows = p.items.map(it => {
+    const [lbl, cls] = DISPO_LABEL[it.disposition] || ["—", "p3"];
+    return `<tr>
+      <td>${it.location || "—"}</td>
+      <td><span class="band b${it.band}">${it.band}</span> ${it.band_label || BAND_LABEL[it.band] || ""}</td>
+      <td>${it.repair_action || "—"}</td>
+      <td class="num">${money(it.estimate_twd[0])} – ${money(it.estimate_twd[1])}</td>
+      <td><span class="badge ${cls}">${lbl}</span></td>
+    </tr>`;
+  }).join("");
+  const waived = p.waived_count
+    ? `<div class="note">其中 ${p.waived_count} 項估價低於索賠處理成本，系統建議記為自然耗損不啟動索賠——<b>能算出「不值得追」也是系統價值</b>。</div>`
+    : "";
+  return `<div class="d-card pricing">
+    <h4>維修估價與處置建議 <span class="muted">（規則表產生，零 API；示意價需依維修合約替換）</span></h4>
+    <table class="ptab"><thead><tr><th>部位</th><th>級距</th><th>維修動作</th><th>估價區間</th><th>處置</th></tr></thead>
+    <tbody>${rows}</tbody></table>
+    <div class="ptotal">可索賠合計：<b>${money(p.total_estimate_twd[0])} – ${money(p.total_estimate_twd[1])}</b>
+      <span class="muted">${p.note || ""}</span></div>
+    ${waived}
+    ${SERVER ? `<button class="btn" onclick="genNotify('${cs.id || ""}', '${cs.judge_id || ""}', this)">✉ 產生三對象通知文案</button>
+      <div class="notifyout"></div>` : ""}
+  </div>`;
+}
+
+async function genNotify(caseId, judgeId, btn) {
+  btn.disabled = true; const old = btn.textContent;
+  btn.textContent = "文案生成中…（約 5 秒）";
+  const out = btn.parentElement.querySelector(".notifyout");
+  try {
+    const body = judgeId ? { judge_id: judgeId } : { case_id: caseId };
+    const r = await fetch("/api/notify", { method: "POST",
+      headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.detail || "生成失敗");
+    const u = j.user_notification, c = j.cs_brief, w = j.work_order;
+    const g = j.grounding_check || {};
+    out.innerHTML = `
+      <div class="nblock"><h5>① 用戶通知 <span class="muted">中性、不歸咎、無術語</span></h5>
+        <div class="ntitle">${u.title}</div><p>${u.body}</p>
+        <div class="muted">${u.evidence_note}｜${u.dispute_channel_note}</div></div>
+      <div class="nblock"><h5>② 客服工作說明 <span class="badge ${c.dispute_risk === "high" ? "p1" : c.dispute_risk === "medium" ? "p2" : "p3"}">爭議風險 ${c.dispute_risk}</span></h5>
+        <p>${c.summary}</p>
+        <div class="muted">${c.confidence_note}</div>
+        <div class="muted">${c.coverage_caveat}</div>
+        <div class="muted"><b>建議處置：</b>${c.recommended_action}｜${c.dispute_risk_reason}</div></div>
+      <div class="nblock"><h5>③ ${w.type === "cleaning" ? "清潔" : w.type === "repair" ? "維修" : "清潔＋維修"}派工單
+        <span class="muted">預估 ${w.estimated_minutes} 分鐘・${w.priority === "urgent" ? "急件" : "一般"}</span></h5>
+        <ul>${(w.items || []).map(i => `<li>${i}</li>`).join("")}</ul>
+        ${(w.special_tools || []).length ? `<div class="muted">需備工具：${w.special_tools.join("、")}</div>` : ""}</div>
+      <div class="gcheck ${g.passed ? "ok" : "bad"}">${g.passed
+        ? "✓ 程式面查核通過：無杜撰金額、無歸咎性表述、用戶通知未含內部代碼"
+        : "✗ 查核未過：" + (g.problems || []).join("；")}</div>`;
+    btn.textContent = "✓ 已生成（可再按重新產生）"; btn.disabled = false;
+  } catch (e) {
+    out.innerHTML = `<div class="gcheck bad">生成失敗：${e.message || e}</div>`;
+    btn.textContent = old; btn.disabled = false;
+  }
 }
 
 async function rejudge(id, btn) {

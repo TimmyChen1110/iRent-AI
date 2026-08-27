@@ -333,6 +333,107 @@ def _client():
     return _gclient
 
 
+# ---------- 判定後加值：估價分流（S6）＋ 多對象文案（S7） ----------
+# 這兩層【不碰判定準確率】——它們吃的是判定結果，不是照片。
+# S6 純規則零 API（損傷類型×尺寸×材質 → 維修動作 + 級距 + 估價區間 + 值不值得追）。
+# S7 一次文字模型呼叫，產出用戶／客服／派工單三種語氣，並做程式面 grounding 查核。
+#
+# 為何預設只開 S6：S6 零成本必開；S7 多一次 API 呼叫，現場 demo 以速度優先，
+# 由前端「產生通知文案」按鈕按需觸發（POST /api/notify）。
+
+def enrich(result: dict) -> dict:
+    """對判定結果補上估價與處置建議（S6）。純程式、零 API、失敗不影響判定。"""
+    try:
+        import disposition  # noqa: PLC0415
+        final = result.get("final") or {}
+        if not final.get("new_damage_found"):
+            return result
+        from diff_new_damage import panel_of  # noqa: PLC0415
+        st4 = (result.get("stage4") or {}).get("damages") or []
+        weighted = {d.get("location"): d.get("weighted_confidence") for d in st4}
+        angle = result.get("angle")
+        priced, total_lo, total_hi = [], 0, 0
+        for d in final.get("damages") or []:
+            # 現行判定 schema 沒有 panel 欄位，只有自由文字 location。
+            # 沒有 panel 就查不到材質，會讓塑膠保桿的刮痕落進「鈑金整片烤漆」級距C
+            # （5,000–15,000）而非正確的「保桿修補烤漆」級距B（1,500–5,000）——
+            # 現場 demo 報出三倍價會很難看，故一律先從 location 文字推分區。
+            panel = d.get("panel") or panel_of(d, angle)
+            p = disposition.assess(
+                d, panel=panel,
+                weighted_confidence=weighted.get(d.get("location"), d.get("confidence")))
+            p["location"] = d.get("location")
+            priced.append(p)
+            if p.get("claimable"):
+                total_lo += p["estimate_twd"][0]
+                total_hi += p["estimate_twd"][1]
+        result["pricing"] = {
+            "items": priced,
+            "total_estimate_twd": [total_lo, total_hi],
+            "claimable_count": sum(1 for p in priced if p.get("claimable")),
+            "waived_count": sum(1 for p in priced
+                                if p.get("disposition") == "waive_not_worth_claiming"),
+            "note": "級距示意區間，實際以維修廠估價為準",
+        }
+    except Exception as e:                     # 加值失敗不能拖垮判定
+        result["pricing"] = {"error": str(e)[:120]}
+    return result
+
+
+class NotifyReq(BaseModel):
+    judge_id: str | None = None
+    case_id: str | None = None
+
+
+@app.post("/api/notify")
+async def api_notify(req: NotifyReq):
+    """S7：對已完成的判定產生用戶／客服／派工單三種文案（多一次 API 呼叫）。"""
+    if not (PIPE / ".gemini_key").exists():
+        raise HTTPException(503, "此機器沒有 pipeline/.gemini_key，無法呼叫 Gemini")
+    import notify  # noqa: PLC0415
+
+    if req.judge_id:
+        with _judges_lock:
+            entry = _judges.get(req.judge_id)
+        if not entry:
+            raise HTTPException(410, "判定結果已過期，請重新判定")
+        result = entry["result"]
+    elif req.case_id:
+        result = _CASE_JUDGE_CACHE.get(req.case_id)
+        if not result:
+            raise HTTPException(404, "找不到該案件的判定結果，請先執行 AI 重判")
+    else:
+        raise HTTPException(400, "需要 judge_id 或 case_id")
+
+    final = result.get("final") or {}
+    case = {
+        "case_id": req.judge_id or req.case_id,
+        "new_damage_found": final.get("new_damage_found", False),
+        "damages": [{**d, **{k: v for k, v in (p or {}).items()
+                             if k in ("repair_action", "band", "estimate_twd", "disposition")}}
+                    for d, p in zip(final.get("damages") or [],
+                                    (result.get("pricing") or {}).get("items") or [{}] * 99)],
+        "coverage": result.get("coverage"),
+        "level": result.get("level"), "kind": result.get("kind"),
+    }
+    if result.get("mode") == "interior":
+        case["interior"] = {"level": final.get("level"),
+                            "findings": final.get("findings") or []}
+
+    def run():
+        with _rejudge_lock:
+            return notify.generate(case, client=_client())
+
+    try:
+        return await run_in_threadpool(run)
+    except Exception as e:
+        raise HTTPException(502, f"文案生成失敗：{str(e)[:200]}")
+
+
+# AI 重判結果暫存（供 /api/notify 以 case_id 取用）
+_CASE_JUDGE_CACHE: dict[str, dict] = {}
+
+
 class RejudgeReq(BaseModel):
     case_id: str
 
@@ -359,7 +460,8 @@ async def rejudge(req: RejudgeReq):
         with _rejudge_lock:  # 免費層 RPM 低，一次一件（與現場實測共用鎖）
             # 資料集照片已知可讀，跳過 Quality Gate 直接判（gate 數值仍會回在結果內）
             return judge_photos.judge_pair(pair["pickup"], pair["return"],
-                                           client=_client(), skip_gate=True)
+                                           client=_client(), skip_gate=True,
+                                           angle=pair["angle"])
 
     try:
         result, _img = await run_in_threadpool(run)
@@ -369,6 +471,8 @@ async def rejudge(req: RejudgeReq):
     final = result.get("final")
     if not final:
         raise HTTPException(502, "未取得有效判定結果")
+    enrich(result)                      # S6 估價分流（零 API）
+    _CASE_JUDGE_CACHE[req.case_id] = result   # 供 POST /api/notify 產文案
     # 標註框同步更新（box_2d 已隨判定取得，零額外 API），前端據此重畫疊加層
     ann = {"findings": [{"box_2d": d["box_2d"], "label": d["type"], "severity": d["severity"],
                          "confidence": d["confidence"],
@@ -380,6 +484,7 @@ async def rejudge(req: RejudgeReq):
             "level": result["level"], "kind": result["kind"],
             "cascade": result.get("cascade"),
             "annotation": ann,
+            "pricing": result.get("pricing"),
             "elapsed_s": result.get("elapsed_s"),
             "judged_at": datetime.now().isoformat(timespec="seconds")}
 
@@ -477,6 +582,7 @@ async def api_judge(mode: str = Form("pair"),
         except Exception as e:
             raise HTTPException(502, f"判定失敗：{str(e)[:200]}")
 
+    enrich(result)          # S6 估價分流（零 API，失敗不影響判定）
     # 暫存路徑對前端沒有意義，拿掉；標註圖直接以 base64 回傳
     for k in ("pickup", "return", "photo"):
         result.pop(k, None)
