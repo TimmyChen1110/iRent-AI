@@ -8,7 +8,7 @@ pydantic>=2.0.0            # 判定結果 schema，強制 Gemini 結構化輸出
 
 # --- 影像處理 ---
 pillow>=10.0.0             # EXIF 轉正、縮圖、標註繪圖（prep_image / draw_annotations）
-opencv-python>=4.8.0       # Quality Gate 模糊度、cv_prefilter 的 ORB/RANSAC/SSIM
+opencv-python>=4.8.0       # Quality Gate 模糊度、cv_prefilter 的 SIFT/ORB/RANSAC/SSIM
 numpy>=1.24.0             # opencv 相依 + 差異圖運算
 pillow-heif>=0.13.0        # iPhone HEIC 支援（judge_photos 現場實測必需）
 
