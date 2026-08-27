@@ -1,0 +1,92 @@
+{
+ "n_common": 12,
+ "A": {
+  "file": "eval_results_gemini_37_flash_v3_cascaded.json",
+  "vs_原始索賠標籤": {
+   "n": 12,
+   "skipped_uncertain": 0,
+   "confusion": {
+    "TP": 5,
+    "FN": 1,
+    "FP": 1,
+    "TN": 5
+   },
+   "recall": 0.8333,
+   "false_positive_rate": 0.1667,
+   "precision": 0.8333
+  },
+  "vs_人工重標": {
+   "n": 12,
+   "skipped_uncertain": 0,
+   "confusion": {
+    "TP": 6,
+    "FN": 1,
+    "FP": 0,
+    "TN": 5
+   },
+   "recall": 0.8571,
+   "false_positive_rate": 0.0,
+   "precision": 1.0
+  }
+ },
+ "B": {
+  "file": "eval_results_v2cal.json",
+  "vs_原始索賠標籤": {
+   "n": 12,
+   "skipped_uncertain": 0,
+   "confusion": {
+    "TP": 6,
+    "FN": 0,
+    "FP": 1,
+    "TN": 5
+   },
+   "recall": 1.0,
+   "false_positive_rate": 0.1667,
+   "precision": 0.8571
+  },
+  "vs_人工重標": {
+   "n": 12,
+   "skipped_uncertain": 0,
+   "confusion": {
+    "TP": 7,
+    "FN": 0,
+    "FP": 0,
+    "TN": 5
+   },
+   "recall": 1.0,
+   "false_positive_rate": 0.0,
+   "precision": 1.0
+  }
+ },
+ "n_flips": 1,
+ "flips_improved": 1,
+ "flips_regressed": 0,
+ "flips": [
+  {
+   "case": "RDH-3092-左後",
+   "label": "positive",
+   "truth": "真損",
+   "A": false,
+   "B": true,
+   "verdict": "改善",
+   "B_reasoning": "左後葉子板在加油孔蓋左側至輪拱上方區域，有一處大面積鈑金凹陷折痕，車身線條與周圍光影反射呈現明顯不規則扭曲；對照借車照同一部位，鈑件表面平整且反射線條流暢，無任何凹陷變形。"
+  }
+ ],
+ "v2_field_quality": {
+  "n_damages": 13,
+  "有observation": 13,
+  "有有效panel": 13,
+  "panel幻覺被丟棄": 0,
+  "有UV座標": 13,
+  "有ruled_out": 13,
+  "平均ruled_out項數": 6.0,
+  "全部勾滿比例": 1.0,
+  "有排除理由": 0,
+  "信心分布": {
+   "≥0.9": 11,
+   "0.75-0.89": 2,
+   "0.6-0.74": 0,
+   "<0.6": 0
+  }
+ }
+}

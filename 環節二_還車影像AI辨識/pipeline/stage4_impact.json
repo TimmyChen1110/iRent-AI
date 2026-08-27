@@ -1,0 +1,1936 @@
+{
+ "n_cases": 141,
+ "n_detected_damage": 22,
+ "coverage_missing": 0,
+ "disposition_counts": {
+  "auto_action": 13,
+  "human_review": 8,
+  "pre_existing": 1
+ },
+ "level_counts": {
+  "P1": 13,
+  "P2": 8,
+  "P3": 1
+ },
+ "downgraded_by_coverage": [
+  {
+   "case": "RCG2235-右後",
+   "from": "P1",
+   "to": "P3",
+   "relabel": "damage",
+   "reason": "車況檔中已有相符既有損傷（D-002）——非新損"
+  },
+  {
+   "case": "RDH-2261-左後",
+   "from": "P1",
+   "to": "P2",
+   "relabel": "damage",
+   "reason": "基準觀測品質偏低（prior_q=0.50）——信心折損為 0.49，須人工複核確認"
+  },
+  {
+   "case": "RDJ-0772-左前",
+   "from": "P1",
+   "to": "P2",
+   "relabel": "damage",
+   "reason": "基準觀測品質偏低（prior_q=0.65）——信心折損為 0.65，須人工複核確認"
+  },
+  {
+   "case": "RDJ-0793-左前",
+   "from": "P1",
+   "to": "P2",
+   "relabel": "damage",
+   "reason": "基準觀測品質偏低（prior_q=0.65）——信心折損為 0.64，須人工複核確認"
+  },
+  {
+   "case": "RDL-8265-右後",
+   "from": "P1",
+   "to": "P2",
+   "relabel": "damage",
+   "reason": "基準觀測品質偏低（prior_q=0.65）——信心折損為 0.62，須人工複核確認"
+  },
+  {
+   "case": "RDL-9262-右前",
+   "from": "P1",
+   "to": "P2",
+   "relabel": "damage",
+   "reason": "基準觀測品質偏低（prior_q=0.65）——信心折損為 0.62，須人工複核確認"
+  },
+  {
+   "case": "RDQ-1950-右後",
+   "from": "P1",
+   "to": "P2",
+   "relabel": "damage",
+   "reason": "基準觀測品質偏低（prior_q=0.55）——信心折損為 0.54，須人工複核確認"
+  },
+  {
+   "case": "RDY-6382-左前",
+   "from": "P1",
+   "to": "P2",
+   "relabel": "damage",
+   "reason": "基準觀測品質偏低（prior_q=0.65）——信心折損為 0.62，須人工複核確認"
+  },
+  {
+   "case": "RFD-0332-右前",
+   "from": "P1",
+   "to": "P2",
+   "relabel": "damage",
+   "reason": "基準觀測品質偏低（prior_q=0.65）——信心折損為 0.64，須人工複核確認"
+  }
+ ],
+ "n_downgraded": 9,
+ "downgraded_true_damage": 9,
+ "downgraded_false_alarm": 0,
+ "rows": [
+  {
+   "case": "RCG2235-右前",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RCG2235-右後",
+   "label": "negative",
+   "relabel": "damage",
+   "detected": true,
+   "case_level": "P3",
+   "case_disposition": "pre_existing",
+   "coverage_available": true,
+   "damages": [
+    {
+     "location": "右後保險桿（右後反光片右側）",
+     "type": "刮痕",
+     "damage_type": null,
+     "estimated_size_cm": null,
+     "depth_assessment": null,
+     "panel": "RB",
+     "raw_confidence": 0.85,
+     "prior_q": 0.65,
+     "weighted_confidence": 0.5525,
+     "disposition": "pre_existing",
+     "level": "P3",
+     "claimable": false,
+     "reason": "車況檔中已有相符既有損傷（D-002）——非新損"
+    }
+   ]
+  },
+  {
+   "case": "RCG2235-左前",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RCG2235-左後",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RCQ6760-右前",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RCQ6760-右後",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RCQ6760-左前",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RCQ6760-左後",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RCW1883-右前",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RCW1883-右後",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RCW1883-左前",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RCW1883-左後",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RCX5100-右前",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RCX5100-右後",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RCX5100-左前",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RCX5100-左後",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RDG8571-右前",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RDG8571-右後",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RDG8571-左前",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RDG8571-左後",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RDG8578-右前",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RDG8578-右後",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RDG8578-左前",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RDG8578-左後",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RDG9853-右前",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RDG9853-右後",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RDG9853-左前",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RDG9853-左後",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RDL7827-右前",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RDL7827-右後",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RDL7827-左前",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RDL7827-左後",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RDL7832-右前",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RDL7832-右後",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RDL7832-左前",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RDL7832-左後",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RDQ5916-右前",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RDQ5916-右後",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RDQ5916-左前",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RDQ5916-左後",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RDR6350-右前",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RDR6350-右後",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RDR6350-左前",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RDR6350-左後",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RDS2805-右前",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RDS2805-右後",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RDS2805-左前",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RDS2805-左後",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RDU-5572-右前",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RDU-5572-右後",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RDU-5572-左前",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RDU-5572-左後",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RDU-7390-右前",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RDU-7390-右後",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RDU-7390-左前",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RDU-7390-左後",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RDW-7085-右前",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RDW-7085-右後",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RDW-7085-左前",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RDW-7085-左後",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RDZ-9006-右前",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RDZ-9006-右後",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RDZ-9006-左前",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RDZ-9006-左後",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RDZ0155-右前",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RDZ0155-右後",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RDZ0155-左前",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RDZ0155-左後",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RDZ6950-右前",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RDZ6950-右後",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RDZ6950-左前",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RDZ6950-左後",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RDZ7922-右前",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RDZ7922-右後",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RDZ7922-左前",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RDZ7922-左後",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RFB-2590-右前",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RFB-2590-右後",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RFB-2590-左前",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RFB-2590-左後",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RFB-3295-右前",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RFB-3295-右後",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RFB-3295-左前",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RFB-3295-左後",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RFB5176-右前",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RFB5176-右後",
+   "label": "negative",
+   "relabel": "damage",
+   "detected": true,
+   "case_level": "P1",
+   "case_disposition": "auto_action",
+   "coverage_available": true,
+   "damages": [
+    {
+     "location": "右後保險桿",
+     "type": "刮痕",
+     "damage_type": null,
+     "estimated_size_cm": null,
+     "depth_assessment": null,
+     "panel": "RB",
+     "raw_confidence": 0.95,
+     "prior_q": 0.72,
+     "weighted_confidence": 0.684,
+     "gate_mode": "gate",
+     "disposition": "auto_action",
+     "level": "P1",
+     "claimable": true,
+     "reason": "基準足夠清晰（prior_q=0.72 ≥ 0.7）且偵測信心 0.95 ≥ 0.85"
+    }
+   ]
+  },
+  {
+   "case": "RFB5176-左前",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RFB5176-左後",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RFD-1336-右前",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RFD-1336-右後",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RFD-1336-左前",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RFD-1336-左後",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RFD-8522-右前",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RFD-8522-右後",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RFD-8522-左前",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RFD-8522-左後",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RFG7213-右前",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RFG7213-右後",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RFG7213-左前",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RFG7213-左後",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RFH7851-右前",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RFH7851-右後",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RFH7851-左前",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RFH7851-左後",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RFH7873-右前",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RFH7873-右後",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RFH7873-左前",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RFH7873-左後",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RFH8052-右前",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RFH8052-右後",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RFH8052-左前",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RFH8052-左後",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RFH8122-右前",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RFH8122-右後",
+   "label": "negative",
+   "relabel": "damage",
+   "detected": true,
+   "case_level": "P1",
+   "case_disposition": "auto_action",
+   "coverage_available": true,
+   "damages": [
+    {
+     "location": "右後保桿側邊下緣（右後輪後方）",
+     "type": "刮痕",
+     "damage_type": null,
+     "estimated_size_cm": null,
+     "depth_assessment": null,
+     "panel": "RB",
+     "raw_confidence": 0.9,
+     "prior_q": 0.72,
+     "weighted_confidence": 0.648,
+     "gate_mode": "gate",
+     "disposition": "auto_action",
+     "level": "P1",
+     "claimable": true,
+     "reason": "基準足夠清晰（prior_q=0.72 ≥ 0.7）且偵測信心 0.90 ≥ 0.85"
+    }
+   ]
+  },
+  {
+   "case": "RFH8122-左前",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RFH8122-左後",
+   "label": "negative",
+   "relabel": "damage",
+   "detected": true,
+   "case_level": "P1",
+   "case_disposition": "auto_action",
+   "coverage_available": true,
+   "damages": [
+    {
+     "location": "後保險桿左側下緣（左後輪後方）",
+     "type": "刮痕",
+     "damage_type": null,
+     "estimated_size_cm": null,
+     "depth_assessment": null,
+     "panel": "RB",
+     "raw_confidence": 0.85,
+     "prior_q": 0.72,
+     "weighted_confidence": 0.612,
+     "gate_mode": "gate",
+     "disposition": "auto_action",
+     "level": "P1",
+     "claimable": true,
+     "reason": "基準足夠清晰（prior_q=0.72 ≥ 0.7）且偵測信心 0.85 ≥ 0.85"
+    }
+   ]
+  },
+  {
+   "case": "RFM-2791-右前",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RFM-2791-右後",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RFM-2791-左前",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RFM-2791-左後",
+   "label": "negative",
+   "relabel": "clean",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RCR-7661-左後",
+   "label": "positive",
+   "relabel": "damage",
+   "detected": true,
+   "case_level": "P1",
+   "case_disposition": "auto_action",
+   "coverage_available": true,
+   "damages": [
+    {
+     "location": "左後葉子板與左後保險桿",
+     "type": "破損",
+     "damage_type": null,
+     "estimated_size_cm": null,
+     "depth_assessment": null,
+     "panel": "RB",
+     "raw_confidence": 0.99,
+     "prior_q": 0.75,
+     "weighted_confidence": 0.7425,
+     "gate_mode": "gate",
+     "disposition": "auto_action",
+     "level": "P1",
+     "claimable": true,
+     "reason": "基準足夠清晰（prior_q=0.75 ≥ 0.7）且偵測信心 0.99 ≥ 0.85"
+    },
+    {
+     "location": "左後車門及下緣",
+     "type": "凹陷",
+     "damage_type": null,
+     "estimated_size_cm": null,
+     "depth_assessment": null,
+     "panel": "RD_L",
+     "raw_confidence": 0.95,
+     "prior_q": 0.4,
+     "weighted_confidence": 0.38,
+     "disposition": "record_only",
+     "level": "P3",
+     "claimable": false,
+     "reason": "基準觀測品質不足（prior_q=0.40 < 0.5）——借車照未清楚拍到此部位，不得對用戶主張"
+    },
+    {
+     "location": "左後輪圈",
+     "type": "刮痕",
+     "damage_type": null,
+     "estimated_size_cm": null,
+     "depth_assessment": null,
+     "panel": null,
+     "raw_confidence": 0.9,
+     "prior_q": null,
+     "weighted_confidence": 0.585,
+     "disposition": "human_review",
+     "level": "P2",
+     "claimable": true,
+     "reason": "基準觀測品質偏低（prior_q=0.65）——信心折損為 0.59，須人工複核確認"
+    }
+   ]
+  },
+  {
+   "case": "RCW-8382-左前",
+   "label": "positive",
+   "relabel": "damage",
+   "detected": true,
+   "case_level": "P1",
+   "case_disposition": "auto_action",
+   "coverage_available": true,
+   "damages": [
+    {
+     "location": "前保險桿及引擎蓋前端",
+     "type": "破損",
+     "damage_type": null,
+     "estimated_size_cm": null,
+     "depth_assessment": null,
+     "panel": "FB",
+     "raw_confidence": 0.99,
+     "prior_q": 0.72,
+     "weighted_confidence": 0.7128,
+     "gate_mode": "gate",
+     "disposition": "auto_action",
+     "level": "P1",
+     "claimable": true,
+     "reason": "基準足夠清晰（prior_q=0.72 ≥ 0.7）且偵測信心 0.99 ≥ 0.85"
+    }
+   ]
+  },
+  {
+   "case": "RCW-9206-左前",
+   "label": "positive",
+   "relabel": "damage",
+   "detected": true,
+   "case_level": "P1",
+   "case_disposition": "auto_action",
+   "coverage_available": true,
+   "damages": [
+    {
+     "location": "右前保桿（大燈下方）",
+     "type": "破損",
+     "damage_type": null,
+     "estimated_size_cm": null,
+     "depth_assessment": null,
+     "panel": "FB",
+     "raw_confidence": 0.92,
+     "prior_q": 0.7,
+     "weighted_confidence": 0.644,
+     "gate_mode": "gate",
+     "disposition": "auto_action",
+     "level": "P1",
+     "claimable": true,
+     "reason": "基準足夠清晰（prior_q=0.70 ≥ 0.7）且偵測信心 0.92 ≥ 0.85"
+    }
+   ]
+  },
+  {
+   "case": "RDH-2261-左後",
+   "label": "positive",
+   "relabel": "damage",
+   "detected": true,
+   "case_level": "P2",
+   "case_disposition": "human_review",
+   "coverage_available": true,
+   "damages": [
+    {
+     "location": "左後保險桿及左後葉子板",
+     "type": "破損",
+     "damage_type": null,
+     "estimated_size_cm": null,
+     "depth_assessment": null,
+     "panel": "RB",
+     "raw_confidence": 0.98,
+     "prior_q": 0.5,
+     "weighted_confidence": 0.49,
+     "disposition": "human_review",
+     "level": "P2",
+     "claimable": true,
+     "reason": "基準觀測品質偏低（prior_q=0.50）——信心折損為 0.49，須人工複核確認"
+    }
+   ]
+  },
+  {
+   "case": "RDH-3092-左後",
+   "label": "positive",
+   "relabel": "damage",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RDJ-0772-左前",
+   "label": "positive",
+   "relabel": "damage",
+   "detected": true,
+   "case_level": "P2",
+   "case_disposition": "human_review",
+   "coverage_available": true,
+   "damages": [
+    {
+     "location": "右前保桿、右前大燈、右前葉子板及引擎蓋右側",
+     "type": "破損",
+     "damage_type": null,
+     "estimated_size_cm": null,
+     "depth_assessment": null,
+     "panel": "HOOD",
+     "raw_confidence": 1.0,
+     "prior_q": 0.65,
+     "weighted_confidence": 0.65,
+     "disposition": "human_review",
+     "level": "P2",
+     "claimable": true,
+     "reason": "基準觀測品質偏低（prior_q=0.65）——信心折損為 0.65，須人工複核確認"
+    }
+   ]
+  },
+  {
+   "case": "RDJ-0793-左前",
+   "label": "positive",
+   "relabel": "damage",
+   "detected": true,
+   "case_level": "P2",
+   "case_disposition": "human_review",
+   "coverage_available": true,
+   "damages": [
+    {
+     "location": "右前保險桿及右前葉子板",
+     "type": "凹陷",
+     "damage_type": null,
+     "estimated_size_cm": null,
+     "depth_assessment": null,
+     "panel": "FB",
+     "raw_confidence": 0.98,
+     "prior_q": 0.65,
+     "weighted_confidence": 0.637,
+     "disposition": "human_review",
+     "level": "P2",
+     "claimable": true,
+     "reason": "基準觀測品質偏低（prior_q=0.65）——信心折損為 0.64，須人工複核確認"
+    }
+   ]
+  },
+  {
+   "case": "RDL-5171-左前",
+   "label": "positive",
+   "relabel": "damage",
+   "detected": true,
+   "case_level": "P1",
+   "case_disposition": "auto_action",
+   "coverage_available": true,
+   "damages": [
+    {
+     "location": "前保險桿與水箱護罩",
+     "type": "破損",
+     "damage_type": null,
+     "estimated_size_cm": null,
+     "depth_assessment": null,
+     "panel": "FB",
+     "raw_confidence": 0.99,
+     "prior_q": 0.72,
+     "weighted_confidence": 0.7128,
+     "gate_mode": "gate",
+     "disposition": "auto_action",
+     "level": "P1",
+     "claimable": true,
+     "reason": "基準足夠清晰（prior_q=0.72 ≥ 0.7）且偵測信心 0.99 ≥ 0.85"
+    },
+    {
+     "location": "引擎蓋",
+     "type": "凹陷",
+     "damage_type": null,
+     "estimated_size_cm": null,
+     "depth_assessment": null,
+     "panel": "HOOD",
+     "raw_confidence": 0.98,
+     "prior_q": 0.7,
+     "weighted_confidence": 0.686,
+     "gate_mode": "gate",
+     "disposition": "auto_action",
+     "level": "P1",
+     "claimable": true,
+     "reason": "基準足夠清晰（prior_q=0.70 ≥ 0.7）且偵測信心 0.98 ≥ 0.85"
+    }
+   ]
+  },
+  {
+   "case": "RDL-7836-左後",
+   "label": "positive",
+   "relabel": "damage",
+   "detected": true,
+   "case_level": "P1",
+   "case_disposition": "auto_action",
+   "coverage_available": true,
+   "damages": [
+    {
+     "location": "後保險桿及後尾門",
+     "type": "破損",
+     "damage_type": null,
+     "estimated_size_cm": null,
+     "depth_assessment": null,
+     "panel": "RB",
+     "raw_confidence": 0.99,
+     "prior_q": 0.7,
+     "weighted_confidence": 0.693,
+     "gate_mode": "gate",
+     "disposition": "auto_action",
+     "level": "P1",
+     "claimable": true,
+     "reason": "基準足夠清晰（prior_q=0.70 ≥ 0.7）且偵測信心 0.99 ≥ 0.85"
+    }
+   ]
+  },
+  {
+   "case": "RDL-8265-右後",
+   "label": "positive",
+   "relabel": "damage",
+   "detected": true,
+   "case_level": "P2",
+   "case_disposition": "human_review",
+   "coverage_available": true,
+   "damages": [
+    {
+     "location": "後行李箱蓋右側（iRent字樣上方）",
+     "type": "凹陷",
+     "damage_type": null,
+     "estimated_size_cm": null,
+     "depth_assessment": null,
+     "panel": null,
+     "raw_confidence": 0.95,
+     "prior_q": null,
+     "weighted_confidence": 0.6175,
+     "disposition": "human_review",
+     "level": "P2",
+     "claimable": true,
+     "reason": "基準觀測品質偏低（prior_q=0.65）——信心折損為 0.62，須人工複核確認"
+    }
+   ]
+  },
+  {
+   "case": "RDL-9262-右前",
+   "label": "positive",
+   "relabel": "damage",
+   "detected": true,
+   "case_level": "P2",
+   "case_disposition": "human_review",
+   "coverage_available": true,
+   "damages": [
+    {
+     "location": "右前保險桿",
+     "type": "刮痕",
+     "damage_type": null,
+     "estimated_size_cm": null,
+     "depth_assessment": null,
+     "panel": "FB",
+     "raw_confidence": 0.95,
+     "prior_q": 0.65,
+     "weighted_confidence": 0.6175,
+     "disposition": "human_review",
+     "level": "P2",
+     "claimable": true,
+     "reason": "基準觀測品質偏低（prior_q=0.65）——信心折損為 0.62，須人工複核確認"
+    }
+   ]
+  },
+  {
+   "case": "RDQ-1950-右後",
+   "label": "positive",
+   "relabel": "damage",
+   "detected": true,
+   "case_level": "P2",
+   "case_disposition": "human_review",
+   "coverage_available": true,
+   "damages": [
+    {
+     "location": "後保險桿右側及尾門右下緣",
+     "type": "凹陷",
+     "damage_type": null,
+     "estimated_size_cm": null,
+     "depth_assessment": null,
+     "panel": "RB",
+     "raw_confidence": 0.99,
+     "prior_q": 0.55,
+     "weighted_confidence": 0.5445,
+     "disposition": "human_review",
+     "level": "P2",
+     "claimable": true,
+     "reason": "基準觀測品質偏低（prior_q=0.55）——信心折損為 0.54，須人工複核確認"
+    }
+   ]
+  },
+  {
+   "case": "RDU-6956-右前",
+   "label": "positive",
+   "relabel": "damage",
+   "detected": true,
+   "case_level": "P1",
+   "case_disposition": "auto_action",
+   "coverage_available": true,
+   "damages": [
+    {
+     "location": "左前保險桿",
+     "type": "破損",
+     "damage_type": null,
+     "estimated_size_cm": null,
+     "depth_assessment": null,
+     "panel": "FB",
+     "raw_confidence": 0.99,
+     "prior_q": 0.72,
+     "weighted_confidence": 0.7128,
+     "gate_mode": "gate",
+     "disposition": "auto_action",
+     "level": "P1",
+     "claimable": true,
+     "reason": "基準足夠清晰（prior_q=0.72 ≥ 0.7）且偵測信心 0.99 ≥ 0.85"
+    }
+   ]
+  },
+  {
+   "case": "RDU-9162-左前",
+   "label": "positive",
+   "relabel": "not_comparable",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RDX-1085-右前",
+   "label": "positive",
+   "relabel": "not_comparable",
+   "detected": true,
+   "case_level": "P1",
+   "case_disposition": "auto_action",
+   "coverage_available": true,
+   "damages": [
+    {
+     "location": "前保桿右側下緣（車牌右方/畫面左側）",
+     "type": "刮痕",
+     "damage_type": null,
+     "estimated_size_cm": null,
+     "depth_assessment": null,
+     "panel": "FB",
+     "raw_confidence": 0.88,
+     "prior_q": 0.7,
+     "weighted_confidence": 0.616,
+     "gate_mode": "gate",
+     "disposition": "auto_action",
+     "level": "P1",
+     "claimable": true,
+     "reason": "基準足夠清晰（prior_q=0.70 ≥ 0.7）且偵測信心 0.88 ≥ 0.85"
+    }
+   ]
+  },
+  {
+   "case": "RDX-2376-右後",
+   "label": "positive",
+   "relabel": "damage",
+   "detected": true,
+   "case_level": "P1",
+   "case_disposition": "auto_action",
+   "coverage_available": true,
+   "damages": [
+    {
+     "location": "右後保桿與葉子板接縫處",
+     "type": "破損",
+     "damage_type": null,
+     "estimated_size_cm": null,
+     "depth_assessment": null,
+     "panel": "RB",
+     "raw_confidence": 0.95,
+     "prior_q": 0.68,
+     "weighted_confidence": 0.646,
+     "disposition": "human_review",
+     "level": "P2",
+     "claimable": true,
+     "reason": "基準觀測品質偏低（prior_q=0.68）——信心折損為 0.65，須人工複核確認"
+    },
+    {
+     "location": "右後葉子板輪拱上方",
+     "type": "刮痕",
+     "damage_type": null,
+     "estimated_size_cm": null,
+     "depth_assessment": null,
+     "panel": "RF_R",
+     "raw_confidence": 0.85,
+     "prior_q": 0.7,
+     "weighted_confidence": 0.595,
+     "gate_mode": "gate",
+     "disposition": "auto_action",
+     "level": "P1",
+     "claimable": true,
+     "reason": "基準足夠清晰（prior_q=0.70 ≥ 0.7）且偵測信心 0.85 ≥ 0.85"
+    }
+   ]
+  },
+  {
+   "case": "RDY-6382-左前",
+   "label": "positive",
+   "relabel": "damage",
+   "detected": true,
+   "case_level": "P2",
+   "case_disposition": "human_review",
+   "coverage_available": true,
+   "damages": [
+    {
+     "location": "左側車門（左前門與左後門）",
+     "type": "凹陷",
+     "damage_type": null,
+     "estimated_size_cm": null,
+     "depth_assessment": null,
+     "panel": "FD_L",
+     "raw_confidence": 0.95,
+     "prior_q": 0.65,
+     "weighted_confidence": 0.6175,
+     "disposition": "human_review",
+     "level": "P2",
+     "claimable": true,
+     "reason": "基準觀測品質偏低（prior_q=0.65）——信心折損為 0.62，須人工複核確認"
+    }
+   ]
+  },
+  {
+   "case": "RDZ-0187-右後",
+   "label": "positive",
+   "relabel": "uncertain",
+   "detected": false,
+   "case_level": "P3",
+   "case_disposition": "no_new_damage",
+   "coverage_available": true,
+   "damages": []
+  },
+  {
+   "case": "RFB-2091-右前",
+   "label": "positive",
+   "relabel": "damage",
+   "detected": true,
+   "case_level": "P1",
+   "case_disposition": "auto_action",
+   "coverage_available": true,
+   "damages": [
+    {
+     "location": "引擎蓋",
+     "type": "凹陷",
+     "damage_type": null,
+     "estimated_size_cm": null,
+     "depth_assessment": null,
+     "panel": "HOOD",
+     "raw_confidence": 0.99,
+     "prior_q": 0.7,
+     "weighted_confidence": 0.693,
+     "gate_mode": "gate",
+     "disposition": "auto_action",
+     "level": "P1",
+     "claimable": true,
+     "reason": "基準足夠清晰（prior_q=0.70 ≥ 0.7）且偵測信心 0.99 ≥ 0.85"
+    }
+   ]
+  },
+  {
+   "case": "RFB-2091-左前",
+   "label": "positive",
+   "relabel": "damage",
+   "detected": true,
+   "case_level": "P1",
+   "case_disposition": "auto_action",
+   "coverage_available": true,
+   "damages": [
+    {
+     "location": "引擎蓋及前保桿",
+     "type": "凹陷",
+     "damage_type": null,
+     "estimated_size_cm": null,
+     "depth_assessment": null,
+     "panel": "HOOD",
+     "raw_confidence": 0.99,
+     "prior_q": 0.75,
+     "weighted_confidence": 0.7425,
+     "gate_mode": "gate",
+     "disposition": "auto_action",
+     "level": "P1",
+     "claimable": true,
+     "reason": "基準足夠清晰（prior_q=0.75 ≥ 0.7）且偵測信心 0.99 ≥ 0.85"
+    },
+    {
+     "location": "右前大燈與水箱護罩",
+     "type": "破損",
+     "damage_type": null,
+     "estimated_size_cm": null,
+     "depth_assessment": null,
+     "panel": null,
+     "raw_confidence": 0.99,
+     "prior_q": null,
+     "weighted_confidence": 0.6435,
+     "disposition": "human_review",
+     "level": "P2",
+     "claimable": true,
+     "reason": "基準觀測品質偏低（prior_q=0.65）——信心折損為 0.64，須人工複核確認"
+    }
+   ]
+  },
+  {
+   "case": "RFD-0332-右前",
+   "label": "positive",
+   "relabel": "damage",
+   "detected": true,
+   "case_level": "P2",
+   "case_disposition": "human_review",
+   "coverage_available": true,
+   "damages": [
+    {
+     "location": "引擎蓋及左前保桿、大燈周邊",
+     "type": "凹陷",
+     "damage_type": null,
+     "estimated_size_cm": null,
+     "depth_assessment": null,
+     "panel": "HOOD",
+     "raw_confidence": 0.99,
+     "prior_q": 0.65,
+     "weighted_confidence": 0.6435,
+     "disposition": "human_review",
+     "level": "P2",
+     "claimable": true,
+     "reason": "基準觀測品質偏低（prior_q=0.65）——信心折損為 0.64，須人工複核確認"
+    }
+   ]
+  }
+ ]
+}

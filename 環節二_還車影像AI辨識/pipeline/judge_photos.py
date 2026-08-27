@@ -133,8 +133,14 @@ def triage(a: dict):
 
 # ---------- 車損比對（借照 vs 還照） ----------
 
-def judge_pair(pickup, ret, client=None, votes=3, rpm=8, skip_gate=False, log=lambda m: None):
-    """回傳 (result_dict, 標註後 PIL Image 或 None)。"""
+def judge_pair(pickup, ret, client=None, votes=3, rpm=8, skip_gate=False, log=lambda m: None,
+               angle=None, coverage_weighting=False):
+    """回傳 (result_dict, 標註後 PIL Image 或 None)。
+
+    coverage_weighting=True 時額外跑規格 Stage 1/4/6（見 coverage.py / diff_new_damage.py）：
+    對【借車照】評估逐分區觀測品質，據以加權新損信心，並產出估價與處置建議。
+    預設關閉——多一次 API 呼叫，且現場 demo 以速度優先。
+    """
     t0 = time.time()
     result = {"mode": "pair", "pickup": str(pickup), "return": str(ret)}
 
@@ -187,6 +193,37 @@ def judge_pair(pickup, ret, client=None, votes=3, rpm=8, skip_gate=False, log=la
     result["level"], result["kind"] = triage(final)
     result["verdict"] = ("damage" if final["new_damage_found"]
                          else "uncomparable" if not final["angle_match"] else "clean")
+
+    # ③.5 觀測覆蓋度加權（規格 Stage 1 → Stage 4 → Stage 6）
+    # 借車照沒拍清楚的部位，不得對用戶主張——這是保護用戶的結構性防線。
+    if coverage_weighting:
+        from coverage import assess_photo, merge_coverage
+        from diff_new_damage import assess_case
+        from disposition import assess as price_assess
+        log("③.5 觀測覆蓋度加權：評估借車照逐分區品質")
+        cov_photo = assess_photo(pickup, angle=angle, client=client, throttle=throttle)
+        if cov_photo.get("error"):
+            log(f"   覆蓋度評估失敗，略過加權：{cov_photo['error'][:60]}")
+            result["coverage"] = {"error": cov_photo["error"]}
+        else:
+            cov = merge_coverage([cov_photo])
+            cov["environment_flags"] = cov_photo.get("environment_flags", [])
+            result["coverage"] = cov
+            st4 = assess_case(final, cov, angle)
+            for d in st4["damages"]:
+                d["pricing"] = price_assess(
+                    d, panel=d.get("panel"),
+                    weighted_confidence=d.get("weighted_confidence"),
+                    coverage_blocked=not d.get("claimable", True))
+            result["stage4"] = st4
+            if st4["damages"]:
+                result["level"] = st4["case_level"]
+                result["kind"] = {"P1": "新車損", "P2": "疑似新損", "P3": "僅記錄"}[st4["case_level"]]
+                log(f"   加權後：{st4['case_level']}（{st4['case_disposition']}）")
+                for d in st4["damages"]:
+                    log(f"   · {d.get('panel') or '?'} 信心 {d.get('raw_confidence')}"
+                        f" × 基準 {d.get('prior_q')} → {d.get('weighted_confidence')}"
+                        f"｜{d['pricing']['repair_action']} 級距{d['pricing']['band']}")
 
     # ④ 視覺標註（座標已隨判定取得，零額外 API）
     findings = [Finding(box_2d=d["box_2d"], label=d["type"], severity=d["severity"],
@@ -267,6 +304,9 @@ def main():
     ap.add_argument("--votes", type=int, default=3, help="級聯複核票數")
     ap.add_argument("--rpm", type=int, default=8, help="每分鐘請求上限（免費 key 建議 ≤10）")
     ap.add_argument("--out", help="標註圖輸出路徑（預設 annotated/live_<檔名>_annotated.jpg）")
+    ap.add_argument("--coverage", action="store_true",
+                    help="加跑觀測覆蓋度加權與估價（規格 Stage 1/4/6，多一次 API 呼叫）")
+    ap.add_argument("--angle", help="拍攝方位（左前/左後/右前/右後），供覆蓋度裁切分區選項")
     args = ap.parse_args()
 
     log = lambda m: print(m, file=sys.stderr, flush=True)  # noqa: E731 進度走 stderr，stdout 保持純 JSON
@@ -275,7 +315,8 @@ def main():
         stem = Path(args.interior).stem
     elif len(args.photos) == 2:
         result, img = judge_pair(*args.photos, votes=args.votes, rpm=args.rpm,
-                                 skip_gate=args.skip_gate, log=log)
+                                 skip_gate=args.skip_gate, log=log,
+                                 angle=args.angle, coverage_weighting=args.coverage)
         stem = Path(args.photos[1]).stem
     else:
         ap.error("用法：judge_photos.py 借車照 還車照，或 --interior 車內照")
