@@ -18,5 +18,11 @@ uvicorn>=0.27.0
 python-multipart>=0.0.9    # multipart 上傳（POST /api/judge）
 qrcode>=7.4                # 區網 QR（GET /api/qr）
 
+# --- 自訓 CV 模型（training/，選用；不跑訓練可不裝） ---
+# torch 在 Apple Silicon 上會自動使用 MPS 加速
+torch>=2.0.0
+torchvision>=0.15.0
+scikit-learn>=1.3.0        # GroupKFold 分組切分 + PR/ROC-AUC
+
 # --- 測試 ---
 pytest>=8.0.0

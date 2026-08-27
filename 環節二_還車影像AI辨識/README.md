@@ -74,7 +74,22 @@ python3 pipeline/export_training_labels.py --disagreed-only  # 只要 AI 判錯�
 > 正式訓練偵測模型前建議先人工修框，或當作弱監督（weak supervision）使用。
 > 「有無車損」二分類則可直接使用。
 
-## 線上交付物
+## 自訓 CV 模型（流程驗證）
+
+`training/` 打通了「監理台標籤 → 訓練 → 評估 → 推論」整條路，並誠實量測現況：
+
+| 指標 | 自訓 ResNet18 | 現行 VLM 級聯 |
+|---|---|---|
+| ROC-AUC（5-fold 車輛分組交叉驗證） | **0.594**（隨機 = 0.50） | — |
+| Recall / FPR | 45.5% / 22.4% | **95.5% / 0%** |
+
+**結論：現階段 VLM 完勝，自訓模型不應接入主流程。**
+瓶頸是資料量（僅 22 個正樣本）而非程式——ablation 顯示凍結 backbone 的
+linear probe（0.611）反而略優於全微調（0.594），是典型過擬合。
+
+等監理台累積到數千筆標籤後，同一支腳本可直接重跑。詳見 [training/README.md](training/README.md)。
+
+
 
 - 系統架構設計文件：https://claude.ai/code/artifact/ab616929-dda5-47a6-9324-8cb6d022c6d2
 - 複核後台 Demo：https://claude.ai/code/artifact/ea7e3f69-18d6-4e5d-bbc2-2d6dd4025058

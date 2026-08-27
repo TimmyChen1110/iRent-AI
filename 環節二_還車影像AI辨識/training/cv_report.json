@@ -1,0 +1,71 @@
+{
+ "n": 138,
+ "positive": 22,
+ "cars": 47,
+ "folds": 5,
+ "epochs": 12,
+ "pr_auc": 0.2181,
+ "roc_auc": 0.5937,
+ "random_baseline_pr_auc": 0.1594,
+ "thresholds": {
+  "0.3": {
+   "TP": 10,
+   "FP": 26,
+   "FN": 12,
+   "TN": 90,
+   "recall": 0.4545,
+   "fpr": 0.2241,
+   "precision": 0.2778
+  },
+  "0.4": {
+   "TP": 4,
+   "FP": 22,
+   "FN": 18,
+   "TN": 94,
+   "recall": 0.1818,
+   "fpr": 0.1897,
+   "precision": 0.1538
+  },
+  "0.5": {
+   "TP": 2,
+   "FP": 21,
+   "FN": 20,
+   "TN": 95,
+   "recall": 0.0909,
+   "fpr": 0.181,
+   "precision": 0.087
+  },
+  "0.6": {
+   "TP": 2,
+   "FP": 17,
+   "FN": 20,
+   "TN": 99,
+   "recall": 0.0909,
+   "fpr": 0.1466,
+   "precision": 0.1053
+  },
+  "0.7": {
+   "TP": 2,
+   "FP": 12,
+   "FN": 20,
+   "TN": 104,
+   "recall": 0.0909,
+   "fpr": 0.1034,
+   "precision": 0.1429
+  }
+ },
+ "vlm_baseline": {
+  "recall": 0.955,
+  "fpr": 0.0,
+  "note": "同一份人工重標標籤，n=138"
+ },
+ "verdict": "流程驗證用；樣本量不足以支撐上線決策",
+ "minutes": 3.77,
+ "ablation": {
+  "full_finetune_roc_auc": 0.5937,
+  "linear_probe_roc_auc": 0.6105,
+  "note": "linear probe（凍結 backbone）略優於全微調 → 確認瓶頸是樣本量造成的過擬合，非程式缺陷；兩者皆僅略高於隨機(0.5)"
+ },
+ "diagnosis": "訓練 loss 降至 0.06 但驗證 ROC-AUC 僅 0.59——22 個正樣本不足以學到泛化特徵。車損是細粒度局部特徵（刮痕僅占畫面極小面積），224px 全圖分類先天不利，需更多資料 + 局部裁切/高解析度輸入才可能追上 VLM。",
+ "caution_on_demo": "predict.py 對訓練集內照片會給出近乎完美的機率（0.96/0.06），那是記憶不是泛化——唯一誠實的指標是 out-of-fold ROC-AUC 0.59。demo 時勿用訓練集照片佐證效果。"
+}
