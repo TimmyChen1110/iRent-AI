@@ -114,8 +114,26 @@ def compare(a_path: Path, b_path: Path) -> dict:
         "flips_improved": sum(1 for f in flips if f["verdict"] == "改善"),
         "flips_regressed": sum(1 for f in flips if f["verdict"] == "退步"),
         "flips": flips,
+        "errors_A": _errors(Ac, truth),
+        "errors_B": _errors(Bc, truth),
         "v2_field_quality": _field_quality(Bc),
     }
+
+
+def _errors(cases: dict, truth: dict) -> list[dict]:
+    """對照人工重標的逐案錯誤（漏抓與誤報），供人工檢視。"""
+    out = []
+    for k, r in sorted(cases.items()):
+        t = truth.get(k)
+        if t is None:
+            continue   # 存疑案件排除
+        pred = r["assessment"]["new_damage_found"]
+        if pred == t:
+            continue
+        out.append({"case": f"{k[0]}-{k[1]}",
+                    "kind": "漏抓FN" if t else "誤報FP",
+                    "detail": _first_reason(r["assessment"])})
+    return out
 
 
 def _first_reason(a: dict) -> str:
@@ -185,6 +203,12 @@ def main():
         mark = {"改善": "✔", "退步": "✘", "無定論": "?"}[f["verdict"]]
         print(f"  {mark} {f['case']:16s} [{f['truth']}] A={f['A']} → B={f['B']}"
               f"  {f['B_reasoning'][:60]}")
+    for side in ("A", "B"):
+        errs = out[f"errors_{side}"]
+        print(f"\n【{side} 對照人工重標的錯誤】{len(errs)} 件")
+        for e in errs:
+            print(f"  {e['kind']} {e['case']:16s} {e['detail'][:70]}")
+
     print("\n【v2 欄位填答品質】")
     print(json.dumps(out["v2_field_quality"], ensure_ascii=False, indent=1))
     print("\n報告寫入 prompt_ab_report.json")

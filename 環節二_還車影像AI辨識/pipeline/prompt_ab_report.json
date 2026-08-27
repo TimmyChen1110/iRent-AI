@@ -1,66 +1,66 @@
 {
- "n_common": 12,
+ "n_common": 141,
  "A": {
   "file": "eval_results_gemini_37_flash_v3_cascaded.json",
   "vs_原始索賠標籤": {
-   "n": 12,
+   "n": 141,
    "skipped_uncertain": 0,
    "confusion": {
-    "TP": 5,
-    "FN": 1,
-    "FP": 1,
-    "TN": 5
-   },
-   "recall": 0.8333,
-   "false_positive_rate": 0.1667,
-   "precision": 0.8333
-  },
-  "vs_人工重標": {
-   "n": 12,
-   "skipped_uncertain": 0,
-   "confusion": {
-    "TP": 6,
-    "FN": 1,
-    "FP": 0,
-    "TN": 5
+    "TP": 18,
+    "FN": 3,
+    "FP": 4,
+    "TN": 116
    },
    "recall": 0.8571,
+   "false_positive_rate": 0.0333,
+   "precision": 0.8182
+  },
+  "vs_人工重標": {
+   "n": 138,
+   "skipped_uncertain": 3,
+   "confusion": {
+    "TP": 21,
+    "FN": 1,
+    "FP": 0,
+    "TN": 116
+   },
+   "recall": 0.9545,
    "false_positive_rate": 0.0,
    "precision": 1.0
   }
  },
  "B": {
-  "file": "eval_results_v2cal.json",
+  "file": "eval_results_v2full.json",
   "vs_原始索賠標籤": {
-   "n": 12,
+   "n": 141,
    "skipped_uncertain": 0,
    "confusion": {
-    "TP": 6,
-    "FN": 0,
-    "FP": 1,
-    "TN": 5
+    "TP": 19,
+    "FN": 2,
+    "FP": 8,
+    "TN": 112
    },
-   "recall": 1.0,
-   "false_positive_rate": 0.1667,
-   "precision": 0.8571
+   "recall": 0.9048,
+   "false_positive_rate": 0.0667,
+   "precision": 0.7037
   },
   "vs_人工重標": {
-   "n": 12,
-   "skipped_uncertain": 0,
+   "n": 138,
+   "skipped_uncertain": 3,
    "confusion": {
-    "TP": 7,
+    "TP": 22,
     "FN": 0,
-    "FP": 0,
-    "TN": 5
+    "FP": 4,
+    "TN": 112
    },
    "recall": 1.0,
-   "false_positive_rate": 0.0,
-   "precision": 1.0
+   "false_positive_rate": 0.0345,
+   "precision": 0.8462
   }
  },
- "n_flips": 1,
- "flips_improved": 1,
- "flips_regressed": 0,
+ "n_flips": 7,
+ "flips_improved": 2,
+ "flips_regressed": 5,
  "flips": [
   {
    "case": "RDH-3092-左後",
@@ -69,23 +69,106 @@
    "A": false,
    "B": true,
    "verdict": "改善",
-   "B_reasoning": "左後葉子板在加油孔蓋左側至輪拱上方區域，有一處大面積鈑金凹陷折痕，車身線條與周圍光影反射呈現明顯不規則扭曲；對照借車照同一部位，鈑件表面平整且反射線條流暢，無任何凹陷變形。"
+   "B_reasoning": "左後葉子板位於油箱蓋前方至左後門縫間、輪拱上方處，出現大範圍明顯向內凹折的立體凹陷與摺痕，造成周圍環境倒影嚴重扭曲中斷；借車照同一區域鈑金表面平整完整。"
+  },
+  {
+   "case": "RDL7827-左前",
+   "label": "negative",
+   "truth": "無損",
+   "A": false,
+   "B": true,
+   "verdict": "退步",
+   "B_reasoning": "左前輪後方的左側裙前段出現大範圍塑膠件破裂、斷裂外翻與立體變形，邊緣撕裂不規則並向上突起；借車照中同一區域側裙線條平直完整貼合。"
+  },
+  {
+   "case": "RDU-5572-右前",
+   "label": "negative",
+   "truth": "無損",
+   "A": false,
+   "B": true,
+   "verdict": "退步",
+   "B_reasoning": "右前保桿角落（右頭燈下方與黑色霧燈飾蓋之間）有數道明顯的灰黑色擦磨痕跡與斜向刮痕，長度約 15 公分，與周圍白色烤漆對比鮮明；借車照同一位置為平整乾淨白漆，無此擦痕"
+  },
+  {
+   "case": "RDU-9162-左前",
+   "label": "positive",
+   "truth": "存疑",
+   "A": false,
+   "B": true,
+   "verdict": "改善",
+   "B_reasoning": "左前葉子板後端與左前門交界處嚴重向外翹起擠壓變形，鈑件接縫間隙異常拉大且不對齊，伴隨邊緣凹折；借車照中該處鈑件平整貼合、縫隙均勻無任何變形"
+  },
+  {
+   "case": "RDW-7085-左前",
+   "label": "negative",
+   "truth": "無損",
+   "A": false,
+   "B": true,
+   "verdict": "退步",
+   "B_reasoning": "前保桿左下前唇下緣處有一道長約 6 公分的淺色水平線狀刮擦痕跡，邊緣稍有粗糙磨損感；借車照在相同陽光直射位置該唇邊表面平整完整，無此刮痕。"
+  },
+  {
+   "case": "RDX-1085-右前",
+   "label": "positive",
+   "truth": "存疑",
+   "A": true,
+   "B": false,
+   "verdict": "退步",
+   "B_reasoning": ""
+  },
+  {
+   "case": "RFM-2791-右後",
+   "label": "negative",
+   "truth": "無損",
+   "A": false,
+   "B": true,
+   "verdict": "退步",
+   "B_reasoning": "後保桿左側靠下緣（iRent 字樣垂直下方偏左處）可見一處明顯圓弧狀向內凹陷變形，周圍光影產生凹陷陰影；借車照對應位置表面平整光滑、無任何凹折變形痕跡。"
+  }
+ ],
+ "errors_A": [
+  {
+   "case": "RDH-3092-左後",
+   "kind": "漏抓FN",
+   "detail": "左後葉子板（油箱蓋左前方與後門接縫處）有既有凹陷與板金變形"
+  }
+ ],
+ "errors_B": [
+  {
+   "case": "RDL7827-左前",
+   "kind": "誤報FP",
+   "detail": "左前輪後方的左側裙前段出現大範圍塑膠件破裂、斷裂外翻與立體變形，邊緣撕裂不規則並向上突起；借車照中同一區域側裙線條平直完整貼合。"
+  },
+  {
+   "case": "RDU-5572-右前",
+   "kind": "誤報FP",
+   "detail": "右前保桿角落（右頭燈下方與黑色霧燈飾蓋之間）有數道明顯的灰黑色擦磨痕跡與斜向刮痕，長度約 15 公分，與周圍白色烤漆對比鮮明；借車照同一位置為平整乾淨白漆，無此擦痕"
+  },
+  {
+   "case": "RDW-7085-左前",
+   "kind": "誤報FP",
+   "detail": "前保桿左下前唇下緣處有一道長約 6 公分的淺色水平線狀刮擦痕跡，邊緣稍有粗糙磨損感；借車照在相同陽光直射位置該唇邊表面平整完整，無此刮痕。"
+  },
+  {
+   "case": "RFM-2791-右後",
+   "kind": "誤報FP",
+   "detail": "後保桿左側靠下緣（iRent 字樣垂直下方偏左處）可見一處明顯圓弧狀向內凹陷變形，周圍光影產生凹陷陰影；借車照對應位置表面平整光滑、無任何凹折變形痕跡。"
   }
  ],
  "v2_field_quality": {
-  "n_damages": 13,
-  "有observation": 13,
-  "有有效panel": 13,
+  "n_damages": 42,
+  "有observation": 42,
+  "有有效panel": 42,
   "panel幻覺被丟棄": 0,
-  "有UV座標": 13,
-  "有ruled_out": 13,
-  "平均ruled_out項數": 6.0,
-  "全部勾滿比例": 1.0,
-  "有排除理由": 0,
+  "有UV座標": 42,
+  "有ruled_out": 42,
+  "平均ruled_out項數": 2.45,
+  "全部勾滿比例": 0.0,
+  "有排除理由": 42,
   "信心分布": {
-   "≥0.9": 11,
-   "0.75-0.89": 2,
-   "0.6-0.74": 0,
+   "≥0.9": 29,
+   "0.75-0.89": 12,
+   "0.6-0.74": 1,
    "<0.6": 0
   }
  }
