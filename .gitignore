@@ -18,3 +18,7 @@ __pycache__/
 **/.venv/
 .pytest_cache/
 **/.pytest_cache/
+
+# 訓練標籤匯出檔（由 export_training_labels.py 從 decisions.sqlite3 產生，可重生）
+**/training_labels*.jsonl
+**/training_coco*.json

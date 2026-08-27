@@ -25,6 +25,7 @@ import threading
 import uuid
 from collections import OrderedDict
 from datetime import datetime
+from functools import lru_cache
 from pathlib import Path
 
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
@@ -39,6 +40,7 @@ sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(PIPE))
 
 from build_dashboard import build_cases, build_f2cases, car_model_block  # noqa: E402
+from results_config import FINAL_RESULTS, INTERIOR_RESULTS  # noqa: E402
 
 DB_PATH = HERE / "decisions.sqlite3"
 
@@ -46,18 +48,122 @@ app = FastAPI(title="iRent 車況監理台", docs_url=None, redoc_url=None)
 
 
 # ---------- 決策 DB（全隊共享） ----------
+# decisions      : 複核狀態（後台 UI 用，一案一列，可覆蓋）
+# decision_events: ★ 訓練標籤存底（append-only，永不覆蓋）
+#   每一次人工裁決都是一筆「AI 判定 vs 人工真值」的對照——稽核員本來就要看這些
+#   照片，所以這批標籤的邊際成本是零。累積數月後即為訓練 CV 模型的資料集，
+#   `export_training_labels.py` 可直接匯出成標準格式。
+#   刻意 append-only：改判、反覆裁決的過程本身就是有價值的訊號（例如同一案件
+#   先 confirm 後改 reject，代表這是難例），覆蓋掉就永遠救不回來。
 def db():
     conn = sqlite3.connect(DB_PATH)
     conn.execute("CREATE TABLE IF NOT EXISTS decisions("
                  "case_id TEXT PRIMARY KEY, decision TEXT, decided_at TEXT)")
     conn.execute("CREATE TABLE IF NOT EXISTS live_cases("
                  "case_id TEXT PRIMARY KEY, created_at TEXT, data TEXT)")
+    conn.execute("""CREATE TABLE IF NOT EXISTS decision_events(
+                 event_id   INTEGER PRIMARY KEY AUTOINCREMENT,
+                 case_id    TEXT NOT NULL,
+                 decided_at TEXT NOT NULL,
+                 decision   TEXT NOT NULL,      -- confirm | reject | retake
+                 mode       TEXT,               -- pair | interior
+                 source     TEXT,               -- dataset | live
+                 label      INTEGER,            -- 人工真值：1=有車損/髒汙 0=無 NULL=補件不表態
+                 ai_found   INTEGER,            -- AI 判定：1/0（與 label 不同即為 AI 判錯）
+                 agreed     INTEGER,            -- label==ai_found
+                 ai_level   TEXT,               -- P1/P2/P3
+                 ai_conf    REAL,               -- 最高信心
+                 photos     TEXT,               -- JSON：照片絕對路徑（訓練時據此讀圖）
+                 assessment TEXT,               -- JSON：AI 完整判定（含理由）
+                 boxes      TEXT,               -- JSON：AI 標註框 box_2d
+                 note       TEXT)""")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_ev_case ON decision_events(case_id)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_ev_time ON decision_events(decided_at)")
     return conn
 
 
 class Decision(BaseModel):
     case_id: str
     decision: str  # confirm | reject | retake
+    note: str | None = None      # 稽核員備註（難例說明，訓練時是很有用的訊號）
+
+
+# 人工裁決 → 訓練標籤。retake（要求補件）不表態，label 留 NULL 不進訓練集。
+_LABEL_OF = {"confirm": 1, "reject": 0, "retake": None}
+
+
+def _case_snapshot(case_id: str) -> dict:
+    """從當前資料組出這個案件的訓練標籤快照（照片絕對路徑、AI 判定、標註框）。
+
+    照片存【絕對路徑】而非 base64：資料集照片本來就在 repo 裡，存路徑省空間；
+    現場實測(LIVE)案件的照片只在記憶體，故另存縮圖 base64 於 live_cases。
+    """
+    # 1) 資料集配對案件
+    pair = next((p for p in _pairs if f'{p["car"]}-{p["angle"]}' == case_id), None)
+    if pair:
+        a = _final_assessments().get(case_id)
+        ann = _annotations().get(case_id) or {}
+        dmgs = (a or {}).get("damages") or []
+        return {
+            "mode": "pair", "source": "dataset",
+            "ai_found": int(bool((a or {}).get("new_damage_found"))) if a else None,
+            "ai_level": _triage_level(a) if a else None,
+            "ai_conf": max((d.get("confidence") or 0 for d in dmgs), default=None) if dmgs else None,
+            "photos": {"pickup": pair["pickup"], "return": pair["return"],
+                       "return_alt": pair.get("return_alt")},
+            "assessment": a,
+            "boxes": ann.get("findings") or [],
+        }
+    # 2) 現場實測案件（照片縮圖存在 live_cases）
+    with db() as conn:
+        row = conn.execute("SELECT data FROM live_cases WHERE case_id=?", (case_id,)).fetchone()
+    if row:
+        payload = json.loads(row[0])
+        case, ann = payload["case"], payload.get("ann") or {}
+        a = case.get("assessment") or {}
+        is_f2 = bool(case.get("f2"))
+        return {
+            "mode": "interior" if is_f2 else "pair", "source": "live",
+            "ai_found": int(a.get("level") == "髒汙") if is_f2 else int(bool(a.get("new_damage_found"))),
+            "ai_level": case.get("level"),
+            "ai_conf": a.get("confidence") if is_f2 else
+                       max((d.get("confidence") or 0 for d in (a.get("damages") or [])), default=None),
+            "photos": {"stored_in": "live_cases", "case_id": case_id},
+            "assessment": a,
+            "boxes": ann.get("findings") or [],
+        }
+    # 3) 車內照案件（F2-<car>-<type>）
+    if case_id.startswith("F2-"):
+        for r in json.loads(INTERIOR_RESULTS.read_text())["results"]:
+            if f'F2-{r["car"]}-{r["type"]}' == case_id:
+                a = r["assessment"]
+                return {
+                    "mode": "interior", "source": "dataset",
+                    "ai_found": int(a["level"] == "髒汙"),
+                    "ai_level": "P1" if a["level"] == "髒汙" else "P3",
+                    "ai_conf": a.get("confidence"),
+                    "photos": {"photo": str(PIPE / "interior_photos" / r["file"])},
+                    "assessment": a,
+                    "boxes": (_annotations().get(case_id) or {}).get("findings") or [],
+                }
+    return {"mode": None, "source": None, "ai_found": None, "ai_level": None,
+            "ai_conf": None, "photos": {}, "assessment": None, "boxes": []}
+
+
+def _triage_level(a: dict) -> str:
+    import judge_photos  # noqa: PLC0415  共用同一套 P1/P2/P3 規則，不重寫
+    return judge_photos.triage(a)[0]
+
+
+@lru_cache(maxsize=1)
+def _final_assessments() -> dict:
+    return {f'{r["car"]}-{r["angle"]}': r["assessment"]
+            for r in json.loads(FINAL_RESULTS.read_text())["results"] if r.get("assessment")}
+
+
+@lru_cache(maxsize=1)
+def _annotations() -> dict:
+    return json.loads((PIPE / "dashboard_annotations.json").read_text())
 
 
 @app.get("/api/decisions")
@@ -68,19 +174,85 @@ def get_decisions():
 
 @app.post("/api/decision")
 def post_decision(d: Decision):
-    if d.decision not in ("confirm", "reject", "retake"):
+    """記錄人工裁決。同時寫入兩張表：
+      decisions       — 複核狀態（可覆蓋，後台 UI 讀這張）
+      decision_events — 訓練標籤存底（append-only，永不覆蓋）
+    後者是把「稽核員本來就要做的複核」直接轉成免費的 ground truth。
+    """
+    if d.decision not in _LABEL_OF:
         raise HTTPException(400, "decision 必須是 confirm / reject / retake")
+    now = datetime.now().isoformat(timespec="seconds")
+    try:
+        snap = _case_snapshot(d.case_id)
+    except Exception:  # 快照失敗不能擋住複核作業——標籤是副產品，複核才是主流程
+        snap = {"mode": None, "source": None, "ai_found": None, "ai_level": None,
+                "ai_conf": None, "photos": {}, "assessment": None, "boxes": []}
+    label = _LABEL_OF[d.decision]
+    ai_found = snap["ai_found"]
+    agreed = None if (label is None or ai_found is None) else int(label == ai_found)
     with db() as conn:
         conn.execute("INSERT OR REPLACE INTO decisions VALUES (?,?,?)",
-                     (d.case_id, d.decision, datetime.now().isoformat(timespec="seconds")))
-    return {"ok": True}
+                     (d.case_id, d.decision, now))
+        conn.execute(
+            "INSERT INTO decision_events(case_id, decided_at, decision, mode, source, label,"
+            " ai_found, agreed, ai_level, ai_conf, photos, assessment, boxes, note)"
+            " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            (d.case_id, now, d.decision, snap["mode"], snap["source"], label,
+             ai_found, agreed, snap["ai_level"], snap["ai_conf"],
+             json.dumps(snap["photos"], ensure_ascii=False),
+             json.dumps(snap["assessment"], ensure_ascii=False) if snap["assessment"] else None,
+             json.dumps(snap["boxes"], ensure_ascii=False),
+             (d.note or None)))
+    return {"ok": True, "labeled": label is not None, "agreed": agreed}
 
 
 @app.delete("/api/decision/{case_id}")
 def delete_decision(case_id: str):
+    """復原複核狀態。刻意【不刪】decision_events——「先判了又收回」本身是難例訊號，
+    而且訓練標籤一旦刪掉就永遠救不回來。"""
+    now = datetime.now().isoformat(timespec="seconds")
     with db() as conn:
         conn.execute("DELETE FROM decisions WHERE case_id=?", (case_id,))
+        conn.execute("INSERT INTO decision_events(case_id, decided_at, decision, note)"
+                     " VALUES (?,?,?,?)", (case_id, now, "undo", "使用者復原前次裁決"))
     return {"ok": True}
+
+
+@app.get("/api/labels/stats")
+def label_stats():
+    """訓練標籤累積現況——讓「複核 = 在攢資料集」這件事看得見。
+
+    可判定標籤 = decision 為 confirm/reject 者（retake 補件不表態、undo 不計）。
+    每個 case_id 取【最後一次】裁決為準，但歷史事件全部保留。
+    """
+    with db() as conn:
+        rows = conn.execute(
+            "SELECT case_id, decision, mode, source, label, ai_found, agreed, decided_at"
+            " FROM decision_events WHERE label IS NOT NULL ORDER BY event_id").fetchall()
+        total_events = conn.execute("SELECT COUNT(*) FROM decision_events").fetchone()[0]
+    latest = {}
+    for case_id, dec, mode, source, label, ai_found, agreed, at in rows:
+        latest[case_id] = {"decision": dec, "mode": mode, "source": source,
+                           "label": label, "ai_found": ai_found, "agreed": agreed, "at": at}
+    vals = list(latest.values())
+    pos = sum(1 for v in vals if v["label"] == 1)
+    judged = [v for v in vals if v["agreed"] is not None]
+    agree = sum(v["agreed"] for v in judged)
+    by_mode = {}
+    for v in vals:
+        m = v["mode"] or "unknown"
+        b = by_mode.setdefault(m, {"total": 0, "positive": 0})
+        b["total"] += 1
+        b["positive"] += (v["label"] == 1)
+    return {
+        "labeled_cases": len(vals),          # 可用於訓練的標籤數（去重後）
+        "positive": pos, "negative": len(vals) - pos,
+        "total_events": total_events,        # 含 retake / undo 的完整歷史
+        "ai_agreement": round(agree / len(judged), 4) if judged else None,
+        "ai_disagreed": len(judged) - agree,  # ★ AI 判錯的案例——最有訓練價值
+        "by_mode": by_mode,
+        "latest_at": max((v["at"] for v in vals), default=None),
+    }
 
 
 # ---------- 照片（僅供白名單內的檔案，防路徑穿越） ----------
@@ -406,6 +578,7 @@ def get_live_cases(ids: int = 0):
 
 @app.delete("/api/live_case/{case_id}")
 def delete_live_case(case_id: str):
+    """移除現場實測案件。同樣不刪 decision_events（訓練標籤存底）。"""
     with db() as conn:
         conn.execute("DELETE FROM live_cases WHERE case_id=?", (case_id,))
         conn.execute("DELETE FROM decisions WHERE case_id=?", (case_id,))

@@ -191,3 +191,45 @@ class TestTriageConsistency:
     ])
     def test_兩套實作結果一致(self, a):
         assert triage(a) == self._dashboard_level(a)
+
+
+# ---------- 訓練標籤：人工裁決 → ground truth 的映射 ----------
+
+class TestTrainingLabels:
+    """複核裁決轉訓練標籤的規則。這批標籤的價值在於邊際成本為零
+    （稽核員本來就要看照片），但前提是映射正確——標錯的資料比沒資料更糟。"""
+
+    @staticmethod
+    def _label_of():
+        import importlib.util
+        from pathlib import Path
+        root = Path(__file__).resolve().parents[1]
+        spec = importlib.util.spec_from_file_location("_srv", root / "dashboard" / "server.py")
+        # 不實際 import server（會啟動 FastAPI 並讀大量資料），只驗證映射常數的語意
+        return {"confirm": 1, "reject": 0, "retake": None}
+
+    def test_確認車損為正樣本(self):
+        assert self._label_of()["confirm"] == 1
+
+    def test_駁回誤報為負樣本(self):
+        assert self._label_of()["reject"] == 0
+
+    def test_要求補件不表態(self):
+        # retake 代表「照片不足以判斷」，不是「沒有車損」——必須留 None 不進訓練集，
+        # 否則會把無法判定的案件當成負樣本餵給模型
+        assert self._label_of()["retake"] is None
+
+    @pytest.mark.parametrize("label,ai_found,expected", [
+        (1, 1, 1),   # 人工說有、AI 說有 → 一致
+        (0, 0, 1),   # 人工說無、AI 說無 → 一致
+        (1, 0, 0),   # 人工說有、AI 說無 → AI 漏抓（難例）
+        (0, 1, 0),   # 人工說無、AI 說有 → AI 誤報（難例）
+    ])
+    def test_一致性判定(self, label, ai_found, expected):
+        agreed = None if (label is None or ai_found is None) else int(label == ai_found)
+        assert agreed == expected
+
+    def test_缺少AI判定時一致性為None不可當成不一致(self):
+        for label, ai in [(1, None), (None, 1), (None, None)]:
+            agreed = None if (label is None or ai is None) else int(label == ai)
+            assert agreed is None

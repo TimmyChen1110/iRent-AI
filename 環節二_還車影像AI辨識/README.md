@@ -34,8 +34,45 @@
     （縮圖存 SQLite 全隊共享）→ 出現在「案件複核」分頁走人工複核——現場判定到複核閉環；
     品質檢核秒回分段顯示；內建區網 QR，評審手機掃碼即開、現場拍現場判。
     依賴見 `requirements.txt`（`pip install -r requirements.txt`）；資料含車牌照片，僅限 localhost／隊內區網
+- `pipeline/export_training_labels.py` — **訓練標籤匯出**（見下節）
 - `artifacts/` — 線上文件備份（架構設計 HTML）
 - `Timmy_Project_Report/` — 14 頁簡報 pptx、逐頁講稿、Demo script、Q&A
+
+## 訓練標籤累積機制（為日後自訓模型鋪路）
+
+VLM API 判定準確、上線快，但長期而言自訓模型才是成本與延遲的解方。
+問題在於自訓模型需要大量人工標註資料——而**監理台的複核作業本身就在產生這批資料**。
+
+每一次人工裁決（確認車損／駁回誤報）都會 append 一筆 `decision_events`，存下：
+
+| 欄位 | 內容 |
+|---|---|
+| `label` | 人工真值（confirm=1／reject=0／retake=NULL 不表態） |
+| `ai_found` / `agreed` | AI 當時的判定，以及是否與人工一致 |
+| `photos` | 照片絕對路徑（訓練時據此讀圖） |
+| `boxes` | AI 標註框 box_2d |
+| `assessment` | AI 完整判定含理由 |
+| `note` | 稽核員備註（難例說明） |
+
+**稽核員本來就要看這些照片，所以這批標籤的邊際成本是零。**
+資料表刻意 append-only：改判、復原的歷程本身就是難例訊號，覆蓋掉就永遠救不回來。
+
+```bash
+# 查看累積現況（監理台統計列也會即時顯示）
+curl localhost:8000/api/labels/stats
+
+# 匯出訓練資料集
+python3 pipeline/export_training_labels.py                  # JSONL
+python3 pipeline/export_training_labels.py --format coco     # COCO 偵測格式
+python3 pipeline/export_training_labels.py --disagreed-only  # 只要 AI 判錯的（難例挖掘）
+```
+
+以本資料集流量估算（4,820 單／日 × 4 方位 ≈ 19,280 組／日），
+車損率 0.5% 時約 **52 天**即可累積 5,000 個正樣本，達偵測模型訓練門檻。
+
+> ⚠️ 匯出的 `box_2d` 由 VLM 產生、人工僅確認「有無車損」而非框的精確度。
+> 正式訓練偵測模型前建議先人工修框，或當作弱監督（weak supervision）使用。
+> 「有無車損」二分類則可直接使用。
 
 ## 線上交付物
 

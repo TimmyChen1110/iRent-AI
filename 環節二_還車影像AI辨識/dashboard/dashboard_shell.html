@@ -485,7 +485,25 @@ function renderStats() {
       <span class="spill crit"><span class="dot"></span>P1 即時預警 ${c.P1}</span>
       <span class="spill warn"><span class="dot"></span>P2 工單 ${c.P2}</span>
       <span class="spill okp"><span class="dot"></span>P3 正常 ${c.P3}</span>
+      ${labelPill()}
     </div>`;
+}
+
+/* 訓練標籤累積：每一次複核裁決都會存成 ground truth（邊際成本為零），
+   累積數月後即為訓練 CV 模型的資料集。讓這件事在後台看得見。 */
+let LABELS = null;
+function labelPill() {
+  if (!SERVER || !LABELS) return "";
+  const d = LABELS.ai_disagreed;
+  const agree = LABELS.ai_agreement == null ? "—" : (LABELS.ai_agreement * 100).toFixed(0) + "%";
+  return `<span class="spill" title="每次裁決都會存成訓練標籤（照片路徑＋AI判定＋人工真值）。\n匯出：python3 pipeline/export_training_labels.py">
+      <span class="dot" style="background:var(--accent,#6ea8fe)"></span>訓練標籤 ${LABELS.labeled_cases}
+      <span style="opacity:.7">（正 ${LABELS.positive}／AI 一致 ${agree}${d ? `／難例 ${d}` : ""}）</span>
+    </span>`;
+}
+async function refreshLabels() {
+  if (!SERVER) return;
+  try { LABELS = await (await fetch("/api/labels/stats")).json(); } catch (e) { LABELS = null; }
 }
 
 /* ================= 左欄 ================= */
@@ -1519,11 +1537,13 @@ function selectCase(id) { currentId = id; renderList(); renderDetail(); }
 function decide(id, kind) {
   decisions[id] = kind; save(); advance(id); renderAll();
   if (SERVER) fetch("/api/decision", { method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ case_id: id, decision: kind }) }).catch(() => {});
+    body: JSON.stringify({ case_id: id, decision: kind }) })
+    .then(() => refreshLabels()).then(() => renderStats()).catch(() => {});
 }
 function undoDecision(id) {
   delete decisions[id]; save(); renderAll();
-  if (SERVER) fetch("/api/decision/" + encodeURIComponent(id), { method: "DELETE" }).catch(() => {});
+  if (SERVER) fetch("/api/decision/" + encodeURIComponent(id), { method: "DELETE" })
+    .then(() => refreshLabels()).then(() => renderStats()).catch(() => {});
 }
 
 async function rejudge(id, btn) {
@@ -1577,6 +1597,7 @@ document.addEventListener("keydown", e => {
 (async function initApp() {
   await loadDecisions();
   await loadLiveCases();
+  await refreshLabels();
   renderAll();
   if (SERVER) {
     // 每 5 秒同步一次全隊複核狀態與現場案件；有變化才重繪
@@ -1586,6 +1607,9 @@ document.addEventListener("keydown", e => {
         const d = await (await fetch("/api/decisions")).json();
         if (JSON.stringify(d) !== JSON.stringify(decisions)) { decisions = d; changed = true; }
       } catch (e) {}
+      const before = LABELS && LABELS.total_events;
+      await refreshLabels();
+      if (LABELS && LABELS.total_events !== before) changed = true;
       if (changed) renderAll();
     }, 5000);
   }
