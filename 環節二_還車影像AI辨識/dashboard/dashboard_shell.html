@@ -537,7 +537,6 @@ function renderTabs() {
     <button class="tab" role="tab" aria-selected="${viewMode === "ops"}" onclick="setMode('ops')">營運總覽</button>
     <button class="tab" role="tab" aria-selected="${viewMode === "cases"}" onclick="setMode('cases')">案件複核<span class="cnt">${CASES.length}</span></button>
     <button class="tab" role="tab" aria-selected="${viewMode === "passport"}" onclick="setMode('passport')">車輛損傷護照<span class="cnt">${Object.keys(PASSPORTS).length}</span></button>
-    <button class="tab" role="tab" aria-selected="${viewMode === "method"}" onclick="setMode('method')">方法論驗證<span class="cnt">4 A/B</span></button>
     <button class="tab" role="tab" aria-selected="${viewMode === "live"}" onclick="setMode('live')">現場實測<span class="cnt">LIVE</span></button>`;
 }
 
@@ -727,7 +726,9 @@ function actionArea(cs) {
 
 function renderDetail() {
   if (viewMode === "ops") { renderOps(); return; }
-  if (viewMode === "method") { renderMethod(); return; }
+  // 「方法論驗證」分頁已從 UI 移除（內容仍在架構設計文件 §08）。
+  // renderMethod() 與其樣式刻意保留：要放回來只需在 renderTabs() 加回按鈕。
+  if (viewMode === "method") { viewMode = "ops"; renderTabs(); renderOps(); return; }
   if (viewMode === "live") { renderLive(); return; }
   if (viewMode === "passport") { renderPassportDetail(); return; }
   const cs = CASES.find(c => c.id === currentId);
