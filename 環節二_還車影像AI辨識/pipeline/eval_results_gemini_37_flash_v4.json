@@ -1,0 +1,2857 @@
+{
+ "summary": {
+  "model": "gemini-3.7-flash",
+  "evaluated": 141,
+  "errors": 0,
+  "confusion": {
+   "TP": 19,
+   "FN": 2,
+   "FP": 7,
+   "TN": 113
+  },
+  "recall": 0.9048,
+  "false_positive_rate": 0.0583,
+  "precision": 0.7308,
+  "tokens": {
+   "input": 698277,
+   "output": 69588
+  },
+  "cost_usd_paid_tier": 0.0
+ },
+ "results": [
+  {
+   "car": "RCG2235",
+   "angle": "右前",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.9,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 523
+   }
+  },
+  {
+   "car": "RCG2235",
+   "angle": "右後",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.9,
+    "pre_existing": [
+     {
+      "description": "右後保險桿反光片外側直向黑色刮痕及底部邊緣擦傷",
+      "seen_in_pickup_photo": "借車照中右後保桿紅色反光片右側及底部邊角處已存在相同的黑色擦痕",
+      "pickup_evidence_strength": "clear"
+     }
+    ],
+    "pre_existing_notes": "右後保險桿反光片旁及底部擦刮痕為借車時已存在的舊損。"
+   },
+   "usage": {
+    "input": 4946,
+    "output": 596
+   }
+  },
+  {
+   "car": "RCG2235",
+   "angle": "左前",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.9,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 267
+   }
+  },
+  {
+   "car": "RCG2235",
+   "angle": "左後",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.9,
+    "pre_existing": [
+     {
+      "description": "後保險桿左下角（紅色反光片下方底緣）有細微擦傷黑痕",
+      "seen_in_pickup_photo": "借車照中左後紅色反光片正下方的保險桿最底緣處，可見相同的細微黑色擦痕",
+      "pickup_evidence_strength": "clear"
+     }
+    ],
+    "pre_existing_notes": "後保桿左下緣有微小既有擦痕，其餘部位無新增損傷。"
+   },
+   "usage": {
+    "input": 4946,
+    "output": 418
+   }
+  },
+  {
+   "car": "RCQ6760",
+   "angle": "右後",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.88,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4874,
+    "output": 345
+   }
+  },
+  {
+   "car": "RCQ6760",
+   "angle": "右前",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.9,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4874,
+    "output": 510
+   }
+  },
+  {
+   "car": "RCQ6760",
+   "angle": "左前",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.92,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4874,
+    "output": 320
+   }
+  },
+  {
+   "car": "RCQ6760",
+   "angle": "左後",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.9,
+    "pre_existing": [
+     {
+      "description": "後保桿左下黑色防刮飾板擦傷白痕",
+      "seen_in_pickup_photo": "借車照中左後輪後方、後保桿左側黑色下護板邊緣可見明顯白色擦痕與刮損",
+      "pickup_evidence_strength": "clear"
+     }
+    ],
+    "pre_existing_notes": "後保桿左下黑色防刮飾板處於借車時已有明顯擦刮痕跡"
+   },
+   "usage": {
+    "input": 4874,
+    "output": 493
+   }
+  },
+  {
+   "car": "RCW1883",
+   "angle": "右前",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.92,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 659
+   }
+  },
+  {
+   "car": "RCW1883",
+   "angle": "右後",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.92,
+    "pre_existing": [
+     {
+      "description": "後保險桿右下角（右側紅色反光片下方邊緣）擦傷磨損",
+      "seen_in_pickup_photo": "借車照中後保險桿右下方紅色反光片下緣，可見明顯的白色擦痕與掉漆",
+      "pickup_evidence_strength": "clear"
+     }
+    ],
+    "pre_existing_notes": "後保桿右下方反光片處已有既有擦傷，比對後無發現新增損傷。"
+   },
+   "usage": {
+    "input": 4946,
+    "output": 451
+   }
+  },
+  {
+   "car": "RCW1883",
+   "angle": "左前",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.95,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 327
+   }
+  },
+  {
+   "car": "RCW1883",
+   "angle": "左後",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.95,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 327
+   }
+  },
+  {
+   "car": "RCX5100",
+   "angle": "右前",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.95,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 264
+   }
+  },
+  {
+   "car": "RCX5100",
+   "angle": "右後",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.95,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 326
+   }
+  },
+  {
+   "car": "RCX5100",
+   "angle": "左前",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.92,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 491
+   }
+  },
+  {
+   "car": "RCX5100",
+   "angle": "左後",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.95,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 331
+   }
+  },
+  {
+   "car": "RDG8571",
+   "angle": "右前",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.92,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 666
+   }
+  },
+  {
+   "car": "RDG8571",
+   "angle": "右後",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.95,
+    "pre_existing": [
+     {
+      "description": "後保險桿右下角（反光片下方邊緣）擦痕磨損",
+      "seen_in_pickup_photo": "借車照中後保險桿右下方紅色反光片下緣處，清晰可見白色磨損刮痕",
+      "pickup_evidence_strength": "clear"
+     }
+    ],
+    "pre_existing_notes": "後保險桿右下緣反光片下方有既有擦傷，還車照無發現新增車損。"
+   },
+   "usage": {
+    "input": 4946,
+    "output": 461
+   }
+  },
+  {
+   "car": "RDG8571",
+   "angle": "左前",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.95,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 409
+   }
+  },
+  {
+   "car": "RDG8571",
+   "angle": "左後",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.92,
+    "pre_existing": [
+     {
+      "description": "後保險桿左下緣（紅色反光片下方邊角）擦傷痕跡",
+      "seen_in_pickup_photo": "借車照左下角紅色反光片下方的保桿邊緣處，可見相同的黑灰色擦痕",
+      "pickup_evidence_strength": "clear"
+     }
+    ],
+    "pre_existing_notes": "後保險桿左下方反光片下緣處有既有擦傷，借還車照片皆可見。"
+   },
+   "usage": {
+    "input": 4946,
+    "output": 412
+   }
+  },
+  {
+   "car": "RDG8578",
+   "angle": "右前",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.95,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 470
+   }
+  },
+  {
+   "car": "RDG8578",
+   "angle": "右後",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.95,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 317
+   }
+  },
+  {
+   "car": "RDG8578",
+   "angle": "左前",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.95,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 684
+   }
+  },
+  {
+   "car": "RDG8578",
+   "angle": "左後",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.93,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 401
+   }
+  },
+  {
+   "car": "RDG9853",
+   "angle": "右前",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.95,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 261
+   }
+  },
+  {
+   "car": "RDG9853",
+   "angle": "右後",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.95,
+    "pre_existing": [
+     {
+      "description": "後保險桿右下方（右側反光片左下處）擦傷掉漆痕跡",
+      "seen_in_pickup_photo": "借車照中後保險桿右側反光片左下方下緣處，清晰可見多道白色擦痕與掉漆",
+      "pickup_evidence_strength": "clear"
+     }
+    ],
+    "pre_existing_notes": "後保桿右下緣已有既有擦傷掉漆，還車照無新增損傷。"
+   },
+   "usage": {
+    "input": 4946,
+    "output": 376
+   }
+  },
+  {
+   "car": "RDG9853",
+   "angle": "左前",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.95,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 546
+   }
+  },
+  {
+   "car": "RDG9853",
+   "angle": "左後",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.95,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 320
+   }
+  },
+  {
+   "car": "RDL7827",
+   "angle": "右前",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.92,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 487
+   }
+  },
+  {
+   "car": "RDL7827",
+   "angle": "右後",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.9,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 301
+   }
+  },
+  {
+   "car": "RDL7827",
+   "angle": "左前",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": true,
+    "damages": [
+     {
+      "location": "左側側裙／車門下方飾板",
+      "type": "刮痕",
+      "severity": "medium",
+      "confidence": 0.85,
+      "reasoning": "還車照中左前輪後方至車門下緣的側裙處可見明顯擦傷與變形反光，而借車照中該處線條平整無痕跡。",
+      "ruled_out_basis": "反光：表面變形導致反光線條中斷凹折；髒污：伴隨底漆外露與塑料邊緣變形特徵。"
+     }
+    ],
+    "no_damage_confidence": 0.0,
+    "pre_existing": [
+     {
+      "description": "右前保險桿側邊接縫外凸分離",
+      "seen_in_pickup_photo": "借車照中車頭右前方（畫面右側）前保險桿與葉子板接縫處明顯隆起外翻、未對齊卡槽。",
+      "pickup_evidence_strength": "clear"
+     }
+    ],
+    "pre_existing_notes": "右前保險桿側邊接縫於借車時即已脫卡外凸。"
+   },
+   "usage": {
+    "input": 4946,
+    "output": 1700
+   }
+  },
+  {
+   "car": "RDL7827",
+   "angle": "左後",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.92,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 421
+   }
+  },
+  {
+   "car": "RDL7832",
+   "angle": "右前",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.92,
+    "pre_existing": [
+     {
+      "description": "左前保桿（畫面右側）霧燈鍍鉻飾條上方微黃褐色擦傷痕跡",
+      "seen_in_pickup_photo": "借車照中在車牌右側、左前霧燈鍍鉻飾條上方即可見相同的淡黃褐色擦傷痕跡",
+      "pickup_evidence_strength": "clear"
+     }
+    ],
+    "pre_existing_notes": "左前霧燈上方有一處既有擦痕，借還車照片均清晰可見，未發現新增損傷。"
+   },
+   "usage": {
+    "input": 4946,
+    "output": 533
+   }
+  },
+  {
+   "car": "RDL7832",
+   "angle": "右後",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.9,
+    "pre_existing": [
+     {
+      "description": "右後保險桿側邊點狀刮痕/掉漆",
+      "seen_in_pickup_photo": "在借車照中右後尾燈下方、後保桿外側轉角處，可清楚看到數個黑色點狀刮痕與掉漆痕跡",
+      "pickup_evidence_strength": "clear"
+     }
+    ],
+    "pre_existing_notes": "右後保險桿側面之點狀擦傷掉漆為借車前即存在的舊損，未發現新增損傷。"
+   },
+   "usage": {
+    "input": 4946,
+    "output": 483
+   }
+  },
+  {
+   "car": "RDL7832",
+   "angle": "左前",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.85,
+    "pre_existing": [
+     {
+      "description": "左前保桿最下緣黑色擦痕/掉漆",
+      "seen_in_pickup_photo": "借車照右下角處，車輛左前保險桿底部邊角可見明顯黑色擦傷痕跡",
+      "pickup_evidence_strength": "clear"
+     }
+    ],
+    "pre_existing_notes": "左前保桿下緣處有既有擦傷掉漆，還車照中無發現新增車損。"
+   },
+   "usage": {
+    "input": 4946,
+    "output": 667
+   }
+  },
+  {
+   "car": "RDL7832",
+   "angle": "左後",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.9,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 363
+   }
+  },
+  {
+   "car": "RDQ5916",
+   "angle": "右前",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.9,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4874,
+    "output": 295
+   }
+  },
+  {
+   "car": "RDQ5916",
+   "angle": "右後",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.85,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4874,
+    "output": 349
+   }
+  },
+  {
+   "car": "RDQ5916",
+   "angle": "左前",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.9,
+    "pre_existing": [
+     {
+      "description": "前保險桿右下緣（霧燈座下方）擦傷磨損",
+      "seen_in_pickup_photo": "借車照中前保桿右下方霧燈黑色飾蓋下方邊緣有明顯黃褐色擦痕",
+      "pickup_evidence_strength": "clear"
+     }
+    ],
+    "pre_existing_notes": "前保險桿下緣既有擦傷刮痕在借還車照皆存在，無新增損傷"
+   },
+   "usage": {
+    "input": 4874,
+    "output": 468
+   }
+  },
+  {
+   "car": "RDQ5916",
+   "angle": "左後",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.9,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4874,
+    "output": 533
+   }
+  },
+  {
+   "car": "RDR6350",
+   "angle": "右前",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.9,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 414
+   }
+  },
+  {
+   "car": "RDR6350",
+   "angle": "右後",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.92,
+    "pre_existing": [
+     {
+      "description": "右後保險桿側邊及下緣擦痕/刮痕",
+      "seen_in_pickup_photo": "借車照中右後輪拱後方、右後保桿側面及反光片周圍可見數條淺白色刮擦痕跡",
+      "pickup_evidence_strength": "clear"
+     }
+    ],
+    "pre_existing_notes": "右後保桿處有既有擦傷，還車照比對無發現任何新增車損。"
+   },
+   "usage": {
+    "input": 4946,
+    "output": 798
+   }
+  },
+  {
+   "car": "RDR6350",
+   "angle": "左前",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.85,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 676
+   }
+  },
+  {
+   "car": "RDS2805",
+   "angle": "右前",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.85,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4874,
+    "output": 453
+   }
+  },
+  {
+   "car": "RDR6350",
+   "angle": "左後",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.95,
+    "pre_existing": [
+     {
+      "description": "後保桿左側下緣（反光條上方）大面積擦傷刮痕",
+      "seen_in_pickup_photo": "借車照左後保險桿左下反光條正上方可清楚看見大片灰色擦痕",
+      "pickup_evidence_strength": "clear"
+     },
+     {
+      "description": "後保險桿左側輪拱後方下緣刮擦痕",
+      "seen_in_pickup_photo": "借車照左後輪後方保險桿側面下緣可見白色條狀刮痕",
+      "pickup_evidence_strength": "clear"
+     }
+    ],
+    "pre_existing_notes": "後保險桿左側下緣及輪拱側邊之刮擦傷在借車照中均已存在，還車照無新增損傷。"
+   },
+   "usage": {
+    "input": 4946,
+    "output": 646
+   }
+  },
+  {
+   "car": "RDS2805",
+   "angle": "右後",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.8,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4874,
+    "output": 240
+   }
+  },
+  {
+   "car": "RDS2805",
+   "angle": "左前",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.85,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4874,
+    "output": 438
+   }
+  },
+  {
+   "car": "RDS2805",
+   "angle": "左後",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.8,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4874,
+    "output": 399
+   }
+  },
+  {
+   "car": "RDU-5572",
+   "angle": "右前",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": true,
+    "damages": [
+     {
+      "location": "右前保險桿（右大燈下方至黑色飾板周圍）",
+      "type": "刮痕",
+      "severity": "medium",
+      "confidence": 0.92,
+      "reasoning": "還車照中右大燈下方與黑色導流飾板之間出現明顯的多道擦刮痕與漆面磨損，借車照對應位置表面平整完好。",
+      "ruled_out_basis": "反光：痕跡呈粗細不一的線條狀擦痕與漆面磨擦特徵，非環境倒影；髒污：具有摩擦破壞漆面之白灰刮擦紋理。"
+     }
+    ],
+    "no_damage_confidence": 0.0,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4874,
+    "output": 668
+   }
+  },
+  {
+   "car": "RDU-5572",
+   "angle": "右後",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.92,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4874,
+    "output": 390
+   }
+  },
+  {
+   "car": "RDU-5572",
+   "angle": "左前",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.9,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4874,
+    "output": 306
+   }
+  },
+  {
+   "car": "RDU-7390",
+   "angle": "右前",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.95,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 264
+   }
+  },
+  {
+   "car": "RDU-5572",
+   "angle": "左後",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.9,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4874,
+    "output": 330
+   }
+  },
+  {
+   "car": "RDU-7390",
+   "angle": "右後",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.92,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 288
+   }
+  },
+  {
+   "car": "RDU-7390",
+   "angle": "左前",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.9,
+    "pre_existing": [
+     {
+      "description": "左前葉子板與前保桿接縫處附近細微黑痕/掉漆",
+      "seen_in_pickup_photo": "在借車照中左前輪拱上方、前保桿接縫邊緣處清晰可見相同細黑刮痕",
+      "pickup_evidence_strength": "clear"
+     }
+    ],
+    "pre_existing_notes": "左前輪拱邊緣處有既有細微擦刮痕跡，兩照一致，無新增車損。"
+   },
+   "usage": {
+    "input": 4946,
+    "output": 366
+   }
+  },
+  {
+   "car": "RDU-7390",
+   "angle": "左後",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.95,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 324
+   }
+  },
+  {
+   "car": "RDW-7085",
+   "angle": "右前",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.9,
+    "pre_existing": [
+     {
+      "description": "前保桿左側（霧燈上方及輪拱前方）有細微淺刮痕/髒污痕跡",
+      "seen_in_pickup_photo": "借車照中霧燈上方與保險桿側邊交界處，隱約可見相同的細微淡痕",
+      "pickup_evidence_strength": "clear"
+     }
+    ],
+    "pre_existing_notes": "前保險桿側邊霧燈上方可見既有細微淺痕，還車時無新增損傷。"
+   },
+   "usage": {
+    "input": 4946,
+    "output": 538
+   }
+  },
+  {
+   "car": "RDW-7085",
+   "angle": "右後",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.95,
+    "pre_existing": [
+     {
+      "description": "後保險桿右下緣（靠近右後輪處）黑色擦痕/污漬",
+      "seen_in_pickup_photo": "借車照中後保桿右側下緣、輪胎後方底部弧度處可見相同的黑色擦痕分布",
+      "pickup_evidence_strength": "clear"
+     }
+    ],
+    "pre_existing_notes": "後保桿右下緣既有輕微擦痕/污漬，還車照無任何新增損傷。"
+   },
+   "usage": {
+    "input": 4946,
+    "output": 401
+   }
+  },
+  {
+   "car": "RDW-7085",
+   "angle": "左前",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": true,
+    "damages": [
+     {
+      "location": "前保桿右下緣（霧燈下方下唇凸起處）",
+      "type": "刮痕",
+      "severity": "medium",
+      "confidence": 0.82,
+      "reasoning": "還車照中前保險桿下方突出的下唇稜線處有一道橫向刮擦掉漆痕跡，借車照對應處漆面完整光滑無此擦痕。",
+      "ruled_out_basis": "反光：該痕跡具實體刮擦邊緣與漆面磨損特徵；髒污：呈明顯線性擦痕而非散狀污漬。"
+     }
+    ],
+    "no_damage_confidence": 0.0,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 996
+   }
+  },
+  {
+   "car": "RDW-7085",
+   "angle": "左後",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.92,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 278
+   }
+  },
+  {
+   "car": "RDZ-9006",
+   "angle": "右前",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.95,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 656
+   }
+  },
+  {
+   "car": "RDZ-9006",
+   "angle": "右後",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.95,
+    "pre_existing": [
+     {
+      "description": "右後保險桿下緣（右後反光片下方）刮痕掉漆",
+      "seen_in_pickup_photo": "借車照中右後保桿最下方、右後紅色反光片下緣處，有一道明顯的白色刮擦掉漆痕跡",
+      "pickup_evidence_strength": "clear"
+     }
+    ],
+    "pre_existing_notes": "右後保桿下緣反光片下方有既有刮痕掉漆，還車照無新增損傷"
+   },
+   "usage": {
+    "input": 4946,
+    "output": 380
+   }
+  },
+  {
+   "car": "RDZ-9006",
+   "angle": "左後",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.9,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 322
+   }
+  },
+  {
+   "car": "RDZ0155",
+   "angle": "右前",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.9,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4874,
+    "output": 413
+   }
+  },
+  {
+   "car": "RDZ-9006",
+   "angle": "左前",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.93,
+    "pre_existing": [
+     {
+      "description": "前保險桿大燈下方至黑色飾板之間有細微點狀痕跡/舊傷",
+      "seen_in_pickup_photo": "借車照中大燈下緣至黑色霧燈罩及氣壩邊緣之間的烤漆面上，可見相同分佈的細微點狀痕跡",
+      "pickup_evidence_strength": "clear"
+     }
+    ],
+    "pre_existing_notes": "前保險桿烤漆面存在細微既有舊痕，還車照比對無任何新增車損。"
+   },
+   "usage": {
+    "input": 4946,
+    "output": 763
+   }
+  },
+  {
+   "car": "RDZ0155",
+   "angle": "右後",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.8,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4874,
+    "output": 365
+   }
+  },
+  {
+   "car": "RDZ0155",
+   "angle": "左前",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.88,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4874,
+    "output": 732
+   }
+  },
+  {
+   "car": "RDZ0155",
+   "angle": "左後",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.85,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4874,
+    "output": 239
+   }
+  },
+  {
+   "car": "RDZ6950",
+   "angle": "右前",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.95,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 343
+   }
+  },
+  {
+   "car": "RDZ6950",
+   "angle": "右後",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.95,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 300
+   }
+  },
+  {
+   "car": "RDZ6950",
+   "angle": "左前",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.95,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 464
+   }
+  },
+  {
+   "car": "RDZ6950",
+   "angle": "左後",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.92,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 378
+   }
+  },
+  {
+   "car": "RDZ7922",
+   "angle": "右前",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.9,
+    "pre_existing": [
+     {
+      "description": "左前保險桿下唇有擦傷掉漆黑痕",
+      "seen_in_pickup_photo": "借車照中車輛左前（照片右下角）前保險桿最底緣處可見一條明顯的黑色擦傷痕跡",
+      "pickup_evidence_strength": "clear"
+     }
+    ],
+    "pre_existing_notes": "借車照中左前保桿下唇有既有擦傷痕跡，還車照中右前區域（引擎蓋、右前葉子板、右大燈、右前保桿）皆無新增損傷。"
+   },
+   "usage": {
+    "input": 4946,
+    "output": 1003
+   }
+  },
+  {
+   "car": "RDZ7922",
+   "angle": "右後",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.88,
+    "pre_existing": [
+     {
+      "description": "右後保險桿側面微淺刮痕",
+      "seen_in_pickup_photo": "借車照右後輪拱後方、後保桿側面轉角處可見相同淺痕",
+      "pickup_evidence_strength": "faint"
+     }
+    ],
+    "pre_existing_notes": "右後保桿側面有既有細微淺痕，還車時無新增車損。"
+   },
+   "usage": {
+    "input": 4946,
+    "output": 450
+   }
+  },
+  {
+   "car": "RDZ7922",
+   "angle": "左前",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.95,
+    "pre_existing": [
+     {
+      "description": "右前保險桿右下緣（霧燈鍍鉻飾條下方）擦傷掉漆露黑底",
+      "seen_in_pickup_photo": "借車照中右前保桿最下緣、右前霧燈鍍鉻飾條正下方處清晰可見黑色擦傷痕跡",
+      "pickup_evidence_strength": "clear"
+     }
+    ],
+    "pre_existing_notes": "右前保桿下緣處有既有擦傷掉漆，比對還車照無新增損傷。"
+   },
+   "usage": {
+    "input": 4946,
+    "output": 613
+   }
+  },
+  {
+   "car": "RDZ7922",
+   "angle": "左後",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.9,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 354
+   }
+  },
+  {
+   "car": "RFB-2590",
+   "angle": "右前",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.95,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4874,
+    "output": 312
+   }
+  },
+  {
+   "car": "RFB-2590",
+   "angle": "右後",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.95,
+    "pre_existing": [
+     {
+      "description": "右後尾燈下方、尾門與右後葉子板垂直接縫邊緣有紅褐色刮痕",
+      "seen_in_pickup_photo": "借車照中右後尾燈下緣縫隙處，車牌右側，可清楚看見一條細長紅褐色刮痕",
+      "pickup_evidence_strength": "clear"
+     }
+    ],
+    "pre_existing_notes": "右後尾燈下方接縫處有既有紅褐色擦痕，還車時無新增車損。"
+   },
+   "usage": {
+    "input": 4874,
+    "output": 593
+   }
+  },
+  {
+   "car": "RFB-2590",
+   "angle": "左前",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.92,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4874,
+    "output": 421
+   }
+  },
+  {
+   "car": "RFB-2590",
+   "angle": "左後",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.92,
+    "pre_existing": [
+     {
+      "description": "左後保險桿下緣近黑色飾條處細微淺刮痕",
+      "seen_in_pickup_photo": "借車照中左後保桿下方黑色飾條左側白色漆面上可見相同微小刮痕",
+      "pickup_evidence_strength": "clear"
+     }
+    ],
+    "pre_existing_notes": "左後保險桿下緣有一處既有微小刮痕，兩照皆存在，無新增損傷。"
+   },
+   "usage": {
+    "input": 4874,
+    "output": 497
+   }
+  },
+  {
+   "car": "RFB-3295",
+   "angle": "右前",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.65,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 478
+   }
+  },
+  {
+   "car": "RFB-3295",
+   "angle": "右後",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.85,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 286
+   }
+  },
+  {
+   "car": "RFB-3295",
+   "angle": "左前",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.85,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 275
+   }
+  },
+  {
+   "car": "RFB-3295",
+   "angle": "左後",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.85,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 298
+   }
+  },
+  {
+   "car": "RFB5176",
+   "angle": "右前",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.88,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 373
+   }
+  },
+  {
+   "car": "RFB5176",
+   "angle": "右後",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": true,
+    "damages": [
+     {
+      "location": "右後保桿轉角處",
+      "type": "刮痕",
+      "severity": "medium",
+      "confidence": 0.95,
+      "reasoning": "還車照右後保桿側面及轉角處出現大面積藍色擦撞漆痕與刮痕，借車照該位置完全乾淨完好無損。",
+      "ruled_out_basis": "反光：藍色擦痕邊緣清晰且帶有異物擦碰痕跡；髒污/水痕：痕跡為實質撞擊擦劃附著之藍色外漆"
+     }
+    ],
+    "no_damage_confidence": 0.0,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 579
+   }
+  },
+  {
+   "car": "RFB5176",
+   "angle": "左前",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.88,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 328
+   }
+  },
+  {
+   "car": "RFB5176",
+   "angle": "左後",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.92,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 317
+   }
+  },
+  {
+   "car": "RFD-1336",
+   "angle": "右前",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.95,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4874,
+    "output": 372
+   }
+  },
+  {
+   "car": "RFD-1336",
+   "angle": "右後",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.9,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4874,
+    "output": 291
+   }
+  },
+  {
+   "car": "RFD-1336",
+   "angle": "左前",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.9,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4874,
+    "output": 316
+   }
+  },
+  {
+   "car": "RFD-1336",
+   "angle": "左後",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.9,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4874,
+    "output": 290
+   }
+  },
+  {
+   "car": "RFD-8522",
+   "angle": "右前",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.9,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 516
+   }
+  },
+  {
+   "car": "RFD-8522",
+   "angle": "右後",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.9,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 425
+   }
+  },
+  {
+   "car": "RFD-8522",
+   "angle": "左前",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.9,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 336
+   }
+  },
+  {
+   "car": "RFD-8522",
+   "angle": "左後",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.9,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 534
+   }
+  },
+  {
+   "car": "RFG7213",
+   "angle": "右前",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.9,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4874,
+    "output": 286
+   }
+  },
+  {
+   "car": "RFG7213",
+   "angle": "右後",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.9,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4874,
+    "output": 319
+   }
+  },
+  {
+   "car": "RFG7213",
+   "angle": "左前",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.92,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4874,
+    "output": 409
+   }
+  },
+  {
+   "car": "RFG7213",
+   "angle": "左後",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.95,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4874,
+    "output": 306
+   }
+  },
+  {
+   "car": "RFH7851",
+   "angle": "右前",
+   "label": "negative",
+   "assessment": {
+    "angle_match": false,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.5,
+    "pre_existing": [],
+    "pre_existing_notes": "借車照拍攝方位為車輛右前方（主要呈現右前側大燈及保桿），還車照拍攝方位為車輛左前方（主要呈現左前側大燈、葉子板及車輪），兩側拍攝角度不一致，無法完整交叉比對側邊車況。"
+   },
+   "usage": {
+    "input": 4946,
+    "output": 855
+   }
+  },
+  {
+   "car": "RFH7851",
+   "angle": "右後",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.85,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 406
+   }
+  },
+  {
+   "car": "RFH7851",
+   "angle": "左前",
+   "label": "negative",
+   "assessment": {
+    "angle_match": false,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.0,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 1322
+   }
+  },
+  {
+   "car": "RFH7851",
+   "angle": "左後",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.9,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 367
+   }
+  },
+  {
+   "car": "RFH7873",
+   "angle": "右前",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.95,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 379
+   }
+  },
+  {
+   "car": "RFH7873",
+   "angle": "右後",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.92,
+    "pre_existing": [
+     {
+      "description": "右後保險桿下緣（反光片下方）擦傷痕跡",
+      "seen_in_pickup_photo": "在借車照右後保險桿最下緣、紅色反光片下方邊角處，可見明顯的黑色橫向擦傷磨損痕跡。",
+      "pickup_evidence_strength": "clear"
+     }
+    ],
+    "pre_existing_notes": "右後保險桿反光片下方邊角處已有既有擦傷，比對還車照無發現新增車損。"
+   },
+   "usage": {
+    "input": 4946,
+    "output": 648
+   }
+  },
+  {
+   "car": "RFH7873",
+   "angle": "左前",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.92,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 297
+   }
+  },
+  {
+   "car": "RFH7873",
+   "angle": "左後",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.9,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 298
+   }
+  },
+  {
+   "car": "RFH8052",
+   "angle": "右前",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.88,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 383
+   }
+  },
+  {
+   "car": "RFH8052",
+   "angle": "右後",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": true,
+    "damages": [
+     {
+      "location": "後尾門右側（車牌右側至e:HEV銘牌下方）",
+      "type": "凹陷",
+      "severity": "medium",
+      "confidence": 0.9,
+      "reasoning": "還車照中後尾門車牌右方有明顯鈑金內凹變形與陰影折痕，借車照對應區域表面平整無凹折。",
+      "ruled_out_basis": "凹陷：鈑件折線與陰影具備明顯立體形變深度；反光與髒污：非表面附著物或光源反射，結構輪廓已改變。"
+     }
+    ],
+    "no_damage_confidence": 0.0,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 582
+   }
+  },
+  {
+   "car": "RFH8052",
+   "angle": "左前",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.85,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 280
+   }
+  },
+  {
+   "car": "RFH8052",
+   "angle": "左後",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.9,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 264
+   }
+  },
+  {
+   "car": "RFH8122",
+   "angle": "右前",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.92,
+    "pre_existing": [
+     {
+      "description": "左前輪拱前方保險桿邊緣有一道淡色斜向刮痕",
+      "seen_in_pickup_photo": "在借車照中左前輪拱前側、霧燈飾板後上方的白色烤漆面上，可見相同位置與長度的細微斜向痕跡",
+      "pickup_evidence_strength": "clear"
+     }
+    ],
+    "pre_existing_notes": "左前保險桿靠輪拱處存在既有細微刮痕，兩照皆有，無新增損傷。"
+   },
+   "usage": {
+    "input": 4946,
+    "output": 556
+   }
+  },
+  {
+   "car": "RFH8122",
+   "angle": "右後",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": true,
+    "damages": [
+     {
+      "location": "右後保桿下緣（右側反光片旁）",
+      "type": "刮痕",
+      "severity": "medium",
+      "confidence": 0.95,
+      "reasoning": "還車照中右後保桿右側紅色反光片旁有明顯深色擦刮痕跡，借車照對應位置漆面平整乾淨。",
+      "ruled_out_basis": "反光/水痕：痕跡呈鋸齒狀深色擦痕與漆面磨損，借車照光線良好且該處乾淨完整，非光影或水漬。"
+     }
+    ],
+    "no_damage_confidence": 0.0,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 814
+   }
+  },
+  {
+   "car": "RFH8122",
+   "angle": "左前",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.95,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 277
+   }
+  },
+  {
+   "car": "RFH8122",
+   "angle": "左後",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": true,
+    "damages": [
+     {
+      "location": "後保桿左側下緣（左後輪後方）",
+      "type": "刮痕",
+      "severity": "low",
+      "confidence": 0.88,
+      "reasoning": "還車照在左後輪後方的後保險桿轉角下緣出現明顯黑色擦刮痕，借車照同位置平整白皙無痕跡。",
+      "ruled_out_basis": "水痕：痕跡呈深色條狀擦刮痕；反光：為深色表面磨擦痕無反光干擾；髒污：線條具摩擦方向性且集中於保桿外凸轉角處。"
+     }
+    ],
+    "no_damage_confidence": 0.0,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 753
+   }
+  },
+  {
+   "car": "RFM-2791",
+   "angle": "右前",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.93,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 394
+   }
+  },
+  {
+   "car": "RFM-2791",
+   "angle": "右後",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.9,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 363
+   }
+  },
+  {
+   "car": "RFM-2791",
+   "angle": "左前",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.9,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 562
+   }
+  },
+  {
+   "car": "RFM-2791",
+   "angle": "左後",
+   "label": "negative",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.85,
+    "pre_existing": [
+     {
+      "description": "後保險桿左下緣（靠近左後輪後方）有黑色擦傷痕跡",
+      "seen_in_pickup_photo": "借車照中左後輪後方保險桿最下緣處，清楚可見數道黑色擦痕",
+      "pickup_evidence_strength": "clear"
+     }
+    ],
+    "pre_existing_notes": "後保桿左下緣已有既有擦傷，還車照未見其他新增損傷"
+   },
+   "usage": {
+    "input": 4946,
+    "output": 401
+   }
+  },
+  {
+   "car": "RCR-7661",
+   "angle": "左後",
+   "label": "positive",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": true,
+    "damages": [
+     {
+      "location": "左後葉子板與左後輪弧",
+      "type": "凹陷",
+      "severity": "high",
+      "confidence": 0.98,
+      "reasoning": "還車照中左後輪弧上方至油箱蓋周圍出現大面積凹陷與水平擦痕，後保桿卡榫處嚴重變形開裂，借車照該處車身鈑件平整無大面積凹刮損。",
+      "ruled_out_basis": "凹陷處金屬鈑件明顯形變反光扭曲，且帶有深層漆面刮除痕跡，非髒污或光影。"
+     },
+     {
+      "location": "左後保險桿側面",
+      "type": "刮痕",
+      "severity": "high",
+      "confidence": 0.98,
+      "reasoning": "還車照中左後保桿側面有大面積深色擦撞擦痕及位移，借車照僅有極小局部舊痕，新增了極大範圍嚴重擦傷。",
+      "ruled_out_basis": "擦撞摩擦痕跡帶有明顯黑色移轉物與車漆磨損，非光影反射。"
+     },
+     {
+      "location": "左後車門下半部",
+      "type": "凹陷",
+      "severity": "high",
+      "confidence": 0.95,
+      "reasoning": "補拍照中左後車門下方至門檻處有明顯凹陷變形與橫向擦痕，借車照可見車門處完好平整。",
+      "ruled_out_basis": "金屬鈑件明顯內凹形變並伴隨底部嚴重摩擦掉漆痕跡。"
+     }
+    ],
+    "no_damage_confidence": 0.0,
+    "pre_existing": [
+     {
+      "description": "左後葉子板與後保險桿接縫處局部小刮痕與微小掉漆",
+      "seen_in_pickup_photo": "在借車照中油箱蓋右下方、葉子板與保險桿接縫邊緣處可見數道細小黑痕與一點鏽斑色掉漆",
+      "pickup_evidence_strength": "clear"
+     }
+    ],
+    "pre_existing_notes": "借車時左後葉子板與保險桿接縫處已有局部細微舊刮痕，還車時左側發生大面積擦撞，造成門板、葉子板凹陷及保險桿大面積刮傷開裂。"
+   },
+   "usage": {
+    "input": 6059,
+    "output": 1045
+   }
+  },
+  {
+   "car": "RCW-8382",
+   "angle": "左前",
+   "label": "positive",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": true,
+    "damages": [
+     {
+      "location": "引擎蓋前端及前保險桿上方（左前大燈內側邊緣）",
+      "type": "破損",
+      "severity": "high",
+      "confidence": 0.99,
+      "reasoning": "還車照中引擎蓋前端嚴重受撞擊擠壓變形隆起，保險桿上方塑料斷裂破開，借車照中對應部位完全平整完好。",
+      "ruled_out_basis": "凹陷隆起折痕立體明顯，伴隨塑料件斷裂裂口與縫隙位移，完全排除反光與污漬"
+     }
+    ],
+    "no_damage_confidence": 0.0,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 594
+   }
+  },
+  {
+   "car": "RCW-9206",
+   "angle": "左前",
+   "label": "positive",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": true,
+    "damages": [
+     {
+      "location": "右前保險桿（大燈下方）",
+      "type": "破損",
+      "severity": "medium",
+      "confidence": 0.95,
+      "reasoning": "還車照中右前大燈下方保險桿處出現明顯垂直破裂折痕，借車照該處平整完好。",
+      "ruled_out_basis": "裂痕邊緣銳利深邃且具有破裂縫隙陰影，非光線反射或表面水痕髒污。"
+     }
+    ],
+    "no_damage_confidence": 0.0,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4874,
+    "output": 626
+   }
+  },
+  {
+   "car": "RDH-2261",
+   "angle": "左後",
+   "label": "positive",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": true,
+    "damages": [
+     {
+      "location": "左後保險桿及左後葉子板",
+      "type": "破損",
+      "severity": "high",
+      "confidence": 0.98,
+      "reasoning": "還車照左後保桿與葉子板處有明顯嚴重撞擊破裂並貼附大面積白色膠帶固定，借車照對應區域外觀結構完整且無膠帶與破洞痕跡",
+      "ruled_out_basis": "破損：保桿塑件撕裂、外殼破洞且表面貼有臨時固定用膠帶，結構性形變明顯，借車照對應輪廓完整平順"
+     }
+    ],
+    "no_damage_confidence": 0.0,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 531
+   }
+  },
+  {
+   "car": "RDH-3092",
+   "angle": "左後",
+   "label": "positive",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": true,
+    "damages": [
+     {
+      "location": "左後葉子板（油箱蓋前側）",
+      "type": "凹陷",
+      "severity": "high",
+      "confidence": 0.95,
+      "reasoning": "還車照中油箱蓋左前側、輪拱上方鈑件有明顯大面積凹折變形與刮痕，而借車照同位置鈑件完整平順無任何凹陷。",
+      "ruled_out_basis": "凹陷：鈑件有明確立體內折結構與反光斷裂變形，借車照同區域平整無損"
+     }
+    ],
+    "no_damage_confidence": 0.0,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 454
+   }
+  },
+  {
+   "car": "RDJ-0772",
+   "angle": "左前",
+   "label": "positive",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": true,
+    "damages": [
+     {
+      "location": "右前車頭（右前葉子板、右前大燈、前保險桿右側）",
+      "type": "破損",
+      "severity": "high",
+      "confidence": 1.0,
+      "reasoning": "還車照中右前葉子板嚴重隆起變形、右大燈組破裂、前保險桿右側撞擊嚴重凹陷碎裂，借車照中該處車身鈑件與燈具皆完好無損。",
+      "ruled_out_basis": "反光：鈑件深度物理形變與大燈破裂脫落，非光影；髒污/水痕：車體結構明顯潰縮破裂。"
+     }
+    ],
+    "no_damage_confidence": 0.0,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 501
+   }
+  },
+  {
+   "car": "RDJ-0793",
+   "angle": "左前",
+   "label": "positive",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": true,
+    "damages": [
+     {
+      "location": "左前保險桿及左前葉子板接縫處",
+      "type": "凹陷",
+      "severity": "high",
+      "confidence": 0.99,
+      "reasoning": "還車照中左前保桿側邊有大面積嚴重凹陷變形、接縫裂開脫位並伴隨擦傷，借車照同位置平整完好。",
+      "ruled_out_basis": "反光/髒污：結構性立體凹折與鈑金件間隙明顯錯位脫開，非平面光影或髒污"
+     }
+    ],
+    "no_damage_confidence": 0.0,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 498
+   }
+  },
+  {
+   "car": "RDL-5171",
+   "angle": "左前",
+   "label": "positive",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": true,
+    "damages": [
+     {
+      "location": "前保險桿及水箱護罩",
+      "type": "破損",
+      "severity": "high",
+      "confidence": 0.99,
+      "reasoning": "還車照中前保桿中央與右側嚴重斷裂破裂、結構脫落變形，借車照中完好無損",
+      "ruled_out_basis": "破裂邊緣與結構位移極為明顯，非反光或髒污"
+     },
+     {
+      "location": "引擎蓋",
+      "type": "凹陷",
+      "severity": "high",
+      "confidence": 0.98,
+      "reasoning": "還車照中引擎蓋前端因撞擊擠壓隆起變形，借車照平整完好",
+      "ruled_out_basis": "立體鈑金擠壓皺摺明顯，非光影或拍攝角度變形"
+     }
+    ],
+    "no_damage_confidence": 0.0,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4910,
+    "output": 474
+   }
+  },
+  {
+   "car": "RDL-7836",
+   "angle": "左後",
+   "label": "positive",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": true,
+    "damages": [
+     {
+      "location": "後保險桿及後行李箱蓋",
+      "type": "破損",
+      "severity": "high",
+      "confidence": 0.99,
+      "reasoning": "還車照中後保險桿左側及中央大面積嚴重撞擊凹陷、脫落位移，行李箱蓋下緣亦受擠壓變形，借車照對應部位完好無損",
+      "ruled_out_basis": "反光/髒污：為車身結構性大面積凹陷、破裂脫落，特徵極為明確，非倒影或水漬髒污"
+     }
+    ],
+    "no_damage_confidence": 0.0,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 518
+   }
+  },
+  {
+   "car": "RDL-8265",
+   "angle": "右後",
+   "label": "positive",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": true,
+    "damages": [
+     {
+      "location": "後尾門右側（iRent標誌上方）",
+      "type": "凹陷",
+      "severity": "medium",
+      "confidence": 0.95,
+      "reasoning": "還車照中後尾門iRent標誌上方至右尾燈內側有明顯的鈑金凹陷與摺痕變形，借車照中該區域鈑金平整無凹損。",
+      "ruled_out_basis": "反光：鈑金邊緣線條明顯受力凹陷扭曲；髒污/水痕：有明確的立體陰影與凹折面。"
+     }
+    ],
+    "no_damage_confidence": 0.0,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 535
+   }
+  },
+  {
+   "car": "RDL-9262",
+   "angle": "右前",
+   "label": "positive",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": true,
+    "damages": [
+     {
+      "location": "右前保桿（右前大燈下方、進氣壩上方飾條處）",
+      "type": "刮痕",
+      "severity": "medium",
+      "confidence": 0.95,
+      "reasoning": "還車照及補拍照中右前保桿黑色飾條邊緣有明顯黃色擦撞刮痕與漆轉移，借車照同位置白漆完整無痕跡。",
+      "ruled_out_basis": "反光：在不同拍攝角度與補拍照中黃色痕跡皆清晰固定；髒污：為具有摩擦方向性的擦撞漆痕，非水漬或泥沙灰塵。"
+     }
+    ],
+    "no_damage_confidence": 0.0,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 6059,
+    "output": 1630
+   }
+  },
+  {
+   "car": "RDQ-1950",
+   "angle": "右後",
+   "label": "positive",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": true,
+    "damages": [
+     {
+      "location": "後保險桿右側及後尾門右下角",
+      "type": "凹陷",
+      "severity": "high",
+      "confidence": 0.99,
+      "reasoning": "還車照右後保桿與尾門邊緣出現大面積嚴重撞擊凹陷變形、擠壓變形及擦傷掉漆，借車照該處完全平整",
+      "ruled_out_basis": "反光/髒污：保桿與尾門呈現明顯立體凹陷與漆面破損痕跡，非光影反射或表面髒污"
+     }
+    ],
+    "no_damage_confidence": 0.0,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 572
+   }
+  },
+  {
+   "car": "RDU-6956",
+   "angle": "右前",
+   "label": "positive",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": true,
+    "damages": [
+     {
+      "location": "左前保險桿（大燈下方及側邊接縫處）",
+      "type": "破損",
+      "severity": "high",
+      "confidence": 0.99,
+      "reasoning": "還車照中左前大燈下方的保險桿出現明顯斷裂、破孔並向外脫開變形，借車照該處完整平整無損。",
+      "ruled_out_basis": "破裂邊緣斷開、結構錯位且有明顯立體陰影與裂縫，排除反光、髒污或角度問題"
+     }
+    ],
+    "no_damage_confidence": 0.0,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 454
+   }
+  },
+  {
+   "car": "RDU-9162",
+   "angle": "左前",
+   "label": "positive",
+   "assessment": {
+    "angle_match": false,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.0,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 387
+   }
+  },
+  {
+   "car": "RDX-1085",
+   "angle": "右前",
+   "label": "positive",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": true,
+    "damages": [
+     {
+      "location": "右前保險桿下緣及水箱護罩旁烤漆面",
+      "type": "刮痕",
+      "severity": "medium",
+      "confidence": 0.9,
+      "reasoning": "還車照中右前保桿角落與下唇有明顯擦撞刮痕及綠色/白色磨損痕跡，借車照該處雖略偏但可見部分為平整無損",
+      "ruled_out_basis": "反光：具實體破漆與刮痕邊界；水痕：邊緣銳利且伴隨漆面磨損；髒污：有明顯擦撞磨損與異色漆轉移痕跡"
+     }
+    ],
+    "no_damage_confidence": 0.0,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4910,
+    "output": 1300
+   }
+  },
+  {
+   "car": "RDX-2376",
+   "angle": "右後",
+   "label": "positive",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": true,
+    "damages": [
+     {
+      "location": "右後保桿與右後葉子板交界處",
+      "type": "破損",
+      "severity": "high",
+      "confidence": 0.98,
+      "reasoning": "還車照中右後保桿明顯受撞擊變形脫落、接縫裂開露出內部卡榫空隙，借車照中該處密合完好無損。",
+      "ruled_out_basis": "反光/陰影：車體結構實體位移、鈑件脫開斷差明顯，非光影干擾。"
+     }
+    ],
+    "no_damage_confidence": 0.0,
+    "pre_existing": [
+     {
+      "description": "右後輪拱上方葉子板細微刮痕",
+      "seen_in_pickup_photo": "借車照中右後輪拱黑色防刮材質上方鈑件隱約可見同位置之細長刮痕",
+      "pickup_evidence_strength": "faint"
+     }
+    ],
+    "pre_existing_notes": "右後輪拱上方葉子板有一處既有細微劃痕，但還車時右後保桿有嚴重脫落破損之新增損傷。"
+   },
+   "usage": {
+    "input": 4946,
+    "output": 1109
+   }
+  },
+  {
+   "car": "RDY-6382",
+   "angle": "左前",
+   "label": "positive",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": true,
+    "damages": [
+     {
+      "location": "左前門",
+      "type": "凹陷",
+      "severity": "medium",
+      "confidence": 0.95,
+      "reasoning": "還車照（補拍張）顯示左前門外板中下部有明顯大面積凹陷變形及擦傷痕跡，借車照對應門板平整光滑無此損傷。",
+      "ruled_out_basis": "反光：反光線條嚴重扭曲且可見明顯金屬凹折面；髒污：伴隨實質鈑金曲折與擦撞痕。"
+     }
+    ],
+    "no_damage_confidence": 0.0,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 6059,
+    "output": 834
+   }
+  },
+  {
+   "car": "RDZ-0187",
+   "angle": "右後",
+   "label": "positive",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": false,
+    "damages": [],
+    "no_damage_confidence": 0.85,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 993
+   }
+  },
+  {
+   "car": "RFB-2091",
+   "angle": "右前",
+   "label": "positive",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": true,
+    "damages": [
+     {
+      "location": "引擎蓋",
+      "type": "凹陷",
+      "severity": "high",
+      "confidence": 1.0,
+      "reasoning": "引擎蓋前段遭受嚴重碰撞擠壓大幅隆起皺褶變形，借車照中該處完全平整完好。",
+      "ruled_out_basis": "反光/髒污：為車體鈑件大面積實體潰縮隆起之結構性形變"
+     }
+    ],
+    "no_damage_confidence": 0.0,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 503
+   }
+  },
+  {
+   "car": "RFB-2091",
+   "angle": "左前",
+   "label": "positive",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": true,
+    "damages": [
+     {
+      "location": "引擎蓋及前保險桿、水箱護罩、右前側車頭",
+      "type": "破損",
+      "severity": "high",
+      "confidence": 1.0,
+      "reasoning": "還車照中車頭發生重大正面撞擊事故，引擎蓋嚴重隆起折曲變形、前保險桿與水箱護罩破裂脫落，借車照中完好無損。",
+      "ruled_out_basis": "反光/髒污：大範圍立體金屬嚴重摺曲隆起與車體塑件破裂位移，屬重大車體結構毀損。"
+     }
+    ],
+    "no_damage_confidence": 0.0,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 549
+   }
+  },
+  {
+   "car": "RFD-0332",
+   "angle": "右前",
+   "label": "positive",
+   "assessment": {
+    "angle_match": true,
+    "new_damage_found": true,
+    "damages": [
+     {
+      "location": "引擎蓋左前方、左前大燈周圍及前保險桿左側",
+      "type": "凹陷",
+      "severity": "high",
+      "confidence": 1.0,
+      "reasoning": "還車照中引擎蓋左側嚴重隆起凹陷變形，前保險桿與左前大燈周邊嚴重凹陷、破裂並位移脫落，借車照中該區域完全平整完好。",
+      "ruled_out_basis": "反光：鈑金嚴重物理折角與大面積形變；髒污：包含多處深度擦傷、鈑件縫隙崩開與卡榫斷裂"
+     }
+    ],
+    "no_damage_confidence": 0.0,
+    "pre_existing": [],
+    "pre_existing_notes": ""
+   },
+   "usage": {
+    "input": 4946,
+    "output": 564
+   }
+  }
+ ]
+}

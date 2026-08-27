@@ -44,6 +44,56 @@ class Assessment(BaseModel):
     no_damage_confidence: float = Field(description="0~1：判定「無新損」的信心。new_damage_found 為 true 時填 0；照片品質差、有可疑但不確定的區域時應調低")
     pre_existing_notes: str = Field(description="兩張照片皆存在的既有損傷簡述，無則空字串")
 
+
+# ---------- v4：既有損對稱舉證（★ 全量實測落敗，保留供記錄，勿啟用） ----------
+#
+# ═══════════════════════════════════════════════════════════════════
+# 結論（2026-08-27，141 組跑滿，eval_results_gemini_37_flash_v4.json）：
+#   v4 落敗。judge() 預設維持 v4=False，正式判定不使用本變體。
+# ═══════════════════════════════════════════════════════════════════
+#
+# 對照人工重標（n=138）：
+#                Recall    FPR     Precision
+#   現行 prompt   95.5%    0%       100%      ← 維持採用
+#   v4 移植版     95.5%    3.5%     84.0%     ← 落敗
+#
+# 原始動機：現行 prompt 唯一漏抓的 RDH-3092，失敗方式是模型寫一句「既有凹陷與板金
+# 變形」就把真實新損免責掉——「既有損」是個無需舉證的逃生出口。detect_v2 的規格版
+# 也栽在同一個洞（RCG2235-右後）。修法是強制說出在借車照哪裡看到它並自評證據強度。
+#
+# ★ 實測結果與教訓：**強制舉證欄位擋不住幻覺，只會讓幻覺變得更有說服力。**
+#   - v4 確實救回 RDH-3092（修法本身有作用）
+#   - 但同時把 RCG2235-右後 漏掉了——正是這個修法要防的那種失敗。模型乖乖填了
+#     seen_in_pickup_photo：「借車照中右後保桿紅色反光片右側及底部邊角處已存在
+#     相同的黑色擦痕」，並自評 pickup_evidence_strength=clear。
+#     人工逐張看圖確認：借車照該處乾淨，這段敘述是杜撰的。
+#   - 30 筆既有損主張中 **28 筆自評 clear、0 筆 cannot_confirm**——逃生出口沒有
+#     被關掉，只是換了個有自信的標籤。自評證據強度這個機制在此模型上無效。
+#   - 另新增 4 筆誤報，其中 3 筆（RDL7827、RDU-5572、RDW-7085）與 detect_v2 幻覺的
+#     是同一批照片——兩個不同 prompt 在同樣的照片上編出同樣的損傷。
+#
+# 保留本段程式碼的用途：記錄這個負面結果，避免日後有人再走一次同一條路。
+# 若要真正解決漏檢，方向應該是外部驗證（如對既有損主張做第二輪反向查核、
+# 或用 photo_chain 跨訂單佐證），而不是在同一次呼叫裡要求模型自我舉證。
+
+class PreExistingClaim(BaseModel):
+    description: str = Field(description="既有損傷描述")
+    seen_in_pickup_photo: str = Field(description="你在【借車照】的什麼位置看到它？具體描述其在借車照中的外觀與參照物。若其實看不清楚，如實寫「借車照無法確認」")
+    pickup_evidence_strength: str = Field(description="clear（借車照明確可見）| faint（隱約可見）| cannot_confirm（借車照無法確認）")
+
+
+class DamageV4(Damage):
+    ruled_out_basis: str = Field(description="你憑什麼排除反光／水痕／髒污？各用幾個字說明判別依據，例如「水痕：痕跡邊緣銳利不隨水珠分布；反光：換角度仍在」")
+
+
+class AssessmentV4(BaseModel):
+    angle_match: bool = Field(description="兩張照片是否為同一車輛的同一方位、可有效比對")
+    new_damage_found: bool = Field(description="還車照中是否有借車照沒有的新損傷")
+    damages: list[DamageV4] = Field(description="新損傷清單，無則空陣列")
+    no_damage_confidence: float = Field(description="0~1：判定「無新損」的信心。new_damage_found 為 true 時填 0；照片品質差、有可疑但不確定的區域時應調低")
+    pre_existing: list[PreExistingClaim] = Field(description="判定為既有損傷者，每一筆都必須說明在借車照的哪裡看到它")
+    pre_existing_notes: str = Field(description="既有損傷的一句話總結，無則空字串")
+
 SYSTEM = """你是 iRent 共享汽車的車況比對專家。你會收到同一台車、同一方位的兩張照片：
 一張是「借車時」拍攝，一張是「還車時」拍攝（還車可能有補拍第二張）。
 
@@ -57,6 +107,23 @@ SYSTEM = """你是 iRent 共享汽車的車況比對專家。你會收到同一�
 5. 寧可保守：confidence 反映真實把握程度，不確定的可疑差異給低 confidence 而非直接不報。
 6. 判定「無新損」時，用 no_damage_confidence 誠實表達把握程度：照片清晰、確定無損給高分；光線差、有難以確認的可疑處給低分。
 7. 若開頭附有「損傷樣態參考照」，僅用於認識真實車損的樣子，與本案車輛無關，不得當作比對對象。"""
+
+
+# v4 = 現行 SYSTEM 逐字保留 + 只加兩項（detect_v2 全量 A/B 證實有效的部分）：
+#   ① 準則 1 補上「既有損也要舉證」
+#   ② 準則 2 補上「說明憑什麼排除」
+# 其餘一字未改，確保 A/B 差異能單獨歸因。
+SYSTEM_V4 = SYSTEM.replace(
+    "1. 只有「還車照有、借車照沒有」的損傷才算新增車損。兩張照片都存在的是既有舊損，記在 pre_existing_notes，不算。",
+    "1. 只有「還車照有、借車照沒有」的損傷才算新增車損。兩張照片都存在的是既有舊損，記在 pre_existing，不算。\n"
+    "   ⚠ 主張「既有損」同樣需要證據：每一筆都必須在 seen_in_pickup_photo 具體說出你在借車照的哪個位置看到它。\n"
+    "   若你其實無法在借車照確認該處，必須誠實填 cannot_confirm，並把它當成低信心新損列入 damages 交人工複核，\n"
+    "   而不是逕自寫成既有損。把新損誤記為既有損＝漏檢，與誤報同樣是系統失敗。",
+).replace(
+    "2. 以下不是車損，嚴禁誤報：光線反射、水痕雨漬、灰塵泥沙髒污、樹影/物體倒影、影像壓縮雜訊、拍攝角度造成的變形。",
+    "2. 以下不是車損，嚴禁誤報：光線反射、水痕雨漬、灰塵泥沙髒污、樹影/物體倒影、影像壓縮雜訊、拍攝角度造成的變形。\n"
+    "   每筆新損都要在 ruled_out_basis 說明你憑什麼排除這些可能——只列你真的排除掉的，不要空泛地全部宣稱一遍。",
+)
 
 
 def get_client() -> genai.Client:
@@ -108,7 +175,10 @@ FEWSHOT = [
 ]
 
 
-def judge(client: genai.Client, model: str, pair: dict, fewshot=False, include_alt=False) -> dict:
+def judge(client: genai.Client, model: str, pair: dict, fewshot=False, include_alt=False,
+          v4=False) -> dict:
+    """v4=True 改用 SYSTEM_V4 + AssessmentV4（既有損對稱舉證 + ruled_out_basis）。
+    預設 False——現行實測數字由預設路徑產生，不可動。"""
     img = lambda p, w=1280: types.Part.from_bytes(data=prep_image(str(p), w), mime_type="image/jpeg")
     contents = []
     if fewshot:
@@ -128,9 +198,9 @@ def judge(client: genai.Client, model: str, pair: dict, fewshot=False, include_a
         model=model,
         contents=contents,
         config=types.GenerateContentConfig(
-            system_instruction=SYSTEM,
+            system_instruction=SYSTEM_V4 if v4 else SYSTEM,
             response_mime_type="application/json",
-            response_schema=Assessment,
+            response_schema=AssessmentV4 if v4 else Assessment,
             temperature=0.1,
         ),
     )
@@ -146,11 +216,12 @@ def judge(client: genai.Client, model: str, pair: dict, fewshot=False, include_a
     }
 
 
-def judge_with_retry(client, model, pair, throttle, retries=4, fewshot=False, include_alt=False):
+def judge_with_retry(client, model, pair, throttle, retries=4, fewshot=False, include_alt=False,
+                     v4=False):
     for i in range(retries):
         throttle.wait()
         try:
-            return judge(client, model, pair, fewshot=fewshot, include_alt=include_alt)
+            return judge(client, model, pair, fewshot=fewshot, include_alt=include_alt, v4=v4)
         except errors.APIError as e:
             if e.code in (429, 500, 503):
                 time.sleep(20 * (i + 1))
@@ -201,6 +272,8 @@ def main():
     ap.add_argument("--rpm", type=int, default=8, help="每分鐘請求上限（免費 key 建議 ≤10）")
     ap.add_argument("--list-models", action="store_true")
     ap.add_argument("--fewshot", action="store_true", help="附上損傷樣態參考照")
+    ap.add_argument("--v4", action="store_true",
+                    help="用 SYSTEM_V4（既有損對稱舉證 + ruled_out_basis），預設用現行 SYSTEM")
     ap.add_argument("--include-alt", action="store_true", help="還2 補拍照一併判讀")
     ap.add_argument("--tag", default="", help="輸出檔名後綴（版本標記）")
     args = ap.parse_args()
@@ -239,7 +312,8 @@ def main():
     plock = threading.Lock()
     with ThreadPoolExecutor(max_workers=args.workers) as ex:
         futs = {ex.submit(judge_with_retry, client, args.model, p, throttle,
-                          fewshot=args.fewshot, include_alt=args.include_alt): p for p in todo}
+                          fewshot=args.fewshot, include_alt=args.include_alt,
+                          v4=args.v4): p for p in todo}
         for i, fut in enumerate(as_completed(futs)):
             r = fut.result()
             results.append(r)
