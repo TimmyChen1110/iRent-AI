@@ -1,0 +1,260 @@
+{
+ "summary": {
+  "checked": 30,
+  "errors": 0,
+  "flagged": 4,
+  "caught_true_damage": [],
+  "caught_uncertain": [
+   "RDZ-0187右後"
+  ],
+  "false_flags_on_clean": [
+   "RDL7832左前",
+   "RDW-7085左前",
+   "RDZ-9006左前"
+  ],
+  "clean_flag_rate": 0.1071
+ },
+ "model": "gemini-3.7-flash",
+ "results": [
+  {
+   "car": "RCQ6760",
+   "angle": "左後",
+   "label": "negative",
+   "claim": "後保險桿左側黑色下護板處有既有擦傷刮痕",
+   "verdict": "visible",
+   "review_flag": false
+  },
+  {
+   "car": "RCW1883",
+   "angle": "右後",
+   "label": "negative",
+   "claim": "後保險桿右下緣（反光片下方）有既有的白色磨損擦傷痕跡",
+   "verdict": "visible",
+   "review_flag": false
+  },
+  {
+   "car": "RCG2235",
+   "angle": "左後",
+   "label": "negative",
+   "claim": "後保險桿左下角反光片下方邊緣有些微既有擦痕，後保桿表面有既有輕微髒污痕跡",
+   "verdict": "visible",
+   "review_flag": false
+  },
+  {
+   "car": "RDG8571",
+   "angle": "右後",
+   "label": "negative",
+   "claim": "右後保險桿下緣（反光片下方邊緣）有既有擦傷掉漆痕跡",
+   "verdict": "visible",
+   "review_flag": false
+  },
+  {
+   "car": "RDG8571",
+   "angle": "左後",
+   "label": "negative",
+   "claim": "後保險桿左下緣（左側反光片下方）有輕微既有擦痕",
+   "verdict": "visible",
+   "review_flag": false
+  },
+  {
+   "car": "RDG9853",
+   "angle": "右後",
+   "label": "negative",
+   "claim": "後保險桿右下緣（反光片旁）有既有擦傷刮痕，尾門銘牌上方有既有淡痕",
+   "verdict": "visible",
+   "review_flag": false
+  },
+  {
+   "car": "RDG9853",
+   "angle": "左前",
+   "label": "negative",
+   "claim": "引擎蓋中央處有既有輕微點狀髒污",
+   "verdict": "visible",
+   "review_flag": false
+  },
+  {
+   "car": "RDL7832",
+   "angle": "右前",
+   "label": "negative",
+   "claim": "前保桿左側（畫面右側）霧燈飾條上方有既有黃褐色擦傷痕跡",
+   "verdict": "visible",
+   "review_flag": false
+  },
+  {
+   "car": "RDL7832",
+   "angle": "右後",
+   "label": "negative",
+   "claim": "右後保險桿側面邊緣處有數點既有的小刮痕與掉漆點",
+   "verdict": "visible",
+   "review_flag": false
+  },
+  {
+   "car": "RDL7832",
+   "angle": "左前",
+   "label": "negative",
+   "claim": "左前保桿下緣角落有既有擦傷擦痕",
+   "verdict": "cannot_determine",
+   "review_flag": true
+  },
+  {
+   "car": "RDQ5916",
+   "angle": "左前",
+   "label": "negative",
+   "claim": "前保桿右下方（霧燈下方與下唇處）有既有擦傷掉漆痕跡",
+   "verdict": "visible",
+   "review_flag": false
+  },
+  {
+   "car": "RDU-7390",
+   "angle": "右前",
+   "label": "negative",
+   "claim": "引擎蓋表面有少許微小髒污斑點，兩照皆相同存在",
+   "verdict": "visible",
+   "review_flag": false
+  },
+  {
+   "car": "RDR6350",
+   "angle": "左後",
+   "label": "negative",
+   "claim": "後保險桿及車身表面有雨水漬痕與泥沙髒污，兩照比對無明顯新增車損。",
+   "verdict": "visible",
+   "review_flag": false
+  },
+  {
+   "car": "RDU-7390",
+   "angle": "左前",
+   "label": "negative",
+   "claim": "左前輪拱上方邊緣及前保險桿處有微小舊擦痕與髒污點，兩照皆已存在",
+   "verdict": "visible",
+   "review_flag": false
+  },
+  {
+   "car": "RDW-7085",
+   "angle": "右前",
+   "label": "negative",
+   "claim": "左前霧燈上方保桿處有細微舊刮痕與點狀小掉漆，兩張照片皆存在",
+   "verdict": "visible",
+   "review_flag": false
+  },
+  {
+   "car": "RDW-7085",
+   "angle": "右後",
+   "label": "negative",
+   "claim": "右後保桿下緣處有細微黑痕與髒污",
+   "verdict": "visible",
+   "review_flag": false
+  },
+  {
+   "car": "RDW-7085",
+   "angle": "左前",
+   "label": "negative",
+   "claim": "前保險桿下唇邊緣有輕微既有磨損擦痕",
+   "verdict": "cannot_determine",
+   "review_flag": true
+  },
+  {
+   "car": "RDZ-9006",
+   "angle": "右後",
+   "label": "negative",
+   "claim": "後保險桿右下角（反光片下方邊緣）存在既有擦傷刮痕",
+   "verdict": "visible",
+   "review_flag": false
+  },
+  {
+   "car": "RDZ-9006",
+   "angle": "左前",
+   "label": "negative",
+   "claim": "前保險桿左側大燈下方有輕微點狀髒污與細微舊痕",
+   "verdict": "cannot_determine",
+   "review_flag": true
+  },
+  {
+   "car": "RDZ-9006",
+   "angle": "左後",
+   "label": "negative",
+   "claim": "油箱蓋周圍及後保險桿表面有少許微小使用痕跡與髒污",
+   "verdict": "visible",
+   "review_flag": false
+  },
+  {
+   "car": "RDZ7922",
+   "angle": "右前",
+   "label": "negative",
+   "claim": "前保險桿右下方邊緣有既有擦傷刮痕",
+   "verdict": "visible",
+   "review_flag": false
+  },
+  {
+   "car": "RDZ7922",
+   "angle": "右後",
+   "label": "negative",
+   "claim": "右後保桿側邊近輪拱處有微細舊刮痕",
+   "verdict": "visible",
+   "review_flag": false
+  },
+  {
+   "car": "RDZ7922",
+   "angle": "左前",
+   "label": "negative",
+   "claim": "右前保險桿下緣（鍍鉻飾條下方）有一處既有擦傷掉漆痕跡，借車照已存在",
+   "verdict": "visible",
+   "review_flag": false
+  },
+  {
+   "car": "RFB-2590",
+   "angle": "右後",
+   "label": "negative",
+   "claim": "右尾燈下方後保桿/尾門邊緣縫隙處有一道紅褐色刮痕，兩張照片皆清晰可見，屬既有舊損。",
+   "verdict": "visible",
+   "review_flag": false
+  },
+  {
+   "car": "RFH7873",
+   "angle": "右後",
+   "label": "negative",
+   "claim": "右後保險桿右下角（反光片下方邊緣）有既有刮擦痕跡，借還車照片皆可見。",
+   "verdict": "visible",
+   "review_flag": false
+  },
+  {
+   "car": "RFH8122",
+   "angle": "右前",
+   "label": "negative",
+   "claim": "左前保險桿近輪拱處有細微舊刮痕，兩張照片皆存在",
+   "verdict": "visible",
+   "review_flag": false
+  },
+  {
+   "car": "RFM-2791",
+   "angle": "左前",
+   "label": "negative",
+   "claim": "車身表面有少許輕微灰塵髒污痕跡，無明顯既有損傷",
+   "verdict": "visible",
+   "review_flag": false
+  },
+  {
+   "car": "RFM-2791",
+   "angle": "左後",
+   "label": "negative",
+   "claim": "借車照中左後保險桿左下方邊角處有既有輕微擦痕",
+   "verdict": "visible",
+   "review_flag": false
+  },
+  {
+   "car": "RDH-3092",
+   "angle": "左後",
+   "label": "positive",
+   "claim": "左後葉子板（油箱蓋左前方與後門接縫處）有既有凹陷與板金變形",
+   "verdict": "visible",
+   "review_flag": false
+  },
+  {
+   "car": "RDZ-0187",
+   "angle": "右後",
+   "label": "positive",
+   "claim": "借車照中右後保險桿邊角處可見細微使用痕跡",
+   "verdict": "cannot_determine",
+   "review_flag": true
+  }
+ ]
+}
