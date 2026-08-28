@@ -384,10 +384,13 @@ def _load_context():
     return cases, pairs
 
 
-def _run_calls(calls: list, workers: int, rpm: int, progress_path: Path):
-    """calls: [{key..., photo, panel}]；斷點續跑＋節流＋原始回應保留。"""
+def _run_calls(calls: list, workers: int, rpm: int, progress_path: Path, call_fn=None):
+    """calls: [{key..., photo, panel}]；斷點續跑＋節流＋原始回應保留。
+    call_fn(client, model, photo, panel, panel_zh) 預設為本模組的 enumerate_panel；
+    v7（continuous_diff.py）傳入自己的 P8 版本沿用同一套骨架。"""
     from google.genai import errors
     from run_eval_gemini import get_client, Throttle
+    call_fn = call_fn or enumerate_panel
 
     done = {}
     if progress_path.exists():
@@ -408,8 +411,8 @@ def _run_calls(calls: list, workers: int, rpm: int, progress_path: Path):
         for i in range(4):
             throttle.wait()
             try:
-                out = enumerate_panel(client, c["model"], c["photo"], c["panel"],
-                                      PANEL_ZH_CACHE.get(c["panel"], c["panel"]))
+                out = call_fn(client, c["model"], c["photo"], c["panel"],
+                              PANEL_ZH_CACHE.get(c["panel"], c["panel"]))
                 return {**{k: c[k] for k in ("car", "angle", "role", "model", "rep", "panel")},
                         **out}
             except errors.APIError as e:
@@ -430,8 +433,10 @@ def _run_calls(calls: list, workers: int, rpm: int, progress_path: Path):
             r = fut.result()
             with plock, progress_path.open("a") as f:
                 f.write(json.dumps(r, ensure_ascii=False) + "\n")
-            mark = ("ERROR " + r["error"][:40]) if r.get("error") else \
-                   f"{sum(len(c.get('marks') or []) for c in r['parsed']['cells'])} marks"
+            n_marks = 0 if r.get("error") else (
+                sum(len(c.get("marks") or []) for c in r["parsed"]["cells"])
+                if "cells" in r["parsed"] else len(r["parsed"].get("marks") or []))
+            mark = ("ERROR " + r["error"][:40]) if r.get("error") else f"{n_marks} marks"
             print(f"  [{i+1:3d}/{len(todo)}] {r['car']:9s} {r['angle']:3s} "
                   f"{r['role']:6s} rep{r['rep']} {r['model'].split('-')[1][:5]:5s} → {mark}", flush=True)
     dedup = {}

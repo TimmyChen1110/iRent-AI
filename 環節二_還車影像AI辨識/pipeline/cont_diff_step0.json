@@ -1,0 +1,19 @@
+{
+ "thresholds": {
+  "extent_cm": 4.62,
+  "count": 3
+ },
+ "null_rate_v6": {
+  "gemini-3.7-flash": {
+   "pairs": 50,
+   "null_rate": 0.34,
+   "mean_signal_cells": 0.34
+  },
+  "gemini-3.1-pro-preview": {
+   "pairs": 50,
+   "null_rate": 0.18,
+   "mean_signal_cells": 0.18
+  }
+ },
+ "v6_clean_flag_rate_for_reference": 0.0714
+}

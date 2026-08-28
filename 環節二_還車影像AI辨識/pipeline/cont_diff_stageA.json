@@ -1,0 +1,40 @@
+{
+ "per_model": {
+  "gemini-3.7-flash": {
+   "n_clusters_used": 2,
+   "sigma_u": 0.0946,
+   "sigma_v": 0.0273,
+   "match_radius": 0.2954,
+   "extent_std_median": 0.12,
+   "extent_threshold": 0.38
+  },
+  "gemini-3.1-pro-preview": {
+   "n_clusters_used": 7,
+   "sigma_u": 0.0,
+   "sigma_v": 0.0,
+   "match_radius": 0.0,
+   "extent_std_median": 0.0,
+   "extent_threshold": null
+  }
+ },
+ "match_radius": 0.2954,
+ "extent_threshold": 0.38,
+ "anchor_quality": {
+  "n_marks": 43,
+  "no_anchor": 0,
+  "no_anchor_rate": 0.0
+ },
+ "null_rate_v7": {
+  "gemini-3.7-flash": {
+   "pairs": 50,
+   "null_rate": 0.24
+  },
+  "gemini-3.1-pro-preview": {
+   "pairs": 50,
+   "null_rate": 0.22
+  }
+ },
+ "condition_A_triggered": true,
+ "condition_B_triggered": false,
+ "condition_E_triggered": false
+}
