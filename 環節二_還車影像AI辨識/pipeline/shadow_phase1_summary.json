@@ -1,0 +1,19 @@
+{
+ "population": 119,
+ "missing_enum": [],
+ "union_signal_records": 89,
+ "dispatched_records": 3,
+ "dispatched_cases": [
+  "RDH-3092左後",
+  "RDL7832右前",
+  "RDW-7085左前"
+ ],
+ "case_signal_rate": 0.0252,
+ "subset_estimate_reference": 0.1,
+ "blind_share_of_dispatched": 0.0,
+ "agreement_breakdown": {
+  "both": 3,
+  "flash_only": 25,
+  "pro_only": 61
+ }
+}
