@@ -1,0 +1,1473 @@
+{
+ "verdict": {
+  "thresholds": {
+   "extent_cm": 4.62,
+   "count": 3
+  },
+  "condition_A": {
+   "gemini-3.7-flash": false,
+   "gemini-3.1-pro-preview": false
+  },
+  "condition_B_neg_ctrl_signal": false,
+  "condition_C_target_no_signal": false,
+  "condition_D_signal_count": 3,
+  "condition_D_triggered": false,
+  "signal_cases": [
+   "RDL7832右前:C2",
+   "RDW-7085左前:B3",
+   "RDH-3092左後:A2"
+  ]
+ },
+ "cases": [
+  {
+   "car": "RCG2235",
+   "angle": "左後",
+   "panel": "RB",
+   "final_signal_cells": [],
+   "per_model": {
+    "gemini-3.7-flash": {
+     "comparable": [
+      "A1",
+      "A2",
+      "A3",
+      "B1",
+      "B2",
+      "B3",
+      "C1",
+      "C2",
+      "C3"
+     ],
+     "occupancy": [
+      "B3"
+     ],
+     "extent": [
+      "B3"
+     ],
+     "count": [],
+     "any": [
+      "B3"
+     ]
+    },
+    "gemini-3.1-pro-preview": {
+     "comparable": [
+      "A1",
+      "A2",
+      "A3",
+      "B1",
+      "B2",
+      "B3",
+      "C2"
+     ],
+     "occupancy": [],
+     "extent": [
+      "A3"
+     ],
+     "count": [],
+     "any": [
+      "A3"
+     ]
+    }
+   }
+  },
+  {
+   "car": "RCQ6760",
+   "angle": "左後",
+   "panel": "RB",
+   "final_signal_cells": [],
+   "per_model": {
+    "gemini-3.7-flash": {
+     "comparable": [
+      "A1",
+      "A2",
+      "B1",
+      "B2",
+      "C1",
+      "C2",
+      "C3"
+     ],
+     "occupancy": [],
+     "extent": [],
+     "count": [],
+     "any": []
+    },
+    "gemini-3.1-pro-preview": {
+     "comparable": [
+      "A1",
+      "A2",
+      "A3",
+      "B1",
+      "B2",
+      "B3"
+     ],
+     "occupancy": [],
+     "extent": [],
+     "count": [],
+     "any": []
+    }
+   }
+  },
+  {
+   "car": "RCW1883",
+   "angle": "右後",
+   "panel": "RB",
+   "final_signal_cells": [],
+   "per_model": {
+    "gemini-3.7-flash": {
+     "comparable": [
+      "A1",
+      "A2",
+      "A3",
+      "B1",
+      "B2",
+      "B3",
+      "C1",
+      "C2",
+      "C3"
+     ],
+     "occupancy": [],
+     "extent": [],
+     "count": [],
+     "any": []
+    },
+    "gemini-3.1-pro-preview": {
+     "comparable": [
+      "A1",
+      "A2",
+      "A3",
+      "B1",
+      "B2",
+      "B3",
+      "C1",
+      "C2",
+      "C3"
+     ],
+     "occupancy": [
+      "A3"
+     ],
+     "extent": [
+      "A3"
+     ],
+     "count": [],
+     "any": [
+      "A3"
+     ]
+    }
+   }
+  },
+  {
+   "car": "RDG8571",
+   "angle": "右後",
+   "panel": "RB",
+   "final_signal_cells": [],
+   "per_model": {
+    "gemini-3.7-flash": {
+     "comparable": [
+      "A1",
+      "A2",
+      "A3",
+      "B1",
+      "B2",
+      "B3",
+      "C1",
+      "C2",
+      "C3"
+     ],
+     "occupancy": [
+      "A3"
+     ],
+     "extent": [
+      "A3"
+     ],
+     "count": [],
+     "any": [
+      "A3"
+     ]
+    },
+    "gemini-3.1-pro-preview": {
+     "comparable": [
+      "B1",
+      "B2",
+      "B3",
+      "C1",
+      "C2"
+     ],
+     "occupancy": [],
+     "extent": [],
+     "count": [],
+     "any": []
+    }
+   }
+  },
+  {
+   "car": "RDG8571",
+   "angle": "左後",
+   "panel": "RB",
+   "final_signal_cells": [],
+   "per_model": {
+    "gemini-3.7-flash": {
+     "comparable": [
+      "A1",
+      "A2",
+      "A3",
+      "B1",
+      "B2",
+      "B3",
+      "C1",
+      "C2",
+      "C3"
+     ],
+     "occupancy": [
+      "B3"
+     ],
+     "extent": [
+      "B3"
+     ],
+     "count": [],
+     "any": [
+      "B3"
+     ]
+    },
+    "gemini-3.1-pro-preview": {
+     "comparable": [
+      "A3",
+      "B1",
+      "B2"
+     ],
+     "occupancy": [],
+     "extent": [],
+     "count": [],
+     "any": []
+    }
+   }
+  },
+  {
+   "car": "RDG9853",
+   "angle": "右後",
+   "panel": "RB",
+   "final_signal_cells": [],
+   "per_model": {
+    "gemini-3.7-flash": {
+     "comparable": [
+      "A1",
+      "A2",
+      "A3",
+      "B1",
+      "B2",
+      "B3",
+      "C1",
+      "C2",
+      "C3"
+     ],
+     "occupancy": [
+      "C3"
+     ],
+     "extent": [
+      "C3"
+     ],
+     "count": [],
+     "any": [
+      "C3"
+     ]
+    },
+    "gemini-3.1-pro-preview": {
+     "comparable": [
+      "B1",
+      "B2",
+      "B3",
+      "C1",
+      "C2",
+      "C3"
+     ],
+     "occupancy": [],
+     "extent": [],
+     "count": [],
+     "any": []
+    }
+   }
+  },
+  {
+   "car": "RDG9853",
+   "angle": "左前",
+   "panel": "HOOD",
+   "final_signal_cells": [],
+   "per_model": {
+    "gemini-3.7-flash": {
+     "comparable": [
+      "A1",
+      "A2",
+      "B1",
+      "C1"
+     ],
+     "occupancy": [],
+     "extent": [],
+     "count": [],
+     "any": []
+    },
+    "gemini-3.1-pro-preview": {
+     "comparable": [
+      "A2",
+      "A3",
+      "B3"
+     ],
+     "occupancy": [
+      "B3"
+     ],
+     "extent": [],
+     "count": [],
+     "any": [
+      "B3"
+     ]
+    }
+   }
+  },
+  {
+   "car": "RDL7832",
+   "angle": "右前",
+   "panel": "FB",
+   "final_signal_cells": [
+    "C2"
+   ],
+   "per_model": {
+    "gemini-3.7-flash": {
+     "comparable": [
+      "A1",
+      "A2",
+      "B1",
+      "B2",
+      "B3",
+      "C1",
+      "C2",
+      "C3"
+     ],
+     "occupancy": [
+      "C2"
+     ],
+     "extent": [
+      "C2"
+     ],
+     "count": [],
+     "any": [
+      "C2"
+     ]
+    },
+    "gemini-3.1-pro-preview": {
+     "comparable": [
+      "A1",
+      "A2",
+      "B1",
+      "B2",
+      "C1",
+      "C2",
+      "C3"
+     ],
+     "occupancy": [
+      "A2",
+      "C3"
+     ],
+     "extent": [
+      "C2",
+      "C3"
+     ],
+     "count": [],
+     "any": [
+      "A2",
+      "C2",
+      "C3"
+     ]
+    }
+   }
+  },
+  {
+   "car": "RDL7832",
+   "angle": "右後",
+   "panel": "RB",
+   "final_signal_cells": [],
+   "per_model": {
+    "gemini-3.7-flash": {
+     "comparable": [
+      "A1",
+      "A2",
+      "A3",
+      "B1",
+      "B2",
+      "B3",
+      "C1",
+      "C2",
+      "C3"
+     ],
+     "occupancy": [],
+     "extent": [
+      "B2"
+     ],
+     "count": [],
+     "any": [
+      "B2"
+     ]
+    },
+    "gemini-3.1-pro-preview": {
+     "comparable": [
+      "A1",
+      "A2",
+      "A3",
+      "B1",
+      "B2",
+      "B3"
+     ],
+     "occupancy": [
+      "A2"
+     ],
+     "extent": [
+      "A2"
+     ],
+     "count": [],
+     "any": [
+      "A2"
+     ]
+    }
+   }
+  },
+  {
+   "car": "RDL7832",
+   "angle": "左前",
+   "panel": "FB",
+   "final_signal_cells": [],
+   "per_model": {
+    "gemini-3.7-flash": {
+     "comparable": [
+      "B1",
+      "B2",
+      "B3",
+      "C1",
+      "C2",
+      "C3"
+     ],
+     "occupancy": [],
+     "extent": [],
+     "count": [],
+     "any": []
+    },
+    "gemini-3.1-pro-preview": {
+     "comparable": [
+      "B1",
+      "B2",
+      "B3",
+      "C1"
+     ],
+     "occupancy": [],
+     "extent": [],
+     "count": [],
+     "any": []
+    }
+   }
+  },
+  {
+   "car": "RDQ5916",
+   "angle": "左前",
+   "panel": "FB",
+   "final_signal_cells": [],
+   "per_model": {
+    "gemini-3.7-flash": {
+     "comparable": [
+      "A1",
+      "A2",
+      "A3",
+      "B1",
+      "B2",
+      "B3",
+      "C1",
+      "C2",
+      "C3"
+     ],
+     "occupancy": [],
+     "extent": [],
+     "count": [],
+     "any": []
+    },
+    "gemini-3.1-pro-preview": {
+     "comparable": [
+      "A1",
+      "A2",
+      "A3",
+      "B1",
+      "B2",
+      "B3",
+      "C1",
+      "C2",
+      "C3"
+     ],
+     "occupancy": [
+      "C3"
+     ],
+     "extent": [
+      "C3"
+     ],
+     "count": [],
+     "any": [
+      "C3"
+     ]
+    }
+   }
+  },
+  {
+   "car": "RDR6350",
+   "angle": "左後",
+   "panel": "RB",
+   "final_signal_cells": [],
+   "per_model": {
+    "gemini-3.7-flash": {
+     "comparable": [
+      "A1",
+      "A2",
+      "A3",
+      "B1",
+      "B2",
+      "B3",
+      "C1",
+      "C2",
+      "C3"
+     ],
+     "occupancy": [
+      "A3"
+     ],
+     "extent": [
+      "A3"
+     ],
+     "count": [],
+     "any": [
+      "A3"
+     ]
+    },
+    "gemini-3.1-pro-preview": {
+     "comparable": [
+      "A1",
+      "B1",
+      "B2",
+      "B3"
+     ],
+     "occupancy": [],
+     "extent": [],
+     "count": [],
+     "any": []
+    }
+   }
+  },
+  {
+   "car": "RDU-7390",
+   "angle": "右前",
+   "panel": "HOOD",
+   "final_signal_cells": [],
+   "per_model": {
+    "gemini-3.7-flash": {
+     "comparable": [
+      "A1",
+      "A2",
+      "A3",
+      "B1",
+      "B3",
+      "C1",
+      "C2",
+      "C3"
+     ],
+     "occupancy": [],
+     "extent": [],
+     "count": [],
+     "any": []
+    },
+    "gemini-3.1-pro-preview": {
+     "comparable": [
+      "A1",
+      "A2",
+      "A3",
+      "B1",
+      "B2",
+      "B3",
+      "C1",
+      "C2",
+      "C3"
+     ],
+     "occupancy": [
+      "B1",
+      "B2",
+      "B3"
+     ],
+     "extent": [],
+     "count": [],
+     "any": [
+      "B1",
+      "B2",
+      "B3"
+     ]
+    }
+   }
+  },
+  {
+   "car": "RDU-7390",
+   "angle": "左前",
+   "panel": "FB",
+   "final_signal_cells": [],
+   "per_model": {
+    "gemini-3.7-flash": {
+     "comparable": [
+      "A1",
+      "A2",
+      "A3",
+      "B1",
+      "B2",
+      "B3",
+      "C1",
+      "C2",
+      "C3"
+     ],
+     "occupancy": [
+      "A1",
+      "B2",
+      "C1"
+     ],
+     "extent": [
+      "B2"
+     ],
+     "count": [],
+     "any": [
+      "A1",
+      "B2",
+      "C1"
+     ]
+    },
+    "gemini-3.1-pro-preview": {
+     "comparable": [
+      "A2",
+      "A3",
+      "B1",
+      "B2",
+      "B3",
+      "C1",
+      "C2",
+      "C3"
+     ],
+     "occupancy": [
+      "B1"
+     ],
+     "extent": [
+      "B1"
+     ],
+     "count": [],
+     "any": [
+      "B1"
+     ]
+    }
+   }
+  },
+  {
+   "car": "RDW-7085",
+   "angle": "右前",
+   "panel": "FB",
+   "final_signal_cells": [],
+   "per_model": {
+    "gemini-3.7-flash": {
+     "comparable": [
+      "A1",
+      "A2",
+      "A3",
+      "B1",
+      "B2",
+      "B3",
+      "C1",
+      "C2",
+      "C3"
+     ],
+     "occupancy": [
+      "A2"
+     ],
+     "extent": [],
+     "count": [],
+     "any": [
+      "A2"
+     ]
+    },
+    "gemini-3.1-pro-preview": {
+     "comparable": [
+      "B1",
+      "B2",
+      "B3",
+      "C1",
+      "C2",
+      "C3"
+     ],
+     "occupancy": [
+      "C1"
+     ],
+     "extent": [],
+     "count": [],
+     "any": [
+      "C1"
+     ]
+    }
+   }
+  },
+  {
+   "car": "RDW-7085",
+   "angle": "右後",
+   "panel": "RB",
+   "final_signal_cells": [],
+   "per_model": {
+    "gemini-3.7-flash": {
+     "comparable": [
+      "A1",
+      "A2",
+      "B1",
+      "B2",
+      "C1",
+      "C2"
+     ],
+     "occupancy": [],
+     "extent": [],
+     "count": [],
+     "any": []
+    },
+    "gemini-3.1-pro-preview": {
+     "comparable": [
+      "B1",
+      "B2",
+      "B3",
+      "C1",
+      "C2",
+      "C3"
+     ],
+     "occupancy": [],
+     "extent": [],
+     "count": [],
+     "any": []
+    }
+   }
+  },
+  {
+   "car": "RDW-7085",
+   "angle": "左前",
+   "panel": "FB",
+   "final_signal_cells": [
+    "B3"
+   ],
+   "per_model": {
+    "gemini-3.7-flash": {
+     "comparable": [
+      "A1",
+      "A2",
+      "A3",
+      "B1",
+      "B2",
+      "B3",
+      "C1",
+      "C2",
+      "C3"
+     ],
+     "occupancy": [
+      "B3"
+     ],
+     "extent": [
+      "B3"
+     ],
+     "count": [],
+     "any": [
+      "B3"
+     ]
+    },
+    "gemini-3.1-pro-preview": {
+     "comparable": [
+      "A1",
+      "A2",
+      "A3",
+      "B1",
+      "B2",
+      "B3"
+     ],
+     "occupancy": [
+      "A3",
+      "B3"
+     ],
+     "extent": [
+      "A3",
+      "B3"
+     ],
+     "count": [],
+     "any": [
+      "A3",
+      "B3"
+     ]
+    }
+   }
+  },
+  {
+   "car": "RDZ-9006",
+   "angle": "右後",
+   "panel": "RB",
+   "final_signal_cells": [],
+   "per_model": {
+    "gemini-3.7-flash": {
+     "comparable": [
+      "A1",
+      "A2",
+      "A3",
+      "B1",
+      "B2",
+      "B3",
+      "C1",
+      "C2",
+      "C3"
+     ],
+     "occupancy": [
+      "B2"
+     ],
+     "extent": [
+      "B2"
+     ],
+     "count": [],
+     "any": [
+      "B2"
+     ]
+    },
+    "gemini-3.1-pro-preview": {
+     "comparable": [
+      "A1",
+      "A2",
+      "A3",
+      "B1",
+      "B2",
+      "B3",
+      "C1",
+      "C2",
+      "C3"
+     ],
+     "occupancy": [
+      "B3"
+     ],
+     "extent": [
+      "B3"
+     ],
+     "count": [],
+     "any": [
+      "B3"
+     ]
+    }
+   }
+  },
+  {
+   "car": "RDZ-9006",
+   "angle": "左前",
+   "panel": "FB",
+   "final_signal_cells": [],
+   "per_model": {
+    "gemini-3.7-flash": {
+     "comparable": [
+      "A1",
+      "A2",
+      "A3",
+      "B1",
+      "B2",
+      "B3",
+      "C1",
+      "C2",
+      "C3"
+     ],
+     "occupancy": [],
+     "extent": [],
+     "count": [],
+     "any": []
+    },
+    "gemini-3.1-pro-preview": {
+     "comparable": [
+      "A1",
+      "A2",
+      "A3",
+      "B1",
+      "B2",
+      "B3",
+      "C1",
+      "C2",
+      "C3"
+     ],
+     "occupancy": [
+      "B1",
+      "B3"
+     ],
+     "extent": [],
+     "count": [],
+     "any": [
+      "B1",
+      "B3"
+     ]
+    }
+   }
+  },
+  {
+   "car": "RDZ-9006",
+   "angle": "左後",
+   "panel": "RB",
+   "final_signal_cells": [],
+   "per_model": {
+    "gemini-3.7-flash": {
+     "comparable": [
+      "A1",
+      "A2",
+      "A3",
+      "B1",
+      "B2",
+      "B3"
+     ],
+     "occupancy": [],
+     "extent": [],
+     "count": [],
+     "any": []
+    },
+    "gemini-3.1-pro-preview": {
+     "comparable": [
+      "A1",
+      "A2",
+      "B1",
+      "B2",
+      "B3",
+      "C1",
+      "C2",
+      "C3"
+     ],
+     "occupancy": [
+      "B2",
+      "C1",
+      "C2"
+     ],
+     "extent": [
+      "B2",
+      "C1",
+      "C2"
+     ],
+     "count": [],
+     "any": [
+      "B2",
+      "C1",
+      "C2"
+     ]
+    }
+   }
+  },
+  {
+   "car": "RDZ7922",
+   "angle": "右前",
+   "panel": "FB",
+   "final_signal_cells": [],
+   "per_model": {
+    "gemini-3.7-flash": {
+     "comparable": [
+      "A1",
+      "A2",
+      "A3",
+      "B1",
+      "B2",
+      "B3",
+      "C1",
+      "C2",
+      "C3"
+     ],
+     "occupancy": [
+      "A3"
+     ],
+     "extent": [
+      "A3"
+     ],
+     "count": [],
+     "any": [
+      "A3"
+     ]
+    },
+    "gemini-3.1-pro-preview": {
+     "comparable": [
+      "A1",
+      "A2",
+      "A3",
+      "B1",
+      "B2",
+      "B3",
+      "C1",
+      "C2",
+      "C3"
+     ],
+     "occupancy": [
+      "B3"
+     ],
+     "extent": [
+      "B3"
+     ],
+     "count": [],
+     "any": [
+      "B3"
+     ]
+    }
+   }
+  },
+  {
+   "car": "RDZ7922",
+   "angle": "右後",
+   "panel": "RB",
+   "final_signal_cells": [],
+   "per_model": {
+    "gemini-3.7-flash": {
+     "comparable": [
+      "A1",
+      "A2",
+      "A3",
+      "B1",
+      "B2",
+      "B3",
+      "C1",
+      "C2",
+      "C3"
+     ],
+     "occupancy": [],
+     "extent": [],
+     "count": [],
+     "any": []
+    },
+    "gemini-3.1-pro-preview": {
+     "comparable": [
+      "A1",
+      "A2",
+      "A3",
+      "B1",
+      "B2",
+      "B3",
+      "C1",
+      "C2",
+      "C3"
+     ],
+     "occupancy": [
+      "A2"
+     ],
+     "extent": [
+      "A2"
+     ],
+     "count": [],
+     "any": [
+      "A2"
+     ]
+    }
+   }
+  },
+  {
+   "car": "RDZ7922",
+   "angle": "左前",
+   "panel": "FB",
+   "final_signal_cells": [],
+   "per_model": {
+    "gemini-3.7-flash": {
+     "comparable": [
+      "A1",
+      "A2",
+      "A3",
+      "B1",
+      "B2",
+      "B3",
+      "C1",
+      "C2",
+      "C3"
+     ],
+     "occupancy": [],
+     "extent": [],
+     "count": [],
+     "any": []
+    },
+    "gemini-3.1-pro-preview": {
+     "comparable": [
+      "A1",
+      "A2",
+      "A3",
+      "B1",
+      "B2",
+      "B3",
+      "C1",
+      "C2",
+      "C3"
+     ],
+     "occupancy": [
+      "B3"
+     ],
+     "extent": [
+      "B3"
+     ],
+     "count": [],
+     "any": [
+      "B3"
+     ]
+    }
+   }
+  },
+  {
+   "car": "RFB-2590",
+   "angle": "右後",
+   "panel": "RB",
+   "final_signal_cells": [],
+   "per_model": {
+    "gemini-3.7-flash": {
+     "comparable": [
+      "A1",
+      "A2",
+      "A3",
+      "B1",
+      "B2",
+      "B3",
+      "C1",
+      "C2",
+      "C3"
+     ],
+     "occupancy": [],
+     "extent": [],
+     "count": [],
+     "any": []
+    },
+    "gemini-3.1-pro-preview": {
+     "comparable": [
+      "A1",
+      "A2",
+      "A3",
+      "B1",
+      "B2",
+      "B3",
+      "C1",
+      "C2",
+      "C3"
+     ],
+     "occupancy": [
+      "B1"
+     ],
+     "extent": [
+      "B1"
+     ],
+     "count": [],
+     "any": [
+      "B1"
+     ]
+    }
+   }
+  },
+  {
+   "car": "RFH7873",
+   "angle": "右後",
+   "panel": "RB",
+   "final_signal_cells": [],
+   "per_model": {
+    "gemini-3.7-flash": {
+     "comparable": [
+      "A1",
+      "A2",
+      "A3",
+      "B1",
+      "B2",
+      "B3",
+      "C1",
+      "C2",
+      "C3"
+     ],
+     "occupancy": [],
+     "extent": [],
+     "count": [],
+     "any": []
+    },
+    "gemini-3.1-pro-preview": {
+     "comparable": [
+      "A1",
+      "A2",
+      "A3",
+      "B1",
+      "B2",
+      "B3"
+     ],
+     "occupancy": [
+      "A3"
+     ],
+     "extent": [
+      "A3"
+     ],
+     "count": [],
+     "any": [
+      "A3"
+     ]
+    }
+   }
+  },
+  {
+   "car": "RFH8122",
+   "angle": "右前",
+   "panel": "FB",
+   "final_signal_cells": [],
+   "per_model": {
+    "gemini-3.7-flash": {
+     "comparable": [
+      "A1",
+      "A2",
+      "A3",
+      "B1",
+      "B2",
+      "B3",
+      "C1",
+      "C2",
+      "C3"
+     ],
+     "occupancy": [
+      "A2",
+      "A3",
+      "B2"
+     ],
+     "extent": [
+      "A3"
+     ],
+     "count": [],
+     "any": [
+      "A2",
+      "A3",
+      "B2"
+     ]
+    },
+    "gemini-3.1-pro-preview": {
+     "comparable": [
+      "B1",
+      "B2",
+      "B3",
+      "C1",
+      "C2",
+      "C3"
+     ],
+     "occupancy": [
+      "C2"
+     ],
+     "extent": [
+      "C2"
+     ],
+     "count": [],
+     "any": [
+      "C2"
+     ]
+    }
+   }
+  },
+  {
+   "car": "RFM-2791",
+   "angle": "左前",
+   "panel": "FB",
+   "final_signal_cells": [],
+   "per_model": {
+    "gemini-3.7-flash": {
+     "comparable": [
+      "A1",
+      "A2",
+      "A3",
+      "B1",
+      "B2",
+      "B3",
+      "C1",
+      "C2",
+      "C3"
+     ],
+     "occupancy": [],
+     "extent": [],
+     "count": [],
+     "any": []
+    },
+    "gemini-3.1-pro-preview": {
+     "comparable": [
+      "A1",
+      "A2",
+      "A3",
+      "B1",
+      "B3",
+      "C1",
+      "C2",
+      "C3"
+     ],
+     "occupancy": [
+      "A3",
+      "B3",
+      "C3"
+     ],
+     "extent": [],
+     "count": [],
+     "any": [
+      "A3",
+      "B3",
+      "C3"
+     ]
+    }
+   }
+  },
+  {
+   "car": "RFM-2791",
+   "angle": "左後",
+   "panel": "RB",
+   "final_signal_cells": [],
+   "per_model": {
+    "gemini-3.7-flash": {
+     "comparable": [
+      "A1",
+      "A2",
+      "B1",
+      "B2",
+      "C1",
+      "C2",
+      "C3"
+     ],
+     "occupancy": [],
+     "extent": [],
+     "count": [],
+     "any": []
+    },
+    "gemini-3.1-pro-preview": {
+     "comparable": [
+      "B1",
+      "B2",
+      "C1",
+      "C2"
+     ],
+     "occupancy": [],
+     "extent": [],
+     "count": [],
+     "any": []
+    }
+   }
+  },
+  {
+   "car": "RDH-3092",
+   "angle": "左後",
+   "panel": "RF_L",
+   "final_signal_cells": [
+    "A2"
+   ],
+   "per_model": {
+    "gemini-3.7-flash": {
+     "comparable": [
+      "A1",
+      "A2",
+      "A3",
+      "B1",
+      "B2",
+      "B3",
+      "C1",
+      "C2",
+      "C3"
+     ],
+     "occupancy": [
+      "A2"
+     ],
+     "extent": [
+      "A2"
+     ],
+     "count": [],
+     "any": [
+      "A2"
+     ]
+    },
+    "gemini-3.1-pro-preview": {
+     "comparable": [
+      "A1",
+      "A2",
+      "A3",
+      "B1",
+      "B2",
+      "B3",
+      "C1",
+      "C2",
+      "C3"
+     ],
+     "occupancy": [
+      "A2"
+     ],
+     "extent": [
+      "A2"
+     ],
+     "count": [],
+     "any": [
+      "A2"
+     ]
+    }
+   }
+  },
+  {
+   "car": "RDZ-0187",
+   "angle": "右後",
+   "panel": "RB",
+   "final_signal_cells": [],
+   "per_model": {
+    "gemini-3.7-flash": {
+     "comparable": [
+      "A1",
+      "A2",
+      "B1"
+     ],
+     "occupancy": [],
+     "extent": [],
+     "count": [],
+     "any": []
+    },
+    "gemini-3.1-pro-preview": {
+     "comparable": [],
+     "occupancy": [],
+     "extent": [],
+     "count": [],
+     "any": []
+    }
+   }
+  },
+  {
+   "car": "RCG2235",
+   "angle": "右後",
+   "panel": "RB",
+   "final_signal_cells": [],
+   "per_model": {
+    "gemini-3.7-flash": {
+     "comparable": [
+      "A1",
+      "A2",
+      "A3",
+      "B1",
+      "B2",
+      "B3",
+      "C1",
+      "C2",
+      "C3"
+     ],
+     "occupancy": [
+      "B2"
+     ],
+     "extent": [
+      "B2"
+     ],
+     "count": [],
+     "any": [
+      "B2"
+     ]
+    },
+    "gemini-3.1-pro-preview": {
+     "comparable": [
+      "A1",
+      "A2",
+      "A3",
+      "B1",
+      "B2",
+      "B3",
+      "C1",
+      "C2",
+      "C3"
+     ],
+     "occupancy": [
+      "A2",
+      "A3"
+     ],
+     "extent": [
+      "A2",
+      "A3"
+     ],
+     "count": [],
+     "any": [
+      "A2",
+      "A3"
+     ]
+    }
+   }
+  }
+ ]
+}

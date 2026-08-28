@@ -60,6 +60,11 @@ clear），要求解釋推理反而讓推理變差（v5 Recall 掉 13.7pp）。
   當查核者，骨架（候選挑選/旗標映射/對照重標統計）可直接沿用，
   tests/test_reverse_check.py 已鎖住這三支純函式。
 
+  ★ 後續（2026-08-28）：v6 盲列舉差分（blind_enumeration.py）實測存活，
+    RDH-3092 由差分訊號抓回。上述教訓修正為：同家族查核在【命題確認】
+    形態下無效；【盲列舉＋差分】形態下一致性感知錯誤自我抵消、可運作。
+    候選挑選函式 select_candidates() 已被 v6 沿用為本層入口。
+
 用法：
   python3 reverse_check.py                # 對 FINAL_RESULTS 的候選全跑
   python3 reverse_check.py --limit 3      # 冒煙測試

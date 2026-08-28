@@ -1,0 +1,1894 @@
+{
+ "gemini-3.7-flash": {
+  "assessable_cells": 45,
+  "occupancy_inconsistent": 9,
+  "occupancy_inconsistent_rate": 0.2,
+  "count_varying_cells": 9,
+  "readable_flip_cells": 8,
+  "cells_total": 45,
+  "extent_std_median": 1.54,
+  "extent_std_max": 5.3,
+  "extent_threshold": 4.62,
+  "count_threshold": 3,
+  "condition_A_triggered": false,
+  "cells_detail": [
+   {
+    "case": [
+     "RDH-3092",
+     "左後"
+    ],
+    "cell": "A1",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RDH-3092",
+     "左後"
+    ],
+    "cell": "A2",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RDH-3092",
+     "左後"
+    ],
+    "cell": "A3",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RDH-3092",
+     "左後"
+    ],
+    "cell": "B1",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RDH-3092",
+     "左後"
+    ],
+    "cell": "B2",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RDH-3092",
+     "左後"
+    ],
+    "cell": "B3",
+    "occupied_frac": 0.4,
+    "counts": [
+     1,
+     0,
+     0,
+     1,
+     0
+    ],
+    "extents": [
+     7.5,
+     0.0,
+     0.0,
+     10.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RDH-3092",
+     "左後"
+    ],
+    "cell": "C1",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RDH-3092",
+     "左後"
+    ],
+    "cell": "C2",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RDH-3092",
+     "左後"
+    ],
+    "cell": "C3",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RCG2235",
+     "右後"
+    ],
+    "cell": "A1",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RCG2235",
+     "右後"
+    ],
+    "cell": "A2",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RCG2235",
+     "右後"
+    ],
+    "cell": "A3",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RCG2235",
+     "右後"
+    ],
+    "cell": "B1",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RCG2235",
+     "右後"
+    ],
+    "cell": "B2",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RCG2235",
+     "右後"
+    ],
+    "cell": "B3",
+    "occupied_frac": 0.8,
+    "counts": [
+     1,
+     1,
+     0,
+     1,
+     1
+    ],
+    "extents": [
+     0.8,
+     2.5,
+     0.0,
+     2.5,
+     2.5
+    ]
+   },
+   {
+    "case": [
+     "RCG2235",
+     "右後"
+    ],
+    "cell": "C1",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RCG2235",
+     "右後"
+    ],
+    "cell": "C2",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RCG2235",
+     "右後"
+    ],
+    "cell": "C3",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RDW-7085",
+     "左前"
+    ],
+    "cell": "A1",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RDW-7085",
+     "左前"
+    ],
+    "cell": "A2",
+    "occupied_frac": 0.4,
+    "counts": [
+     1,
+     0,
+     1,
+     0,
+     0
+    ],
+    "extents": [
+     0.5,
+     0.0,
+     0.5,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RDW-7085",
+     "左前"
+    ],
+    "cell": "A3",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RDW-7085",
+     "左前"
+    ],
+    "cell": "B1",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RDW-7085",
+     "左前"
+    ],
+    "cell": "B2",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RDW-7085",
+     "左前"
+    ],
+    "cell": "B3",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RDW-7085",
+     "左前"
+    ],
+    "cell": "C1",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RDW-7085",
+     "左前"
+    ],
+    "cell": "C2",
+    "occupied_frac": 0.2,
+    "counts": [
+     0,
+     1,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     6.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RDW-7085",
+     "左前"
+    ],
+    "cell": "C3",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RDG9853",
+     "左前"
+    ],
+    "cell": "A1",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RDG9853",
+     "左前"
+    ],
+    "cell": "A2",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RDG9853",
+     "左前"
+    ],
+    "cell": "A3",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RDG9853",
+     "左前"
+    ],
+    "cell": "B1",
+    "occupied_frac": 0.5,
+    "counts": [
+     0,
+     1,
+     0,
+     1
+    ],
+    "extents": [
+     0.0,
+     8.0,
+     0.0,
+     0.5
+    ]
+   },
+   {
+    "case": [
+     "RDG9853",
+     "左前"
+    ],
+    "cell": "B2",
+    "occupied_frac": 0.5,
+    "counts": [
+     1,
+     0
+    ],
+    "extents": [
+     8.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RDG9853",
+     "左前"
+    ],
+    "cell": "B3",
+    "occupied_frac": 0.5,
+    "counts": [
+     0,
+     1
+    ],
+    "extents": [
+     0.0,
+     0.5
+    ]
+   },
+   {
+    "case": [
+     "RDG9853",
+     "左前"
+    ],
+    "cell": "C1",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RDG9853",
+     "左前"
+    ],
+    "cell": "C2",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RDG9853",
+     "左前"
+    ],
+    "cell": "C3",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RCW1883",
+     "右後"
+    ],
+    "cell": "A1",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RCW1883",
+     "右後"
+    ],
+    "cell": "A2",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RCW1883",
+     "右後"
+    ],
+    "cell": "A3",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RCW1883",
+     "右後"
+    ],
+    "cell": "B1",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RCW1883",
+     "右後"
+    ],
+    "cell": "B2",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RCW1883",
+     "右後"
+    ],
+    "cell": "B3",
+    "occupied_frac": 1.0,
+    "counts": [
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "extents": [
+     12.0,
+     10.5,
+     9.5,
+     12.0,
+     8.5
+    ]
+   },
+   {
+    "case": [
+     "RCW1883",
+     "右後"
+    ],
+    "cell": "C1",
+    "occupied_frac": 0.2,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     1
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     12.0
+    ]
+   },
+   {
+    "case": [
+     "RCW1883",
+     "右後"
+    ],
+    "cell": "C2",
+    "occupied_frac": 0.2,
+    "counts": [
+     0,
+     0,
+     0,
+     1,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     15.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RCW1883",
+     "右後"
+    ],
+    "cell": "C3",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  ]
+ },
+ "gemini-3.1-pro-preview": {
+  "assessable_cells": 42,
+  "occupancy_inconsistent": 2,
+  "occupancy_inconsistent_rate": 0.0476,
+  "count_varying_cells": 3,
+  "readable_flip_cells": 4,
+  "cells_total": 45,
+  "extent_std_median": 0.0,
+  "extent_std_max": 0.55,
+  "extent_threshold": null,
+  "count_threshold": 3,
+  "condition_A_triggered": false,
+  "cells_detail": [
+   {
+    "case": [
+     "RDH-3092",
+     "左後"
+    ],
+    "cell": "A1",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RDH-3092",
+     "左後"
+    ],
+    "cell": "A2",
+    "occupied_frac": 0.6,
+    "counts": [
+     0,
+     1,
+     0,
+     1,
+     1
+    ],
+    "extents": [
+     0.0,
+     20.0,
+     0.0,
+     20.0,
+     20.0
+    ]
+   },
+   {
+    "case": [
+     "RDH-3092",
+     "左後"
+    ],
+    "cell": "A3",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RDH-3092",
+     "左後"
+    ],
+    "cell": "B1",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RDH-3092",
+     "左後"
+    ],
+    "cell": "B2",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RDH-3092",
+     "左後"
+    ],
+    "cell": "B3",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RDH-3092",
+     "左後"
+    ],
+    "cell": "C1",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RDH-3092",
+     "左後"
+    ],
+    "cell": "C2",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RDH-3092",
+     "左後"
+    ],
+    "cell": "C3",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RCG2235",
+     "右後"
+    ],
+    "cell": "A1",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RCG2235",
+     "右後"
+    ],
+    "cell": "A2",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RCG2235",
+     "右後"
+    ],
+    "cell": "A3",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RCG2235",
+     "右後"
+    ],
+    "cell": "B1",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RCG2235",
+     "右後"
+    ],
+    "cell": "B2",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RCG2235",
+     "右後"
+    ],
+    "cell": "B3",
+    "occupied_frac": 1.0,
+    "counts": [
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "extents": [
+     5.0,
+     4.0,
+     4.0,
+     5.0,
+     5.0
+    ]
+   },
+   {
+    "case": [
+     "RCG2235",
+     "右後"
+    ],
+    "cell": "C1",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RCG2235",
+     "右後"
+    ],
+    "cell": "C2",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RCG2235",
+     "右後"
+    ],
+    "cell": "C3",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RDW-7085",
+     "左前"
+    ],
+    "cell": "A1",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RDW-7085",
+     "左前"
+    ],
+    "cell": "A2",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RDW-7085",
+     "左前"
+    ],
+    "cell": "A3",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RDW-7085",
+     "左前"
+    ],
+    "cell": "B1",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RDW-7085",
+     "左前"
+    ],
+    "cell": "B2",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RDW-7085",
+     "左前"
+    ],
+    "cell": "B3",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RDW-7085",
+     "左前"
+    ],
+    "cell": "C1",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RDW-7085",
+     "左前"
+    ],
+    "cell": "C2",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RDW-7085",
+     "左前"
+    ],
+    "cell": "C3",
+    "occupied_frac": 1.0,
+    "counts": [
+     2,
+     2,
+     1,
+     2,
+     1
+    ],
+    "extents": [
+     12.0,
+     12.0,
+     12.0,
+     12.0,
+     12.0
+    ]
+   },
+   {
+    "case": [
+     "RDG9853",
+     "左前"
+    ],
+    "cell": "A1",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RDG9853",
+     "左前"
+    ],
+    "cell": "A2",
+    "occupied_frac": 0.4,
+    "counts": [
+     0,
+     0,
+     1,
+     1,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     2.0,
+     2.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RDG9853",
+     "左前"
+    ],
+    "cell": "A3",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RDG9853",
+     "左前"
+    ],
+    "cell": "B1",
+    "occupied_frac": 1.0,
+    "counts": [
+     1,
+     1,
+     1
+    ],
+    "extents": [
+     15.0,
+     15.0,
+     15.0
+    ]
+   },
+   {
+    "case": [
+     "RDG9853",
+     "左前"
+    ],
+    "cell": "B3",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RDG9853",
+     "左前"
+    ],
+    "cell": "C3",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RCW1883",
+     "右後"
+    ],
+    "cell": "A1",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RCW1883",
+     "右後"
+    ],
+    "cell": "A2",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RCW1883",
+     "右後"
+    ],
+    "cell": "A3",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RCW1883",
+     "右後"
+    ],
+    "cell": "B1",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RCW1883",
+     "右後"
+    ],
+    "cell": "B2",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RCW1883",
+     "右後"
+    ],
+    "cell": "B3",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RCW1883",
+     "右後"
+    ],
+    "cell": "C1",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RCW1883",
+     "右後"
+    ],
+    "cell": "C2",
+    "occupied_frac": 0.0,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "extents": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "case": [
+     "RCW1883",
+     "右後"
+    ],
+    "cell": "C3",
+    "occupied_frac": 1.0,
+    "counts": [
+     2,
+     2,
+     2,
+     2,
+     2
+    ],
+    "extents": [
+     15.0,
+     15.0,
+     15.0,
+     15.0,
+     15.0
+    ]
+   }
+  ]
+ }
+}
