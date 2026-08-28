@@ -616,6 +616,147 @@ def step_report(_args):
     }, ensure_ascii=False, indent=2))
 
 
+# ---------- 服務化擴充（純函式；服務化規格 §3/§4/§7） ----------
+
+UNION_SAMPLE_N = 10
+
+
+def build_queue(records: list, n_union: int = UNION_SAMPLE_N) -> list:
+    """複核佇列：全部派送（交集）訊號＋pro 單模型訊號的確定性抽樣。
+
+    抽樣依 signal_id 的 sha256 排序取前 n——可重現、與案件內容無關。
+    queue_source 讓 §7 的交集 vs 聯集決策能分開統計。
+    """
+    queue = [{**r, "queue_source": "intersection"} for r in records if r["dispatched"]]
+    pro_only = [r for r in records if r["model_agreement"] == "pro_only"]
+    pro_only.sort(key=lambda r: hashlib.sha256(r["signal_id"].encode()).hexdigest())
+    queue += [{**r, "queue_source": "union_sample"} for r in pro_only[:n_union]]
+    return queue
+
+
+def duration_excl_locate(r: dict):
+    """複核耗時扣掉定位時間（介面成本，非訊號成本——目前只能給全圖）。"""
+    d = r.get("review_duration_sec")
+    if d is None:
+        return None
+    t = r.get("time_to_locate_sec") or 0
+    return max(0, d - t)
+
+
+def acceptance_with_supplement(records: list) -> dict:
+    """§7 三檔判準＋§4 小樣本補充條款（預先註冊於 2026-08-29，資料進來前訂立）。
+
+    n < 15：一律 insufficient_sample，不給暫定結論（避免中途看數字改變行為）。
+    n < 20：confirmed_rate 信賴區間過寬無決策價值，改用補充條款——
+      成本已證實可忽略（扣定位後中位數 ≤60s）＋wrong_area 無 match_failure
+      ＋至少一筆 confirmed＋無停止條件 → 可接入低優先佇列。
+    n ≥ 20：走協定 §7 原判準（acceptance_verdict）。
+    """
+    done = [r for r in records if r.get("dispatched") and r.get("review_verdict")]
+    n = len(done)
+    if n < 15:
+        return {"n": n, "decision": "insufficient_sample"}
+    if n < 20:
+        durs = [duration_excl_locate(r) for r in done]
+        durs = [d for d in durs if d is not None]
+        med = statistics.median(durs) if durs else None
+        wa = [r for r in done if r.get("review_position_match") == "wrong_area"]
+        match_failures = sum(1 for r in wa
+                             if attribute_wrong_area(r.get("review_free_text")) == "match_failure")
+        confirmed = sum(1 for r in done if r["review_verdict"] == "confirmed_damage")
+        ok = (med is not None and med <= 60 and match_failures == 0
+              and confirmed >= 1 and not check_stop(records))
+        return {"n": n, "decision": "integrate_low_priority" if ok else "do_not_integrate",
+                "clause": "small_sample_supplement",
+                "duration_median_excl_locate_sec": med,
+                "match_failures": match_failures, "confirmed": confirmed}
+    return acceptance_with_locate(records)
+
+
+def acceptance_with_locate(records: list) -> dict:
+    """協定 §7 原判準，但耗時採扣除定位時間的口徑（服務化規格 §3）。"""
+    done = [r for r in records if r.get("dispatched") and r.get("review_verdict")]
+    if not done:
+        return {"decision": "insufficient_data", "n": 0}
+    patched = [{**r, "review_duration_sec": duration_excl_locate(r)} for r in done]
+    out = acceptance_verdict(patched)
+    out["duration_basis"] = "excl_locate"
+    return out
+
+
+def progress_snapshot(records: list, target: int = 40) -> dict:
+    """GET /v1/review/progress 的計算核心（零 API）。"""
+    queue = build_queue(records)
+    done = [r for r in queue if r.get("review_verdict")]
+    durs = [r["review_duration_sec"] for r in done if r.get("review_duration_sec") is not None]
+    durs_x = [duration_excl_locate(r) for r in done]
+    durs_x = [d for d in durs_x if d is not None]
+    disp_done = [r for r in done if r["queue_source"] == "intersection"]
+    n = len(disp_done)
+    conf = sum(1 for r in disp_done if r["review_verdict"] == "confirmed_damage")
+    wa_all = [r for r in done if r.get("review_position_match") == "wrong_area"]
+    _KEY = {"boundary_error": "cell_boundary"}
+    attribution = {"cell_boundary": 0, "bistable_flip": 0, "match_failure": 0, "unattributed": 0}
+    for r in wa_all:
+        key = attribute_wrong_area(r.get("review_free_text"))
+        attribution[_KEY.get(key, key)] += 1
+    verdict = acceptance_with_supplement(records)
+    return {
+        "reviewed": len(done), "pending": len(queue) - len(done), "target": target,
+        "current_metrics": {
+            "confirmed_rate": round(conf / n, 4) if n else None,
+            "wrong_area_rate": round(len([r for r in disp_done
+                                          if r.get("review_position_match") == "wrong_area"]) / n, 4) if n else None,
+            "review_duration_median_sec": statistics.median(durs) if durs else None,
+            "review_duration_median_excl_locate_sec": statistics.median(durs_x) if durs_x else None,
+        },
+        "provisional_verdict": verdict["decision"],
+        "stop_conditions_triggered": check_stop(records),
+        "wrong_area_attribution": attribution,
+    }
+
+
+# §7 監控基線（第一期實測值，非估計；空轉率為理論下限另列參考）
+BASELINE = {
+    "signal_rate": 0.0252,            # 交集訊號 case 率（全流量 119 案）
+    "intersection_filter": 0.966,     # 交集濾掉的聯集訊號比例（86/89）
+    "flash_case_rate": 0.185,         # flash 單模型訊號 case 率（22/119）
+    "pro_case_rate": 0.437,           # pro 單模型訊號 case 率（52/119）
+    "null_rate_reference": {"flash": 0.34, "pro": 0.18},   # 空轉基線（pairwise）
+}
+
+
+def signal_health(records: list, n_population: int) -> dict:
+    """訊號層健康度 vs 第一期實測基線（服務化規格 §7）。
+
+    單模型訊號率上升是模型或 prompt 悄悄變動的最早訊號，
+    比準確率下降更早出現——各項偏離基線 2 倍即告警。
+    """
+    if not n_population:
+        return {"alerts": ["no_population"]}
+    n_union = len(records)
+    n_both = sum(1 for r in records if r["model_agreement"] == "both")
+    cases_with_signal = {r["case_id"] for r in records if r["model_agreement"] == "both"}
+    flash_cases = {r["case_id"] for r in records if r["model_agreement"] in ("flash_only", "both")}
+    pro_cases = {r["case_id"] for r in records if r["model_agreement"] in ("pro_only", "both")}
+    m = {
+        "signal_rate": round(len(cases_with_signal) / n_population, 4),
+        "intersection_filter": round(1 - n_both / n_union, 4) if n_union else None,
+        "flash_case_rate": round(len(flash_cases) / n_population, 4),
+        "pro_case_rate": round(len(pro_cases) / n_population, 4),
+    }
+    alerts = []
+    if m["signal_rate"] > 2 * BASELINE["signal_rate"]:
+        alerts.append("signal_rate_deviation")
+    if m["intersection_filter"] is not None and m["intersection_filter"] < 0.90:
+        alerts.append("intersection_filter_below_90pct")
+    if m["flash_case_rate"] > 2 * BASELINE["flash_case_rate"]:
+        alerts.append("flash_rate_drift")
+    if m["pro_case_rate"] > 2 * BASELINE["pro_case_rate"]:
+        alerts.append("pro_rate_drift")
+    return {"metrics": m, "baseline": BASELINE, "alerts": alerts}
+
+
 # ---------- 互動式複核（第二期，由真人執行） ----------
 
 VERDICT_KEYS = {"1": "confirmed_damage", "2": "no_damage", "3": "cannot_determine"}

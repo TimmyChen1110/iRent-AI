@@ -46,6 +46,15 @@ DB_PATH = HERE / "decisions.sqlite3"
 
 app = FastAPI(title="iRent 車況監理台", docs_url=None, redoc_url=None)
 
+# ---------- 服務化（複核介面 API + 判讀 API；規格見各模組檔頭） ----------
+from prompt_manifest import assert_frozen  # noqa: E402
+assert_frozen()   # Prompt 凍結檢查：hash 不符即拒絕啟動（服務化規格 §6）
+
+from inspections_api import router as inspections_router  # noqa: E402
+from review_api import router as review_router  # noqa: E402
+app.include_router(review_router)
+app.include_router(inspections_router)
+
 
 # ---------- 決策 DB（全隊共享） ----------
 # decisions      : 複核狀態（後台 UI 用，一案一列，可覆蓋）

@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Shadow 複核台</title>
+<style>
+  :root { --bg:#0f1412; --card:#171f1a; --line:#2a3630; --ink:#e4ede7; --mut:#92a399;
+          --green:#37ce8f; --amber:#e8a356; --red:#e57a70; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink);
+         font:15px/1.7 "Noto Sans TC","PingFang TC",sans-serif; padding:16px; }
+  .wrap { max-width:1080px; margin:0 auto; }
+  h1 { font-size:18px; margin:0 0 4px; }
+  .mut { color:var(--mut); font-size:13px; }
+  .bar { display:flex; gap:16px; align-items:baseline; flex-wrap:wrap; margin-bottom:14px; }
+  .imgs { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:14px 0; }
+  .ph { position:relative; background:#000; border:1px solid var(--line); }
+  .ph img { display:block; width:100%; }
+  .ph .lbl { position:absolute; top:6px; left:8px; background:#000a; padding:2px 10px;
+             font-size:13px; font-weight:700; border-radius:4px; }
+  .grid { position:absolute; inset:0; display:grid;
+          grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(3,1fr);
+          pointer-events:none; }
+  .grid div { border:1px dashed #ffffff2e; font:11px monospace; color:#ffffff55;
+              padding:2px 4px; }
+  .grid div.hot { border:2px solid var(--amber); background:#e8a35618; color:var(--amber); }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:8px;
+          padding:14px 18px; margin:12px 0; }
+  .card h3 { margin:0 0 6px; font-size:14px; color:var(--green); }
+  .card p { margin:0 0 8px; }
+  .btns { display:flex; gap:8px; flex-wrap:wrap; margin:8px 0 4px; }
+  button { background:var(--card); color:var(--ink); border:1px solid var(--line);
+           border-radius:6px; padding:9px 16px; font-size:14px; cursor:pointer; }
+  button:hover { border-color:var(--green); }
+  button.sel { border-color:var(--green); background:#12291e; color:var(--green); }
+  button.primary { background:var(--green); color:#0f1412; font-weight:700; }
+  button:disabled { opacity:.4; cursor:default; }
+  textarea { width:100%; min-height:70px; background:#0c100e; color:var(--ink);
+             border:1px solid var(--line); border-radius:6px; padding:10px; font:inherit; }
+  .q { font-weight:700; margin-top:14px; }
+  .warn { color:var(--amber); font-size:13px; }
+  .done { text-align:center; padding:40px 0; }
+  pre { background:#0c100e; border:1px solid var(--line); padding:12px; overflow:auto;
+        font-size:12.5px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="bar">
+    <h1>Shadow 複核台</h1>
+    <span class="mut" id="prog"></span>
+  </div>
+  <div id="stage"></div>
+</div>
+<script>
+"use strict";
+const $ = s => document.querySelector(s);
+let queue = [], idx = 0, t0 = 0, locateSec = null, sel = {v:null, p:null};
+
+const VERDICTS = [["confirmed_damage","確認損傷"],["no_damage","無損傷"],["cannot_determine","無法判定"]];
+const POSITIONS = [["exact","位置準確"],["approximate","大致符合"],["wrong_area","錯誤區域"],["n/a","不適用"]];
+
+async function api(path, opts) {
+  const r = await fetch(path, opts);
+  if (!r.ok) throw new Error((await r.json().catch(()=>({}))).detail || r.status);
+  return r.json();
+}
+
+async function load() {
+  const q = await api("/v1/review/queue");
+  queue = q.items.filter(i => !i.done);
+  $("#prog").textContent = `待複核 ${q.pending} 筆・已完成 ${q.completed} 筆`;
+  if (!queue.length) return finish();
+  idx = 0; show();
+}
+
+function gridHtml(hot) {
+  const cells = [];
+  for (const r of [1,2,3]) for (const c of ["A","B","C"])
+    cells.push(`<div class="${hot.includes(c+r)?"hot":""}">${c}${r}</div>`);
+  return `<div class="grid">${cells.join("")}</div>`;
+}
+
+async function show() {
+  const item = queue[idx];
+  const s = await api(`/v1/review/signals/${encodeURIComponent(item.signal_id)}`);
+  sel = {v:null, p:null}; locateSec = null;
+  const hot = s.images.grid_overlay.highlight_cells;
+  let html = `
+    <div class="mut">[${idx+1}/${queue.length}] ${s.signal_id}・分區 ${s.panel}・訊號 ${s.signal_type}
+      ${s.review_flow==="blind" ? "・<b class='warn'>盲測流程</b>" : ""}</div>
+    <div class="imgs">
+      <div class="ph"><span class="lbl">借車照</span><img src="${s.images.pickup_url}">${gridHtml(hot)}</div>
+      <div class="ph"><span class="lbl">還車照</span><img src="${s.images.return_url}">${gridHtml(hot)}</div>
+    </div>
+    <div class="mut">${s.images.grid_overlay.note}・高亮格＝訊號位置（近似）</div>
+    <div class="btns"><button id="found">📍 已找到位置（停止定位計時）</button>
+      <span class="mut" id="locmsg"></span></div>`;
+  if (s.blind_phase === "pre") {
+    html += `<div class="card"><h3>盲測第一階段</h3>
+      <p>先只看圖：兩張照片在高亮區域是否有差異？</p>
+      <div class="btns" id="preBtns">${VERDICTS.map(([k,t]) =>
+        `<button data-k="${k}">${t}</button>`).join("")}</div></div>`;
+    $("#stage").innerHTML = html;
+    t0 = performance.now();
+    wireFound();
+    $("#preBtns").querySelectorAll("button").forEach(b => b.onclick = async () => {
+      const res = await api(`/v1/review/signals/${encodeURIComponent(s.signal_id)}`, {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({blind_pre_verdict: b.dataset.k})});
+      renderMain(s, res.card, b.dataset.k);
+    });
+    return;
+  }
+  $("#stage").innerHTML = html;
+  t0 = performance.now();
+  wireFound();
+  renderMain(s, s.card, null);
+}
+
+function wireFound() {
+  $("#found").onclick = () => {
+    locateSec = Math.round((performance.now() - t0) / 100) / 10;
+    $("#found").disabled = true;
+    $("#locmsg").textContent = `定位耗時 ${locateSec}s`;
+  };
+}
+
+function renderMain(s, card, preVerdict) {
+  const div = document.createElement("div");
+  let cardHtml = "";
+  if (card) cardHtml = `<div class="card">
+      <h3>說明卡（系統整理，非判定）</h3>
+      <p><b>看哪裡：</b>${card.where_to_look}</p>
+      <p><b>差在哪：</b>${card.what_differs}</p>
+      ${(card.caveats||[]).map(c=>`<p class="warn">⚠ ${c}</p>`).join("")}
+      <p class="mut">${card.reviewer_note}</p></div>`;
+  div.innerHTML = `${cardHtml}
+    ${preVerdict ? `<div class="mut">你的盲測判定：<b>${preVerdict}</b>——看完說明卡後給最終判定：</div>` : ""}
+    <div class="q">最終判定</div>
+    <div class="btns" id="vBtns">${VERDICTS.map(([k,t])=>`<button data-k="${k}">${t}</button>`).join("")}</div>
+    <div class="q">訊號指的位置與你看到的東西是否符合</div>
+    <div class="btns" id="pBtns">${POSITIONS.map(([k,t])=>`<button data-k="${k}">${t}</button>`).join("")}</div>
+    <div class="q">訊號指向的位置上實際有什麼（必填）</div>
+    <textarea id="ft" placeholder="例：C 型飾條上那道黃褐色痕兩張都有／該處兩張都乾淨"></textarea>
+    <div class="btns"><button class="primary" id="submit">送出並下一筆</button>
+      <span class="warn" id="err"></span></div>`;
+  $("#stage").appendChild(div);
+  const wire = (id, key) => div.querySelector(id).querySelectorAll("button").forEach(b =>
+    b.onclick = () => { sel[key] = b.dataset.k;
+      b.parentElement.querySelectorAll("button").forEach(x=>x.classList.toggle("sel", x===b)); });
+  wire("#vBtns","v"); wire("#pBtns","p");
+  div.querySelector("#submit").onclick = async () => {
+    const ft = div.querySelector("#ft").value.trim();
+    if (!sel.v || !sel.p || !ft) { div.querySelector("#err").textContent = "三項皆必填"; return; }
+    const body = {
+      review_verdict: sel.v, review_position_match: sel.p,
+      time_to_locate_sec: locateSec,
+      review_duration_sec: Math.round((performance.now() - t0) / 100) / 10,
+      review_free_text: ft,
+    };
+    try {
+      await api(`/v1/review/signals/${encodeURIComponent(s.signal_id)}`, {
+        method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(body)});
+    } catch (e) { div.querySelector("#err").textContent = e.message; return; }
+    idx += 1;
+    if (idx < queue.length) show(); else finish();
+  };
+}
+
+async function finish() {
+  const p = await api("/v1/review/progress");
+  $("#stage").innerHTML = `<div class="done"><h2>本輪完成 🎉</h2>
+    <p class="mut">已複核 ${p.reviewed} 筆・暫定判準：<b>${p.provisional_verdict}</b></p>
+    <pre>${JSON.stringify(p, null, 2)}</pre></div>`;
+  $("#prog").textContent = `已完成 ${p.reviewed} 筆`;
+}
+
+load().catch(e => $("#stage").innerHTML = `<p class="warn">載入失敗：${e.message}</p>`);
+</script>
+</body>
+</html>

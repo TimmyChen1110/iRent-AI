@@ -230,6 +230,27 @@ flash 80%／pro 40%，wrong_area 歸因欄位為必備。複核佇列已就緒
 - **「破損」一律報換件**（12,000–40,000）：改由 severity 調節，medium 以下降為板件修補
 - **「輪圈：整片烤漆」**：鋁圈／玻璃／燈殼加專屬規則，不再套鈑件邏輯
 
+## 後端服務化（複核介面 API＋非同步判讀 API）
+
+依《環節二後端服務化 API 規格》落地，紅線：**v6 訊號層在 shadow 第二期完成前
+一律 flag off（`feature_flags.V6_ENABLED=False`），只寫入不派送**；開啟的唯一條件
+是判準報告程式化產出，不是人為判斷。
+
+| 元件 | 位置 | 要點 |
+|---|---|---|
+| 複核介面 | `dashboard/review_api.py`＋`/review` 表單頁 | 佇列＝3 筆交集派送＋10 筆 pro 抽樣（確定性）；blind 流程的說明卡由**後端**扣住（前端藏不住開發者工具）；`time_to_locate_sec` 與總時長分開計（定位是介面成本非訊號成本，判準用扣除後口徑）；3×3 網格疊圖近似指引 |
+| 判讀 API | `dashboard/inspections_api.py` | 非同步（finalize 即回 202、輪詢取果）、冪等鍵 `(rental_id, sha256(sorted(photo_hashes)))` 實測去重、v6 觸發限縮（僅「判無新損＋帶既有損主張」，省 75% 成本）、`versions` 每筆必回、降級不停止還車流程 |
+| Prompt 凍結 | `pipeline/prompts/`＋`prompt_manifest.py` | MANIFEST sha256 啟動時比對、不符拒絕啟動；tests 雙向凍結（檔案==程式內常數） |
+| §4 小樣本補充條款 | `shadow_mode.acceptance_with_supplement()` | 預先註冊（2026-08-29，資料進來前）：n<15 一律不給結論；15≤n<20 改用「扣定位耗時 ≤60s＋無 match_failure＋至少 1 confirmed＋無停止條件」 |
+| 監控 | `GET /v1/review/health` | 訊號率/交集過濾率/單模型率 vs 第一期實測基線，偏離 2 倍告警——單模型率漂移是 prompt/模型悄悄變動的最早訊號 |
+
+**上線前檢查（規格 §5）已做**：89 筆無主張案＝88 clean＋1 not_comparable，
+零已知真新損——v6 觸發限縮的前提「零訊號＝本來就沒訊號」成立。
+生產訊號寫 `shadow_signals_live.jsonl`，與第一期資料集檔分開。
+
+**找隊友複核只需一句話**：開 server 後瀏覽器進 `http://<IP>:8000/review`，
+13 筆約一小時，答完自動出判準。
+
 ## 評測與版本管理規範（改 prompt 前必讀）
 
 上面五次證偽能成立，靠的是同一套評測紀律。日後任何 prompt／門檻／模型改動一律照此執行：
@@ -264,7 +285,7 @@ flash 80%／pro 40%，wrong_area 歸因欄位為必備。複核佇列已就緒
 
 - `SETUP.md` — **環境安裝、驗證指令與常見問題（第一次接手請先看這份）**
 - `requirements.txt` — 執行環境依賴（Python 3.12/3.13）
-- `tests/` — 判定骨幹回歸測試（`python -m pytest tests/ -q`，224 項，零 API 成本）
+- `tests/` — 判定骨幹回歸測試（`python -m pytest tests/ -q`，253 項，零 API 成本）
 - `pipeline/` — 全部程式與評測結果（用法見 SETUP.md）
   - `results_config.py` — 判定結果檔的單一事實來源；Dashboard／標註／護照／KPI 一律讀同一份
 - `dashboard/` — 複核後台原始碼：`dashboard_shell.html`（UI 模板）+ `build_dashboard.py`（一鍵組裝單檔版）+ `server.py`（server 版）
