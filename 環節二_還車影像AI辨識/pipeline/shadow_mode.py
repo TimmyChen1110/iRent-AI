@@ -76,8 +76,11 @@
       是「視角造成的可見度差」而非「新損」；本資料集上 v6 的
       已證實效益歸零，僅存結構性價值（差異送審機制）
     ④現行 prompt 對照人工重標的 Recall 由 95.5%（21/22）變 100%（21/21）
-  → relabels.json 是全部指標的 ground truth，改動需用戶決定；
-    在定案前，任何場合引用 v6「Recall→100%」主張都必須附帶此爭議。
+  → 【2026-08-29 定案（用戶決定）】RDH-3092 已改判 uncertain：
+    relabels.json 已註記＋指向證據；現行 prompt 對照重標為
+    n=137、Recall 21/21=100%、FPR 0%（relabeled_metrics.json 含歷史值）；
+    v6 頭條主張已在 README 撤回，活文件（成果摘要／簡報／開工須知／
+    training 對照）全數改為新口徑，歷史 A/B 表保留原口徑並加註。
 
 用法：
   python3 shadow_mode.py --step 0p       # 零 API：雙穩態盛行率
