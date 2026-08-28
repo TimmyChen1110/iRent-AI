@@ -197,7 +197,7 @@
   <h1>iRent 智能車況管家<br>還車影像 AI 辨識系統設計</h1>
   <p class="subtitle">運用 AI 辨識使用者上傳的還車照片：比對借／還車影像偵測<strong>新增車損</strong>、判定<strong>車內整潔程度</strong>，並在異常時觸發<strong>後台預警與通知</strong>，優化租還車體驗與營運管理效率。</p>
   <div class="meta">
-    <span>DATE <b>2026-08-27</b></span>
+    <span>DATE <b>2026-08-29</b></span>
     <span>ENGINE <b>混合式（品質檢核 + VLM 模型級聯）</b></span>
     <span>SCOPE <b>架構設計 + 141 組實測 + 四次 A/B 方法論驗證</b></span>
   </div>
@@ -508,14 +508,14 @@
   <p class="src-note">※ 目標：Recall ≥90%、誤報率 ≤5%。級聯僅升級 3% 案件（4 組）至 gemini-3.1-pro 三票多數決，即 +4.7pp 召回。1 組臨界案例（既有舊損密集車輛）跨執行判定會翻轉；其餘跨輪判定一致性 99.3%。</p>
 
   <h3>141 組全量重標（視覺仲裁）</h3>
-  <p>以並排對照圖逐組人工檢視全部 141 組，存疑案例以全解析度放大、亮度增強與「還2」補拍照二次複驗（AI 輔助仲裁）。修正 8 筆標籤：4 筆「未索賠」實為可見新損；2 筆索賠案借/還照根本拍不到損傷部位；RDY-6382 的損傷藏在還2 補拍照（左側車門凹陷，主還車照拍正面看不到）；RDZ-0187 增亮後仍模糊、維持存疑。以重標後 ground truth 重新計分：</p>
+  <p>以並排對照圖逐組人工檢視全部 141 組，存疑案例以全解析度放大、亮度增強與「還2」補拍照二次複驗（AI 輔助仲裁）。修正 9 筆標籤：4 筆「未索賠」實為可見新損；2 筆索賠案借/還照根本拍不到損傷部位；RDY-6382 的損傷藏在還2 補拍照（左側車門凹陷，主還車照拍正面看不到）；RDZ-0187 增亮後仍模糊、維持存疑；RDH-3092 原記為唯一漏抓，後經人工複核＋原圖放大複驗證實借車照同區已可見鈑面變形、改判存疑（2026-08-29，證據照存 repo）。以重標後 ground truth 重新計分：</p>
   <div class="tblwrap"><table>
     <tr><th>指標</th><th>v3 + 級聯（對重標 GT）</th><th>說明</th></tr>
-    <tr><td>Recall</td><td class="num"><strong>95.5%（21/22）</strong></td><td>含 4 筆原「未索賠」真損全數抓到；唯一漏抓 RDH-3092（借車照視角半遮 + 舊損密集，AI 判為既有損）</td></tr>
+    <tr><td>Recall</td><td class="num"><strong>100%（21/21）</strong></td><td>含 4 筆原「未索賠」真損全數抓到；零漏抓（原記漏抓的 RDH-3092 經複驗證實 AI 判「既有損」為正確判定）</td></tr>
     <tr><td>誤報率</td><td class="num"><strong>0%（0/116）</strong></td><td>原 4 筆「誤報」全數證實為標籤錯誤</td></tr>
-    <tr><td>排除樣本</td><td class="num">3 組（2.1%）</td><td>2 組拍錯側／未覆蓋、1 組過暗模糊——全屬拍攝品質問題</td></tr>
+    <tr><td>排除樣本</td><td class="num">4 組（2.8%）</td><td>2 組拍錯側／未覆蓋、1 組過暗模糊、1 組新舊損無法定論——全屬拍攝品質問題</td></tr>
   </table></div>
-  <p class="src-note">※ 重標明細見 pipeline/relabels.json。正確解讀：<b>照片可比對時，AI 與逐圖仲裁近乎完全一致（138 組僅 1 筆分歧）；系統的極限在拍攝品質而非辨識能力</b>——排除與漏抓案例全數源自借車照覆蓋不足，是二期拍攝端檢核與車輛照片鏈的直接立論依據。</p>
+  <p class="src-note">※ 重標明細見 pipeline/relabels.json。正確解讀：<b>照片可比對時，AI 與逐圖仲裁完全一致（137 組零分歧）；系統的極限在拍攝品質而非辨識能力</b>——排除與漏抓案例全數源自借車照覆蓋不足，是二期拍攝端檢核與車輛照片鏈的直接立論依據。</p>
 
   <h3>關鍵發現</h3>
   <ul>
@@ -545,8 +545,8 @@
     <div class="vc kept">
       <div class="vh">BASELINE · 採用中</div>
       <div class="vt">現行判定 prompt</div>
-      <div class="vr">Recall <span class="vnum">95.5%</span><br>誤報 <span class="vnum">0%</span><br>
-        <span class="mini">n=138（人工逐圖重標）</span></div>
+      <div class="vr">Recall <span class="vnum">100%</span><br>誤報 <span class="vnum">0%</span><br>
+        <span class="mini">n=137（人工逐圖重標，2026-08-29 修正後）</span></div>
     </div>
     <div class="vc lost">
       <div class="vh">實驗 A · 落敗</div>
@@ -640,8 +640,8 @@
     </div>
     <div class="card">
       <span class="tag">REGRESSION TESTS</span>
-      <h4>142 項零 API 測試</h4>
-      <p>覆蓋 P1/P2/P3 分流、級聯升級條件、平手取有損、估價級距與材質規則。
+      <h4>226 項零 API 測試</h4>
+      <p>覆蓋 P1/P2/P3 分流、級聯升級條件、平手取有損、估價級距與材質規則、差分查核與 shadow 判準。
         改壞了不會報錯、只會靜靜分錯級的邏輯，全部鎖住。</p>
     </div>
     <div class="card">

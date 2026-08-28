@@ -6398,7 +6398,7 @@ const PASSPORTS = (typeof PASSPORT_DATA !== "undefined") ? PASSPORT_DATA : {};
 
 /* 實測 KPI（來源：analyze_autopass.py / quality_gate.py / cleanliness_score.py / photo_chain.py） */
 const OPS = {
-  photos: 27367, orders: 4820, recall: 95.5, fpr: 0,
+  photos: 27367, orders: 4820, recall: 100, fpr: 0,
   autoPass: 83.0, alert: 15.6, human: 1.4, gate: 9.2, escalate: 2.8,
   interiorReal: 24, interiorMis: 56, chainCars: 1126, chainScanned: 15, chainHits: 1,
 };
@@ -6870,8 +6870,8 @@ function hotCarSvg(cnt) {
 // 包含全部落敗的版本——量測過程本身就是交付物。
 const AB_RUNS = [
   { tag: "BASELINE", name: "現行判定 prompt", state: "kept",
-    recall: "95.5%", fpr: "0%", prec: "100%",
-    note: "採用中。141 組對照人工逐圖重標（n=138）。" },
+    recall: "100%", fpr: "0%", prec: "100%",
+    note: "採用中。141 組對照人工逐圖重標（n=137；2026-08-29 原記唯一漏抓 RDH-3092 經原圖複驗改判存疑後，零漏抓）。" },
   { tag: "實驗 A", name: "規格版完整重寫", state: "lost",
     recall: "100%", fpr: "3.5%", prec: "84.6%",
     note: "先描述後判斷／主動排除混淆源／UV 座標。多抓 1 筆真損，代價是 4 筆誤告用戶。" },
