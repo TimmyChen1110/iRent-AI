@@ -691,8 +691,11 @@ def main():
     ap.add_argument("--rpm", type=int, default=8)
     ap.add_argument("--workers", type=int, default=2)
     args = ap.parse_args()
-    {"0p": step_0p, "phase1": step_phase1, "signals": step_signals,
-     "cards": step_cards, "review": step_review, "report": step_report}[args.step](args)
+    try:
+        {"0p": step_0p, "phase1": step_phase1, "signals": step_signals,
+         "cards": step_cards, "review": step_review, "report": step_report}[args.step](args)
+    except KeyboardInterrupt:
+        print("\n已中斷。已回答的複核都已存檔，重跑 --step review 會從未答的繼續。")
 
 
 if __name__ == "__main__":
