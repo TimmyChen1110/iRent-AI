@@ -201,3 +201,24 @@ class TestIntersectVsUnion:
         assert out["intersection"]["precision"] == 1.0
         assert out["missed_by_intersection"] == 2
         assert out["layering_recommended"] is True
+
+
+# ---------- 互動複核的寫回 ----------
+
+class TestApplyReview:
+    from shadow_mode import apply_review
+
+    def test_只更新目標記錄(self):
+        from shadow_mode import apply_review
+        rs = [{"signal_id": "A左後-A2", "review_verdict": None},
+              {"signal_id": "B右前-C2", "review_verdict": None}]
+        out = apply_review(rs, "A左後-A2", {"review_verdict": "confirmed_damage",
+                                            "review_duration_sec": 42.0})
+        assert out[0]["review_verdict"] == "confirmed_damage"
+        assert out[0]["review_duration_sec"] == 42.0
+        assert out[1]["review_verdict"] is None
+
+    def test_不存在的id不動任何記錄(self):
+        from shadow_mode import apply_review
+        rs = [{"signal_id": "A左後-A2", "review_verdict": None}]
+        assert apply_review(rs, "X", {"review_verdict": "no_damage"}) == rs

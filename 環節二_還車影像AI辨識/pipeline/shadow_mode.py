@@ -595,16 +595,104 @@ def step_report(_args):
     }, ensure_ascii=False, indent=2))
 
 
+# ---------- 互動式複核（第二期，由真人執行） ----------
+
+VERDICT_KEYS = {"1": "confirmed_damage", "2": "no_damage", "3": "cannot_determine"}
+POSITION_KEYS = {"1": "exact", "2": "approximate", "3": "wrong_area", "4": "n/a"}
+
+
+def apply_review(records: list, signal_id: str, review: dict) -> list:
+    """把單筆複核結果寫進記錄清單（純函式，tests 覆蓋）。"""
+    out = []
+    for r in records:
+        if r["signal_id"] == signal_id:
+            r = {**r, **review}
+        out.append(r)
+    return out
+
+
+def _save(records):
+    SIGNALS_PATH.write_text("\n".join(json.dumps(r, ensure_ascii=False)
+                                      for r in records) + "\n")
+
+
+def _ask(prompt, keys):
+    while True:
+        v = input(prompt).strip()
+        if v in keys:
+            return keys[v]
+        print(f"  請輸入 {'/'.join(keys)}")
+
+
+def step_review(_args):
+    """逐筆複核派送訊號：開並排圖 → 顯示 P9 卡（盲測流程先問後看卡）→
+    計時 → 寫回 shadow_signals.jsonl。全部完成後自動出 report。
+
+    計時定義：從說明卡（盲測：從圖）呈現到 verdict 輸入完成；
+    free_text 打字時間不計入。
+    """
+    import subprocess
+    import time as _time
+    records = [json.loads(l) for l in SIGNALS_PATH.read_text().splitlines()]
+    todo = [r for r in records if r["dispatched"] and not r.get("review_verdict")]
+    if not todo:
+        print("沒有待複核的派送訊號。現況：")
+        return step_report(_args)
+    print(f"待複核 {len(todo)} 筆。判定選項：1=確認損傷 2=無損傷 3=無法判定\n"
+          f"位置符合：1=準確 2=大致 3=錯誤區域 4=不適用\n")
+    for i, r in enumerate(todo):
+        sid = r["signal_id"]
+        card_path = CARDS_DIR / f"{sid}.json"
+        img_path = CARDS_DIR / f"{sid}.jpg"
+        card = json.loads(card_path.read_text()) if card_path.exists() else None
+        print(f"\n━━━ [{i + 1}/{len(todo)}] {sid}  分區 {r['panel']}  "
+              f"訊號 {'/'.join(r['signal_types_all'])}  流程 {r['review_flow']} ━━━")
+        if img_path.exists():
+            subprocess.run(["open", str(img_path)], check=False)
+            print(f"（已開啟並排圖：左＝借車照、右＝還車照）")
+        review = {}
+        if r["review_flow"] == "blind" and card:
+            t0 = _time.time()
+            print("【盲測】先只看圖：兩張照片在此區域是否有差異？")
+            review["blind_pre_verdict"] = _ask("  盲測判定 (1/2/3)：", VERDICT_KEYS)
+            print("\n--- 現在顯示說明卡 ---")
+        if card:
+            print(f"看哪裡：{card['where_to_look']}\n差在哪：{card['what_differs']}")
+            for c_ in card.get("caveats") or []:
+                print(f"注意：{c_}")
+            print(f"（{card['reviewer_note']}）")
+        if r["review_flow"] != "blind":
+            t0 = _time.time()
+        review["review_verdict"] = _ask("最終判定 (1/2/3)：", VERDICT_KEYS)
+        review["review_position_match"] = _ask("位置符合 (1/2/3/4)：", POSITION_KEYS)
+        review["review_duration_sec"] = round(_time.time() - t0, 1)
+        if r["review_flow"] == "blind":
+            review["blind_changed_after_card"] = (
+                review["review_verdict"] != review["blind_pre_verdict"])
+        while True:
+            ft = input("訊號指向的位置上實際有什麼？（必填）：").strip()
+            if ft:
+                review["review_free_text"] = ft
+                break
+        if review["review_position_match"] == "wrong_area":
+            print(f"  歸因：{attribute_wrong_area(review['review_free_text'])}")
+        records = apply_review(records, sid, review)
+        _save(records)
+        print(f"  ✓ 已存（{review['review_duration_sec']} 秒）")
+    print("\n全部完成。判準結果：")
+    step_report(_args)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--step", required=True,
-                    choices=["0p", "phase1", "signals", "cards", "report"])
+                    choices=["0p", "phase1", "signals", "cards", "review", "report"])
     ap.add_argument("--model", default="gemini-3.7-flash", help="P9 說明卡用模型")
     ap.add_argument("--rpm", type=int, default=8)
     ap.add_argument("--workers", type=int, default=2)
     args = ap.parse_args()
     {"0p": step_0p, "phase1": step_phase1, "signals": step_signals,
-     "cards": step_cards, "report": step_report}[args.step](args)
+     "cards": step_cards, "review": step_review, "report": step_report}[args.step](args)
 
 
 if __name__ == "__main__":
