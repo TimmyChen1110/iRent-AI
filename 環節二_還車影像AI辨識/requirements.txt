@@ -10,6 +10,7 @@ pydantic>=2.0.0            # 判定結果 schema，強制 Gemini 結構化輸出
 pillow>=10.0.0             # EXIF 轉正、縮圖、標註繪圖（prep_image / draw_annotations）
 opencv-python>=4.8.0       # Quality Gate 模糊度、cv_prefilter 的 SIFT/ORB/RANSAC/SSIM
 numpy>=1.24.0             # opencv 相依 + 差異圖運算
+scipy>=1.10.0              # 匈牙利匹配（continuous_diff.match_marks 的 linear_sum_assignment）；非 training 專用
 pillow-heif>=0.13.0        # iPhone HEIC 支援（judge_photos 現場實測必需）
 
 # --- 監理台 Server（dashboard/server.py） ---
@@ -26,3 +27,6 @@ scikit-learn>=1.3.0        # GroupKFold 分組切分 + PR/ROC-AUC
 
 # --- 測試 ---
 pytest>=8.0.0
+
+# --- 簡報建置（Timmy_Project_Report/build_deck.py 產生 presentation.pptx；非 runtime 依賴） ---
+python-pptx>=0.6.23

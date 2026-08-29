@@ -9,12 +9,12 @@
 | 指標 | 數值 |
 |---|---|
 | 車損偵測（141 組全量，對照**原始索賠標籤**） | 快篩 Recall 81% → Pro 級聯 **85.7%**、誤報 3.3% ← 系統對外指標 |
-| 同一批結果對照**逐圖人工重標**（排除 3 組無法判定，n=138） | Recall 95.5%（21/22）、誤報 0% ← 說明「4 筆 FP 其實是真車損、原標籤有噪音」|
-| 標籤噪音發現 | 4 筆「未索賠」樣本經放大複驗證實為真實新損（AI 抓到人工漏掉的車損） |
-| 車內整潔（80 張 Blob 真實車內照） | 乾淨 21／普通 56／髒汙 3（3.75% 檢出，人工抽驗確認） |
-| API 成本 | $0（Gemini 免費額度）；全量上線估 NT$1,200／日 |
+| 同一批結果對照**逐圖人工重標**（排除 4 組無法判定，n=137） | Recall 100%（19/19）、誤報 0.85%（1/118）、精確度 95% ← 說明「帳面 4 筆 FP 中 2 筆其實是真車損、原標籤有噪音」|
+| 標籤噪音發現 | 原記 4 筆「未索賠」實為真損，2026-08-30 用戶逐圖複核後確認 2 筆（AI 抓到人工漏登的車損）；另 1 筆為 AI 誤報、1 筆借車照覆蓋不足不可比 |
+| 車內整潔（80 張 Blob 候選影像） | `photo_ok` 檢查（模型判斷）：24 張通過、56 張未通過（人工抽驗 3 張未通過案例，3 張皆為車外照）；級聯模型對通過檢查的 24 張分類結果：乾淨 20／普通 1／髒汙 3 |
+| API 成本 | 尚未完成正式成本驗證，暫不作量化宣稱（正式計價與帳單核對列為後續工作） |
 
-關鍵工程發現：76% 照片帶未套用的 EXIF 旋轉（轉正 +10pp recall）；傳統 CV 差異偵測（ORB+SSIM）被實測推翻（手持照對齊成功率僅 45%），架構因此修正為 **VLM 模型級聯**（Flash 全量快篩 → 疑似案件升級 Pro 三票多數決）。
+關鍵工程發現：76% 照片帶未套用的 EXIF 旋轉（轉正 +10pp recall）；傳統 CV 差異偵測（ORB+SSIM）被實測推翻（手持照對齊成功率僅 45%），架構因此修正為 **VLM 模型級聯**（Flash 全量快篩 → 疑似案件改用 Pro 模型複核）。
 
 ## 專案結構（對應比賽三環節）
 
@@ -24,7 +24,7 @@
 │   ├── pipeline/                # 辨識與評測程式
 │   │   ├── build_pairs.py       # 檔名解析 → 借/還配對（120 負 + 21 正）
 │   │   ├── run_eval_gemini.py   # 車損判定評測（EXIF 轉正、few-shot、還2、斷點續跑）
-│   │   ├── run_cascade.py       # Pro 級聯複核（低信心/無法比對升級、多數決）
+│   │   ├── run_cascade.py       # Pro 級聯複核（低信心/無法比對改用 Pro 判讀）
 │   │   ├── classify_interior.py # F2 車內整潔三級分類（Blob 下載 80 張實測）
 │   │   ├── annotate_damage.py   # 損傷/髒污視覺標註（紅框+中文說明）
 │   │   ├── batch_annotate.py    # Dashboard 標註框批次產生
@@ -53,7 +53,7 @@ pip install -r requirements.txt
 echo "你的GEMINI_KEY" > pipeline/.gemini_key   # 金鑰已被 .gitignore 排除
 
 # 驗證安裝（零 API 成本）
-python -m pytest tests/ -q                      # 39 passed
+python -m pytest tests/ -q                      # 262 passed
 python pipeline/quality_gate.py                 # 282 張檢核，攔下 26 張（9.2%）
 
 cd pipeline
@@ -68,5 +68,5 @@ python3 judge_photos.py 借車照.jpg 還車照.jpg     # 現場實測：任意�
 
 ## 線上交付物（私有 Artifact）
 
-- 系統架構設計文件 v1.5：https://claude.ai/code/artifact/ab616929-dda5-47a6-9324-8cb6d022c6d2
+- 系統架構設計文件 v2.0（2026-08-29 同步）：https://claude.ai/code/artifact/ab616929-dda5-47a6-9324-8cb6d022c6d2
 - 複核後台 Demo（38 個真實案例、一鍵複核）：https://claude.ai/code/artifact/ea7e3f69-18d6-4e5d-bbc2-2d6dd4025058

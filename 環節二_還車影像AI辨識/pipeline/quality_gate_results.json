@@ -20,7 +20,7 @@
  "fail_pct": 9.2,
  "fails": [
   {
-   "file": "RDS2805右前 借.jfif",
+   "file": "RDS2805右前 借.jpg",
    "pass": false,
    "reasons": [
     "照片過暗（亮度 34 < 55），請開閃光或移到亮處重拍"
@@ -30,7 +30,7 @@
    "highlight_clip": 0.0
   },
   {
-   "file": "RDS2805右前 還.jfif",
+   "file": "RDS2805右前 還.jpg",
    "pass": false,
    "reasons": [
     "照片過暗（亮度 48 < 55），請開閃光或移到亮處重拍"
@@ -40,7 +40,7 @@
    "highlight_clip": 0.001
   },
   {
-   "file": "RDS2805右後 借.jfif",
+   "file": "RDS2805右後 借.jpg",
    "pass": false,
    "reasons": [
     "照片過暗（亮度 42 < 55），請開閃光或移到亮處重拍"
@@ -50,7 +50,7 @@
    "highlight_clip": 0.0
   },
   {
-   "file": "RDS2805右後 還.jfif",
+   "file": "RDS2805右後 還.jpg",
    "pass": false,
    "reasons": [
     "照片過暗（亮度 38 < 55），請開閃光或移到亮處重拍"
@@ -60,7 +60,7 @@
    "highlight_clip": 0.0
   },
   {
-   "file": "RDS2805左前 借.jfif",
+   "file": "RDS2805左前 借.jpg",
    "pass": false,
    "reasons": [
     "照片過暗（亮度 46 < 55），請開閃光或移到亮處重拍"
@@ -70,7 +70,7 @@
    "highlight_clip": 0.004
   },
   {
-   "file": "RDS2805左前 還.jfif",
+   "file": "RDS2805左前 還.jpg",
    "pass": false,
    "reasons": [
     "照片過暗（亮度 50 < 55），請開閃光或移到亮處重拍"
@@ -80,7 +80,7 @@
    "highlight_clip": 0.001
   },
   {
-   "file": "RDS2805左後 借.jfif",
+   "file": "RDS2805左後 借.jpg",
    "pass": false,
    "reasons": [
     "照片過暗（亮度 51 < 55），請開閃光或移到亮處重拍"
@@ -90,7 +90,7 @@
    "highlight_clip": 0.003
   },
   {
-   "file": "RDS2805左後 還.jfif",
+   "file": "RDS2805左後 還.jpg",
    "pass": false,
    "reasons": [
     "照片模糊（清晰度 46 < 60），請對焦後重拍",
@@ -101,7 +101,7 @@
    "highlight_clip": 0.009
   },
   {
-   "file": "RDZ0155左後 還.jfif",
+   "file": "RDZ0155左後 還.jpg",
    "pass": false,
    "reasons": [
     "照片過暗（亮度 50 < 55），請開閃光或移到亮處重拍"
@@ -193,7 +193,7 @@
    "highlight_clip": 0.0
   },
   {
-   "file": "RFH7851右後 借.jfif",
+   "file": "RFH7851右後 借.jpg",
    "pass": false,
    "reasons": [
     "照片過暗（亮度 46 < 55），請開閃光或移到亮處重拍"
@@ -203,7 +203,7 @@
    "highlight_clip": 0.0
   },
   {
-   "file": "RFH7851左後 借.jfif",
+   "file": "RFH7851左後 借.jpg",
    "pass": false,
    "reasons": [
     "照片過暗（亮度 50 < 55），請開閃光或移到亮處重拍"

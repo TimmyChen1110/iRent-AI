@@ -2,13 +2,17 @@
  "evaluable": 137,
  "excluded": 4,
  "confusion": {
-  "TP": 21,
+  "TP": 19,
   "FN": 0,
-  "FP": 0,
-  "TN": 116
+  "FP": 1,
+  "TN": 117
  },
  "recall": 1.0,
- "false_positive_rate": 0.0,
+ "false_positive_rate": 0.00847457627118644,
+ "precision": 0.95,
  "fn_cases": [],
- "history": "2026-08-29 前：n=138、Recall 0.9545、FN=[RDH-3092 左後]。該筆經用戶複核＋原圖複驗改判 uncertain（relabels.json 有註記）"
+ "fp_cases": [
+  "RCG2235 右後"
+ ],
+ "history": "2026-08-29 前：n=138、Recall 0.9545、FN=[RDH-3092]。2026-08-29 RDH-3092 改 uncertain(n=137)；2026-08-30 再改 clean(n=138)。2026-08-30 用戶逐圖複核 4 筆『未索賠實為真損』：確認 RFB5176右後、RFH8122右後；RCG2235右後 改判 clean（既有痕，AI 誤報）；RFH8122左後 改判 not_comparable（借車照覆蓋不足）。"
 }

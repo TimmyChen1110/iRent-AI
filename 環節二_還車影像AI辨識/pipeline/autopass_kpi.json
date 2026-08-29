@@ -17,7 +17,5 @@
   "pct": 1.4
  },
  "human_or_alert_pct": 17.0,
- "auto_pass_missed_vs_truth": [
-  "RDH-3092 左後"
- ]
+ "auto_pass_missed_vs_truth": []
 }

@@ -3,7 +3,7 @@
 
 快篩：gemini-3.7-flash 全量三級分類。
 複核：判「髒汙」或 confidence<0.7 者升級 Pro 模型確認後才算數（控誤報，
-      對應架構 §04：髒汙須 Opus/Pro 級複核確認才觸發 P1 預警）。
+      對應架構 §04：髒汙須 Pro 級（高階模型）複核確認才觸發 P1 預警）。
 
 用法：python3 classify_interior.py            # interior_sample.json 全量
       python3 classify_interior.py --limit 6  # 冒煙

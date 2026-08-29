@@ -256,7 +256,7 @@
   <p class="sec-lede">沿用現行上傳鏈路（App → Azure Blob），以事件驅動方式掛上辨識服務，對既有系統侵入最小。</p>
 
   <figure>
-    <svg viewBox="0 0 920 300" role="img" aria-label="整體架構圖：App 上傳照片至 Azure Blob，事件觸發辨識服務，經 CV 前處理與 Claude Vision 判定後寫入結果資料庫，再由預警引擎路由至後台工單與即時通知">
+    <svg viewBox="0 0 920 300" role="img" aria-label="整體架構圖：App 上傳照片至 Azure Blob，事件觸發辨識服務，經 CV 前處理與 VLM 判定引擎判定後寫入結果資料庫，再由預警引擎路由至後台工單與即時通知">
       <defs>
         <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
           <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
@@ -277,7 +277,7 @@
         <text x="545" y="66">影像前處理</text>
         <text x="545" y="86" font-size="11.5" font-weight="400">OpenCV：配對・對齊・差異</text>
         <text x="795" y="58" fill="#00A862">AI 判定引擎</text>
-        <text x="795" y="78" font-size="11.5" font-weight="400">Claude Vision</text>
+        <text x="795" y="78" font-size="11.5" font-weight="400">VLM 模型級聯</text>
         <text x="795" y="96" font-size="11.5" font-weight="400">車損比對 / 整潔分級</text>
       </g>
       <g stroke="currentColor" stroke-width="1.5" marker-end="url(#arr)">
@@ -351,7 +351,7 @@
   <h3>F1 · 新車損偵測（借 vs 還 比對）</h3>
 
   <figure>
-    <svg viewBox="0 0 920 330" role="img" aria-label="車損偵測流程：借還照片配對後經品質檢核、影像對齊與差異偵測，無顯著差異者自動通過，有候選差異者送 Claude Opus 比對判定，輸出新車損 JSON 或自動通過">
+    <svg viewBox="0 0 920 330" role="img" aria-label="車損偵測流程：借還照片配對後經品質檢核、影像對齊與差異偵測，無顯著差異者自動通過，有候選差異者送高階模型比對判定，輸出新車損 JSON 或自動通過">
       <defs>
         <marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
           <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
@@ -396,7 +396,7 @@
       <rect x="620" y="262" width="280" height="60" rx="3" fill="none" stroke="#00A862" stroke-width="2.5"/>
       <path d="M 858 95 L 895 95 L 895 240 L 760 240 L 760 256" fill="none" stroke="#00A862" stroke-width="2" marker-end="url(#arr2)"/>
       <text x="760" y="286" font-size="12.5" fill="#00A862" text-anchor="middle" font-weight="600">Stage 2 · 高階模型複核</text>
-      <text x="760" y="305" font-size="11" fill="currentColor" text-anchor="middle">Pro/Opus 級 → 新損傷？位置/類型/嚴重度</text>
+      <text x="760" y="305" font-size="11" fill="currentColor" text-anchor="middle">Pro 級（高階模型）→ 新損傷？位置/類型/嚴重度</text>
       <!-- output arrow -->
       <line x1="616" y1="292" x2="560" y2="292" stroke="#00A862" stroke-width="2" marker-end="url(#arr2)"/>
       <rect x="400" y="266" width="156" height="52" rx="3" fill="none" stroke="currentColor" stroke-width="1.5"/>
@@ -408,16 +408,16 @@
       <text x="295" y="212" font-size="12" fill="currentColor" text-anchor="middle" font-weight="600">不合格照片</text>
       <text x="295" y="230" font-size="11" fill="currentColor" text-anchor="middle">標記「無法比對」入工單</text>
     </svg>
-    <figcaption><b>車損偵測管線（v1.1 實測修正版）。</b>快篩層以低價 VLM 全量判定（實測約 85% 配對直接放行），只有疑似新損案件（綠色路徑）升級高階模型複核——級聯是混合式架構省成本、控誤報的關鍵。</figcaption>
+    <figcaption><b>車損偵測管線（實測修正版・2026-08-29 同步）。</b>快篩層以低價 VLM 全量判定（實測約 85% 配對直接放行），只有疑似新損案件（綠色路徑）升級高階模型複核——級聯是混合式架構省成本、控誤報的關鍵。</figcaption>
   </figure>
 
   <ul>
     <li><strong>Stage 0 — 品質與方向前處理：</strong>EXIF 方向轉正（實測資料集 76% 照片帶未套用的旋轉標記）、模糊度（Laplacian variance）與曝光檢核為純 CV；角度正確性交由 VLM 判定時一併校驗並輸出 <code>angle_match</code>。不合格照片直接標記「無法比對」，成為缺圖工單，而非硬比對產生誤判。<br><em class="hl">Quality Gate 實測（quality_gate.py，282 張借還照）：</em>攔下 26 張（9.2%）模糊/過暗照片並給出具體重拍指示——包含唯一連人工都無法複驗的存疑案例 RDZ-0187（清晰度 49、亮度 44，雙重不合格）。若拍攝當下即攔截，判定天花板直接抬高。</li>
     <li><strong>Stage 1 — 輕量模型快篩：</strong>以低價 VLM（Flash 級）對全部配對做第一輪判定，明確「無新損」者直接放行。</li>
-    <li><strong>Stage 2 — 高階模型複核：</strong>快篩標記「有新損」或低信心的案件，升級高階模型（Pro / Opus 級）複核後才觸發預警，控制誤報。</li>
+    <li><strong>Stage 2 — 高階模型複核：</strong>快篩標記「有新損」或低信心的案件，升級高階模型（Pro 級）複核後才觸發預警，控制誤報。</li>
   </ul>
 
-  <div class="callout warn"><strong>實測修正（v1.1）：</strong>原設計以傳統 CV（ORB 對齊 + SSIM 差異）作為過濾層，實測 141 組真實配對後推翻——使用者手持拍攝的借/還照角度與光線差異過大，對齊成功率僅 45%，且對齊成功者的差異分數在有損/無損樣本間完全重疊（光影變化淹沒車損訊號）。混合式因此修正為「<strong>CV 只做品質/方向前處理，過濾層改用模型級聯</strong>」：便宜 VLM 快篩 → 高階 VLM 複核。這也是實測的價值：架構要跟著證據修正。</div>
+  <div class="callout warn"><strong>實測修正：</strong>原設計以傳統 CV（ORB 對齊 + SSIM 差異）作為過濾層，實測 141 組真實配對後推翻——使用者手持拍攝的借/還照角度與光線差異過大，對齊成功率僅 45%，且對齊成功者的差異分數在有損/無損樣本間完全重疊（光影變化淹沒車損訊號）。混合式因此修正為「<strong>CV 只做品質/方向前處理，過濾層改用模型級聯</strong>」：便宜 VLM 快篩 → 高階 VLM 複核。這也是實測的價值：架構要跟著證據修正。</div>
 
   <p>判定輸出以 <strong>Structured Outputs</strong>（<code>output_config.format</code>）強制 JSON Schema，下游規則引擎零解析風險：</p>
   <pre><code>{
@@ -437,10 +437,10 @@
   <h3>F2 · 車內整潔程度分級</h3>
   <p>車內照（ImageType 10/11）為單張判讀、無需借還比對，是典型的三級分類任務——輕量 VLM 做第一線分類，僅「髒汙」判定與低信心（&lt;0.7）案例升級 Pro 級複核，控制誤報又壓低成本。</p>
 
-  <div class="callout"><strong>F2 實測（80 張 Blob 真實車內照，40 筆訂單）：</strong>分布為乾淨 21／普通 56／<em class="hl">髒汙 3（檢出率 3.75%）</em>。Pro 複核翻轉 5 張，其中 1 張把快篩漏判的「方向盤後方遺留寶特瓶」從乾淨救回髒汙；髒汙判定經人工看圖抽驗，明確污漬案例正確。額外發現：抽樣中即有「車內照」欄位混入車外照（模型誠實回報「非車內照無法判定」）——再次佐證分類錯置為常態，需入補件流程。已知課題：快篩對「普通」級的信心分數校準偏低（中位數 0.1），造成升級率偏高，需在 prompt 明確定義信心語意。</div>
+  <div class="callout"><strong>F2 實測（80 張 Blob 候選影像，40 筆訂單）：</strong>經 <code>photo_ok</code> 有效性檢查（模型判斷，非完整人工 Ground Truth），<em class="hl">24 張通過、56 張未通過</em>（人工抽驗 3 張未通過案例，3 張皆為車外照）。級聯模型對通過檢查的 24 張分類：乾淨 20／普通 1／髒汙 3；其中 1 張把快篩漏判的「方向盤後方遺留寶特瓶」由 Pro 複核從乾淨救回髒汙，髒汙判定經人工看圖抽驗。「車內照」欄位大量混入非車內影像——佐證分類錯置為常態，需入補件流程。已知課題：快篩對「普通」級的信心分數校準偏低（中位數 0.1），造成升級率偏高，需在 prompt 明確定義信心語意。</div>
   <div class="tblwrap"><table>
     <tr><th>分級</th><th>定義（Prompt 準則）</th><th>動作</th></tr>
-    <tr><td><span class="pill red">髒汙</span></td><td>明顯垃圾、食物殘渣、液體污漬、泥沙覆蓋、異味風險物（菸蒂、寵物毛）</td><td>Opus 複核確認 → <strong>異常預警</strong>，該車暫停派單、優先清潔</td></tr>
+    <tr><td><span class="pill red">髒汙</span></td><td>明顯垃圾、食物殘渣、液體污漬、泥沙覆蓋、異味風險物（菸蒂、寵物毛）</td><td>Pro 級複核確認 → <strong>異常預警</strong>，該車暫停派單、優先清潔</td></tr>
     <tr><td><span class="pill amber">普通</span></td><td>少量灰塵、輕微使用痕跡，不影響下一位用戶</td><td>記錄，納入清潔排程權重</td></tr>
     <tr><td><span class="pill green">乾淨</span></td><td>無可見髒污</td><td>記錄；可回饋用戶（信譽加分／行銷）</td></tr>
   </table></div>
@@ -455,7 +455,7 @@
     <tr><th>事件</th><th>等級</th><th>通知路徑</th><th>SLA</th></tr>
     <tr><td>新車損 severity=high 或 confidence≥0.85</td><td><span class="pill red">P1 即時</span></td><td>後台紅色工單 + LINE/簡訊推播站點與客服；車輛暫停派單</td><td class="num">≤ 5 分鐘</td></tr>
     <tr><td>新車損 medium/low 或 confidence 0.6–0.85</td><td><span class="pill amber">P2 工單</span></td><td>後台複核佇列，客服上班時段處理</td><td class="num">≤ 4 小時</td></tr>
-    <tr><td>車內「髒汙」（Opus 複核確認）</td><td><span class="pill red">P1 即時</span></td><td>清潔調度通知 + 該車暫停派單至清潔完成</td><td class="num">≤ 5 分鐘</td></tr>
+    <tr><td>車內「髒汙」（Pro 級複核確認）</td><td><span class="pill red">P1 即時</span></td><td>清潔調度通知 + 該車暫停派單至清潔完成</td><td class="num">≤ 5 分鐘</td></tr>
     <tr><td>照片缺漏／無法比對（漏拍後方等）</td><td><span class="pill amber">P2 工單</span></td><td>缺圖清單；App 端推播提醒用戶補拍（二期）</td><td class="num">當日</td></tr>
     <tr><td>判定正常</td><td><span class="pill green">P3 記錄</span></td><td>寫入結果 DB，供稽核與抽查</td><td class="num">—</td></tr>
   </table></div>
@@ -474,23 +474,16 @@
 
   <div class="tblwrap"><table>
     <tr><th>層級</th><th>選型</th><th>角色</th><th>理由</th></tr>
-    <tr><td>快篩層</td><td><code>gemini-3.7-flash</code><br>（或 <code>claude-haiku-4-5</code>）</td><td>全量借/還比對第一輪判定、車內整潔三級初分</td><td>本次實測引擎；AI Studio 免費層即可原型驗證，付費單價極低。資料量小（正樣本僅 53 張）不足以訓練專用模型，VLM 零訓練即可上線</td></tr>
+    <tr><td>快篩層</td><td><code>gemini-3.7-flash</code><br>（或 <code>claude-haiku-4-5</code>）</td><td>全量借/還比對第一輪判定、車內整潔三級初分</td><td>本次實測引擎；AI Studio 有免費層便於快速原型驗證（正式成本驗證列為後續工作）。資料量小（正樣本僅 53 張）不足以訓練專用模型，VLM 零訓練即可上線</td></tr>
     <tr><td>複核層</td><td><code>gemini-3.1-pro</code> 級<br>（或 <code>claude-opus-5</code>）</td><td>疑似新損 / 低信心 / 髒汙案件複核後才觸發預警</td><td>視覺推理更強、控制誤報；只處理 ~15% 案件，成本可控</td></tr>
     <tr><td>前處理</td><td>OpenCV / Pillow（自建）</td><td>EXIF 方向轉正、模糊與曝光檢核</td><td>零 API 成本；實測 76% 照片需轉正，轉正後召回率 +10pp</td></tr>
   </table></div>
 
-  <h3>成本（以實測 token 用量換算）</h3>
-  <p>實測 141 組比對共耗 349k 輸入 + 49k 輸出 tokens（平均每次判定約 2.5k 輸入）。以每日 2,400 筆還車、每單 4 組車外配對 + 2 張車內照（6 次判定）換算：</p>
+  <h3>成本結構</h3>
+  <p>成本控制的關鍵在級聯結構：低價 Flash 級模型承接全量快篩，僅約 15% 疑似／臨界案件升級高階模型複核；前處理與分流層為純程式邏輯、零 API 成本。</p>
+  <div class="callout warn"><strong>成本量化揭露：</strong>正式成本驗證（實際計價模型與帳單核對）列為後續工作，本文件暫不提供每單／每日的量化成本估算。</div>
 
-  <div class="tblwrap"><table>
-    <tr><th>方案</th><th>說明</th><th>每單成本</th><th>每日估算</th></tr>
-    <tr><td>原型驗證（本次）</td><td>AI Studio 免費層，141 組全數跑完</td><td class="num">$0</td><td class="num">$0</td></tr>
-    <tr><td>Flash 全量快篩</td><td>付費層 $0.30/$2.50 per MTok</td><td class="num">≈ US$0.010</td><td class="num">≈ US$24（NT$770）</td></tr>
-    <tr><td><strong>級聯完整版</strong></td><td>Flash 全量 + ~15% 疑似案件升級 Pro 複核</td><td class="num">≈ US$0.016</td><td class="num"><strong>≈ US$38（NT$1,220）</strong></td></tr>
-  </table></div>
-  <p class="src-note">※ 依 2026-08 實測 token 用量與公開定價換算，為量級參考；提案初期原型階段成本為零。</p>
-
-  <div class="callout">對照效益：一件車損爭議的人工調閱比對成本（客服工時 + 爭議賠償流失）遠高於每單不到 NT$1 的 AI 判定成本；且缺漏率 25~30% 的後方照片問題，靠人力抽查根本無法規模化。實測更抓到一筆「未索賠的真實車損」——AI 不只省人力，還能挽回漏損（見 §07）。</div>
+  <div class="callout">對照效益：一件車損爭議的人工調閱比對成本（客服工時 + 爭議賠償流失）本就難以規模化；缺漏率 25~30% 的後方照片問題，靠人力抽查更無法覆蓋。實測亦定案確認 2 筆「未索賠的真實車損」——AI 不只省人力，還找回了人工漏登的車損（見 §07）。</div>
 </section>
 
 <!-- ================= 07 ================= -->
@@ -505,31 +498,31 @@
     <tr><td>v3 few-shot + 補拍照 + 跨側禁令</td><td class="num">81.0%（17/21）</td><td class="num">3.3%（4/120）</td><td class="num">81.0%</td></tr>
     <tr><td><strong>v3 + Pro 級聯複核</strong></td><td class="num"><strong>85.7%（18/21）</strong></td><td class="num"><strong>3.3%</strong>✅ 達標 ≤5%</td><td class="num">81.8%</td></tr>
   </table></div>
-  <p class="src-note">※ 目標：Recall ≥90%、誤報率 ≤5%。級聯僅升級 3% 案件（4 組）至 gemini-3.1-pro 三票多數決，即 +4.7pp 召回。1 組臨界案例（既有舊損密集車輛）跨執行判定會翻轉；其餘跨輪判定一致性 99.3%。</p>
+  <p class="src-note">※ 目標：Recall ≥90%、誤報率 ≤5%。級聯僅升級 3% 案件（4 組）至 gemini-3.1-pro 複核，即 +4.7pp 召回（來源為換用更強模型；附帶的 3 票一致性檢查 4 件全 3:0、無分歧）。1 組臨界案例（既有舊損密集車輛）跨執行判定會翻轉；其餘跨輪判定一致性 99.3%。</p>
 
   <h3>141 組全量重標（視覺仲裁）</h3>
-  <p>以並排對照圖逐組人工檢視全部 141 組，存疑案例以全解析度放大、亮度增強與「還2」補拍照二次複驗（AI 輔助仲裁）。修正 9 筆標籤：4 筆「未索賠」實為可見新損；2 筆索賠案借/還照根本拍不到損傷部位；RDY-6382 的損傷藏在還2 補拍照（左側車門凹陷，主還車照拍正面看不到）；RDZ-0187 增亮後仍模糊、維持存疑；RDH-3092 原記為唯一漏抓，後經人工複核＋原圖放大複驗證實借車照同區已可見鈑面變形、改判存疑（2026-08-29，證據照存 repo）。以重標後 ground truth 重新計分：</p>
+  <p>以並排對照圖逐組人工檢視全部 141 組，存疑案例以全解析度放大、亮度增強與「還2」補拍照二次複驗（AI 輔助仲裁）。修正 9 筆標籤（並經 2026-08-30 用戶逐圖複核定案）：原記 4 筆「未索賠」實為可見新損，複核後確認 2 筆（RFB5176 右後、RFH8122 右後），另 1 筆 RCG2235 右後 判定為既有痕＝AI 誤報、1 筆 RFH8122 左後 因借車照覆蓋不足改列不可比；2 筆索賠案借/還照根本拍不到損傷部位；RDY-6382 的損傷藏在還2 補拍照（左側車門凹陷，主還車照拍正面看不到）；RDZ-0187 增亮後仍模糊、維持存疑；RDH-3092 原記為唯一漏抓，後經人工複核＋原圖放大複驗證實借車照同區已可見鈑面變形，定案為無新損＝AI 判定正確（2026-08-30，證據照存 repo）。以重標後 ground truth 重新計分：</p>
   <div class="tblwrap"><table>
     <tr><th>指標</th><th>v3 + 級聯（對重標 GT）</th><th>說明</th></tr>
-    <tr><td>Recall</td><td class="num"><strong>100%（21/21）</strong></td><td>含 4 筆原「未索賠」真損全數抓到；零漏抓（原記漏抓的 RDH-3092 經複驗證實 AI 判「既有損」為正確判定）</td></tr>
-    <tr><td>誤報率</td><td class="num"><strong>0%（0/116）</strong></td><td>原 4 筆「誤報」全數證實為標籤錯誤</td></tr>
-    <tr><td>排除樣本</td><td class="num">4 組（2.8%）</td><td>2 組拍錯側／未覆蓋、1 組過暗模糊、1 組新舊損無法定論——全屬拍攝品質問題</td></tr>
+    <tr><td>Recall</td><td class="num"><strong>100%（19/19）</strong></td><td>含 2 筆原「未索賠」定案真損（RFB5176 右後、RFH8122 右後）；零漏抓（原記漏抓的 RDH-3092 經複驗定案 AI 判「無新損」正確）</td></tr>
+    <tr><td>誤報率</td><td class="num"><strong>0.85%（1/118）</strong></td><td>唯一誤報為 RCG2235 右後（把既有痕判為新損）；精確度 95%</td></tr>
+    <tr><td>排除樣本</td><td class="num">4 組（2.8%）</td><td>3 組拍錯側／借車照未覆蓋爭議部位、1 組過暗模糊存疑——全屬拍攝品質問題</td></tr>
   </table></div>
-  <p class="src-note">※ 重標明細見 pipeline/relabels.json。正確解讀：<b>照片可比對時，AI 與逐圖仲裁完全一致（137 組零分歧）；系統的極限在拍攝品質而非辨識能力</b>——排除與漏抓案例全數源自借車照覆蓋不足，是二期拍攝端檢核與車輛照片鏈的直接立論依據。</p>
+  <p class="src-note">※ 重標明細見 pipeline/relabels.json。正確解讀：<b>照片可比對時，AI 與逐圖仲裁高度一致（137 組僅 1 筆分歧）；系統的極限在拍攝品質而非辨識能力</b>——排除與漏抓案例全數源自借車照覆蓋不足，是二期拍攝端檢核與車輛照片鏈的直接立論依據。</p>
 
   <h3>關鍵發現</h3>
   <ul>
-    <li><strong>AI 抓到人工漏掉的車損（標籤噪音）：</strong>4 筆「誤報」經逐圖放大複驗——<em class="hl">全數確認為真實新車損</em>（RFB5176 藍色擦撞痕+凹陷、RCG2235 反光片旁刮痕、RFH8122 左右後保桿擦痕），只是當時未索賠。「未索賠」≠「無車損」，系統能挽回營運端漏掉的求償機會。</li>
+    <li><strong>AI 抓到人工漏掉的車損（標籤噪音）：</strong>4 筆帳面「誤報」經逐圖人工定案——<em class="hl">2 筆確認為人工漏登的真車損</em>（RFB5176 右後藍色擦撞痕、RFH8122 右後保桿擦痕）、1 筆借車照覆蓋不足不可比（RFH8122 左後）、1 筆為真誤報（RCG2235 右後把既有痕判為新損）。「未索賠」≠「無車損」，AI 找到了原始標註漏掉的車損。</li>
     <li><strong>EXIF 方向是免費的 +10pp：</strong>76% 照片帶未套用的旋轉標記；轉正後召回率 71.4% → 81.0%，並救回「白天借車 vs 深夜地下室還車」的極端光差案例。</li>
-    <li><strong>剩餘漏抓主因是拍攝覆蓋，不是模型：</strong>4 筆 FN 中 2 筆為借車照根本沒拍到損傷部位（模型誠實回報 <code>angle_match=false</code>）；唯一的真誤報也是借/還照拍了不同側所致。治本靠第二期「App 拍攝端即時角度檢核」。</li>
+    <li><strong>剩餘限制主因是拍攝覆蓋，不是模型：</strong>重標定案後的不可比案例均為借車照未覆蓋爭議部位或拍錯側（模型誠實回報 <code>angle_match=false</code>）；唯一真誤報（RCG2235 右後）為把既有痕判為新損。治本靠第二期「App 拍攝端即時角度檢核」。</li>
   </ul>
 
   <h3>下一步優化（往 Recall ≥90%）</h3>
   <ul>
-    <li><strong>✅ 已實作 — 複核層：</strong>快篩「無損但低信心 / 無法比對」升級 gemini-3.1-pro 三票多數決，Recall +4.7pp（85.7%），升級量僅 3%。</li>
+    <li><strong>✅ 已實作 — 複核層：</strong>快篩「無損但低信心 / 無法比對」改用 gemini-3.1-pro 複核（3 票取一致性檢查），Recall +4.7pp（85.7%）全來自換模型，升級量僅 3%。</li>
     <li><strong>✅ 已實作 — Prompt 跨側禁令 / few-shot / 補拍照：</strong>跨側誤比型誤報已消除；few-shot 以 8 張「車況回報」特寫為範例（與評測集零重疊）。</li>
     <li><strong>車輛照片鏈基準：</strong>剩餘 3 筆漏抓中 2 筆是借車照拍錯側／未覆蓋損傷部位——比對基準回溯同車前一單還車照（Blob 依 CarNo 可串）即可治本。</li>
-    <li><strong>✅ 已實作 — F2 車內整潔首輪實測：</strong>80 張 Blob 真實車內照完成三級分類（髒汙檢出率 3.75%，見 §04）；下一步擴大至 300 張人工標註建立正式校準評測集，並修正快篩信心校準。</li>
+    <li><strong>✅ 已實作 — F2 車內整潔首輪實測：</strong>80 張候選影像經 photo_ok 檢查（模型判斷）24 張通過，級聯模型分類乾淨 20／普通 1／髒汙 3（見 §04）；下一步擴大至 300 張人工標註建立正式校準評測集，並修正快篩信心校準。</li>
   </ul>
 </section>
 
@@ -545,8 +538,8 @@
     <div class="vc kept">
       <div class="vh">BASELINE · 採用中</div>
       <div class="vt">現行判定 prompt</div>
-      <div class="vr">Recall <span class="vnum">100%</span><br>誤報 <span class="vnum">0%</span><br>
-        <span class="mini">n=137（人工逐圖重標，2026-08-29 修正後）</span></div>
+      <div class="vr">Recall <span class="vnum">100%</span><br>誤報 <span class="vnum">0.85%</span><br>
+        <span class="mini">n=137（人工逐圖重標，2026-08-30 用戶複核定案後）</span></div>
     </div>
     <div class="vc lost">
       <div class="vh">實驗 A · 落敗</div>
@@ -640,7 +633,7 @@
     </div>
     <div class="card">
       <span class="tag">REGRESSION TESTS</span>
-      <h4>226 項零 API 測試</h4>
+      <h4>262 項零 API 測試</h4>
       <p>覆蓋 P1/P2/P3 分流、級聯升級條件、平手取有損、估價級距與材質規則、差分查核與 shadow 判準。
         改壞了不會報錯、只會靜靜分錯級的邏輯，全部鎖住。</p>
     </div>
@@ -678,9 +671,9 @@
       <div class="ph">PHASE 1 · 0–1 月</div>
       <h4>MVP 驗證（進行中）</h4>
       <ul>
-        <li>✅ Pipeline 對 141 組驗證集跑通（$0 成本）</li>
-        <li>✅ 誤報率 3.3% 達標；級聯複核 Recall 85.7%，照片鏈補至 ≥90%</li>
-        <li>✅ 複核 Dashboard Demo（32 個真實案例）</li>
+        <li>✅ Pipeline 對 141 組驗證集跑通</li>
+        <li>✅ 誤報率 3.3% 達標；級聯複核 Recall 85.7%（照片鏈方案規劃補強至 ≥90%）</li>
+        <li>✅ 複核 Dashboard Demo（38 個真實案例：32 車損＋6 車內）</li>
       </ul>
     </div>
     <div class="phase">

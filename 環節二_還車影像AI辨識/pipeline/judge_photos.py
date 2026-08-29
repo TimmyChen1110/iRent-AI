@@ -70,6 +70,8 @@ class LiveSpot(BaseModel):
 
 
 class LiveInterior(BaseModel):
+    photo_ok: bool = Field(description="是否為可判讀的車內照；明顯非車內、幾乎無車內區域、全黑或視角嚴重錯誤為 false")
+    invalid_reason: str = Field(description="photo_ok=false 時一句話說明原因；true 時填空字串")
     level: str = Field(description="整潔分級：髒汙 | 普通 | 乾淨")
     confidence: float = Field(description="0~1 分級信心")
     findings: list[LiveSpot] = Field(description="具體髒污點清單（乾淨則空陣列）。光影、座椅紋路、固定配備不標")
@@ -80,7 +82,8 @@ PAIR_SYSTEM_LIVE = PAIR_SYSTEM + """
 8. 每個新損傷除文字說明外，一併回傳其在【還車照】上的精確 box_2d（[ymin,xmin,ymax,xmax]，0~1000 正規化）。框要緊貼損傷範圍，不要框整個部件。"""
 
 INTERIOR_SYSTEM_LIVE = INTERIOR_SYSTEM + """
-5. 每個具體髒污點一併回傳精確 box_2d（[ymin,xmin,ymax,xmax]，0~1000 正規化），框要緊貼髒污範圍。"""
+5. 每個具體髒污點一併回傳精確 box_2d（[ymin,xmin,ymax,xmax]，0~1000 正規化），框要緊貼髒污範圍。
+6. 分級之前先判斷這是否為可判讀的車內照：明顯非車內照、幾乎沒有可見車內區域、全黑無法辨識、或視角嚴重錯誤導致無法合理判定整潔度時，photo_ok 填 false 並在 invalid_reason 用一句話說明；此時 level 仍需填一個合法值，但系統會忽略它。可正常判讀時 photo_ok 填 true、invalid_reason 填空字串。"""
 
 
 # ---------- 核心呼叫（重試 + 複核模型 404 自動 fallback） ----------
@@ -152,7 +155,7 @@ def judge_pair(pickup, ret, client=None, votes=3, rpm=8, skip_gate=False, log=la
     result["gate_pass"] = all(g["pass"] for g in gates.values())
     log(f"① Quality Gate：借車照 {'✓' if gates['pickup']['pass'] else '✗'}／還車照 {'✓' if gates['return']['pass'] else '✗'}")
     if not result["gate_pass"] and not skip_gate:
-        result.update(verdict="retake", level="P2", kind="品質不合格",
+        result.update(verdict="retake", level="P2", kind="品質不合格", retake_reason="gate",
                       elapsed_s=round(time.time() - t0, 1))
         return result, None
 
@@ -252,7 +255,7 @@ def judge_interior(photo, client=None, rpm=8, skip_gate=False, log=lambda m: Non
     result["gate_pass"] = gates["photo"]["pass"]
     log(f"① Quality Gate：{'✓' if result['gate_pass'] else '✗'}")
     if not result["gate_pass"] and not skip_gate:
-        result.update(verdict="retake", level="P2", kind="品質不合格",
+        result.update(verdict="retake", level="P2", kind="品質不合格", retake_reason="gate",
                       elapsed_s=round(time.time() - t0, 1))
         return result, None
 
@@ -268,21 +271,35 @@ def judge_interior(photo, client=None, rpm=8, skip_gate=False, log=lambda m: Non
     result["screening"] = {"model": used, "assessment": screening}
     log(f"② 快篩（{used}）：{screening['level']}（{screening['confidence']:.2f}）")
 
-    # 級聯：判髒汙或低信心 → Pro 複核確認（與 classify_interior 同一套規則）
+    # 級聯：疑似非有效車內照（photo_ok=false 須 Pro 確認）、判髒汙或低信心 → Pro 複核，最多一次
     final = screening
     result["cascade"] = None
-    if screening["level"] == "髒汙" or screening["confidence"] < 0.7:
-        log(f"③ 臨界案件 → 升級 {REVIEW_MODEL} 複核")
+    needs_pro = (not screening["photo_ok"]) or screening["level"] == "髒汙" or screening["confidence"] < 0.7
+    if needs_pro:
+        reason = ("疑似非有效車內照" if not screening["photo_ok"]
+                  else "髒汙須複核確認" if screening["level"] == "髒汙"
+                  else f"低信心({screening['confidence']:.2f})")
+        log(f"③ 臨界案件 → 升級 {REVIEW_MODEL} 複核（{reason}）")
         try:
             model, pv = _call(client, REVIEW_MODEL, contents, INTERIOR_SYSTEM_LIVE, LiveInterior,
                               throttle, fallback=SCREEN_MODEL)
             final = pv.model_dump()
-            result["cascade"] = {"reason": "髒汙須複核確認" if screening["level"] == "髒汙" else f"低信心({screening['confidence']:.2f})",
+            result["cascade"] = {"reason": reason,
                                  "model": model, "flipped": final["level"] != screening["level"]}
-            log(f"   複核（{model}）：{final['level']}（{'翻轉' if result['cascade']['flipped'] else '維持'}）")
+            log(f"   複核（{model}）：{'可判讀' if final['photo_ok'] else '無法判讀'}／{final['level']}（{'翻轉' if result['cascade']['flipped'] else '維持'}）")
         except Exception as e:
             log(f"   複核失敗，沿用快篩：{str(e)[:80]}")
     result["final"] = final
+    # photo_ok=false 最高優先，不得折疊成 clean/P3；Pro 被呼叫則以 Pro 為準，
+    # Pro 失敗時 final 即 Flash 的 false → 保守走 retake。photo_ok 為 required 欄位，
+    # 缺欄位應在 structured-output parse 層失敗，這裡刻意不給 fail-open 預設值。
+    if not final["photo_ok"]:
+        result.update(verdict="retake", level="P2", kind="無法判讀車內照",
+                      retake_reason="photo_invalid",
+                      invalid_reason=final["invalid_reason"],
+                      elapsed_s=round(time.time() - t0, 1))
+        log("④ 判定：無法確認為適合判讀的車內照 → 請重新拍攝")
+        return result, None
     result["level"] = "P1" if final["level"] == "髒汙" else "P3"
     result["kind"] = {"髒汙": "車內髒汙", "普通": "車內正常", "乾淨": "車內正常"}.get(final["level"], "車內")
     result["verdict"] = "dirty" if final["level"] == "髒汙" else "clean"

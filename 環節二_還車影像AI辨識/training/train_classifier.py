@@ -195,7 +195,7 @@ def main():
 
     print("\n=== 對照現行 VLM 級聯（同一批資料）===")
     print("VLM 級聯：Recall 85.7% / FPR 3.3%（141 組，對照原始索賠標籤）")
-    print("VLM 級聯：Recall 100% / FPR 0.0%（137 組，對照人工重標＝本次訓練用的同一份標籤）")
+    print("VLM 級聯：Recall 100% / FPR 0.85%（137 組，對照人工重標＝本次訓練用的同一份標籤）")
     best = max(rows.values(), key=lambda m: m["recall"] - m["fpr"])
     print(f"本模型最佳：Recall {best['recall']:.1%} / FPR {best['fpr']:.1%}")
 
@@ -204,8 +204,8 @@ def main():
            "pr_auc": round(pr_auc, 4), "roc_auc": round(roc, 4),
            "random_baseline_pr_auc": round(float(base), 4),
            "thresholds": {str(k): v for k, v in rows.items()},
-           "vlm_baseline": {"recall": 0.955, "fpr": 0.0,
-                            "note": "同一份人工重標標籤，n=137"},
+           "vlm_baseline": {"recall": 1.0, "fpr": 0.0085,
+                            "note": "同一份人工重標標籤，n=137（2026-08-30 用戶逐圖複核定案後；唯一 FP 為 RCG2235 右後）"},
            "verdict": "流程驗證用；樣本量不足以支撐上線決策",
            "minutes": round(dur / 60, 2)}
     # 保留人工加註的診斷欄位（ablation / diagnosis / caution_on_demo），

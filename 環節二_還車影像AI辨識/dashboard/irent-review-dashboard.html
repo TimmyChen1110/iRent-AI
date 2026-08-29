@@ -6398,7 +6398,7 @@ const PASSPORTS = (typeof PASSPORT_DATA !== "undefined") ? PASSPORT_DATA : {};
 
 /* 實測 KPI（來源：analyze_autopass.py / quality_gate.py / cleanliness_score.py / photo_chain.py） */
 const OPS = {
-  photos: 27367, orders: 4820, recall: 100, fpr: 0,
+  photos: 27367, orders: 4820, recall: 100, fpr: 0.85,
   autoPass: 83.0, alert: 15.6, human: 1.4, gate: 9.2, escalate: 2.8,
   interiorReal: 24, interiorMis: 56, chainCars: 1126, chainScanned: 15, chainHits: 1,
 };
@@ -6790,7 +6790,7 @@ function flowSvg() {
       <rect class="nd hi" x="658" y="${Y - 34}" width="130" height="68" rx="5"/>
       <text class="tt" x="672" y="${Y - 8}">③ Pro 複核</text>
       <text class="tn" x="672" y="${Y + 12}">臨界 2.8% 升級</text>
-      <text class="ts" x="672" y="${Y + 27}">三票多數決</text>
+      <text class="ts" x="672" y="${Y + 27}">換用更強模型</text>
     </g>
     <!-- 幹線 -->
     <path class="pipe base" stroke-width="10" d="M 148 ${Y} H 218"/><path class="pipe anim" stroke="var(--acc)" stroke-width="4" d="M 148 ${Y} H 218"/>
@@ -6870,14 +6870,14 @@ function hotCarSvg(cnt) {
 // 包含全部落敗的版本——量測過程本身就是交付物。
 const AB_RUNS = [
   { tag: "BASELINE", name: "現行判定 prompt", state: "kept",
-    recall: "100%", fpr: "0%", prec: "100%",
-    note: "採用中。141 組對照人工逐圖重標（n=137；2026-08-29 原記唯一漏抓 RDH-3092 經原圖複驗改判存疑後，零漏抓）。" },
+    recall: "100%", fpr: "0.85%", prec: "95%",
+    note: "採用中。141 組對照人工逐圖重標（n=137；2026-08-30 用戶逐圖複核定案：零漏抓，唯一誤報為 RCG2235 右後把既有痕判為新損）。" },
   { tag: "實驗 A", name: "規格版完整重寫", state: "lost",
     recall: "100%", fpr: "3.5%", prec: "84.6%",
     note: "先描述後判斷／主動排除混淆源／UV 座標。多抓 1 筆真損，代價是 4 筆誤告用戶。" },
   { tag: "實驗 B", name: "只移植「既有損舉證」", state: "lost",
     recall: "95.5%", fpr: "3.5%", prec: "84.0%",
-    note: "強制說明「在借車照哪裡看到它」。救回 RDH-3092，卻漏掉 RCG2235。" },
+    note: "強制說明「在借車照哪裡看到它」。把 RDH-3092 翻成有損（該筆後定案為無新損，等於第 5 筆誤報），卻漏掉 RCG2235。" },
   { tag: "實驗 C", name: "只加「排除理由」欄位", state: "lost",
     recall: "81.8%", fpr: "2.6%", prec: "85.7%",
     note: "四次中最差。7 組翻轉全是退步、0 改善。" },
@@ -6987,7 +6987,7 @@ function renderOps() {
   el.innerHTML = `<div class="ops">
     <div class="kpis">
       <div class="kpi"><div class="micro">兩日還車照片</div><div class="num" data-n="${OPS.photos}" data-d="0"></div><div class="sub">4,820 筆訂單 · 全部真實營運資料</div></div>
-      <div class="kpi good"><div class="micro">車損判讀召回</div><div class="num" data-n="${OPS.recall}" data-d="1" data-s="%"></div><div class="sub">141 組逐圖人工重標後 · 誤報 0%</div></div>
+      <div class="kpi good"><div class="micro">車損判讀召回</div><div class="num" data-n="${OPS.recall}" data-d="1" data-s="%"></div><div class="sub">141 組逐圖人工重標後 · 誤報 0.85%</div></div>
       <div class="kpi good"><div class="micro">自動放行</div><div class="num" data-n="${OPS.autoPass}" data-d="1" data-s="%"></div><div class="sub">需人工逐案複核僅 1.4%</div></div>
       <div class="kpi"><div class="micro">每單判定成本</div><div class="num">&lt;NT$1</div><div class="sub">原型驗證 $0（免費額度完成）</div></div>
     </div>
@@ -7012,15 +7012,15 @@ function renderOps() {
       <div class="panel">
         <div class="p-title"><b>資料品質即時發現</b><span class="micro">AI 誠實回報</span></div>
         <div class="dq">
-          <div class="cell"><div class="big crit">${misPct}%</div><div class="cap2">「車內照」欄位實為車外照（56/80，逐張人工抽驗證實）——佐證拍攝端防呆必要性</div></div>
+          <div class="cell"><div class="big crit">${misPct}%</div><div class="cap2">「車內照」欄位 56/80 未通過 photo_ok 模型檢查（人工抽驗 3 張皆為車外照）——佐證拍攝端防呆必要性</div></div>
           <div class="cell"><div class="big warn">76%</div><div class="cap2">照片帶未套用的 EXIF 旋轉標記，前處理轉正後召回 +10pp</div></div>
           <div class="cell"><div class="big warn">9.2%</div><div class="cap2">照片過暗/模糊，Quality Gate 上傳當下即攔——含人工也無法複驗的存疑案例</div></div>
-          <div class="cell"><div class="big good">4 筆</div><div class="cap2">「未索賠」樣本被 AI 抓出真實車損——挽回本應追償的漏損</div></div>
+          <div class="cell"><div class="big good">2 筆</div><div class="cap2">「未索賠」樣本經逐圖定案確認為人工漏登的真車損（另 1 筆不可比、1 筆誤報）</div></div>
         </div>
         <div class="p-title" style="margin-top:16px"><b>Photo-chain 跨訂單追溯</b><span class="micro">責任回溯到單</span></div>
         <div class="dq">
           <div class="cell"><div class="big">1,126<span style="font-size: 15.1px;color:var(--muted)"> 台</span></div><div class="cap2">兩日資料中可建立跨訂單車況鏈的車輛</div></div>
-          <div class="cell"><div class="big good">1 / 15</div><div class="cap2">抽掃 15 台即抓到 RDE-0180 跨單新損（3 票一致＋人工證實、未在索賠清單）→ 責任鎖定訂單 #47353795</div></div>
+          <div class="cell"><div class="big good">1 / 16</div><div class="cap2">抽掃 16 台即抓到 RDE-0180 跨單新損（3 票一致＋人工證實、未在索賠清單）→ 責任鎖定訂單 #47353795</div></div>
         </div>
       </div>
     </div>
@@ -7532,6 +7532,13 @@ function liveResultHtml(j) {
     <div>完成 ・ 耗時 ${j.elapsed_s} 秒 ・ 判讀模型 ${(j.screening || {}).model || "—"}</div></div></div>`;
   const gate = `<div class="d-card"><div class="v-sub" style="margin-bottom:8px"><b>① Quality Gate（純 CV，零 API 成本）</b></div>${liveGateHtml(j)}</div>`;
   if (j.verdict === "retake") {
+    if (j.retake_reason === "photo_invalid") {
+      // 固定文案：photo_ok 是模型判斷非 ground truth，不宣稱「一定不是車內照」；
+      // invalid_reason 為模型自由文字，僅保留於 API result，不渲染進 HTML
+      return steps + gate + `
+      <div class="d-card verdict"><h3 class="warn"><span class="ico">◐</span>無法判讀 — 請重新拍攝</h3>
+        <div class="v-sub">無法確認這是一張適合判讀車內整潔度的照片，請重新拍攝車內範圍。</div></div>`;
+    }
     return steps + gate + `
       <div class="d-card verdict"><h3 class="warn"><span class="ico">◐</span>品質不合格 — 請重拍</h3>
         <div class="v-sub">實際系統中此照片會在 App 拍攝當下被即時擋下並顯示重拍原因（環節一）。</div>
@@ -7639,15 +7646,36 @@ function setMode(m) {
 function setFilter(f) { viewMode = "cases"; filter = f; renderAll(); }
 function selectCase(id) { currentId = id; renderList(); renderDetail(); }
 function decide(id, kind) {
+  const prev = decisions[id];
   decisions[id] = kind; save(); advance(id); renderAll();
   if (SERVER) fetch("/api/decision", { method: "POST", headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ case_id: id, decision: kind }) })
-    .then(() => refreshLabels()).then(() => renderStats()).catch(() => {});
+    // rollback 邊界只涵蓋持久化本身：HTTP 非 2xx 或網路中斷。後續 refresh 失敗不得回滾已保存的裁決
+    .then(r => r.ok ? null : "HTTP " + r.status, e => String(e))
+    .then(fail => {
+      if (fail) {
+        if (prev === undefined) delete decisions[id]; else decisions[id] = prev;
+        renderAll();
+        alert("裁決未成功保存（" + fail + "），畫面已還原，請重試");
+        return;
+      }
+      refreshLabels().then(() => renderStats()).catch(() => {});
+    });
 }
 function undoDecision(id) {
+  const prev = decisions[id];
   delete decisions[id]; save(); renderAll();
   if (SERVER) fetch("/api/decision/" + encodeURIComponent(id), { method: "DELETE" })
-    .then(() => refreshLabels()).then(() => renderStats()).catch(() => {});
+    .then(r => r.ok ? null : "HTTP " + r.status, e => String(e))
+    .then(fail => {
+      if (fail) {
+        if (prev !== undefined) decisions[id] = prev;
+        renderAll();
+        alert("復原未成功保存（" + fail + "），畫面已還原，請重試");
+        return;
+      }
+      refreshLabels().then(() => renderStats()).catch(() => {});
+    });
 }
 
 

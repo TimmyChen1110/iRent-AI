@@ -41,7 +41,7 @@ source .venv/bin/activate
 
 # ① 測試套件——判定骨幹的回歸保護
 python -m pytest tests/ -q
-# 預期：39 passed
+# 預期：262 passed
 
 # ② 資料集配對
 python pipeline/build_pairs.py
