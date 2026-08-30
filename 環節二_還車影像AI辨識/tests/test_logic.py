@@ -162,6 +162,28 @@ class TestQualityGate:
         assert BLUR_MIN > 0 and 0 < DARK_MAX < BRIGHT_MIN <= 255
         assert 0 < CLIP_MAX <= 1
 
+    def test_夜間門檻只放寬亮度不放寬清晰度(self):
+        # 夜間照亮度低是物理事實；但模糊照在夜間一樣不可判讀，
+        # 放寬清晰度會讓真正該擋的糊照混進判定。
+        from quality_gate import (BLUR_MIN, DARK_MAX,
+                                  NIGHT_BLUR_MIN, NIGHT_DARK_MAX)
+        assert NIGHT_DARK_MAX < DARK_MAX
+        assert NIGHT_BLUR_MIN == BLUR_MIN
+
+    def test_夜間門檻仍嚴於車內門檻(self):
+        # 車內照最暗（封閉空間），夜間車外次之，日間車外最亮。
+        # 順序顛倒代表某組門檻被改壞。
+        from quality_gate import INT_DARK_MAX, NIGHT_DARK_MAX, DARK_MAX
+        assert INT_DARK_MAX < NIGHT_DARK_MAX < DARK_MAX
+
+    def test_gate_模式互斥且車內優先(self):
+        # gate() 同時收到 interior 與 night 時，必須套車內門檻（最寬），
+        # 否則車內照會被夜間門檻誤擋。
+        import inspect
+        from quality_gate import gate
+        src = inspect.getsource(gate)
+        assert "if interior:" in src and "elif night:" in src
+
 
 # ---------- 分流規則一致性：triage 與 Dashboard 必須同一套 ----------
 

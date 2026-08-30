@@ -37,6 +37,22 @@ CLIP_MAX = 0.35      # 過曝：≥250 的像素占比高於此值
 INT_BLUR_MIN = 8.0
 INT_DARK_MAX = 15.0
 
+# 夜間車外照專用門檻（night=True）。校準依據：photo_chain 候選集 1,907 張實測
+# （gate_chain_results.json，134 台車）——該批含大量夜間路邊還車照，車外門檻 55
+# 攔下 16.9%，其中 128 張（全體 6.7%）為「亮度 40–55 但清晰度正常」。
+# 逐張目視抽驗結果：
+#   亮度 44.9（RDD-9950）車頭、保險桿、車牌全清晰可辨 → 誤擋
+#   亮度 24.3（RCG-3965）車身輪廓與車牌仍可辨識      → 誤擋
+#   亮度 16.5（RDF-0315）僅局部反光可見，無法判讀車損 → 應擋
+#   亮度 12.3（RDE-0215）近乎全黑                     → 應擋
+# 故判讀邊界落在 ~20；設 NIGHT_DARK_MAX = 20 後該批攔截率降至約 9%，
+# 與資料集基準 9.2% 一致。夜間照亮度低是物理事實而非拍攝失誤，
+# 用日間門檻要求「開閃光重拍」對用戶不合理。
+# ⚠️ 仍待補：本門檻由 4 張目視抽驗定位邊界，樣本數少於車內門檻的校準規模；
+#    若日後有更完整的人工標註，應重新校準。
+NIGHT_BLUR_MIN = 60.0    # 清晰度要求不放寬——夜間照模糊仍然不可判讀
+NIGHT_DARK_MAX = 20.0
+
 
 def measure(path, max_w=1280):
     """回傳 (sharpness, brightness, highlight_clip)。與判定 pipeline 相同的前處理。"""
@@ -50,16 +66,27 @@ def measure(path, max_w=1280):
     return sharp, bright, clip
 
 
-def gate(path, interior=False):
+def gate(path, interior=False, night=False):
     """回傳 (通過?, 原因列表, 數值)。原因供 App 端顯示重拍提示。
-    interior=True 時改用車內照門檻（車內天生較暗、表面平滑，車外門檻會誤擋 12.5%）。"""
-    blur_min, dark_max = (INT_BLUR_MIN, INT_DARK_MAX) if interior else (BLUR_MIN, DARK_MAX)
+
+    interior=True 時改用車內照門檻（車內天生較暗、表面平滑，車外門檻會誤擋 12.5%）。
+    night=True 時改用夜間車外門檻（夜間路邊還車照，車外門檻會誤擋 6.7%）；
+    兩者互斥，interior 優先。夜間只放寬亮度，清晰度要求不變。
+    """
+    if interior:
+        blur_min, dark_max = INT_BLUR_MIN, INT_DARK_MAX
+    elif night:
+        blur_min, dark_max = NIGHT_BLUR_MIN, NIGHT_DARK_MAX
+    else:
+        blur_min, dark_max = BLUR_MIN, DARK_MAX
     sharp, bright, clip = measure(path)
     reasons = []
     if sharp < blur_min:
         reasons.append(f"照片模糊（清晰度 {sharp:.0f} < {blur_min:.0f}），請對焦後重拍")
     if bright < dark_max:
-        reasons.append(f"照片過暗（亮度 {bright:.0f} < {dark_max:.0f}），請開閃光或移到亮處重拍")
+        reasons.append(f"照片過暗（亮度 {bright:.0f} < {dark_max:.0f}），"
+                       + ("環境過暗無法判讀，請移到有照明處重拍" if night
+                          else "請開閃光或移到亮處重拍"))
     if bright > BRIGHT_MIN or clip > CLIP_MAX:
         reasons.append("照片過曝，請避開強光直射重拍")
     return not reasons, reasons, {"sharpness": round(sharp, 1),

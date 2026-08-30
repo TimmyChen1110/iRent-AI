@@ -25,6 +25,7 @@ from run_eval_gemini import get_client, prep_image, Assessment, Throttle  # noqa
 
 HERE = Path(__file__).resolve().parent
 CHAIN_DIR = HERE / "chain_photos"
+DL_TIMEOUT = 30   # 秒；單張照片下載逾時（見 download() 註解）
 
 SYSTEM = """你是 iRent 共享汽車的車況比對專家。你會收到同一台車的兩張還車照：
 第一張是「前一筆訂單」還車時拍的（基準），第二張是「本筆訂單」還車時拍的。
@@ -49,7 +50,16 @@ def download(car):
         for itype, meta in itypes.items():
             fp = d / f"{order}_{itype}.png"
             if not fp.exists():
-                urllib.request.urlretrieve(meta["url"], fp)
+                # 必須設 timeout：Azure Blob 偶有連線不回應，urlretrieve 預設
+                # 無逾時會永久掛住整趟掃描（gate_chain 實測卡 23 分鐘）
+                try:
+                    with urllib.request.urlopen(meta["url"], timeout=DL_TIMEOUT) as r:
+                        data = r.read()
+                    fp.write_bytes(data)
+                except Exception as e:
+                    fp.unlink(missing_ok=True)   # 不留半截檔，下次可重試
+                    print(f"  下載失敗 {car}/{order}_{itype}: {e}", file=sys.stderr)
+                    continue
             files.setdefault(order, {})[itype] = {"path": str(fp), "ts": meta["ts"], "guess": meta.get("guess")}
     return files
 
