@@ -6,7 +6,8 @@
   python3 run_eval_gemini.py --model gemini-2.5-pro                # 換模型
   python3 run_eval_gemini.py --limit 6                             # 冒煙測試
   python3 run_eval_gemini.py --list-models                         # 列出你的 key 可用的模型
-（無環境變數時會讀取 pipeline/.gemini_key 檔案內容作為 key）
+（無環境變數時會讀取 環節二/.env 或 pipeline/.env 的 GEMINI_API_KEY；
+ 舊格式 pipeline/.gemini_key 仍向後相容）
 
 免費額度注意：AI Studio 免費 key 有 RPM 限制，預設 --rpm 8 節流；
 付費 key 可拉高 --rpm 與 --workers。
@@ -176,14 +177,39 @@ SYSTEM_V5 = SYSTEM.replace(
 )
 
 
+# .env 搜尋位置：pipeline/.env 優先，其次環節二根目錄的 .env（與 requirements.txt 同層）
+ENV_FILES = (HERE / ".env", HERE.parent / ".env")
+_KEY_NAMES = ("GEMINI_API_KEY", "GOOGLE_API_KEY")
+
+
+def find_key() -> str | None:
+    """依序找 key：環境變數 → .env 檔 → 舊格式 pipeline/.gemini_key（向後相容）。"""
+    for name in _KEY_NAMES:
+        if os.environ.get(name):
+            return os.environ[name]
+    for envfile in ENV_FILES:
+        if not envfile.exists():
+            continue
+        for line in envfile.read_text().splitlines():
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            name, _, val = line.partition("=")
+            if name.strip() in _KEY_NAMES:
+                val = val.strip().strip('"').strip("'")
+                if val:
+                    return val
+    legacy = HERE / ".gemini_key"
+    if legacy.exists():
+        return legacy.read_text().strip()
+    return None
+
+
 def get_client() -> genai.Client:
-    key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
+    key = find_key()
     if not key:
-        keyfile = HERE / ".gemini_key"
-        if keyfile.exists():
-            key = keyfile.read_text().strip()
-    if not key:
-        sys.exit("找不到 API key：請設定 GEMINI_API_KEY 或建立 pipeline/.gemini_key")
+        sys.exit("找不到 API key：請在 環節二_還車影像AI辨識/.env 寫入 GEMINI_API_KEY=<key>"
+                 "（見 .env.example），或直接設定環境變數 GEMINI_API_KEY")
     return genai.Client(api_key=key)
 
 

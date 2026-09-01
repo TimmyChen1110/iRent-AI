@@ -25,9 +25,11 @@ uv pip install -r requirements.txt --python .venv/bin/python
 Gemini API key（AI Studio 免費額度即可）擇一：
 
 ```bash
-export GEMINI_API_KEY=your_key_here      # 方式 A：環境變數
-echo "your_key_here" > pipeline/.gemini_key   # 方式 B：檔案（已在 .gitignore）
+cp .env.example .env                     # 方式 A（建議）：.env 檔，填入 GEMINI_API_KEY
+export GEMINI_API_KEY=your_key_here      # 方式 B：環境變數
 ```
+
+（舊格式 `pipeline/.gemini_key` 仍向後相容；`.env` 與 `.gemini_key` 都已在 .gitignore）
 
 **沒有 key 也能跑**：`build_pairs.py`、`quality_gate.py`、`cv_prefilter.py`、
 `analyze_autopass.py`、`analyze_eval.py`、`build_passport.py`、`build_dashboard.py`
@@ -103,7 +105,7 @@ python pipeline/judge_photos.py 借.jpg 還.jpg --skip-gate
 |---|---|
 | `ModuleNotFoundError: cv2` | 沒有 `source .venv/bin/activate`，或用系統 python 跑 |
 | pip 安裝 opencv 失敗 | Python 版本是 3.14，改用 3.13 |
-| `找不到 API key` | 設 `GEMINI_API_KEY` 或建立 `pipeline/.gemini_key` |
+| `找不到 API key` | 建立 `.env`（見 `.env.example`）或設環境變數 `GEMINI_API_KEY` |
 | 判定時 429 / 配額用盡 | 免費層 RPM 低，降 `--rpm`（預設 8）；腳本已內建退避重試與斷點續跑 |
 | `複核模型 404` | Pro 模型該 key 不可用，程式會自動 fallback 回 Flash，不影響流程 |
 | `syntax all OK` 沒出現 | 沒裝 node，僅跳過 JS 語法檢查，HTML 仍正常產出 |

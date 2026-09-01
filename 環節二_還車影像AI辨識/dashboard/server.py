@@ -5,7 +5,7 @@
   - 複核決策存 SQLite，全隊共享（前端每 5 秒自動同步）
   - 照片由 server 供圖（頁面輕、可看原圖）
   - 資料直接讀 pipeline/ 的實測結果（POST /api/reload 可熱更新）
-  - 「AI 重判」按鈕：現場呼叫 Gemini 重新判定該案（需 pipeline/.gemini_key）
+  - 「AI 重判」按鈕：現場呼叫 Gemini 重新判定該案（需 環節二/.env 的 GEMINI_API_KEY）
 
 啟動：
   pip3 install fastapi uvicorn pillow
@@ -324,7 +324,7 @@ def reload_data():
     return {"ok": True}
 
 
-# ---------- AI 現場重判（需 pipeline/.gemini_key，免費層約 10 秒） ----------
+# ---------- AI 現場重判（需 GEMINI_API_KEY，免費層約 10 秒） ----------
 # 判定標準不在此重寫：一律走 judge_photos.judge_pair()（Quality Gate → Flash 快篩
 # → 臨界升級 Pro 多數決 → box_2d 標註），與現場實測、離線評測完全同一套規則。
 
@@ -340,6 +340,17 @@ def _client():
         from run_eval_gemini import get_client  # noqa: PLC0415
         _gclient = get_client()
     return _gclient
+
+
+def _require_key():
+    """呼叫 Gemini 前的統一守門：找不到 key（環境變數 / .env / 舊 .gemini_key）就 503。"""
+    try:
+        from run_eval_gemini import find_key  # noqa: PLC0415
+        ok = find_key() is not None
+    except ImportError:  # google-genai 未安裝，同樣無法呼叫
+        ok = False
+    if not ok:
+        raise HTTPException(503, "此機器沒有 Gemini API key：請在 環節二/.env 設定 GEMINI_API_KEY")
 
 
 # ---------- 判定後加值：估價分流（S6）＋ 多對象文案（S7） ----------
@@ -397,8 +408,7 @@ class NotifyReq(BaseModel):
 @app.post("/api/notify")
 async def api_notify(req: NotifyReq):
     """S7：對已完成的判定產生用戶／客服／派工單三種文案（多一次 API 呼叫）。"""
-    if not (PIPE / ".gemini_key").exists():
-        raise HTTPException(503, "此機器沒有 pipeline/.gemini_key，無法呼叫 Gemini")
+    _require_key()
     import notify  # noqa: PLC0415
 
     if req.judge_id:
@@ -456,9 +466,7 @@ async def rejudge(req: RejudgeReq):
     box_2d，導致同一案件「AI 重判」的結果與 Dashboard 原判定不一致，
     而原因是 prompt 不同、不是模型不穩，無法向評審解釋。
     """
-    key = PIPE / ".gemini_key"
-    if not key.exists():
-        raise HTTPException(503, "此機器沒有 pipeline/.gemini_key，無法呼叫 Gemini")
+    _require_key()
     pair = next((p for p in _pairs if f'{p["car"]}-{p["angle"]}' == req.case_id), None)
     if not pair:
         raise HTTPException(404, f"找不到案件 {req.case_id}（車內照不支援重判）")
@@ -604,8 +612,7 @@ async def api_judge(mode: str = Form("pair"),
                     skip_gate: bool = Form(False)):
     """現場實測：跑完整鏈路（Quality Gate → 級聯判定 → 視覺標註）。
     上傳照片只寫進暫存目錄（with 區塊結束即刪除），不進 repo。"""
-    if not (PIPE / ".gemini_key").exists():
-        raise HTTPException(503, "此機器沒有 pipeline/.gemini_key，無法呼叫 Gemini")
+    _require_key()
     import judge_photos  # noqa: PLC0415  延遲載入：不啟用此功能時 server 照常跑
 
     need = [("pickup", pickup), ("ret", ret)] if mode == "pair" else [("interior", interior)]

@@ -1,4 +1,6 @@
-# 機密：API 金鑰絕不進版控
+# 機密：API 金鑰絕不進版控（.env.example 是範本，不含金鑰，照常進版控）
+.env
+**/.env
 **/.gemini_key
 **/.anthropic_key
 

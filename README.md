@@ -50,7 +50,7 @@
 cd 環節二_還車影像AI辨識
 python3.13 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-echo "你的GEMINI_KEY" > pipeline/.gemini_key   # 金鑰已被 .gitignore 排除
+cp .env.example .env   # 填入 GEMINI_API_KEY（.env 已被 .gitignore 排除）
 
 # 驗證安裝（零 API 成本）
 python -m pytest tests/ -q                      # 262 passed
