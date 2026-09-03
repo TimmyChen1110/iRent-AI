@@ -1,0 +1,22 @@
+# iRent 智能車況管家 — backend 執行環境（runtime）
+# 安裝：python3.13 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt
+# 注意：Python 3.14 上 opencv / pillow-heif 尚無 wheel，請用 3.12 或 3.13。
+# 測試 / 訓練 / 簡報的額外依賴見 requirements-dev.txt。
+
+# --- AI 判定核心（pipeline/ 全部腳本必需） ---
+google-genai>=1.0.0        # Gemini API client（run_eval_gemini.get_client）
+pydantic>=2.0.0            # 判定結果 schema，強制 Gemini 結構化輸出
+
+# --- 影像處理 ---
+pillow>=10.0.0            # EXIF 轉正、縮圖、標註繪圖（prep_image / draw_annotations）
+opencv-python-headless>=4.8.0  # Quality Gate 模糊度、cv_prefilter 的 SIFT/ORB/RANSAC/SSIM（容器無 GUI，用 headless）
+numpy>=1.24.0            # opencv 相依 + 差異圖運算
+scipy>=1.10.0             # 匈牙利匹配（match_marks 的 linear_sum_assignment）
+pillow-heif>=0.13.0       # iPhone HEIC 支援（judge_photos 現場實測必需）
+
+# --- 後端 Server（app/server.py） ---
+fastapi>=0.110.0
+uvicorn>=0.27.0
+python-multipart>=0.0.9   # multipart 上傳（POST /api/judge）
+qrcode>=7.4              # 區網 QR（GET /api/qr）
+psutil>=5.9             # lan_ip 偵測實體網卡（QR 掃碼；缺少時自動退回 ifconfig 解析）
