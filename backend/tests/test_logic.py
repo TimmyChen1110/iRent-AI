@@ -204,7 +204,7 @@ class TestTrainingLabels:
         import importlib.util
         from pathlib import Path
         root = Path(__file__).resolve().parents[1]
-        spec = importlib.util.spec_from_file_location("_srv", root / "dashboard" / "server.py")
+        spec = importlib.util.spec_from_file_location("_srv", root / "app" / "server.py")
         # 不實際 import server（會啟動 FastAPI 並讀大量資料），只驗證映射常數的語意
         return {"confirm": 1, "reject": 0, "retake": None}
 

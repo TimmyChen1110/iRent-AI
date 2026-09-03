@@ -1649,7 +1649,7 @@ function renderLive() {
   if (!SERVER) {
     el.innerHTML = `<div class="d-card verdict"><h3 class="warn"><span class="ico">◐</span>現場實測需要 server 版</h3>
       <div class="v-sub">單檔版無法呼叫 AI。請在有 pipeline/.gemini_key 的機器上啟動：</div>
-      <div class="steplog" style="margin-top:8px">cd 環節二_還車影像AI辨識/dashboard<br>uvicorn server:app --host 0.0.0.0 --port 8000</div>
+      <div class="steplog" style="margin-top:8px">cd backend/app<br>uvicorn server:app --host 0.0.0.0 --port 8000</div>
       <div class="v-sub" style="margin-top:8px">然後開 http://localhost:8000 → 現場實測。CLI 版：python3 pipeline/judge_photos.py 借車照 還車照</div></div>`;
     return;
   }

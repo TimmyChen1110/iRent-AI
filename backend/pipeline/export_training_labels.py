@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """把監理台累積的人工裁決匯出成訓練資料集。
 
-資料來源：dashboard/decisions.sqlite3 的 decision_events 表——每一次人工複核
+資料來源：app/decisions.sqlite3 的 decision_events 表——每一次人工複核
 裁決都會存下「AI 判定 vs 人工真值 + 照片路徑 + 標註框」。稽核員本來就要看這些
 照片，所以這批標籤的邊際成本是零；累積數月後即為訓練 CV 模型的資料集。
 
@@ -25,7 +25,7 @@ from collections import Counter
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-DB = HERE.parent / "dashboard" / "decisions.sqlite3"
+DB = HERE.parent / "app" / "decisions.sqlite3"
 
 
 def load_events(db_path: Path, include_history=False):

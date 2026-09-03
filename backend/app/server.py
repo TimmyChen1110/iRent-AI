@@ -8,8 +8,8 @@
   - 「AI 重判」按鈕：現場呼叫 Gemini 重新判定該案（需 pipeline/.gemini_key）
 
 啟動：
-  pip3 install fastapi uvicorn pillow
-  cd 環節二_還車影像AI辨識/dashboard
+  pip3 install -r backend/requirements.txt
+  cd backend/app
   uvicorn server:app --host 0.0.0.0 --port 8000
   → 本機開 http://localhost:8000 ；隊友連 http://<你的區網IP>:8000
 
@@ -39,10 +39,11 @@ PIPE = HERE.parent / "pipeline"
 sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(PIPE))
 
+import paths  # noqa: E402  執行期可設定的路徑與金鑰檢查
 from build_dashboard import build_cases, build_f2cases, car_model_block  # noqa: E402
 from results_config import FINAL_RESULTS, INTERIOR_RESULTS  # noqa: E402
 
-DB_PATH = HERE / "decisions.sqlite3"
+DB_PATH = paths.DB_PATH
 
 app = FastAPI(title="iRent 車況監理台", docs_url=None, redoc_url=None)
 
@@ -397,8 +398,8 @@ class NotifyReq(BaseModel):
 @app.post("/api/notify")
 async def api_notify(req: NotifyReq):
     """S7：對已完成的判定產生用戶／客服／派工單三種文案（多一次 API 呼叫）。"""
-    if not (PIPE / ".gemini_key").exists():
-        raise HTTPException(503, "此機器沒有 pipeline/.gemini_key，無法呼叫 Gemini")
+    if not paths.gemini_key_available():
+        raise HTTPException(503, "找不到 Gemini 金鑰：設定 GEMINI_API_KEY 或建立 pipeline/.gemini_key")
     import notify  # noqa: PLC0415
 
     if req.judge_id:
@@ -456,9 +457,8 @@ async def rejudge(req: RejudgeReq):
     box_2d，導致同一案件「AI 重判」的結果與 Dashboard 原判定不一致，
     而原因是 prompt 不同、不是模型不穩，無法向評審解釋。
     """
-    key = PIPE / ".gemini_key"
-    if not key.exists():
-        raise HTTPException(503, "此機器沒有 pipeline/.gemini_key，無法呼叫 Gemini")
+    if not paths.gemini_key_available():
+        raise HTTPException(503, "找不到 Gemini 金鑰：設定 GEMINI_API_KEY 或建立 pipeline/.gemini_key")
     pair = next((p for p in _pairs if f'{p["car"]}-{p["angle"]}' == req.case_id), None)
     if not pair:
         raise HTTPException(404, f"找不到案件 {req.case_id}（車內照不支援重判）")
@@ -604,8 +604,8 @@ async def api_judge(mode: str = Form("pair"),
                     skip_gate: bool = Form(False)):
     """現場實測：跑完整鏈路（Quality Gate → 級聯判定 → 視覺標註）。
     上傳照片只寫進暫存目錄（with 區塊結束即刪除），不進 repo。"""
-    if not (PIPE / ".gemini_key").exists():
-        raise HTTPException(503, "此機器沒有 pipeline/.gemini_key，無法呼叫 Gemini")
+    if not paths.gemini_key_available():
+        raise HTTPException(503, "找不到 Gemini 金鑰：設定 GEMINI_API_KEY 或建立 pipeline/.gemini_key")
     import judge_photos  # noqa: PLC0415  延遲載入：不啟用此功能時 server 照常跑
 
     need = [("pickup", pickup), ("ret", ret)] if mode == "pair" else [("interior", interior)]

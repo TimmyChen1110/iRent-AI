@@ -32,9 +32,11 @@ from fastapi.responses import JSONResponse
 
 HERE = Path(__file__).resolve().parent
 PIPE = HERE.parent / "pipeline"
-UPLOADS = HERE / "inspection_uploads"
-LIVE_SIGNALS = PIPE / "shadow_signals_live.jsonl"
-DB_PATH = HERE / "decisions.sqlite3"
+
+import paths  # noqa: E402  執行期可設定的路徑（Docker 掛 volume 於此）
+UPLOADS = paths.UPLOAD_DIR
+LIVE_SIGNALS = paths.LIVE_SIGNALS_PATH
+DB_PATH = paths.DB_PATH
 
 from feature_flags import should_run_v6  # noqa: E402
 from prompt_manifest import PROMPT_VERSIONS  # noqa: E402
@@ -227,6 +229,7 @@ def _v6_layer(photos: dict, angle: str, verdict: dict) -> dict:
             out["intersection"].append(entry)
         else:
             out["union_only"].append({**entry, "model": "flash" if "flash" in r["model_agreement"] else "pro"})
+    LIVE_SIGNALS.parent.mkdir(parents=True, exist_ok=True)
     with _write_lock, LIVE_SIGNALS.open("a") as f:
         for r in records:
             f.write(json.dumps(r, ensure_ascii=False) + "\n")

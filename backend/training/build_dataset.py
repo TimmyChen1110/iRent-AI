@@ -3,7 +3,7 @@
 
 資料來源（依優先序合併，後者覆蓋前者）：
   1. pipeline/relabels.json      — 141 組逐圖人工重標（目前唯一的已驗證標籤）
-  2. dashboard/decisions.sqlite3 — 監理台累積的複核裁決（上線後會持續長大）
+  2. app/decisions.sqlite3 — 監理台累積的複核裁決（上線後會持續長大）
 
 任務定義：判斷【還車照】單張是否有車損。
   label=1 → 該還車照有新增車損（relabel=damage / 裁決 confirm）
@@ -26,7 +26,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 PIPE = HERE.parent / "pipeline"
-DB = HERE.parent / "dashboard" / "decisions.sqlite3"
+DB = HERE.parent / "app" / "decisions.sqlite3"
 OUT = HERE / "dataset.json"
 
 # 人工重標 → 標籤；只收明確的兩類

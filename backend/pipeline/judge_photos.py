@@ -6,7 +6,7 @@
           → ④ 視覺標註（判定與 box_2d 同一次呼叫取得，免費層 RPM 友善）
 
 判定邏輯抽成可複用函式：judge_pair() / judge_interior()，
-dashboard/server.py 的 POST /api/judge 直接呼叫，不重寫一份。
+app/server.py 的 POST /api/judge 直接呼叫，不重寫一份。
 
 用法：
   python3 judge_photos.py 借車照.jpg 還車照.jpg          # 車損比對

@@ -19,7 +19,7 @@ from pathlib import Path
 import cv2, numpy as np
 from PIL import Image, ImageOps
 
-H = Path("/Users/chentingyu/Desktop/iRent/環節二_還車影像AI辨識/pipeline")
+H = Path(__file__).resolve().parent
 PAIRS = json.loads((H/"pairs.json").read_text())["pairs"]
 RELABELS = {(r["car"], r["angle"]): r["relabel"]
             for r in json.loads((H/"relabels.json").read_text())["relabels"]}
