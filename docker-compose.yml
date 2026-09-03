@@ -1,0 +1,47 @@
+# iRent 車況判讀 — 本機／staging 編排
+#
+# 現況（重構 PR #1）：單一 backend 容器，狀態仍走 SQLite（掛在 data volume）。
+# 下一步（PR #2）：啟用下方註解的 postgres 區塊，backend 改讀 DATABASE_URL。
+#
+# ⚠️ 資料含真實車牌照片 + 無認證機制 → 僅限本機／內網，禁止對公網開放。
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      # 原始照片資料集不進 image（太大、非公開）。掛進容器供監理台 /photos/* 讀。
+      IRENT_DATASET_ROOT: /dataset
+    volumes:
+      - backend_data:/data          # uploads / scratch / shadow_signals_live / decisions.sqlite3
+      - "./iRent - 運用 AI 打造 iRent 智能車況管家：優化租還車體驗與營運效率:/dataset:ro"
+      # 開發時想改 code 即時生效可解除下一行（prod 不要）：
+      # - ./backend:/app
+    restart: unless-stopped
+    # 紅線：背景判讀是行內 thread + 全域鎖（Gemini 免費層 RPM 8）。
+    # 勿設 replicas > 1，會有兩個 worker 重複打 API。
+    deploy:
+      replicas: 1
+
+  # --- PR #2 啟用：SQLite → Postgres ---
+  # postgres:
+  #   image: postgres:16
+  #   environment:
+  #     POSTGRES_DB: irent
+  #     POSTGRES_USER: irent
+  #     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set in .env}
+  #   volumes:
+  #     - pgdata:/var/lib/postgresql/data
+  #   restart: unless-stopped
+  #
+  # 屆時 backend 加：
+  #   depends_on: [postgres]
+  #   environment:
+  #     DATABASE_URL: postgresql://irent:${POSTGRES_PASSWORD}@postgres:5432/irent
+
+volumes:
+  backend_data:
+  # pgdata:

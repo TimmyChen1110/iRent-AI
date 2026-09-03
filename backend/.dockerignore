@@ -1,0 +1,28 @@
+# build context = backend/
+
+# 不進 image 的大件 / 非 runtime
+training/                    # 自訓 CV（torch），不接主流程
+tests/                       # 測試不進生產 image
+requirements-dev.txt
+
+# 執行期產物
+_data/
+app/inspection_uploads/
+app/inspection_photos/
+app/decisions.sqlite3
+pipeline/shadow_signals_live.jsonl
+app/_chk*.js
+
+# 評測斷點檔（批次腳本 resume 用，runtime 不讀）— 保留 shadow_signals.jsonl
+*progress*.jsonl
+
+# 秘密
+**/.gemini_key
+**/.anthropic_key
+
+# 雜訊
+**/__pycache__/
+**/*.pyc
+**/.pytest_cache/
+**/.DS_Store
+.git/

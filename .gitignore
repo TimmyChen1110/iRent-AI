@@ -4,6 +4,9 @@
 **/.gemini_key
 **/.anthropic_key
 
+# 容器執行期資料
+backend/_data/
+
 # 系統雜訊
 .DS_Store
 **/.DS_Store

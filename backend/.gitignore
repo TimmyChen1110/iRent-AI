@@ -1,0 +1,12 @@
+# 執行期產物（非同步判讀 API 的上傳暫存）
+app/inspection_uploads/
+app/inspection_photos/
+
+# 本機 config.yaml 預設的資料目錄（階段 2 起使用）
+_data/
+
+# 生產訊號流（與 pipeline/shadow_signals.jsonl 評測基準分開）
+pipeline/shadow_signals_live.jsonl
+
+# build_dashboard.py 的暫存語法檢查檔
+app/_chk*.js

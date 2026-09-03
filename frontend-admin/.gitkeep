@@ -1,0 +1,2 @@
+# 後台前端（暫留空）— 現階段監理台仍由 backend/app/server.py 直接 server-render
+# (dashboard_shell.html)。日後拆成獨立 SPA 時在此開發。

@@ -1,0 +1,45 @@
+#!/usr/bin/env python3
+"""集中管理「執行期可設定」的路徑與旗標。
+
+只涵蓋『會被寫入』或『部署時要換位置』的東西——上傳暫存、生產訊號流、
+執行期旗標。判定核心的唯讀資源（pipeline/ 內部檔、prompts/、評測結果
+JSON）仍走各模組自身的 __file__ 相對路徑：pipeline/ 整包搬移時目錄深度
+不變，那些路徑無需集中化。
+
+金鑰查找統一走 run_eval_gemini.find_key()（環境變數 → .env → 舊 .gemini_key）。
+
+所有設定用環境變數覆寫；不設就用開發預設值。Docker 由 compose 注入 env。
+
+  IRENT_UPLOAD_DIR    非同步判讀 API 的上傳暫存根目錄（掛 volume）
+  IRENT_LIVE_SIGNALS  生產 shadow 訊號流檔路徑
+  IRENT_SCRATCH_DIR   現場實測 / AI 重判的暫存根目錄
+  IRENT_ENABLE_DOCS   設任意非空值即開啟 /docs、/redoc、/openapi.json（預設關）
+"""
+import os
+from pathlib import Path
+
+APP_DIR = Path(__file__).resolve().parent        # backend/app
+BACKEND_DIR = APP_DIR.parent                      # backend
+PIPELINE_DIR = BACKEND_DIR / "pipeline"           # backend/pipeline
+
+
+def _path(env: str, default: Path) -> Path:
+    v = os.environ.get(env)
+    return Path(v).expanduser().resolve() if v else default
+
+
+# 非同步判讀 API 的上傳暫存（Docker 掛 volume 於此）
+UPLOAD_DIR = _path("IRENT_UPLOAD_DIR", APP_DIR / "inspection_uploads")
+
+# 生產 shadow 訊號流——與 pipeline/shadow_signals.jsonl（評測基準）分開
+LIVE_SIGNALS_PATH = _path("IRENT_LIVE_SIGNALS", PIPELINE_DIR / "shadow_signals_live.jsonl")
+
+# 現場實測 / AI 重判上傳的暫存根（tempfile 預設 /tmp，可改指向 volume）
+SCRATCH_DIR = _path("IRENT_SCRATCH_DIR", Path(os.environ.get("TMPDIR", "/tmp")))
+
+# 複核決策 SQLite（階段 4 將整體換 Postgres；在那之前用 volume 保存容器狀態）
+DB_PATH = _path("IRENT_DB_PATH", APP_DIR / "decisions.sqlite3")
+
+# API 文件（/docs、/redoc、/openapi.json）：預設關閉。資料含真實車牌且 server
+# 尚無認證——開發時在自己機器設 IRENT_ENABLE_DOCS=1 開啟，共用/對外部署不要設。
+DOCS_ENABLED = bool(os.environ.get("IRENT_ENABLE_DOCS"))
