@@ -12,8 +12,12 @@ services:
       - "8000:8000"
     env_file:
       - .env
+    environment:
+      # 原始照片資料集不進 image（太大、非公開）。掛進容器供監理台 /photos/* 讀。
+      IRENT_DATASET_ROOT: /dataset
     volumes:
       - backend_data:/data          # uploads / scratch / shadow_signals_live / decisions.sqlite3
+      - "./iRent - 運用 AI 打造 iRent 智能車況管家：優化租還車體驗與營運效率:/dataset:ro"
       # 開發時想改 code 即時生效可解除下一行（prod 不要）：
       # - ./backend:/app
     restart: unless-stopped
