@@ -77,6 +77,7 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
+from pairs_io import load_pairs  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
 
@@ -218,7 +219,7 @@ def main():
     if args.limit:
         cands = cands[: args.limit]
 
-    pairs = {(p["car"], p["angle"]): p for p in json.loads((HERE / "pairs.json").read_text())["pairs"]}
+    pairs = {(p["car"], p["angle"]): p for p in load_pairs()}
     relabels = {(r["car"], r["angle"]): r["relabel"]
                 for r in json.loads((HERE / "relabels.json").read_text())["relabels"]}
 

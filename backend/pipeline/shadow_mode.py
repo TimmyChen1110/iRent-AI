@@ -98,6 +98,7 @@ import itertools
 import json
 import statistics
 from pathlib import Path
+from pairs_io import load_pairs  # noqa: E402
 
 from blind_enumeration import (ALL_CELLS, MODELS, PANEL_ZH_CACHE, _run_calls,
                                cell_map, diff_signals, max_extent)
@@ -520,7 +521,7 @@ def step_0p(_args):
 def step_phase1(args):
     pop = _population()
     pairs = {(p["car"], p["angle"]): p
-             for p in json.loads((HERE / "pairs.json").read_text())["pairs"]}
+             for p in load_pairs()}
     progress = HERE / "shadow_progress_phase1.jsonl"
     # 30 筆候選已在 v6 Stage B 跑過（P7 逐字相同）——直接重用，不重複呼叫
     if not progress.exists():
@@ -585,7 +586,7 @@ def step_cards(args):
     from run_eval_gemini import get_client
     idx = _load_enum_index()
     pairs = {(p["car"], p["angle"]): p
-             for p in json.loads((HERE / "pairs.json").read_text())["pairs"]}
+             for p in load_pairs()}
     _population()  # 填 PANEL_ZH_CACHE
     records = [json.loads(l) for l in SIGNALS_PATH.read_text().splitlines()]
     CARDS_DIR.mkdir(exist_ok=True)

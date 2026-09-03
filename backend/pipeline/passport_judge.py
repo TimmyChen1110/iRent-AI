@@ -13,6 +13,7 @@ from google.genai import types
 from pydantic import BaseModel, Field
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from pairs_io import load_pairs  # noqa: E402
 from run_eval_gemini import get_client, prep_image, Assessment, Throttle  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
@@ -64,7 +65,7 @@ def main():
     ap.add_argument("--model", default="gemini-3.7-flash")
     args = ap.parse_args()
 
-    pairs = {(p["car"], p["angle"]): p for p in json.loads((HERE / "pairs.json").read_text())["pairs"]}
+    pairs = {(p["car"], p["angle"]): p for p in load_pairs()}
     passports = json.loads((HERE / "passports.json").read_text())
     pair = pairs[(args.car, args.angle)]
 

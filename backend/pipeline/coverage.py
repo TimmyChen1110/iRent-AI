@@ -24,6 +24,7 @@ import sys
 import threading
 import time
 from pathlib import Path
+from pairs_io import load_pairs  # noqa: E402
 
 from google.genai import types
 from pydantic import BaseModel, Field
@@ -168,7 +169,7 @@ def prior_quality(coverage_map: list[dict] | dict, panel: str | None) -> float |
 
 def _run_pairs(args):
     """對 pairs.json 全部【借車照】跑覆蓋度 → 建立每案的基準（prior_q 來源）。"""
-    pairs = json.loads((HERE / "pairs.json").read_text())["pairs"]
+    pairs = load_pairs()
     if args.limit:
         pairs = pairs[: args.limit]
     out_path = HERE / "coverage_baseline.json"

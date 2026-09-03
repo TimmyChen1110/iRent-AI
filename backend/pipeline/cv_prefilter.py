@@ -62,12 +62,13 @@ import json
 import math
 import time
 from pathlib import Path
+from pairs_io import load_pairs  # noqa: E402
 
 import cv2
 import numpy as np
 
 HERE = Path(__file__).resolve().parent
-PAIRS = json.loads((HERE / "pairs.json").read_text())["pairs"]
+PAIRS = load_pairs()
 OUT = HERE / "cv_results.json"
 
 MIN_INLIERS = 15          # RANSAC inlier 數低於此視為對齊失敗

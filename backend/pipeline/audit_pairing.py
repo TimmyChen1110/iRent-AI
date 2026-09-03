@@ -23,6 +23,7 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
+from pairs_io import load_pairs  # noqa: E402
 
 from PIL import Image, ImageOps, ImageEnhance
 
@@ -82,7 +83,7 @@ def ocr(paths: list[str], workdir: Path) -> dict[str, list[str]]:
 
 
 def main():
-    pairs = json.loads((HERE / "pairs.json").read_text())["pairs"]
+    pairs = load_pairs()
     photos = []
     for p in pairs:
         photos += [p["pickup"], p["return"]]

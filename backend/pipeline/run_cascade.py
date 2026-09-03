@@ -38,6 +38,7 @@ import json
 import sys
 import time
 from pathlib import Path
+from pairs_io import load_pairs  # noqa: E402
 
 from google.genai import errors
 
@@ -80,7 +81,7 @@ def main():
 
     data = json.loads(Path(args.results).read_text())
     results = [r for r in data["results"] if r.get("assessment")]
-    pairs = {(p["car"], p["angle"]): p for p in json.loads((HERE / "pairs.json").read_text())["pairs"]}
+    pairs = {(p["car"], p["angle"]): p for p in load_pairs()}
 
     esc = [(r, reason) for r in results if (reason := needs_escalation(r["assessment"]))]
     print(f"快篩 {len(results)} 組 → 升級複核 {len(esc)} 組 ({len(esc)/len(results):.0%})")

@@ -16,6 +16,8 @@ import re
 import sys
 from pathlib import Path
 
+from pairs_io import to_rel
+
 DATA_ROOT = Path(__file__).resolve().parents[2] / "iRent - 運用 AI 打造 iRent 智能車況管家：優化租還車體驗與營運效率"
 NEG_DIR = DATA_ROOT / "沒有進行索賠"
 POS_DIR = DATA_ROOT / "進行索賠資料"
@@ -32,12 +34,12 @@ def scan(folder: Path, label: str):
             continue
         m = FNAME_RE.match(f.name)
         if not m:
-            extras.append(str(f))
+            extras.append(to_rel(f))
             continue
         car, angle, phase, dup = m.group(1), m.group(2), m.group(3), m.group(4)
         key = (car, angle)
         slot = slots.setdefault(key, {})
-        slot[phase + (dup or "")] = str(f)
+        slot[phase + (dup or "")] = to_rel(f)
     pairs = []
     for (car, angle), slot in sorted(slots.items()):
         if "借" in slot and "還" in slot:

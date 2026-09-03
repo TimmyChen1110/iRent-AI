@@ -16,11 +16,12 @@
 """
 import json, math, sys, time
 from pathlib import Path
+from pairs_io import load_pairs  # noqa: E402
 import cv2, numpy as np
 from PIL import Image, ImageOps
 
 H = Path(__file__).resolve().parent
-PAIRS = json.loads((H/"pairs.json").read_text())["pairs"]
+PAIRS = load_pairs()
 RELABELS = {(r["car"], r["angle"]): r["relabel"]
             for r in json.loads((H/"relabels.json").read_text())["relabels"]}
 

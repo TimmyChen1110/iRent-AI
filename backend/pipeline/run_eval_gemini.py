@@ -20,6 +20,7 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
+from pairs_io import load_pairs  # noqa: E402
 
 from google import genai
 from google.genai import types, errors
@@ -338,7 +339,7 @@ def main():
                 print(m.name)
         return
 
-    pairs = json.loads((HERE / "pairs.json").read_text())["pairs"]
+    pairs = load_pairs()
     if args.limit:
         pos = [p for p in pairs if p["label"] == "positive"][: args.limit // 2]
         neg = [p for p in pairs if p["label"] == "negative"][: args.limit - len(pos)]

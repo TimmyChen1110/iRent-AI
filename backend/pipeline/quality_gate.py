@@ -14,6 +14,7 @@
 import json
 import sys
 from pathlib import Path
+from pairs_io import load_pairs  # noqa: E402
 
 import cv2
 import numpy as np
@@ -73,7 +74,7 @@ def main():
         print(json.dumps({"pass": ok, "reasons": reasons, **m}, ensure_ascii=False, indent=1))
         return
 
-    pairs = json.loads((HERE / "pairs.json").read_text())["pairs"]
+    pairs = load_pairs()
     photos = sorted({p["pickup"] for p in pairs} | {p["return"] for p in pairs})
     rows = []
     for f in photos:

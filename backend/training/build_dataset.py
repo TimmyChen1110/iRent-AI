@@ -21,6 +21,7 @@
 import argparse
 import json
 import sqlite3
+import sys
 from collections import Counter
 from pathlib import Path
 
@@ -29,14 +30,16 @@ PIPE = HERE.parent / "pipeline"
 DB = HERE.parent / "app" / "decisions.sqlite3"
 OUT = HERE / "dataset.json"
 
+sys.path.insert(0, str(PIPE))
+from pairs_io import load_pairs  # noqa: E402
+
 # 人工重標 → 標籤；只收明確的兩類
 RELABEL_MAP = {"damage": 1, "clean": 0}
 
 
 def from_relabels() -> dict:
     """{(car, angle): {label, photo, source}}"""
-    pairs = {(p["car"], p["angle"]): p
-             for p in json.loads((PIPE / "pairs.json").read_text())["pairs"]}
+    pairs = {(p["car"], p["angle"]): p for p in load_pairs()}
     out = {}
     for r in json.loads((PIPE / "relabels.json").read_text())["relabels"]:
         lab = RELABEL_MAP.get(r.get("relabel"))

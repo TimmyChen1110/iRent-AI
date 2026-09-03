@@ -19,6 +19,7 @@ from PIL import Image, ImageDraw, ImageFont, ImageOps
 from pydantic import BaseModel, Field
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from pairs_io import load_pairs  # noqa: E402
 from run_eval_gemini import get_client, prep_image  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
@@ -130,7 +131,7 @@ def main():
         result = analyze(client, args.model, [("車內照：", prep_image(str(path)))], INT_SYSTEM)
         out = OUT / f"{path.stem}_annotated.jpg"
     else:
-        pairs = {(p["car"], p["angle"]): p for p in json.loads((HERE / "pairs.json").read_text())["pairs"]}
+        pairs = {(p["car"], p["angle"]): p for p in load_pairs()}
         p = pairs[(args.car, args.angle)]
         target = ImageOps.exif_transpose(Image.open(p["return"])).convert("RGB")
         result = analyze(client, args.model, [

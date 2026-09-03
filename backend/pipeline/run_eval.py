@@ -20,6 +20,7 @@ import sys
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
+from pairs_io import load_pairs  # noqa: E402
 
 import anthropic
 from pydantic import BaseModel, Field
@@ -152,7 +153,7 @@ def main():
     ap.add_argument("--workers", type=int, default=4)
     args = ap.parse_args()
 
-    pairs = json.loads((HERE / "pairs.json").read_text())["pairs"]
+    pairs = load_pairs()
     if args.limit:
         pos = [p for p in pairs if p["label"] == "positive"][: args.limit // 2]
         neg = [p for p in pairs if p["label"] == "negative"][: args.limit - len(pos)]

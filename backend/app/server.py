@@ -38,6 +38,7 @@ HERE = Path(__file__).resolve().parent
 PIPE = HERE.parent / "pipeline"
 sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(PIPE))
+from pairs_io import load_pairs  # noqa: E402
 
 import paths  # noqa: E402  執行期可設定的路徑與金鑰檢查
 from build_dashboard import build_cases, build_f2cases, car_model_block  # noqa: E402
@@ -266,7 +267,7 @@ def label_stats():
 
 
 # ---------- 照片（僅供白名單內的檔案，防路徑穿越） ----------
-_pairs = json.loads((PIPE / "pairs.json").read_text())["pairs"]
+_pairs = load_pairs()
 PAIR_PHOTOS = {Path(p[k]).name: p[k] for p in _pairs for k in ("pickup", "return")}
 INTERIOR_DIR = PIPE / "interior_photos"
 INTERIOR_FILES = {f.name for f in INTERIOR_DIR.iterdir()} if INTERIOR_DIR.exists() else set()

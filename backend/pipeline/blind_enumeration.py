@@ -112,6 +112,7 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
+from pairs_io import load_pairs  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
 
@@ -377,7 +378,7 @@ def _load_context():
 
     results = json.loads(FINAL_RESULTS.read_text())["results"]
     pairs = {(p["car"], p["angle"]): p
-             for p in json.loads((HERE / "pairs.json").read_text())["pairs"]}
+             for p in load_pairs()}
 
     cases = []
     for c in select_candidates(results):

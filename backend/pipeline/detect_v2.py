@@ -53,6 +53,7 @@ import sys
 import threading
 import time
 from pathlib import Path
+from pairs_io import load_pairs  # noqa: E402
 
 from google.genai import types, errors
 from pydantic import BaseModel, Field
@@ -301,7 +302,7 @@ def main():
     ap.add_argument("--no-fewshot", action="store_true")
     args = ap.parse_args()
 
-    pairs = json.loads((HERE / "pairs.json").read_text())["pairs"]
+    pairs = load_pairs()
     if args.limit:
         pos = [p for p in pairs if p["label"] == "positive"][: max(1, args.limit // 2)]
         neg = [p for p in pairs if p["label"] == "negative"][: args.limit - len(pos)]

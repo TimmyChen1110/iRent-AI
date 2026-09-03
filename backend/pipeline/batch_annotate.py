@@ -11,6 +11,7 @@ from pathlib import Path
 from google.genai import errors
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from pairs_io import load_pairs  # noqa: E402
 from run_eval_gemini import get_client, prep_image, Throttle  # noqa: E402
 from annotate_damage import analyze, EXT_SYSTEM, INT_SYSTEM    # noqa: E402
 from results_config import FINAL_RESULTS, INTERIOR_RESULTS   # noqa: E402
@@ -18,7 +19,7 @@ from results_config import FINAL_RESULTS, INTERIOR_RESULTS   # noqa: E402
 HERE = Path(__file__).resolve().parent
 MODEL = "gemini-3.7-flash"
 
-pairs = {(p["car"], p["angle"]): p for p in json.loads((HERE / "pairs.json").read_text())["pairs"]}
+pairs = {(p["car"], p["angle"]): p for p in load_pairs()}
 casc = json.loads(FINAL_RESULTS.read_text())["results"]
 interior = json.loads(INTERIOR_RESULTS.read_text())["results"]
 

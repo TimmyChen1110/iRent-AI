@@ -20,6 +20,7 @@ from PIL import Image, ImageOps
 HERE = Path(__file__).resolve().parent
 PIPE = HERE.parent / "pipeline"
 sys.path.insert(0, str(PIPE))
+from pairs_io import load_pairs  # noqa: E402
 
 from results_config import FINAL_RESULTS, INTERIOR_RESULTS  # noqa: E402
 
@@ -83,7 +84,7 @@ def _pricing(a: dict, angle: str) -> dict | None:
 def build_cases(embed=True):
     """embed=True 時照片轉 base64 內嵌（單檔版）；False 時給 /photos/ URL（server 版）。"""
     pairs = {(p["car"], p["angle"]): p
-             for p in json.loads((PIPE / "pairs.json").read_text())["pairs"]}
+             for p in load_pairs()}
     data = json.loads(FINAL_RESULTS.read_text())["results"]
 
     def level(a):

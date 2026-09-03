@@ -17,6 +17,7 @@ from google.genai import types
 from pydantic import BaseModel, Field
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from pairs_io import load_pairs  # noqa: E402
 from run_eval_gemini import get_client, prep_image, Throttle  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
@@ -49,7 +50,7 @@ def angle_of(case_id, angles=("左前", "左後", "右前", "右後")):
 
 def main():
     pairs = {(p["car"], p["angle"]): p
-             for p in json.loads((HERE / "pairs.json").read_text())["pairs"]}
+             for p in load_pairs()}
     passports = json.loads((HERE / "passports.json").read_text())
 
     prog_path = HERE / "part_progress.jsonl"

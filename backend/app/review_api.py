@@ -29,6 +29,7 @@ from pydantic import BaseModel
 
 HERE = Path(__file__).resolve().parent
 PIPE = HERE.parent / "pipeline"
+from pairs_io import load_pairs  # noqa: E402
 
 from shadow_mode import (SIGNALS_PATH, CARDS_DIR, build_queue,  # noqa: E402
                          progress_snapshot, signal_health)
@@ -55,7 +56,7 @@ def _queue_map() -> dict:
 
 
 def _pairs() -> dict:
-    data = json.loads((PIPE / "pairs.json").read_text())["pairs"]
+    data = load_pairs()
     return {f"{p['car']}{p['angle']}": p for p in data}
 
 
