@@ -84,9 +84,14 @@ cd app && uvicorn server:app --host 0.0.0.0 --port 8000
 ### Docker
 
 ```bash
-cp .env.example .env      # 填入 GEMINI_API_KEY
-docker compose up --build # → http://localhost:8000
+make up        # 確保 colima 在跑 → 建 .env → build → 背景起 → http://localhost:8000
+make logs      # 看 backend log
+make down      # 停（留 volume 資料）        make help   全部指令
 ```
+
+macOS 需先有容器 runtime（`brew install colima docker docker-compose`）；`make up` 會自動 `colima start`。
+手動等價：`cp .env.example .env && docker compose up --build -d`。
+資料集照片不進 image，`docker-compose.yml` 已把資料夾唯讀掛進容器（見 `IRENT_DATASET_ROOT`）。
 
 免費額度建議 `--rpm 8` 節流；中斷可直接重跑（斷點續跑）。
 
