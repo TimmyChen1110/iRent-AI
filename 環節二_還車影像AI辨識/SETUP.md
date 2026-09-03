@@ -87,6 +87,15 @@ cp .env.example .env && docker compose up --build
 
 > ⚠️ 資料含真實車牌照片，**僅限 localhost / 隊內區網，勿部署公網**。server 無認證機制。
 
+**看 API 文件（Swagger UI）**：預設關閉。本機開發時加 `IRENT_ENABLE_DOCS=1`：
+>
+> ```bash
+> IRENT_ENABLE_DOCS=1 uvicorn server:app --port 8000   # 本機
+> # Docker：在 .env 取消註解 IRENT_ENABLE_DOCS=1 再 up
+> ```
+>
+> 然後開 http://localhost:8000/docs （或 `/redoc`、`/openapi.json`）。共用／對外部署不要設此變數。
+
 **保底方案**：`app/irent-review-dashboard.html` 是自包含單檔，
 雙擊即開、零依賴、離線可用。單檔版沒有「現場實測」與「AI 重判」（需要 server 呼叫 Gemini），
 其餘分頁功能完全相同。

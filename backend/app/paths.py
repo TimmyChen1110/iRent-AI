@@ -11,6 +11,7 @@ JSON）仍走各模組自身的 __file__ 相對路徑：pipeline/ 整包搬移�
   IRENT_UPLOAD_DIR    非同步判讀 API 的上傳暫存根目錄（掛 volume）
   IRENT_LIVE_SIGNALS  生產 shadow 訊號流檔路徑
   IRENT_SCRATCH_DIR   現場實測 / AI 重判的暫存根目錄
+  IRENT_ENABLE_DOCS   設任意非空值即開啟 /docs、/redoc、/openapi.json（預設關）
   GEMINI_API_KEY      Gemini 金鑰（亦接受 GOOGLE_API_KEY 或 pipeline/.gemini_key 檔）
 """
 import os
@@ -37,6 +38,10 @@ SCRATCH_DIR = _path("IRENT_SCRATCH_DIR", Path(os.environ.get("TMPDIR", "/tmp")))
 
 # 複核決策 SQLite（階段 4 將整體換 Postgres；在那之前用 volume 保存容器狀態）
 DB_PATH = _path("IRENT_DB_PATH", APP_DIR / "decisions.sqlite3")
+
+# API 文件（/docs、/redoc、/openapi.json）：預設關閉。資料含真實車牌且 server
+# 尚無認證——開發時在自己機器設 IRENT_ENABLE_DOCS=1 開啟，共用/對外部署不要設。
+DOCS_ENABLED = bool(os.environ.get("IRENT_ENABLE_DOCS"))
 
 
 def gemini_key_available() -> bool:

@@ -46,7 +46,13 @@ from results_config import FINAL_RESULTS, INTERIOR_RESULTS  # noqa: E402
 
 DB_PATH = paths.DB_PATH
 
-app = FastAPI(title="iRent 車況監理台", docs_url=None, redoc_url=None)
+app = FastAPI(
+    title="iRent 車況監理台",
+    # 預設關閉；本機開發設 IRENT_ENABLE_DOCS=1 開啟（見 app/paths.py）
+    docs_url="/docs" if paths.DOCS_ENABLED else None,
+    redoc_url="/redoc" if paths.DOCS_ENABLED else None,
+    openapi_url="/openapi.json" if paths.DOCS_ENABLED else None,
+)
 
 # ---------- 服務化（複核介面 API + 判讀 API；規格見各模組檔頭） ----------
 from prompt_manifest import assert_frozen  # noqa: E402
