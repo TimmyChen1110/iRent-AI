@@ -76,7 +76,8 @@
   ],
   "open_new": 1,
   "pre_existing": 2,
-  "real_orders": {}
+  "real_orders": {},
+  "chain_new": 0
  },
  "RCQ6760": {
   "car": "RCQ6760",
@@ -106,7 +107,8 @@
   ],
   "open_new": 0,
   "pre_existing": 1,
-  "real_orders": {}
+  "real_orders": {},
+  "chain_new": 0
  },
  "RCW1883": {
   "car": "RCW1883",
@@ -136,7 +138,8 @@
   ],
   "open_new": 0,
   "pre_existing": 1,
-  "real_orders": {}
+  "real_orders": {},
+  "chain_new": 0
  },
  "RDG8571": {
   "car": "RDG8571",
@@ -188,7 +191,8 @@
   ],
   "open_new": 0,
   "pre_existing": 2,
-  "real_orders": {}
+  "real_orders": {},
+  "chain_new": 0
  },
  "RDG9853": {
   "car": "RDG9853",
@@ -240,7 +244,8 @@
   ],
   "open_new": 0,
   "pre_existing": 2,
-  "real_orders": {}
+  "real_orders": {},
+  "chain_new": 0
  },
  "RDL7832": {
   "car": "RDL7832",
@@ -314,7 +319,8 @@
   ],
   "open_new": 0,
   "pre_existing": 3,
-  "real_orders": {}
+  "real_orders": {},
+  "chain_new": 0
  },
  "RDQ5916": {
   "car": "RDQ5916",
@@ -346,7 +352,8 @@
   "pre_existing": 1,
   "real_orders": {
    "47341241": "2026-04-22 13:15"
-  }
+  },
+  "chain_new": 0
  },
  "RDR6350": {
   "car": "RDR6350",
@@ -376,7 +383,8 @@
   ],
   "open_new": 0,
   "pre_existing": 1,
-  "real_orders": {}
+  "real_orders": {},
+  "chain_new": 0
  },
  "RDU-7390": {
   "car": "RDU-7390",
@@ -430,7 +438,8 @@
   "pre_existing": 2,
   "real_orders": {
    "47344100": "2026-04-22 13:59"
-  }
+  },
+  "chain_new": 0
  },
  "RDW-7085": {
   "car": "RDW-7085",
@@ -504,7 +513,8 @@
   ],
   "open_new": 0,
   "pre_existing": 3,
-  "real_orders": {}
+  "real_orders": {},
+  "chain_new": 0
  },
  "RDZ-9006": {
   "car": "RDZ-9006",
@@ -578,7 +588,8 @@
   ],
   "open_new": 0,
   "pre_existing": 3,
-  "real_orders": {}
+  "real_orders": {},
+  "chain_new": 0
  },
  "RDZ7922": {
   "car": "RDZ7922",
@@ -655,7 +666,8 @@
   "real_orders": {
    "47350120": "2026-04-22 10:42",
    "47353661": "2026-04-22 19:54"
-  }
+  },
+  "chain_new": 0
  },
  "RFB-2590": {
   "car": "RFB-2590",
@@ -687,7 +699,8 @@
   "pre_existing": 1,
   "real_orders": {
    "47343822": "2026-04-22 01:20"
-  }
+  },
+  "chain_new": 0
  },
  "RFB5176": {
   "car": "RFB5176",
@@ -722,7 +735,8 @@
   ],
   "open_new": 1,
   "pre_existing": 0,
-  "real_orders": {}
+  "real_orders": {},
+  "chain_new": 0
  },
  "RFH7873": {
   "car": "RFH7873",
@@ -752,7 +766,8 @@
   ],
   "open_new": 0,
   "pre_existing": 1,
-  "real_orders": {}
+  "real_orders": {},
+  "chain_new": 0
  },
  "RFH8122": {
   "car": "RFH8122",
@@ -836,7 +851,8 @@
   ],
   "open_new": 2,
   "pre_existing": 1,
-  "real_orders": {}
+  "real_orders": {},
+  "chain_new": 0
  },
  "RFM-2791": {
   "car": "RFM-2791",
@@ -890,7 +906,8 @@
   "pre_existing": 2,
   "real_orders": {
    "47355737": "2026-04-22 21:34"
-  }
+  },
+  "chain_new": 0
  },
  "RCR-7661": {
   "car": "RCR-7661",
@@ -1001,7 +1018,8 @@
   ],
   "open_new": 3,
   "pre_existing": 1,
-  "real_orders": {}
+  "real_orders": {},
+  "chain_new": 0
  },
  "RCW-8382": {
   "car": "RCW-8382",
@@ -1036,7 +1054,8 @@
   ],
   "open_new": 1,
   "pre_existing": 0,
-  "real_orders": {}
+  "real_orders": {},
+  "chain_new": 0
  },
  "RCW-9206": {
   "car": "RCW-9206",
@@ -1071,7 +1090,8 @@
   ],
   "open_new": 1,
   "pre_existing": 0,
-  "real_orders": {}
+  "real_orders": {},
+  "chain_new": 0
  },
  "RDH-2261": {
   "car": "RDH-2261",
@@ -1106,7 +1126,8 @@
   ],
   "open_new": 1,
   "pre_existing": 0,
-  "real_orders": {}
+  "real_orders": {},
+  "chain_new": 0
  },
  "RDH-3092": {
   "car": "RDH-3092",
@@ -1136,7 +1157,8 @@
   ],
   "open_new": 0,
   "pre_existing": 1,
-  "real_orders": {}
+  "real_orders": {},
+  "chain_new": 0
  },
  "RDJ-0772": {
   "car": "RDJ-0772",
@@ -1171,7 +1193,8 @@
   ],
   "open_new": 1,
   "pre_existing": 0,
-  "real_orders": {}
+  "real_orders": {},
+  "chain_new": 0
  },
  "RDJ-0793": {
   "car": "RDJ-0793",
@@ -1206,7 +1229,8 @@
   ],
   "open_new": 1,
   "pre_existing": 0,
-  "real_orders": {}
+  "real_orders": {},
+  "chain_new": 0
  },
  "RDL-5171": {
   "car": "RDL-5171",
@@ -1268,7 +1292,8 @@
   ],
   "open_new": 2,
   "pre_existing": 0,
-  "real_orders": {}
+  "real_orders": {},
+  "chain_new": 0
  },
  "RDL-7836": {
   "car": "RDL-7836",
@@ -1303,7 +1328,8 @@
   ],
   "open_new": 1,
   "pre_existing": 0,
-  "real_orders": {}
+  "real_orders": {},
+  "chain_new": 0
  },
  "RDL-8265": {
   "car": "RDL-8265",
@@ -1341,7 +1367,8 @@
   "real_orders": {
    "47350063": "2026-04-22 19:07",
    "47350036": "2026-04-22 12:30"
-  }
+  },
+  "chain_new": 0
  },
  "RDL-9262": {
   "car": "RDL-9262",
@@ -1376,7 +1403,8 @@
   ],
   "open_new": 1,
   "pre_existing": 0,
-  "real_orders": {}
+  "real_orders": {},
+  "chain_new": 0
  },
  "RDQ-1950": {
   "car": "RDQ-1950",
@@ -1413,7 +1441,8 @@
   "pre_existing": 0,
   "real_orders": {
    "47354729": "2026-04-22 21:34"
-  }
+  },
+  "chain_new": 0
  },
  "RDU-6956": {
   "car": "RDU-6956",
@@ -1448,7 +1477,8 @@
   ],
   "open_new": 1,
   "pre_existing": 0,
-  "real_orders": {}
+  "real_orders": {},
+  "chain_new": 0
  },
  "RDX-1085": {
   "car": "RDX-1085",
@@ -1483,7 +1513,8 @@
   ],
   "open_new": 1,
   "pre_existing": 0,
-  "real_orders": {}
+  "real_orders": {},
+  "chain_new": 0
  },
  "RDX-2376": {
   "car": "RDX-2376",
@@ -1540,7 +1571,8 @@
   ],
   "open_new": 2,
   "pre_existing": 0,
-  "real_orders": {}
+  "real_orders": {},
+  "chain_new": 0
  },
  "RDY-6382": {
   "car": "RDY-6382",
@@ -1572,7 +1604,8 @@
   "pre_existing": 0,
   "real_orders": {
    "47353046": "2026-04-22 18:59"
-  }
+  },
+  "chain_new": 0
  },
  "RDZ-0187": {
   "car": "RDZ-0187",
@@ -1604,7 +1637,8 @@
   "pre_existing": 1,
   "real_orders": {
    "47350104": "2026-04-22 12:54"
-  }
+  },
+  "chain_new": 0
  },
  "RFB-2091": {
   "car": "RFB-2091",
@@ -1693,7 +1727,8 @@
   ],
   "open_new": 3,
   "pre_existing": 0,
-  "real_orders": {}
+  "real_orders": {},
+  "chain_new": 0
  },
  "RFD-0332": {
   "car": "RFD-0332",
@@ -1730,6 +1765,39 @@
   "pre_existing": 0,
   "real_orders": {
    "47351031": "2026-04-22 15:25"
-  }
+  },
+  "chain_new": 0
+ },
+ "RDE-0180": {
+  "car": "RDE-0180",
+  "records": [
+   {
+    "id": "C-001",
+    "kind": "chain",
+    "status": "open",
+    "chain_key": "47351663->47353795:2",
+    "angle": "右前",
+    "location": "後保桿右側（反光片附近）",
+    "type": "刮痕",
+    "severity": "medium",
+    "confidence": 0.88,
+    "box_2d": null,
+    "reasoning": "基準照中右後反光片下方及保桿轉角表面完好，本單還車照中可見明顯的白色擦傷與刮痕。",
+    "first_seen": {
+     "order": "47353795",
+     "time": "",
+     "source": "跨訂單照片鏈"
+    },
+    "evidence_case": "CHAIN-RDE-0180-2",
+    "verified": false,
+    "liable_order": "47353795",
+    "baseline_order": "47351663",
+    "vote_agreement": "3/3"
+   }
+  ],
+  "real_orders": {},
+  "open_new": 0,
+  "pre_existing": 0,
+  "chain_new": 1
  }
 }

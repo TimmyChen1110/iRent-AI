@@ -65,7 +65,7 @@
 cd backend
 python3.13 -m venv .venv && source .venv/bin/activate
 pip install -r requirements-dev.txt              # runtime + 測試/訓練
-export GEMINI_API_KEY=你的KEY                    # 或 echo ... > pipeline/.gemini_key
+export GEMINI_API_KEY=你的KEY                    # 或寫進 backend/.env（Docker 用 repo 根 .env）
 
 # 驗證安裝（零 API 成本）
 python -m pytest tests/ -q                       # 262 passed
