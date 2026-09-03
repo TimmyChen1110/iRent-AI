@@ -534,10 +534,10 @@ async def api_gate(mode: str = Form("pair"),
         if f is None:
             raise HTTPException(400, f"缺少 {name} 照片")
     with tempfile.TemporaryDirectory(prefix="irent-gate-") as td:
-        paths, _ = await _save_uploads(td, need)
+        saved, _ = await _save_uploads(td, need)   # 勿命名為 paths（遮蔽模組）
         try:
             names = {"pickup": "pickup", "ret": "return", "interior": "photo"}
-            gates = judge_photos._run_gate({names[k]: p for k, p in paths.items()},
+            gates = judge_photos._run_gate({names[k]: p for k, p in saved.items()},
                                            interior=(mode != "pair"))
         except Exception as e:
             raise HTTPException(400, f"照片無法讀取：{str(e)[:120]}")
@@ -623,14 +623,15 @@ async def api_judge(mode: str = Form("pair"),
     logs = []
     with tempfile.TemporaryDirectory(prefix="irent-judge-") as td:
         # raw bytes 留在記憶體供「存入案件佇列」縮圖用（下次判定即覆蓋）
-        paths, raw = await _save_uploads(td, need)
+        # 變數名不可用 paths——會遮蔽模組 paths，使上方的金鑰檢查 UnboundLocalError
+        saved, raw = await _save_uploads(td, need)
 
         def run():
             with _rejudge_lock:  # 免費層 RPM 低，一次一件（與 AI 重判共用鎖）
                 if mode == "pair":
-                    return judge_photos.judge_pair(paths["pickup"], paths["ret"], client=_client(),
+                    return judge_photos.judge_pair(saved["pickup"], saved["ret"], client=_client(),
                                                    skip_gate=skip_gate, log=logs.append)
-                return judge_photos.judge_interior(paths["interior"], client=_client(),
+                return judge_photos.judge_interior(saved["interior"], client=_client(),
                                                    skip_gate=skip_gate, log=logs.append)
 
         try:
