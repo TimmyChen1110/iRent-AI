@@ -23,3 +23,7 @@ FINAL_RESULTS = HERE / "eval_results_gemini_37_flash_v3_cascaded.json"
 
 # 車內整潔判定結果（Flash 快篩 + Pro 複核）
 INTERIOR_RESULTS = HERE / "interior_results.json"
+
+# 歸還期間車損比對結果（最新借車 vs 上次還車）
+CHAIN_RESULTS = HERE / "chain_cases.json"
+
