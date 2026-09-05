@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>iRent 拍照即時防呆 Demo</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <h1>iRent 拍照即時防呆 Demo</h1>
+
+    <select id="view-select">
+      <option value="左前">左前</option>
+      <option value="右前">右前</option>
+      <option value="左後">左後</option>
+      <option value="右後">右後</option>
+      <option value="前車內">前車內</option>
+      <option value="後車內">後車內</option>
+    </select>
+
+    <select id="camera-select"></select>
+
+    <div class="camera-wrap">
+      <video id="video" autoplay playsinline muted></video>
+      <img id="captured-photo" alt="" />
+      <canvas id="overlay"></canvas>
+    </div>
+
+    <div class="controls">
+      <button id="capture-btn">拍照（用上面即時畫面）</button>
+      <button id="retake-btn" class="secondary" disabled>重拍</button>
+    </div>
+
+    <div class="controls">
+      <label class="file-btn secondary" for="file-input">
+        📱 用手機相機拍照 / 選擇照片上傳
+      </label>
+      <input id="file-input" type="file" accept="image/*" capture="environment" hidden />
+    </div>
+
+    <div id="status">等待相機啟動…</div>
+    <pre id="diag"></pre>
+    <div id="result"></div>
+
+    <script src="app.js"></script>
+  </body>
+</html>

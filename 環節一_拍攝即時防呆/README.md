@@ -2,7 +2,14 @@
 
 > 目標：在用戶透過 iRent App 上傳照片的**當下**，即時判斷照片品質——有沒有拍對位置、模糊、未拍攝到車牌、拍攝角度不對、太遠太近、太髒等。
 
-## 狀態：規劃中（環節二實測數據已證明其必要性）
+## 狀態：兩條 prototype 各自開發中，尚未整合
+
+- **`quality_guard/`**：拍照即時防呆 API（FastAPI，模糊/亮度/構圖/車牌位置檢查），車牌偵測目前用傳統 CV + Tesseract，文字辨識精確率待改善。細節見 [quality_guard/backend/README.md](quality_guard/backend/README.md)。
+- **`app_models/`**：YOLO 車牌偵測 + fast-plate-ocr 辨識 pipeline，準確度預期優於 `quality_guard` 目前的車牌 OCR。細節見 [app_models/README.md](app_models/README.md)。
+
+兩者尚未接線——後續整合方向可能是把 `quality_guard/backend/app/checks/plate.py` 換成呼叫 `app_models` 的偵測/辨識模型。
+
+## 原規劃背景（環節二實測數據證明其必要性）
 
 環節二對真實營運照片的實測，量化了「不防呆」的代價：
 

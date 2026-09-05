@@ -1,0 +1,150 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, "PingFang TC", "Microsoft JhengHei", sans-serif;
+  background: #111318;
+  color: #f2f2f2;
+  margin: 0;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+h1 {
+  font-size: 1.25rem;
+  margin: 0;
+}
+
+#view-select {
+  font-size: 1rem;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid #444;
+  background: #1c1f26;
+  color: #f2f2f2;
+}
+
+.camera-wrap {
+  position: relative;
+  width: min(92vw, 480px);
+}
+
+video,
+canvas,
+img#captured-photo {
+  width: 100%;
+  border-radius: 12px;
+  background: #000;
+  display: block;
+}
+
+img#captured-photo {
+  display: none;
+  object-fit: contain;
+}
+
+img#captured-photo.active {
+  display: block;
+}
+
+video.hidden-by-photo {
+  display: none;
+}
+
+canvas#overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  /* video,canvas 共用規則給了黑色底色，這是給 video 載入前用的佔位色，
+     但 overlay 這層是疊在 video 正上方的透明畫框層，繼承黑底會直接把
+     整個影片畫面蓋住，所以這裡要覆蓋回透明。 */
+  background: transparent;
+}
+
+.controls {
+  display: flex;
+  gap: 12px;
+}
+
+button {
+  font-size: 1rem;
+  padding: 10px 20px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  background: #3d7dff;
+  color: white;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+button.secondary {
+  background: #3a3f4b;
+}
+
+.file-btn {
+  font-size: 1rem;
+  padding: 10px 20px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  background: #3a3f4b;
+  color: white;
+  display: inline-block;
+}
+
+#result {
+  width: min(92vw, 480px);
+  border-radius: 12px;
+  padding: 16px;
+  background: #1c1f26;
+  min-height: 60px;
+}
+
+#result.pass {
+  border: 2px solid #3ddc84;
+}
+
+#result.fail {
+  border: 2px solid #ff5b5b;
+}
+
+#result .headline {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+#result ul {
+  margin: 4px 0 0;
+  padding-left: 20px;
+}
+
+#result .debug {
+  margin-top: 10px;
+  font-size: 0.8rem;
+  color: #9aa0ab;
+  white-space: pre-wrap;
+}
+
+#status {
+  font-size: 0.85rem;
+  color: #9aa0ab;
+}
+
+#diag {
+  font-size: 0.72rem;
+  color: #6b7280;
+  white-space: pre-wrap;
+  font-family: ui-monospace, monospace;
+  width: min(92vw, 480px);
+  margin: 0;
+}
