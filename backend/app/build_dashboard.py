@@ -168,11 +168,35 @@ def build_f2cases(embed=True):
     return out
 
 
+def build_chain_cases_data():
+    from results_config import CHAIN_RESULTS
+    if CHAIN_RESULTS.exists():
+        cases = json.loads(CHAIN_RESULTS.read_text()).get("cases", [])
+    else:
+        from build_chain_cases import build_chain_cases
+        cases = build_chain_cases()[0]
+    return cases
+
+
+
+def load_annotations():
+    base = json.loads((PIPE / "dashboard_annotations.json").read_text())
+    chain_ann_file = PIPE / "chain_annotations.json"
+    if chain_ann_file.exists():
+        try:
+            chain_ann = json.loads(chain_ann_file.read_text())
+            base.update(chain_ann)
+        except Exception:
+            pass
+    return base
+
+
 def main():
     blocks = [
         "const CASES=" + json.dumps(build_cases(), ensure_ascii=False) + ";",
         "const F2CASES=" + json.dumps(build_f2cases(), ensure_ascii=False) + ";",
-        "const ANNOTATIONS=" + (PIPE / "dashboard_annotations.json").read_text() + ";",
+        "const CHAINCASES=" + json.dumps(build_chain_cases_data(), ensure_ascii=False) + ";",
+        "const ANNOTATIONS=" + json.dumps(load_annotations(), ensure_ascii=False) + ";",
         "const PASSPORT_DATA=" + (PIPE / "passports.json").read_text() + ";",
     ]
     shell = (HERE / "dashboard_shell.html").read_text()

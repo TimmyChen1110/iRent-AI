@@ -137,6 +137,9 @@
   .badge.p1 { background: var(--red-soft); color: var(--red); border: 1px solid var(--red); }
   .badge.p2 { background: var(--amber-soft); color: var(--amber); border: 1px solid var(--amber); }
   .badge.p3 { background: var(--ok-soft); color: var(--ok); border: 1px solid rgba(58,221,138,.4); }
+  .badge.p4 { background: rgba(140, 140, 140, .15); color: #B0B0B0; border: 1px solid #707070; }
+  .spill.p4 { color: #B0B0B0; } .spill.p4 .dot { background: #707070; }
+  .item.lv-p4 .stripe { background: #707070; }
   .badge.soft { background: var(--panel3); color: var(--muted); border: 1px solid var(--line2); font-weight: 700; }
   .badge.f2tag { background: var(--acc-soft); color: var(--acc-ink); border: 1px solid rgba(58,221,138,.35); font-weight: 700; }
 
@@ -475,7 +478,8 @@
 <script>
 /* ================= 資料整備 ================= */
 F2CASES.forEach(c => CASES.push(c));
-{ const ord = { P1: 0, P2: 1, P3: 2 }; CASES.sort((a, b) => ord[a.level] - ord[b.level]); }
+const CHAINCASES_LIST = (typeof CHAINCASES !== "undefined") ? CHAINCASES : [];
+{ const ord = { P1: 0, P2: 1, P3: 2 }; CASES.sort((a, b) => ord[a.level] - ord[b.level]); CHAINCASES_LIST.sort((a, b) => ord[a.level] - ord[b.level]); }
 const ANN = (typeof ANNOTATIONS !== "undefined") ? ANNOTATIONS : {};
 const PASSPORTS = (typeof PASSPORT_DATA !== "undefined") ? PASSPORT_DATA : {};
 
@@ -488,7 +492,7 @@ const OPS = {
 
 /* server 版（uvicorn server:app）注入 SERVER_MODE=true：照片走 /photos/ URL、複核決策全隊共享 */
 const SERVER = (typeof SERVER_MODE !== "undefined") && SERVER_MODE;
-function imgSrc(v) { return v && v.startsWith("/photos/") ? v : "data:image/jpeg;base64," + v; }
+function imgSrc(v) { return v && (v.startsWith("/photos/") || v.startsWith("http")) ? v : "data:image/jpeg;base64," + v; }
 
 const LS_KEY = "irent-review-demo-v1";
 let decisions = {};
@@ -511,6 +515,7 @@ const LEVEL_META = {
   P1: { label: "P1 即時預警", ico: "⚠" },
   P2: { label: "P2 工單", ico: "◐" },
   P3: { label: "P3 正常", ico: "✓" },
+  P4: { label: "P4 角度不符", ico: "🚫" },
 };
 const DECISION_META = {
   confirm: { cls: "confirm", ico: "✓", label: "已確認 — 進入索賠／清潔調度，附照片證據鏈" },
@@ -520,8 +525,9 @@ const DECISION_META = {
 
 function save() { if (!SERVER) localStorage.setItem(LS_KEY, JSON.stringify(decisions)); }
 function counts() {
-  const c = { all: CASES.length, P1: 0, P2: 0, P3: 0, done: 0 };
-  for (const cs of CASES) { c[cs.level]++; if (decisions[cs.id]) c.done++; }
+  const pool = viewMode === "chain" ? CHAINCASES_LIST : CASES;
+  const c = { all: pool.length, P1: 0, P2: 0, P3: 0, P4: 0, done: 0 };
+  for (const cs of pool) { if (c[cs.level] !== undefined) c[cs.level]++; if (decisions[cs.id]) c.done++; }
   return c;
 }
 
@@ -536,13 +542,14 @@ function renderTabs() {
   document.getElementById("tabs").innerHTML = `
     <button class="tab" role="tab" aria-selected="${viewMode === "ops"}" onclick="setMode('ops')">營運總覽</button>
     <button class="tab" role="tab" aria-selected="${viewMode === "cases"}" onclick="setMode('cases')">案件複核<span class="cnt">${CASES.length}</span></button>
+    <button class="tab" role="tab" aria-selected="${viewMode === "chain"}" onclick="setMode('chain')">歸還期間車損<span class="cnt">${CHAINCASES_LIST.length}</span></button>
     <button class="tab" role="tab" aria-selected="${viewMode === "passport"}" onclick="setMode('passport')">車輛損傷護照<span class="cnt">${Object.keys(PASSPORTS).length}</span></button>
     <button class="tab" role="tab" aria-selected="${viewMode === "live"}" onclick="setMode('live')">現場實測<span class="cnt">LIVE</span></button>`;
 }
 
 function renderStats() {
   const bar = document.getElementById("statsbar");
-  if (viewMode !== "cases") { bar.innerHTML = ""; return; }
+  if (viewMode !== "cases" && viewMode !== "chain") { bar.innerHTML = ""; return; }
   const c = counts();
   const pct = Math.round(c.done / c.all * 100);
   bar.innerHTML = `
@@ -555,6 +562,7 @@ function renderStats() {
       <span class="spill crit"><span class="dot"></span>P1 即時預警 ${c.P1}</span>
       <span class="spill warn"><span class="dot"></span>P2 工單 ${c.P2}</span>
       <span class="spill okp"><span class="dot"></span>P3 正常 ${c.P3}</span>
+      ${c.P4 ? `<span class="spill p4"><span class="dot"></span>P4 角度不符 ${c.P4}</span>` : ""}
       ${labelPill()}
     </div>`;
 }
@@ -579,13 +587,15 @@ async function refreshLabels() {
 /* ================= 左欄 ================= */
 function renderFilters() {
   const el = document.getElementById("filters");
-  if (viewMode !== "cases") { el.innerHTML = ""; return; }
+  if (viewMode !== "cases" && viewMode !== "chain") { el.innerHTML = ""; return; }
   const c = counts();
-  const f2n = CASES.filter(cs => cs.f2).length;
-  const liveN = CASES.filter(cs => cs.live).length;
+  const pool = viewMode === "chain" ? CHAINCASES_LIST : CASES;
+  const f2n = pool.filter(cs => cs.f2).length;
+  const liveN = pool.filter(cs => cs.live).length;
   const defs = [
     ["all", "全部", c.all], ["P1", "P1", c.P1], ["P2", "P2", c.P2], ["P3", "P3", c.P3],
-    ["f2", "車內", f2n],
+    ...(c.P4 ? [["P4", "P4 角度不符", c.P4]] : []),
+    ...(f2n ? [["f2", "車內", f2n]] : []),
     ...(liveN ? [["live", "現場", liveN]] : []),
     ["todo", "未複核", c.all - c.done], ["done", "已複核", c.done],
   ];
@@ -594,7 +604,8 @@ function renderFilters() {
 }
 
 function visible() {
-  return CASES.filter(cs => {
+  const pool = viewMode === "chain" ? CHAINCASES_LIST : CASES;
+  return pool.filter(cs => {
     if (filter === "all") return true;
     if (filter === "done") return !!decisions[cs.id];
     if (filter === "todo") return !decisions[cs.id];
@@ -606,6 +617,7 @@ function visible() {
 
 function summaryText(cs) {
   const a = cs.assessment;
+  if (!a) return cs.desc || "歸還期間車損比對";
   if (cs.f2) {
     if (a.level === "髒汙") return "髒汙：" + (a.issues.join("、") || a.reasoning);
     return `${a.level} — ${a.reasoning}`;
@@ -617,18 +629,18 @@ function summaryText(cs) {
 
 function renderList() {
   if (viewMode === "passport") { renderPassportList(); return; }
-  if (viewMode !== "cases") return;
+  if (viewMode !== "cases" && viewMode !== "chain") return;
   const vis = visible();
   if (vis.length && !vis.some(cs => cs.id === currentId)) currentId = vis[0].id;
   document.getElementById("list").innerHTML = vis.map(cs => {
     const d = decisions[cs.id];
-    const thumb = cs.f2 ? cs.photo : cs.ret;
+    const thumb = cs.return || cs.ret || cs.pickup || cs.photo;
     return `<button class="item lv-${cs.level.toLowerCase()}" aria-current="${cs.id === currentId}" onclick="selectCase('${cs.id}')">
       <span class="stripe"></span>
       <img class="thumb" src="${imgSrc(thumb)}" alt="" loading="lazy">
       <span class="mid">
         <span class="t1"><span class="plate">${cs.car}</span><span class="angle">${cs.angle}</span>
-          ${cs.f2 ? `<span class="badge f2tag">車內</span>` : ""}${cs.live ? `<span class="badge f2tag">現場</span>` : ""}</span>
+          ${cs.is_chain ? `<span class="badge f2tag">跨單鏈</span>` : ""}${cs.f2 ? `<span class="badge f2tag">車內</span>` : ""}${cs.live ? `<span class="badge f2tag">現場</span>` : ""}</span>
         <span class="desc">${summaryText(cs)}</span>
       </span>
       <span class="right">
@@ -731,34 +743,45 @@ function renderDetail() {
   if (viewMode === "method") { viewMode = "ops"; renderTabs(); renderOps(); return; }
   if (viewMode === "live") { renderLive(); return; }
   if (viewMode === "passport") { renderPassportDetail(); return; }
-  const cs = CASES.find(c => c.id === currentId);
+  const pool = viewMode === "chain" ? CHAINCASES_LIST : CASES;
+  const cs = pool.find(c => c.id === currentId) || pool[0];
   const el = document.getElementById("detail");
   if (!cs) { el.innerHTML = ""; return; }
   if (cs.f2) { renderF2Detail(el, cs); return; }
 
-  const a = cs.assessment;
+  const a = cs.assessment || {};
   let head, sub;
   if (!a.angle_match) {
     head = `<h3 class="warn"><span class="ico">◐</span>無法有效比對</h3>`;
     sub = "兩張照片非同一方位或損傷部位未入鏡 — 建議要求補件，並於 App 端加入拍攝即時檢核。";
   } else if (a.new_damage_found) {
     head = `<h3 class="crit"><span class="ico">⚠</span>偵測到新增車損</h3>`;
-    sub = "以下損傷存在於還車照、但借車照對應位置無此痕跡：";
+    sub = cs.is_chain
+      ? "以下損傷存在於最新一次借車照、但上一次還車照對應位置無此痕跡（疑為歸還/停放期間發生的車損）："
+      : "以下損傷存在於還車照、但借車照對應位置無此痕跡：";
   } else {
     head = `<h3 class="ok"><span class="ico">✓</span>未發現新增車損</h3>`;
-    sub = "借/還照比對一致，本案自動記錄。";
+    sub = cs.is_chain ? "上一次還車照與最新一次借車照比對一致，停放期間無新增車損。" : "借/還照比對一致，本案自動記錄。";
   }
-  const dmgs = annRows(cs) ?? a.damages.map(d => `
+  const dmgs = annRows(cs) ?? (a.damages || []).map(d => `
     <div class="dmg">
-      <div class="l1">${d.location} · ${d.type}<span class="sev ${d.severity}">${d.severity.toUpperCase()}</span></div>
-      ${confBar(d.confidence)}
-      <div class="why">${d.reasoning}</div>
+      <div class="l1">${d.location} · ${d.type}<span class="sev ${d.severity || "medium"}">${(d.severity || "medium").toUpperCase()}</span></div>
+      ${confBar(d.confidence || 0.85)}
+      <div class="why">${d.reasoning || d.description || ""}</div>
     </div>`).join("");
   const pre = a.pre_existing_notes ? `<div class="note"><b>既有舊損備註：</b>${a.pre_existing_notes}（兩照皆存在，不列入本次求償）</div>` : "";
   const priceBox = pricingCard(cs);
-  const truthLbl = cs.truth === "claimed" ? "資料集標註：實際有索賠"
-    : cs.truth === "live" ? "現場實測案件" : "資料集標註：當時未索賠";
+  const truthLbl = cs.is_chain
+    ? `歸還期間鏈式比對（前單 #${cs.prev_order} → 本單 #${cs.curr_order}）`
+    : (cs.truth === "claimed" ? "資料集標註：實際有索賠"
+      : cs.truth === "live" ? "現場實測案件" : "資料集標註：當時未索賠");
   const annN = ANN[cs.id] && ANN[cs.id].findings.length;
+
+  const leftLabel = cs.is_chain ? "上一次還車照" : "借車照";
+  const leftSub = cs.is_chain ? `單號 #${cs.prev_order}` : "比對基準";
+  const rightLabel = cs.is_chain ? "最新一次借車照" : "還車照";
+  const rightSub = cs.is_chain ? `單號 #${cs.curr_order}` : (annN ? "AI 標註 " + annN + " 處" : "本次判定");
+  const rightImg = cs.return || cs.ret;
 
   el.innerHTML = `
     <div class="d-card d-head">
@@ -771,11 +794,11 @@ function renderDetail() {
       ${actionArea(cs)}
     </div>
     <div class="photos">
-      <div class="photo d-card"><div class="cap"><span class="before">借車照</span><span class="t">比對基準</span></div>
-        <div class="imgwrap zoomable"><img src="${imgSrc(cs.pickup)}" alt="${cs.car} ${cs.angle} 借車照"></div>
-        <div class="zoom-hint">滑過照片 → 借/還同座標放大鏡</div></div>
-      <div class="photo d-card"><div class="cap"><span class="after">還車照</span><span class="t">${annN ? "AI 標註 " + annN + " 處" : "本次判定"}</span></div>
-        <div class="imgwrap zoomable"><img src="${imgSrc(cs.ret)}" alt="${cs.car} ${cs.angle} 還車照">${annBoxes(cs)}</div></div>
+      <div class="photo d-card"><div class="cap"><span class="before">${leftLabel}</span><span class="t">${leftSub}</span></div>
+        <div class="imgwrap zoomable"><img src="${imgSrc(cs.pickup)}" alt="${cs.car} ${cs.angle} 照片"></div>
+        <div class="zoom-hint">滑過照片 → 同座標對照放大鏡</div></div>
+      <div class="photo d-card"><div class="cap"><span class="after">${rightLabel}</span><span class="t">${rightSub}</span></div>
+        <div class="imgwrap zoomable"><img src="${imgSrc(rightImg)}" alt="${cs.car} ${cs.angle} 照片">${annBoxes(cs)}</div></div>
     </div>
     <div class="d-card verdict">${head}<div class="v-sub">${sub}</div>${dmgs}${pre}</div>
     ${priceBox}`;

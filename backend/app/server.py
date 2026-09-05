@@ -163,6 +163,21 @@ def _case_snapshot(case_id: str) -> dict:
                     "assessment": a,
                     "boxes": (_annotations().get(case_id) or {}).get("findings") or [],
                 }
+    # 4) 歸還期間車損案件（CHAIN-<car>-<angle>）
+    if case_id.startswith("CHAIN-"):
+        from build_dashboard import build_chain_cases_data
+        c_case = next((c for c in build_chain_cases_data() if c["id"] == case_id), None)
+        if c_case:
+            a = c_case.get("assessment") or {}
+            return {
+                "mode": "chain", "source": "dataset",
+                "ai_found": int(bool(a.get("new_damage_found"))),
+                "ai_level": c_case.get("level"),
+                "ai_conf": 0.88,
+                "photos": {"pickup": c_case.get("pickup"), "return": c_case.get("return")},
+                "assessment": a,
+                "boxes": [],
+            }
     return {"mode": None, "source": None, "ai_found": None, "ai_level": None,
             "ai_conf": None, "photos": {}, "assessment": None, "boxes": []}
 
@@ -305,17 +320,21 @@ def render_page(force=False):
             return _page_cache["html"]
         shell = (HERE / "dashboard_shell.html").read_text()
         three = (HERE / "three.min.js").read_text()
+        import importlib
+        import build_dashboard
+        importlib.reload(build_dashboard)
         blocks = [
             "const SERVER_MODE=true;",
-            "const CASES=" + json.dumps(build_cases(embed=False), ensure_ascii=False) + ";",
-            "const F2CASES=" + json.dumps(build_f2cases(embed=False), ensure_ascii=False) + ";",
-            "const ANNOTATIONS=" + (PIPE / "dashboard_annotations.json").read_text() + ";",
+            "const CASES=" + json.dumps(build_dashboard.build_cases(embed=False), ensure_ascii=False) + ";",
+            "const F2CASES=" + json.dumps(build_dashboard.build_f2cases(embed=False), ensure_ascii=False) + ";",
+            "const CHAINCASES=" + json.dumps(build_dashboard.build_chain_cases_data(), ensure_ascii=False) + ";",
+            "const ANNOTATIONS=" + json.dumps(build_dashboard.load_annotations(), ensure_ascii=False) + ";",
             "const PASSPORT_DATA=" + (PIPE / "passports.json").read_text() + ";",
         ]
         html = (shell
                 .replace("<!--DATA-->", "<script>\n" + "\n".join(blocks) + "\n</script>")
                 .replace("<!--THREE-->", "<script>" + three + "</script>")
-                .replace("<!--CARMODEL-->", car_model_block()))
+                .replace("<!--CARMODEL-->", build_dashboard.car_model_block()))
         _page_cache["html"] = html
         return html
 
