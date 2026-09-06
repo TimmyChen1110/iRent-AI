@@ -1,11 +1,26 @@
+# 影像處理：伺服器環境用 headless（無 GUI 依賴）。
+# 注意 ultralytics 自己宣告依賴 opencv-python（非 headless），pip 會一起裝進來，
+# 兩者同時存在時 import cv2 會解析到後裝的那一份；實測功能一致，但正式部署
+# 建議在 Dockerfile 用 `pip install --no-deps ultralytics` 後手動補齊其相依套件，
+# 只保留 headless 一份。
 opencv-python-headless>=4.9,<5
-pytesseract>=0.3.10,<0.4
 numpy>=1.26,<3
+pillow>=10,<12
+
+# API
 fastapi>=0.110,<1
 uvicorn[standard]>=0.27,<1
 python-multipart>=0.0.9
 pydantic>=2.6,<3
-openpyxl>=3.1,<4
-pytest>=8.0,<9
+
+# Stage 3 視角分類（MobileNetV2 transfer learning）
 torch>=2.2,<3
 torchvision>=0.17,<1
+
+# Stage 2 車牌偵測 + OCR（原 app_models/requirements.txt）
+ultralytics>=8.4.0
+fast-plate-ocr[onnx]>=1.1.0
+
+# 資料處理 / 測試
+openpyxl>=3.1,<4
+pytest>=8.0,<9

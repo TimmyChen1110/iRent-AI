@@ -2,12 +2,31 @@
 
 > 目標：在用戶透過 iRent App 上傳照片的**當下**，即時判斷照片品質——有沒有拍對位置、模糊、未拍攝到車牌、拍攝角度不對、太遠太近、太髒等。
 
-## 狀態：兩條 prototype 各自開發中，尚未整合
+## 狀態：兩條 prototype 已整合完成，四階段 pipeline 可跑
 
-- **`quality_guard/`**：拍照即時防呆 API（FastAPI，模糊/亮度/構圖/車牌位置檢查），車牌偵測目前用傳統 CV + Tesseract，文字辨識精確率待改善。細節見 [quality_guard/backend/README.md](quality_guard/backend/README.md)。
-- **`app_models/`**：YOLO 車牌偵測 + fast-plate-ocr 辨識 pipeline，準確度預期優於 `quality_guard` 目前的車牌 OCR。細節見 [app_models/README.md](app_models/README.md)。
+- **`quality_guard/`**：拍照即時防呆服務（FastAPI + 靜態前端）。使用者上傳或貼上一張
+  照片後，回傳車牌號碼、拍攝角度，以及不合格時的具體重拍原因。
+  細節見 [quality_guard/backend/README.md](quality_guard/backend/README.md)。
+- **`app_models/`**：YOLO 車牌偵測 + fast-plate-ocr 辨識模型與獨立 CLI。
+  細節見 [app_models/README.md](app_models/README.md)。
 
-兩者尚未接線——後續整合方向可能是把 `quality_guard/backend/app/checks/plate.py` 換成呼叫 `app_models` 的偵測/辨識模型。
+`quality_guard` 已把 `app_models` 的兩個模型接成服務內的 Stage 2（模型檔仍放在
+`app_models/` 原路徑，沒有複製副本），再加上本專案訓練的四角視角分類器當 Stage 3。
+整合的施工圖見 [quality_guard/整合計畫_四階段辨識.md](quality_guard/整合計畫_四階段辨識.md)。
+
+整合前後對 285 張真實照片的實測差異：
+
+| 指標 | 整合前 | 整合後 |
+|---|---|---|
+| 車牌文字精確辨識率 | 0.0%（傳統 CV + Tesseract） | **50.8%** |
+| 四角視角分類準確率 | 無（heuristic，不擋關） | **96.9%** |
+| 單張處理耗時（中位數） | 273 ms | **102 ms** |
+
+> 整合過程中發現 `raw_data` 的照片檔名在**車頭照**上把左右寫反了（產線記的是 App
+> 要求的欄位，不是畫面實際拍到的角度；車尾照沒有這個問題）。修正的位置在
+> `validation/parse_filename.py` 的**驗證真值**那一側——模型是用人工目視標註的資料集
+> 訓練的，輸出本身就是對的，**不要去改模型輸出的左右**。證據與踩過的坑見
+> quality_guard 的 README。
 
 ## 原規劃背景（環節二實測數據證明其必要性）
 
