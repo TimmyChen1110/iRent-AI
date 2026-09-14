@@ -32,6 +32,12 @@ def snap_pair():
                 {"location": "左後保險桿", "type": "刮痕", "severity": "medium", "confidence": 0.97, "reasoning": "r"}]}}
 
 
+def snap_interior():
+    return {"mode": "interior", "source": "live", "ai_found": 1, "ai_level": "P1", "ai_conf": 0.9,
+            "photos": {}, "boxes": [],
+            "assessment": {"level": "髒汙", "confidence": 0.9, "score": 42, "issues": ["垃圾"], "reasoning": "後座垃圾"}}
+
+
 def make_task(srv, case_id="RCR-7661-左後", monkeypatch=None):
     if monkeypatch:
         monkeypatch.setattr(srv, "_case_snapshot", lambda cid: snap_pair())
@@ -383,3 +389,104 @@ class TestPhotosAndMyTasks:
         monkeypatch.setenv("DATABASE_URL", "postgresql://u:p@h/db")
         assert ops.ops_db.dialect() == "postgres"
         assert ops.ops_db.sql("SELECT * FROM x WHERE a=?") == "SELECT * FROM x WHERE a=%s"
+
+
+# ---------- 流程修正：孤兒清理、防搶單、完工照守門、逾時升級、自動指派、一致率 ----------
+
+class TestFlowFixes:
+    def test_Demo重置後事件與紀錄跟著清(self, srv, ops, monkeypatch, tmp_path):
+        monkeypatch.setattr(ops, "PHOTO_ROOT", tmp_path / "photos")
+        t = make_task(srv, monkeypatch=monkeypatch)
+        import io
+        from starlette.datastructures import UploadFile as SUF
+        r = run(ops.upload_task_photo(t["id"], photo=SUF(filename="a.jpg", file=io.BytesIO(_jpeg_bytes()))))
+        f = tmp_path / "photos" / str(t["id"]) / r["photo"]["filename"]
+        assert ops.list_events()["events"] and f.exists()
+        with srv.db() as conn:   # 模擬 /api/demo/reset：直接刪任務
+            conn.execute("DELETE FROM task_events WHERE task_id=?", (t["id"],))
+            conn.execute("DELETE FROM tasks WHERE id=?", (t["id"],))
+        assert ops.list_events()["events"] == [] and not f.exists()
+        assert ops.summary()["unread"] == 0
+
+    def test_防搶單(self, srv, ops, monkeypatch):
+        t = make_task(srv, monkeypatch=monkeypatch)
+        ops.update_task(t["id"], ops.OpsTaskUpdate(assignee="清潔組 A", expected_assignee=""))
+        with pytest.raises(HTTPException) as ei:
+            ops.update_task(t["id"], ops.OpsTaskUpdate(assignee="清潔組 B", expected_assignee=""))
+        assert ei.value.status_code == 409 and "清潔組 A" in ei.value.detail
+        d = ops.update_task(t["id"], ops.OpsTaskUpdate(assignee="清潔組 B", expected_assignee="清潔組 A"))
+        assert d["task"]["assignee"] == "清潔組 B"
+
+    def test_清潔任務完工須有照片_監理台路徑也擋(self, srv, ops, monkeypatch, tmp_path):
+        monkeypatch.setattr(ops, "PHOTO_ROOT", tmp_path / "photos")
+        monkeypatch.setattr(srv, "_case_snapshot", lambda cid: snap_interior())
+        t = srv.post_decision(srv.Decision(case_id="F2-RDE-0160-front", decision="confirm"))["task"]
+        assert t["task_type"] == "cleaning"
+        srv.patch_task(t["id"], srv.TaskUpdate(status="in_progress"))
+        with pytest.raises(HTTPException) as ei:
+            srv.patch_task(t["id"], srv.TaskUpdate(status="completed"))   # 監理台的 PATCH 也走同一條守門
+        assert ei.value.status_code == 409 and "完工照" in ei.value.detail
+        import io
+        from starlette.datastructures import UploadFile as SUF
+        run(ops.upload_task_photo(t["id"], photo=SUF(filename="a.jpg", file=io.BytesIO(_jpeg_bytes()))))
+        assert srv.patch_task(t["id"], srv.TaskUpdate(status="completed"))["status"] == "completed"
+
+    def test_維修任務預設不強制照片_設定可改(self, srv, ops, monkeypatch):
+        t = make_task(srv, monkeypatch=monkeypatch)
+        srv.patch_task(t["id"], srv.TaskUpdate(status="in_progress"))
+        ops.put_settings({"require_photo_repair": True})
+        with pytest.raises(HTTPException):
+            srv.patch_task(t["id"], srv.TaskUpdate(status="completed"))
+        ops.put_settings({"require_photo_repair": False})
+        assert srv.patch_task(t["id"], srv.TaskUpdate(status="completed"))["status"] == "completed"
+
+    def test_逾時升級推播一次並記錄(self, srv, ops, monkeypatch):
+        sent = []
+        monkeypatch.setattr(srv, "send_notification", lambda p: sent.append(p) or True)
+        t = make_task(srv, monkeypatch=monkeypatch)
+        assert len(sent) == 1 and sent[0]["kind"] == "system_event"
+        old = (datetime.now() - timedelta(minutes=30)).isoformat(timespec="seconds")
+        with srv.db() as conn:
+            conn.execute("UPDATE tasks SET created_at=? WHERE id=?", (old, t["id"]))
+        ops.list_tasks(); ops.list_tasks()
+        esc = [p for p in sent if p.get("kind") == "escalation"]
+        assert len(esc) == 1 and esc[0]["event"] == "sla_overdue" and esc[0]["task_id"] == t["id"]
+        d = ops.get_task(t["id"])
+        assert d["notification_log"][-1]["audience"] == "escalation" and d["notification_log"][-1]["status"] == "sent"
+
+    def test_逾時升級可關閉(self, srv, ops, monkeypatch):
+        sent = []
+        monkeypatch.setattr(srv, "send_notification", lambda p: sent.append(p) or True)
+        ops.put_settings({"escalate_on_overdue": False})
+        t = make_task(srv, monkeypatch=monkeypatch)
+        old = (datetime.now() - timedelta(minutes=30)).isoformat(timespec="seconds")
+        with srv.db() as conn:
+            conn.execute("UPDATE tasks SET created_at=? WHERE id=?", (old, t["id"]))
+        ops.list_tasks()
+        assert not [p for p in sent if p.get("kind") == "escalation"]
+
+    def test_依類型自動指派只做一次(self, srv, ops, monkeypatch):
+        ops.put_settings({"default_assignee_repair": "維修組 B"})
+        t = make_task(srv, monkeypatch=monkeypatch)
+        got = ops.get_task(t["id"])["task"]
+        assert got["assignee"] == "維修組 B" and "自動指派" in got["events"][-1]["detail"]
+        srv.patch_task(t["id"], srv.TaskUpdate(assignee=""))    # 人工清掉 → 不再自動覆蓋
+        assert ops.get_task(t["id"])["task"]["assignee"] in (None, "")
+
+    def test_一致率統計(self, srv, ops, monkeypatch):
+        monkeypatch.setattr(srv, "_case_snapshot", lambda cid: snap_pair())
+        srv.post_decision(srv.Decision(case_id="RCR-7661-左後", decision="confirm"))   # AI found=1, 人工=1 → 一致
+        srv.post_decision(srv.Decision(case_id="RCG2235-右前", decision="reject"))    # AI found=1, 人工=0 → 不一致
+        a = ops.insights()["agreement"]
+        assert a["n"] == 2 and a["agreed"] == 1 and a["rate"] == 0.5 and len(a["days"]) == 1
+
+    def test_基準照只取已完成任務(self, srv, ops, monkeypatch, tmp_path):
+        monkeypatch.setattr(ops, "PHOTO_ROOT", tmp_path / "photos")
+        t = make_task(srv, monkeypatch=monkeypatch)
+        import io
+        from starlette.datastructures import UploadFile as SUF
+        run(ops.upload_task_photo(t["id"], photo=SUF(filename="a.jpg", file=io.BytesIO(_jpeg_bytes()))))
+        assert ops.car_baseline("rcr-7661")["photos"] == []
+        srv.patch_task(t["id"], srv.TaskUpdate(status="in_progress"))
+        srv.patch_task(t["id"], srv.TaskUpdate(status="completed"))
+        assert len(ops.car_baseline("RCR-7661")["photos"]) == 1

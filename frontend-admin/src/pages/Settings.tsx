@@ -7,10 +7,11 @@ import { useStore } from '../lib/store'
 export function Settings() {
   const [channels, setChannels] = useState<Channel[]>([])
   const [sla, setSla] = useState({ p1: '5', p2: '240', p3: '1440' })
+  const [rules, setRules] = useState({ require_photo_cleaning: '1', require_photo_repair: '0', escalate_on_overdue: '1', default_assignee_cleaning: '', default_assignee_repair: '' })
   const [saving, setSaving] = useState(false)
   const [testing, setTesting] = useState(false)
   const [pre, setPre] = useState<Record<string, string>>({})
-  const { health } = useStore()
+  const { health, people } = useStore()
   const toast = useToast()
 
   const testHook = async () => {
@@ -28,9 +29,12 @@ export function Settings() {
 
   useEffect(() => {
     api.health().then(h => setChannels(h.channels)).catch(() => {})
-    api.settings().then(r => setSla({ p1: r.settings.sla_minutes_p1, p2: r.settings.sla_minutes_p2, p3: r.settings.sla_minutes_p3 })).catch(() => {})
+    api.settings().then(r => { setSla({ p1: r.settings.sla_minutes_p1, p2: r.settings.sla_minutes_p2, p3: r.settings.sla_minutes_p3 }); setRules(x => ({ ...x, ...pick(r.settings) })) }).catch(() => {})
   }, [])
 
+  const saveRules = async () => {
+    try { const r = await api.putSettings(rules); setRules(x => ({ ...x, ...pick(r.settings) })); toast('規則已儲存') } catch (e) { toast((e as Error).message, 'warn') }
+  }
   const save = async () => {
     setSaving(true)
     try {
@@ -72,6 +76,24 @@ export function Settings() {
           </div>
         )}
         <div className="card">
+          <h2>整備規則</h2>
+          <div style={{ display: 'grid', gap: 10 }}>
+            <label className="row"><input type="checkbox" checked={rules.require_photo_cleaning === '1'} onChange={e => setRules(r => ({ ...r, require_photo_cleaning: e.target.checked ? '1' : '0' }))} /> 清潔任務完工前須至少一張完工照（監理台與手機版皆適用）</label>
+            <label className="row"><input type="checkbox" checked={rules.require_photo_repair === '1'} onChange={e => setRules(r => ({ ...r, require_photo_repair: e.target.checked ? '1' : '0' }))} /> 維修任務完工前須至少一張完工照</label>
+            <label className="row"><input type="checkbox" checked={rules.escalate_on_overdue === '1'} onChange={e => setRules(r => ({ ...r, escalate_on_overdue: e.target.checked ? '1' : '0' }))} /> SLA 逾時時自動再發一次 webhook 升級推播（kind=escalation）</label>
+            <div className="row wrap" style={{ gap: 14 }}>
+              <label className="row">清潔任務預設指派
+                <select className="select" value={rules.default_assignee_cleaning} onChange={e => setRules(r => ({ ...r, default_assignee_cleaning: e.target.value }))}>
+                  <option value="">不自動</option>{people.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}</select></label>
+              <label className="row">維修任務預設指派
+                <select className="select" value={rules.default_assignee_repair} onChange={e => setRules(r => ({ ...r, default_assignee_repair: e.target.value }))}>
+                  <option value="">不自動</option>{people.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}</select></label>
+            </div>
+            <div><button className="btn primary" onClick={saveRules}>儲存規則</button></div>
+          </div>
+          <div className="small faint" style={{ marginTop: 8 }}>自動指派只在任務建立且從未被人指派過時執行一次；人工改過就不再覆蓋。</div>
+        </div>
+        <div className="card">
           <h2>SLA 門檻（待處理 → 開工，分鐘）</h2>
           <div className="row wrap">
             {(['p1', 'p2', 'p3'] as const).map(k => (
@@ -86,3 +108,5 @@ export function Settings() {
     </>
   )
 }
+
+const pick = (s: Record<string, string>) => Object.fromEntries(Object.entries(s).filter(([k]) => k.startsWith('require_photo_') || k === 'escalate_on_overdue' || k.startsWith('default_assignee_')))

@@ -9,7 +9,8 @@ import { rel, syncClock } from '../lib/time'
 import { PriorityBadge } from '../components/Badges'
 import { useToast } from '../components/Toast'
 
-type Filter = 'all' | 'P1' | 'P2' | 'P3' | 'unread' | 'failed' | 'overdue'
+type Filter = 'action' | 'all' | 'P1' | 'P2' | 'P3' | 'unread' | 'failed' | 'overdue'
+const ACTION_TYPES = new Set(['task_created', 'notify_failed', 'sla_overdue'])
 
 const ICO: Record<string, string> = {
   task_created: '🆕', task_status: '↦', task_assigned: '👤', notify_sent: '🔔', notify_failed: '⚠',
@@ -19,7 +20,7 @@ const ICO: Record<string, string> = {
 export function Inbox() {
   const { summary, tick, refresh } = useStore()
   const [events, setEvents] = useState<OpsEvent[]>([])
-  const [filter, setFilter] = useState<Filter>('all')
+  const [filter, setFilter] = useState<Filter>('action')
   const [loaded, setLoaded] = useState(false)
   const nav = useNavigate()
   const loc = useLocation()
@@ -38,6 +39,7 @@ export function Inbox() {
     if (filter === 'failed') return e.type === 'notify_failed'
     if (filter === 'overdue') return e.type === 'sla_overdue'
     if (filter === 'all') return true
+    if (filter === 'action') return ACTION_TYPES.has(e.type)
     return e.priority === filter
   }), [events, filter])
 
@@ -53,7 +55,7 @@ export function Inbox() {
     try { await api.markRead(null); refresh(); toast('已全部標為已讀') } catch { toast('操作失敗，請重試', 'warn') }
   }
 
-  const count = (f: Filter) => f === 'all' ? events.length : f === 'unread' ? events.filter(e => !e.is_read).length
+  const count = (f: Filter) => f === 'all' ? events.length : f === 'action' ? events.filter(e => ACTION_TYPES.has(e.type)).length : f === 'unread' ? events.filter(e => !e.is_read).length
     : f === 'failed' ? events.filter(e => e.type === 'notify_failed').length
     : f === 'overdue' ? events.filter(e => e.type === 'sla_overdue').length
     : events.filter(e => e.priority === f).length
@@ -61,13 +63,13 @@ export function Inbox() {
   return (
     <>
       <div className="topbar" style={{ position: 'static', background: 'transparent', backdropFilter: 'none', borderBottom: 0, paddingBottom: 0 }}>
-        <div><h1>通知中心</h1><div className="sub">案件確認、通知結果、SLA 逾時——只列真實發生的事</div></div>
+        <div><h1>通知中心</h1><div className="sub">預設只列需要行動的事：新任務、推播失敗、SLA 逾時；其餘在「全部」</div></div>
         <span className="spacer" />
         <button className="btn sm" onClick={readAll} disabled={!events.some(e => !e.is_read)}>全部標為已讀</button>
       </div>
       <div className="content">
         <div className="kpis">
-          <button className={`kpi ${filter === 'all' ? 'active' : ''}`} onClick={() => setFilter('all')}>
+          <button className={`kpi ${filter === 'action' ? 'active' : ''}`} onClick={() => setFilter('action')}>
             <div className="micro">待處理任務</div><div className="num">{summary?.pending ?? '—'}</div><div className="sub">處理中 {summary?.in_progress ?? '—'} · 今日完成 {summary?.completed_today ?? '—'}</div>
           </button>
           <button className={`kpi ${filter === 'P1' ? 'active' : ''}`} onClick={() => setFilter('P1')}>
@@ -77,14 +79,14 @@ export function Inbox() {
             <div className="micro">SLA 逾時</div><div className={`num ${(summary?.overdue || 0) > 0 ? 'warn' : ''}`}>{summary?.overdue ?? '—'}</div><div className="sub">待處理且超過開工期限</div>
           </button>
           <button className={`kpi ${filter === 'failed' ? 'active' : ''}`} onClick={() => setFilter('failed')}>
-            <div className="micro">通知失敗</div><div className={`num ${(summary?.notify_failed || 0) > 0 ? 'warn' : ''}`}>{summary?.notify_failed ?? '—'}</div><div className="sub">可於任務詳情重發</div>
+            <div className="micro">推播失敗</div><div className={`num ${(summary?.notify_failed || 0) > 0 ? 'warn' : ''}`}>{summary?.notify_failed ?? '—'}</div><div className="sub">可於任務詳情重發</div>
           </button>
         </div>
 
         <div className="chips">
-          {(['all', 'unread', 'P1', 'P2', 'P3', 'failed', 'overdue'] as Filter[]).map(f => (
+          {(['action', 'all', 'unread', 'P1', 'P2', 'P3', 'failed', 'overdue'] as Filter[]).map(f => (
             <button key={f} className={`chip ${filter === f ? 'active' : ''}`} onClick={() => setFilter(f)}>
-              {{ all: '全部', unread: '未讀', P1: 'P1', P2: 'P2', P3: 'P3', failed: '通知失敗', overdue: '逾時' }[f]}
+              {{ action: '需要行動', all: '全部', unread: '未讀', P1: 'P1', P2: 'P2', P3: 'P3', failed: '推播失敗', overdue: '逾時' }[f]}
               <span className="n">{count(f)}</span>
             </button>
           ))}

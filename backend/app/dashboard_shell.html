@@ -1663,6 +1663,11 @@ function setViz(v) {
 }
 
 function jumpToCase(id) { viewMode = "cases"; filter = "all"; currentId = id; renderAll(); }
+/* 深連結：整備中心任務詳情「在監理台開啟」→ /#case=<case_id>（chain / live 案件亦可） */
+window.addEventListener("load", () => {
+  const m = location.hash.match(/^#case=(.+)$/);
+  if (m) setTimeout(() => { try { jumpFromTask(decodeURIComponent(m[1])); } catch (e) { console.warn("deep link", e); } }, 0);
+});
 
 /* ================= 現場實測（任意照片即時判定，需 server 版） ================= */
 const LIVE = { mode: "pair", files: {}, urls: {}, busy: false, result: null, error: null, t0: 0, timer: null };

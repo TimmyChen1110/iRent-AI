@@ -94,4 +94,5 @@ export interface Insights {
   tasks: { total: number; by_type: Record<string, Record<string, number>>; median_minutes_to_start: number | null; median_minutes_to_complete: number | null; n_started: number; n_completed: number }
   car_ranking: Array<{ car: string; repair: number; cleaning: number; claims: number }>
   interior: { 乾淨: number; 普通: number; 髒汙: number; n: number; excluded_unreadable: number }
+  agreement: { days: Array<{ day: string; n: number; agreed: number }>; n: number; agreed: number; rate: number | null }
 }

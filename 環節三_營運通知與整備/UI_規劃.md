@@ -180,4 +180,5 @@ ops_settings(key TEXT PK, value TEXT)
   - 站點人員手機版 `/ops/m`（同日）：選組別 → 我的任務（指派給我＋未指派）→ 接單開工 → 拍完工照（`POST /api/ops/tasks/{id}/photos`，EXIF 轉正、縮圖、存 `IRENT_UPLOAD_DIR/ops_task_photos/`）→ 完工（前端要求至少一張完工照）。完工照顯示於任務詳情，日後可作下一次借車基準照。
   - Dockerfile 改多階段（node 建前端 → python），compose 的 build context 改為 repo 根、根目錄 `.dockerignore`；repo 內 `backend/app/static/ops/` 仍保留供本機 uvicorn 直接使用。
   - `ops_db.py` 方言層：`DATABASE_URL` 為 postgres 時以 psycopg 連線、`?`→`%s`、AUTOINCREMENT→SERIAL；**Postgres 未實測**（本機無 Postgres），等同事的 PR #2 一起驗證。
-  - 待做：Postgres 實測、登入與身分驗證、派單系統真實串接。
+  - **流程修正（2026-09-14 下午）**：Demo 重置後孤兒事件／紀錄／完工照自動清除；手機版接單防搶單（`expected_assignee`，409）；完工照規則改由後端守門（`server.TASK_COMPLETE_GUARD`，監理台與手機版同一條；清潔預設必附、維修選填、設定頁可調）；系統推播 payload 加 `kind=system_event` 與 `url`（需 `PUBLIC_BASE_URL`）；SLA 逾時自動升級推播（`kind=escalation`，可關）；通知中心預設「需要行動」；任務詳情深連結監理台 `/#case=<id>`；依任務類型預設指派（只做一次）；完工照作基準照 `GET /api/ops/cars/{car}/baseline`；洞察頁加「人工裁決 vs AI 一致率」趨勢。
+  - 待做：Postgres 實測、登入與身分驗證、派單系統真實串接、環節二判讀流程實際取用基準照。

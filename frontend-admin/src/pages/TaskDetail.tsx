@@ -131,7 +131,7 @@ export function TaskDetail({ mode }: { mode: 'sheet' | 'page' }) {
           <div className="row wrap" style={{ marginTop: 10 }}>
             <span className="small faint">案件 <span className="mono">{d.case.case_id}</span>{d.case.decision && <> · 人工裁決 {d.case.decision.decision} @ {fmt(d.case.decision.decided_at)}</>}</span>
             <span className="spacer" />
-            <a className="btn xs ghost" href="/" target="_blank" rel="noreferrer">在監理台開啟 ↗</a>
+            <a className="btn xs ghost" href={`/#case=${encodeURIComponent(d.case.case_id)}`} target="_blank" rel="noreferrer">在監理台開啟此案件 ↗</a>
           </div>
         </div>
 

@@ -29,7 +29,7 @@ export const api = {
   tasks: (f: { status?: string; task_type?: string; priority?: string; assignee?: string; overdue?: boolean } = {}) =>
     call<{ tasks: Task[]; server_time: string; sla: Record<string, number> }>('/api/ops/tasks' + q(f)),
   task: (id: number) => call<TaskDetail>(`/api/ops/tasks/${id}`),
-  patchTask: (id: number, body: { status?: string; assignee?: string; note?: string }) =>
+  patchTask: (id: number, body: { status?: string; assignee?: string; note?: string; expected_assignee?: string }) =>
     call<TaskDetail>(`/api/ops/tasks/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
   retryNotify: (id: number) => call<TaskDetail>(`/api/ops/tasks/${id}/notify`, { method: 'POST' }),
   events: (f: { since?: number; priority?: string; unread?: boolean; types?: string; limit?: number } = {}) =>
@@ -56,6 +56,7 @@ export const api = {
   lockCar: (car: string, locked: boolean, reason?: string) =>
     call<FleetResp & { lock: unknown }>(`/api/ops/fleet/${encodeURIComponent(car)}`, { method: 'PATCH', body: JSON.stringify({ locked, reason }) }),
   insights: () => call<Insights>('/api/ops/insights'),
+  baseline: (car: string) => call<{ car: string; photos: TaskPhoto[] }>(`/api/ops/cars/${encodeURIComponent(car)}/baseline`),
   myTasks: () => call<{ tasks: MyTask[]; reader: string; server_time: string }>('/api/ops/my-tasks'),
   uploadPhoto: async (taskId: number, file: File) => {
     const fd = new FormData(); fd.append('photo', file)

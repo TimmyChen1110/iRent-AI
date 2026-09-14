@@ -164,7 +164,14 @@ class TestPayload:
         assert p == {"event": "task_created", "case_id": "X-左後", "task_id": 7,
                      "task_type": "repair", "priority": "P1", "car": "X",
                      "title": "T", "description": "D", "assignee": None,
-                     "status": "pending", "created_at": "2026-09-05T00:00:00"}
+                     "status": "pending", "created_at": "2026-09-05T00:00:00",
+                     "kind": "system_event", "url": None}
+
+    def test_payload_url需設PUBLIC_BASE_URL(self, srv, monkeypatch):
+        task = {"id": 7, "case_id": "X", "task_type": "repair", "title": "T", "status": "pending",
+                "created_at": "2026-09-05T00:00:00"}
+        monkeypatch.setenv("PUBLIC_BASE_URL", "http://10.0.0.5:8000/")
+        assert srv.build_notification_payload(task)["url"] == "http://10.0.0.5:8000/ops/tasks/7"
 
     def test_URL不寫進task_events(self, srv, spy, monkeypatch):
         t = confirm(srv, "RCR-7661-左後", snap_pair(), monkeypatch)["task"]

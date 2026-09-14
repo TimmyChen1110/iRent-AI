@@ -62,6 +62,20 @@ export function Insights() {
         </div>
 
         <div className="card">
+          <h2>人工裁決 vs AI 判定一致率 — 系統越用越準的證據</h2>
+          <div className="small muted" style={{ marginBottom: 10 }}>每一次人工 confirm／reject 都自動存成標籤（decision_events，append-only）。一致率 = 人工真值與 AI 判定相同的比例；n = {d.agreement.n}{d.agreement.rate != null && <>，整體 <b>{Math.round(d.agreement.rate * 100)}%</b></>}。</div>
+          {d.agreement.days.length === 0 ? <div className="empty">尚無裁決紀錄</div> : (
+            <>
+              <Columns data={d.agreement.days.map(x => ({ label: x.day.slice(5), value: Math.round(x.agreed / x.n * 100), hint: `${x.day}：${x.agreed}/${x.n} 一致` }))} height={160} valueFmt={v => `${v}%`} />
+              {showTable && (
+                <table className="table" style={{ marginTop: 10 }}><thead><tr><th>日期</th><th>裁決數</th><th>一致</th><th>一致率</th></tr></thead>
+                  <tbody>{d.agreement.days.map(x => <tr key={x.day}><td className="mono">{x.day}</td><td className="mono">{x.n}</td><td className="mono">{x.agreed}</td><td className="mono">{Math.round(x.agreed / x.n * 100)}%</td></tr>)}</tbody></table>
+              )}
+            </>
+          )}
+        </div>
+
+        <div className="card">
           <h2>車輛事件排行 — 哪些車該優先巡檢</h2>
           <div className="small muted" style={{ marginBottom: 10 }}>人工確認的維修／清潔任務（即時）＋ 資料集索賠正樣本（離線，n = 21）。取前 10。</div>
           {d.car_ranking.length === 0 ? <div className="empty">尚無資料</div> : (

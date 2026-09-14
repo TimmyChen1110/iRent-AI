@@ -53,6 +53,11 @@ DEFAULT_SETTINGS = {
     "sla_minutes_p1": "5",
     "sla_minutes_p2": "240",
     "sla_minutes_p3": "1440",
+    "require_photo_cleaning": "1",     # 清潔任務完工前須至少一張完工照
+    "require_photo_repair": "0",       # 維修任務不強制
+    "escalate_on_overdue": "1",        # SLA 逾時自動再發一次 webhook（升級）
+    "default_assignee_cleaning": "",   # 建立時依類型自動指派（空＝不自動）
+    "default_assignee_repair": "",
 }
 
 DDL = [
@@ -410,3 +415,32 @@ def add_task_photo(conn, task: dict, filename: str, by: str) -> dict:
 
 def list_task_photos(conn, task_id: int) -> list[dict]:
     return rows(conn.execute("SELECT * FROM task_photos WHERE task_id=? ORDER BY id", (task_id,)))
+
+
+# ---------- 孤兒清理：任務被刪（Demo 重置）後，事件／已讀／發送紀錄／完工照跟著清 ----------
+
+def purge_orphans(conn) -> dict:
+    gone = [r[0] for r in conn.execute(
+        "SELECT DISTINCT task_id FROM ops_events WHERE task_id IS NOT NULL"
+        "   AND task_id NOT IN (SELECT id FROM tasks)")]
+    gone += [r[0] for r in conn.execute(
+        "SELECT DISTINCT task_id FROM task_photos WHERE task_id NOT IN (SELECT id FROM tasks)")]
+    gone += [r[0] for r in conn.execute(
+        "SELECT DISTINCT task_id FROM notification_log WHERE task_id NOT IN (SELECT id FROM tasks)")]
+    gone = sorted(set(gone))
+    photo_files = []
+    for tid in gone:
+        photo_files += [r[0] for r in conn.execute("SELECT filename FROM task_photos WHERE task_id=?", (tid,))]
+        conn.execute("DELETE FROM event_reads WHERE event_id IN (SELECT id FROM ops_events WHERE task_id=?)", (tid,))
+        conn.execute("DELETE FROM ops_events WHERE task_id=?", (tid,))
+        conn.execute("DELETE FROM notification_log WHERE task_id=?", (tid,))
+        conn.execute("DELETE FROM task_photos WHERE task_id=?", (tid,))
+    return {"task_ids": gone, "photo_files": photo_files}
+
+
+def photo_count(conn, task_id: int) -> int:
+    return conn.execute("SELECT COUNT(*) FROM task_photos WHERE task_id=?", (task_id,)).fetchone()[0]
+
+
+def has_assignee_event(conn, task_id: int) -> bool:
+    return conn.execute("SELECT 1 FROM task_events WHERE task_id=? AND event='assignee'", (task_id,)).fetchone() is not None

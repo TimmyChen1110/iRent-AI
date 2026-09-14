@@ -40,6 +40,21 @@ def bind(server_module) -> None:
     # 測試會 monkeypatch server.DB_PATH；跟著它走，確保與監理台同一顆資料庫
     ops_db.db_path = lambda: _srv.DB_PATH
     ops_db.base_init = lambda: _srv.db().close()   # 先確保 tasks / task_events 存在
+    _srv.TASK_COMPLETE_GUARD = _complete_guard     # 監理台與整備中心共用同一條完工規則
+
+
+def _complete_guard(conn, task_id: int) -> str | None:
+    """完工前檢查：依設定要求完工照（清潔預設必附）。conn 為監理台的連線（同一顆 DB）。"""
+    row = conn.execute("SELECT task_type FROM tasks WHERE id=?", (task_id,)).fetchone()
+    if not row:
+        return None
+    with ops_db.db() as oconn:
+        s = ops_db.get_settings(oconn)
+        need = s.get(f"require_photo_{row[0]}", "0") == "1"
+        n = ops_db.photo_count(oconn, task_id) if need else 0
+    if need and n == 0:
+        return "完工前需至少一張完工照（可於站點手機版上傳；規則可在通知設定調整）"
+    return None
 
 
 def _now() -> datetime:
@@ -80,23 +95,84 @@ def _with_sla(task: dict, sla: dict, now: datetime) -> dict:
     return t
 
 
-def _scan_overdue(conn, sla: dict, now: datetime) -> int:
-    """對逾時仍待處理的任務各產生一則 sla_overdue 事件（每任務一次）。
-    在每次讀取事件／任務時順手執行，成本極低，不需背景 thread。"""
-    n = 0
+def _scan_overdue(conn, sla: dict, now: datetime) -> list[dict]:
+    """對逾時仍待處理的任務各產生一則 sla_overdue 事件（每任務一次）。回傳新逾時的任務，
+    由呼叫端在 transaction 之外做升級推播。"""
+    fresh = []
     for r in conn.execute("SELECT * FROM tasks WHERE status='pending'"):
         t = _with_sla(dict(r), sla, now)
         if t["overdue"] and not ops_db.has_overdue_event(conn, t["id"]):
             ops_db.add_event(conn, "sla_overdue", t,
                              f"{t['priority'] or 'P2'} 任務逾時未開工（SLA {t['sla_minutes']} 分鐘）",
                              at=_iso(now))
-            n += 1
+            fresh.append(t)
+    return fresh
+
+
+def _escalate(tasks: list[dict]) -> None:
+    """逾時升級：對 webhook 再發一次（kind=escalation），結果記 notification_log 與歷程。
+    HTTP 在 DB transaction 之外；失敗只記錄，不影響掃描。"""
+    if not tasks:
+        return
+    with ops_db.db() as conn:
+        enabled = ops_db.get_settings(conn).get("escalate_on_overdue", "1") == "1"
+    if not enabled:
+        return
+    for t in tasks:
+        if not _srv._webhook_url():
+            status, detail = "skipped", "逾時升級：通知管道未設定，未發送"
+        else:
+            payload = {**_srv.build_notification_payload(t), "event": "sla_overdue", "kind": "escalation",
+                       "sla_minutes": t["sla_minutes"], "sla_due_at": t["sla_due_at"]}
+            try:
+                ok = _srv.send_notification(payload)
+            except Exception:
+                ok = False
+            status = "sent" if ok else "failed"
+            detail = "逾時升級推播已送出（webhook）" if ok else "逾時升級推播失敗"
+        with ops_db.db() as conn:
+            entry = ops_db.add_notification_log(conn, t["id"], "escalation", "webhook", status, detail)
+            conn.execute("INSERT INTO task_events(task_id, at, event, detail) VALUES (?,?,?,?)",
+                         (t["id"], entry["at"], "notify", detail))
+
+
+def _auto_assign(conn) -> int:
+    """依設定把尚未指派、且從未被人指派過的待處理任務自動指派（每任務只做一次）。"""
+    s = ops_db.get_settings(conn)
+    n = 0
+    for r in conn.execute("SELECT id, task_type FROM tasks WHERE status='pending' AND (assignee IS NULL OR assignee='')"):
+        who = (s.get(f"default_assignee_{r[1]}") or "").strip()
+        if not who or ops_db.has_assignee_event(conn, r[0]):
+            continue
+        now = ops_db.now_iso()
+        conn.execute("UPDATE tasks SET assignee=?, updated_at=? WHERE id=?", (who, now, r[0]))
+        conn.execute("INSERT INTO task_events(task_id, at, event, detail) VALUES (?,?,?,?)",
+                     (r[0], now, "assignee", f"依類型規則自動指派給 {who}"))
+        n += 1
     return n
 
 
+_PENDING_ESCALATION: list[dict] = []
+
+
 def _refresh_events(conn) -> None:
+    """每次讀取時順手做：孤兒清理（Demo 重置後）、自動指派、派生事件、逾時掃描。"""
+    purged = ops_db.purge_orphans(conn)
+    for name in purged["photo_files"]:
+        for tid in purged["task_ids"]:
+            f = PHOTO_ROOT / str(tid) / name
+            if f.exists():
+                f.unlink()
+    _auto_assign(conn)
     ops_db.derive_events_from_tasks(conn)
-    _scan_overdue(conn, ops_db.sla_minutes(conn), _now())
+    _PENDING_ESCALATION.extend(_scan_overdue(conn, ops_db.sla_minutes(conn), _now()))
+
+
+def _flush_escalations() -> None:
+    """在 DB transaction 之外發升級推播（呼叫端於 with ops_db.db() 結束後呼叫）。"""
+    if _PENDING_ESCALATION:
+        batch, _PENDING_ESCALATION[:] = list(_PENDING_ESCALATION), []
+        _escalate(batch)
 
 
 # ---------- 案件快照 → 前端可用的照片 URL ----------
@@ -179,7 +255,7 @@ def summary(x_ops_reader: str | None = Header(default=None)):
         sla = ops_db.sla_minutes(conn)
         tasks = [_with_sla(dict(r), sla, now) for r in conn.execute("SELECT * FROM tasks")]
         today = now.date().isoformat()
-        return {
+        out = {
             "server_time": _iso(now),
             "pending": sum(t["status"] == "pending" for t in tasks),
             "in_progress": sum(t["status"] == "in_progress" for t in tasks),
@@ -191,6 +267,8 @@ def summary(x_ops_reader: str | None = Header(default=None)):
                                  for t in tasks),
             "unread": ops_db.unread_count(conn, _reader(x_ops_reader)),
         }
+    _flush_escalations()
+    return out
 
 
 @router.get("/tasks")
@@ -211,6 +289,7 @@ def list_tasks(status: str | None = None, task_type: str | None = None,
             " ORDER BY created_at DESC"
         ids = [r[0] for r in conn.execute(q, params)]
         out = [_with_sla(_srv._task_row(conn, i), sla, now) for i in ids]
+    _flush_escalations()
     if overdue:
         out = [t for t in out if t["overdue"]]
     demo_ids = set(_srv.DEMO_CASE_IDS) if _srv._demo_mode() else set()
@@ -241,12 +320,21 @@ class OpsTaskUpdate(BaseModel):
     status: str | None = None
     assignee: str | None = None
     note: str | None = None
+    expected_assignee: str | None = None   # 防搶單：指派前確認目前負責人仍是此值（"" = 未指派）
 
 
 @router.patch("/tasks/{task_id}")
 def update_task(task_id: int, upd: OpsTaskUpdate, x_ops_reader: str | None = Header(default=None)):
     """狀態 / 指派走監理台的 patch_task（同一套狀態機）；備註另寫 task_events(note)。"""
     who = _reader(x_ops_reader)
+    if upd.expected_assignee is not None:
+        with _srv.db() as conn:
+            row = conn.execute("SELECT assignee FROM tasks WHERE id=?", (task_id,)).fetchone()
+        if not row:
+            raise HTTPException(404, f"找不到任務 #{task_id}")
+        cur = row[0] or ""
+        if cur != upd.expected_assignee:
+            raise HTTPException(409, f"任務已由「{cur or '其他人'}」接手，請重新整理")
     if upd.status is not None or upd.assignee is not None:
         _srv.patch_task(task_id, _srv.TaskUpdate(status=upd.status, assignee=upd.assignee))
     note = (upd.note or "").strip()
@@ -279,8 +367,10 @@ def list_events(since: int = 0, priority: str | None = None, unread: bool = Fals
         evs = ops_db.list_events(conn, reader, since_id=since, priority=priority,
                                  unread_only=unread, types=types.split(",") if types else None,
                                  limit=max(1, min(limit, 500)))
-        return {"events": evs, "unread": ops_db.unread_count(conn, reader),
-                "server_time": _iso(_now())}
+        out = {"events": evs, "unread": ops_db.unread_count(conn, reader),
+               "server_time": _iso(_now())}
+    _flush_escalations()
+    return out
 
 
 class ReadBody(BaseModel):
@@ -351,6 +441,8 @@ def put_settings(values: dict):
             if not 1 <= iv <= 60 * 24 * 7:
                 raise HTTPException(400, f"{k} 需介於 1 與 10080 分鐘")
             clean[k] = iv
+        elif k in ("require_photo_cleaning", "require_photo_repair", "escalate_on_overdue"):
+            clean[k] = "1" if v in (True, 1, "1", "true", "on") else "0"
         elif isinstance(k, str) and len(k) <= 64:
             clean[k] = str(v)[:500]
     with ops_db.db() as conn:
@@ -513,6 +605,7 @@ def _events_after(last_id: int, reader: str) -> list[dict]:
     with ops_db.db() as conn:
         _refresh_events(conn)
         evs = ops_db.list_events(conn, reader, since_id=last_id, limit=50)
+    _flush_escalations()
     return list(reversed(evs))   # 由舊到新
 
 
@@ -713,6 +806,7 @@ def insights():
                   "n_started": len(to_start), "n_completed": len(to_done)},
         "car_ranking": ranking,
         "interior": interior,
+        "agreement": _agreement_stats(),
     }
 
 
@@ -795,3 +889,28 @@ def my_tasks(x_ops_reader: str | None = Header(default=None)):
     out.sort(key=lambda t: (0 if t["mine"] else 1, 0 if t["status"] == "in_progress" else 1,
                             rank.get(t.get("priority") or "P2", 1), t["created_at"]))
     return {"tasks": out, "reader": who, "server_time": _iso(now)}
+
+
+# ---------- 完工照 → 下一次借車的基準照 ----------
+
+@router.get("/cars/{car}/baseline")
+def car_baseline(car: str, limit: int = 6):
+    """該車最近的完工照（最新在前）。環節二比對可優先取用此基準，而非只靠用戶自拍的借車照。"""
+    car = car.strip().upper()
+    with ops_db.db() as conn:
+        rows = ops_db.rows(conn.execute(
+            "SELECT p.*, t.task_type, t.status FROM task_photos p JOIN tasks t ON t.id = p.task_id"
+            " WHERE UPPER(p.car)=? AND t.status='completed' ORDER BY p.id DESC LIMIT ?", (car, limit)))
+    return {"car": car, "photos": [_photo_row(r) for r in rows], "server_time": _iso(_now())}
+
+
+def _agreement_stats() -> dict:
+    """人工裁決 vs AI 判定一致率：來源 decision_events（append-only）。只算有表態（label 非 NULL）者。"""
+    with _srv.db() as conn:
+        rows = conn.execute(
+            "SELECT substr(decided_at,1,10) AS day, COUNT(*) AS n, SUM(agreed) AS agreed"
+            "  FROM decision_events WHERE agreed IS NOT NULL GROUP BY day ORDER BY day").fetchall()
+    days = [{"day": d, "n": n, "agreed": a or 0} for d, n, a in rows]
+    n = sum(x["n"] for x in days)
+    a = sum(x["agreed"] for x in days)
+    return {"days": days, "n": n, "agreed": a, "rate": round(a / n, 3) if n else None}

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
-import type { FleetResp, FleetRow } from '../lib/types'
+import type { FleetResp, FleetRow, TaskPhoto } from '../lib/types'
 import { useStore } from '../lib/store'
 import { fmt, rel, syncClock } from '../lib/time'
 import { PriorityBadge, TypeBadge } from '../components/Badges'
@@ -20,6 +20,7 @@ export function Fleet() {
   const [st, setSt] = useState<'' | FleetRow['status']>('')
   const [lockCar, setLockCar] = useState('')
   const [reason, setReason] = useState('')
+  const [baseline, setBaseline] = useState<Record<string, TaskPhoto[]>>({})
   const nav = useNavigate(); const loc = useLocation(); const toast = useToast()
 
   const load = useCallback(async () => {
@@ -40,6 +41,10 @@ export function Fleet() {
     catch (e) { toast((e as Error).message, 'warn') }
   }
 
+  const showBaseline = async (car: string) => {
+    if (baseline[car]) { setBaseline(b => { const n = { ...b }; delete n[car]; return n }); return }
+    try { const r = await api.baseline(car); setBaseline(b => ({ ...b, [car]: r.photos })) } catch (e) { toast((e as Error).message, 'warn') }
+  }
   const rows = (data?.fleet || []).filter(r => (!q || r.car.toUpperCase().includes(q.toUpperCase())) && (!st || r.status === st))
 
   return (
@@ -88,7 +93,8 @@ export function Fleet() {
                     ))}
                   </td>
                   <td className="small muted">{r.dataset_cases > 0 ? <>{r.dataset_cases} 案{r.claims > 0 && <> · 索賠 {r.claims}</>}{r.unreviewed_flags > 0 && <> · <span style={{ color: '#7A5D00' }}>待複核 {r.unreviewed_flags}</span></>}</> : '—'}</td>
-                  <td className="mono small">{r.last_completed_at ? fmt(r.last_completed_at) : '—'}{r.completed_tasks > 0 && <span className="faint">（{r.completed_tasks} 次）</span>}</td>
+                  <td className="mono small">{r.last_completed_at ? fmt(r.last_completed_at) : '—'}{r.completed_tasks > 0 && <> <span className="faint">（{r.completed_tasks} 次）</span> <button className="btn xs ghost" onClick={() => showBaseline(r.car)}>基準照</button></>}
+                    {baseline[r.car] && <div className="row wrap" style={{ gap: 4, marginTop: 4 }}>{baseline[r.car].length === 0 ? <span className="faint">無完工照</span> : baseline[r.car].map(p => <img key={p.id} src={p.url} alt="" style={{ width: 64, height: 48, objectFit: 'cover', borderRadius: 4 }} title={`${p.by || ''} ${fmt(p.at)}`} />)}</div>}</td>
                   <td style={{ textAlign: 'right' }}><button className="btn xs" onClick={() => toggle(r)}>{r.manual_lock ? '🔓 解除' : '🔒 鎖定'}</button></td>
                 </tr>
               ))}

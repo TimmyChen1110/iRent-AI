@@ -32,7 +32,7 @@ export function Mobile() {
     const prev = tasks
     setTasks(l => status === 'completed' ? l.filter(x => x.id !== t.id) : l.map(x => x.id === t.id ? { ...x, status } : x))
     try {
-      if (status === 'in_progress' && !t.assignee) await api.patchTask(t.id, { assignee: reader })
+      if (status === 'in_progress' && !t.assignee) await api.patchTask(t.id, { assignee: reader, expected_assignee: '' })   // 防搶單：只有仍未指派才接
       await api.patchTask(t.id, { status }); refresh(); load()
       toast(status === 'completed' ? `✓ ${t.car} 完工` : `▶ ${t.car} 開工`)
     } catch (e) { setTasks(prev); toast((e as Error).message, 'warn') } finally { setBusy(null) }

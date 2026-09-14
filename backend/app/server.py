@@ -65,6 +65,9 @@ from review_api import router as review_router  # noqa: E402
 app.include_router(review_router)
 app.include_router(inspections_router)
 
+# 完成前守門（環節三 ops_api 於 bind() 註冊；例如清潔任務須先有完工照）。回傳錯誤訊息字串即拒絕。
+TASK_COMPLETE_GUARD = None
+
 # 環節三 整備中心 API（/api/ops）與前端（/ops）；規則不重寫，router 內回呼本模組函式
 import ops_api  # noqa: E402
 ops_api.bind(sys.modules[__name__])
@@ -433,7 +436,15 @@ def build_notification_payload(task: dict) -> dict:
         "assignee": task.get("assignee"),
         "status": task["status"],
         "created_at": task["created_at"],
+        "kind": "system_event",          # 系統事件推播（非人工發送的三對象文案）
+        "url": _task_url(task["id"]),
     }
+
+
+def _task_url(task_id: int) -> str | None:
+    """整備中心任務連結；需設 PUBLIC_BASE_URL（如 http://10.0.0.5:8000）才有絕對網址。"""
+    base = (os.environ.get("PUBLIC_BASE_URL") or "").rstrip("/")
+    return f"{base}/ops/tasks/{task_id}" if base else None
 
 
 def send_notification(payload: dict) -> bool:
@@ -548,6 +559,7 @@ class TaskUpdate(BaseModel):
     status: str | None = None
 
 
+
 @app.get("/api/tasks")
 def get_tasks(status: str | None = None, task_type: str | None = None,
               priority: str | None = None):
@@ -591,6 +603,10 @@ def patch_task(task_id: int, upd: TaskUpdate):
                 raise HTTPException(400, "status 必須是 pending / in_progress / completed / cancelled")
             if upd.status != cur_status and upd.status not in _TASK_FLOW[cur_status]:
                 raise HTTPException(400, f"狀態不可由 {cur_status} 直接變更為 {upd.status}")
+            if upd.status == "completed" and cur_status != "completed" and TASK_COMPLETE_GUARD:
+                why = TASK_COMPLETE_GUARD(conn, task_id)
+                if why:
+                    raise HTTPException(409, why)
             if upd.status != cur_status:
                 resolved = now if upd.status == "completed" else None
                 conn.execute("UPDATE tasks SET status=?, resolved_at=?, updated_at=? WHERE id=?",
