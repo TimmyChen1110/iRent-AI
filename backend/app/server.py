@@ -929,6 +929,19 @@ async def rejudge(req: RejudgeReq):
 ALLOWED_SUFFIX = {".jpg", ".jpeg", ".png", ".jfif", ".webp", ".heic", ".heif"}
 
 
+def _baseline_pickup(car: str | None):
+    """環節三完工照 → 借車基準照。回 (UploadFile, 資訊) 或 (None, None)。
+    優先用整備後的基準，而非只靠用戶自拍的借車照——三個環節串起來的關鍵。"""
+    if not car:
+        return None, None
+    b = ops_api.latest_baseline(car)
+    if not b:
+        return None, None
+    info = {k: b[k] for k in ("car", "task_id", "filename", "by", "at", "url")}
+    info["source"] = "completion_photo"
+    return UploadFile(file=io.BytesIO(b["bytes"]), filename=b["filename"]), info
+
+
 async def _save_uploads(td, need):
     """上傳檔存進暫存目錄，回 (路徑 dict, 原始 bytes dict)。"""
     paths, raw = {}, {}
@@ -945,10 +958,16 @@ async def _save_uploads(td, need):
 async def api_gate(mode: str = Form("pair"),
                    pickup: UploadFile | None = File(None),
                    ret: UploadFile | None = File(None),
-                   interior: UploadFile | None = File(None)):
+                   interior: UploadFile | None = File(None),
+                   baseline_car: str | None = Form(None)):
     """只跑 Quality Gate（純 CV、<1 秒、零 API）——前端先呼叫這支即時顯示品質檢核，
     通過才續打 /api/judge，讓「檢核→判定」有分段回饋。"""
     import judge_photos  # noqa: PLC0415
+    baseline = None
+    if mode == "pair" and pickup is None:
+        pickup, baseline = _baseline_pickup(baseline_car)
+        if baseline_car and not baseline:
+            raise HTTPException(404, f"{baseline_car.upper()} 沒有可用的完工照，請上傳借車照")
     need = [("pickup", pickup), ("ret", ret)] if mode == "pair" else [("interior", interior)]
     for name, f in need:
         if f is None:
@@ -961,7 +980,7 @@ async def api_gate(mode: str = Form("pair"),
                                            interior=(mode != "pair"))
         except Exception as e:
             raise HTTPException(400, f"照片無法讀取：{str(e)[:120]}")
-    return {"gate": gates, "gate_pass": all(g["pass"] for g in gates.values())}
+    return {"gate": gates, "gate_pass": all(g["pass"] for g in gates.values()), "baseline": baseline}
 
 
 def lan_ip() -> str:
@@ -1028,12 +1047,19 @@ async def api_judge(mode: str = Form("pair"),
                     pickup: UploadFile | None = File(None),
                     ret: UploadFile | None = File(None),
                     interior: UploadFile | None = File(None),
-                    skip_gate: bool = Form(False)):
+                    skip_gate: bool = Form(False),
+                    baseline_car: str | None = Form(None)):
     """現場實測：跑完整鏈路（Quality Gate → 級聯判定 → 視覺標註）。
-    上傳照片只寫進暫存目錄（with 區塊結束即刪除），不進 repo。"""
+    上傳照片只寫進暫存目錄（with 區塊結束即刪除），不進 repo。
+    baseline_car：未上傳 pickup 時，以該車最近完工照（環節三）作為借車基準。"""
     _require_key()
     import judge_photos  # noqa: PLC0415  延遲載入：不啟用此功能時 server 照常跑
 
+    baseline = None
+    if mode == "pair" and pickup is None:
+        pickup, baseline = _baseline_pickup(baseline_car)
+        if baseline_car and not baseline:
+            raise HTTPException(404, f"{baseline_car.upper()} 沒有可用的完工照，請上傳借車照")
     need = [("pickup", pickup), ("ret", ret)] if mode == "pair" else [("interior", interior)]
     for name, f in need:
         if f is None:
@@ -1059,6 +1085,8 @@ async def api_judge(mode: str = Form("pair"),
             raise HTTPException(502, f"判定失敗：{str(e)[:200]}")
 
     enrich(result)          # S6 估價分流（零 API，失敗不影響判定）
+    if baseline:
+        result["baseline"] = baseline
     # 暫存路徑對前端沒有意義，拿掉；標註圖直接以 base64 回傳
     for k in ("pickup", "return", "photo"):
         result.pop(k, None)
@@ -1125,8 +1153,10 @@ def save_live_case(req: LiveCaseReq):
                              "description": f'{d["location"]}：{d["reasoning"]}'}
                             for d in fin["damages"] if len(d.get("box_2d") or []) == 4],
                "summary": ""}
-        case = {"id": live_id, "live": True, "car": "LIVE", "angle": now.strftime("%m/%d %H:%M"),
+        base = r.get("baseline") or {}
+        case = {"id": live_id, "live": True, "car": base.get("car") or "LIVE", "angle": now.strftime("%m/%d %H:%M"),
                 "level": r["level"], "kind": r["kind"], "truth": "live", "assessment": fin,
+                "baseline": {k: v for k, v in base.items() if k != "bytes"} or None,
                 "pickup": _thumb_b64(entry["raw"]["pickup"]),
                 "ret": _thumb_b64(entry["raw"]["ret"])}
     else:

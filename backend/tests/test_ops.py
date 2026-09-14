@@ -490,3 +490,43 @@ class TestFlowFixes:
         srv.patch_task(t["id"], srv.TaskUpdate(status="in_progress"))
         srv.patch_task(t["id"], srv.TaskUpdate(status="completed"))
         assert len(ops.car_baseline("RCR-7661")["photos"]) == 1
+
+
+# ---------- 完工照 → 現場實測的借車基準照 ----------
+
+class TestBaselineInJudge:
+    def _done_with_photo(self, srv, ops, monkeypatch, tmp_path):
+        monkeypatch.setattr(ops, "PHOTO_ROOT", tmp_path / "photos")
+        t = make_task(srv, monkeypatch=monkeypatch)
+        import io
+        from starlette.datastructures import UploadFile as SUF
+        run(ops.upload_task_photo(t["id"], photo=SUF(filename="a.jpg", file=io.BytesIO(_jpeg_bytes(640, 480)))))
+        srv.patch_task(t["id"], srv.TaskUpdate(status="in_progress"))
+        srv.patch_task(t["id"], srv.TaskUpdate(status="completed"))
+        return t
+
+    def test_latest_baseline(self, srv, ops, monkeypatch, tmp_path):
+        assert ops.latest_baseline("RCR-7661") is None
+        t = self._done_with_photo(srv, ops, monkeypatch, tmp_path)
+        b = ops.latest_baseline("rcr-7661")
+        assert b["task_id"] == t["id"] and b["bytes"][:2] == b"\xff\xd8" and b["url"].endswith(".jpg")
+
+    def test_gate用完工照當借車基準(self, srv, ops, monkeypatch, tmp_path):
+        self._done_with_photo(srv, ops, monkeypatch, tmp_path)
+        import io
+        from starlette.datastructures import UploadFile as SUF
+        r = run(srv.api_gate(mode="pair", pickup=None, ret=SUF(filename="r.jpg", file=io.BytesIO(_jpeg_bytes(640, 480))),
+                             interior=None, baseline_car="RCR-7661"))
+        assert set(r["gate"]) == {"pickup", "return"} and r["baseline"]["source"] == "completion_photo"
+        assert r["baseline"]["car"] == "RCR-7661" and "bytes" not in r["baseline"]
+
+    def test_沒完工照時404_未給車牌仍要求上傳(self, srv, ops, monkeypatch, tmp_path):
+        import io
+        from starlette.datastructures import UploadFile as SUF
+        ret = SUF(filename="r.jpg", file=io.BytesIO(_jpeg_bytes()))
+        with pytest.raises(HTTPException) as ei:
+            run(srv.api_gate(mode="pair", pickup=None, ret=ret, interior=None, baseline_car="ZZZ-9999"))
+        assert ei.value.status_code == 404
+        with pytest.raises(HTTPException) as ei:
+            run(srv.api_gate(mode="pair", pickup=None, ret=ret, interior=None, baseline_car=None))
+        assert ei.value.status_code == 400

@@ -1670,7 +1670,8 @@ window.addEventListener("load", () => {
 });
 
 /* ================= 現場實測（任意照片即時判定，需 server 版） ================= */
-const LIVE = { mode: "pair", files: {}, urls: {}, busy: false, result: null, error: null, t0: 0, timer: null };
+const LIVE = { mode: "pair", files: {}, urls: {}, busy: false, result: null, error: null, t0: 0, timer: null,
+               baseline: null, car: "" };   // baseline：以環節三完工照當借車基準（{car,url,by,at}）
 
 /* --- 現場判定 → 案件佇列（存 SQLite，全隊共享） --- */
 const liveLoaded = new Set();
@@ -1724,21 +1725,43 @@ async function deleteLiveCase(id) {
 function setLiveMode(m) { LIVE.mode = m; LIVE.result = null; LIVE.error = null; LIVE.gate = null; renderLive(); }
 function liveSet(k, file) {
   if (!file || !file.type.startsWith("image/")) return;
-  if (LIVE.urls[k]) URL.revokeObjectURL(LIVE.urls[k]);
+  if (k === "pickup") LIVE.baseline = null;   // 自己上傳借車照 → 不用完工照基準
+  if (LIVE.urls[k] && LIVE.urls[k].startsWith("blob:")) URL.revokeObjectURL(LIVE.urls[k]);
   LIVE.files[k] = file; LIVE.urls[k] = URL.createObjectURL(file);
   LIVE.result = null; LIVE.error = null; LIVE.gate = null; renderLive();
 }
 function liveFile(input, k) { liveSet(k, input.files[0]); }
 function liveDrop(e, k) { e.preventDefault(); e.currentTarget.classList.remove("over"); liveSet(k, e.dataTransfer.files[0]); }
 function liveReset() {
-  Object.values(LIVE.urls).forEach(u => URL.revokeObjectURL(u));
-  LIVE.files = {}; LIVE.urls = {}; LIVE.result = null; LIVE.error = null; LIVE.gate = null; renderLive();
+  Object.values(LIVE.urls).forEach(u => { if (u.startsWith("blob:")) URL.revokeObjectURL(u); });
+  LIVE.files = {}; LIVE.urls = {}; LIVE.baseline = null; LIVE.result = null; LIVE.error = null; LIVE.gate = null; renderLive();
+}
+/* 用環節三的完工照當借車基準：整備完成 → 該車下一次比對優先用整備後的狀態，而非只靠用戶自拍 */
+async function useBaseline() {
+  const car = (document.getElementById("lf_car") || {}).value || LIVE.car;
+  LIVE.car = (car || "").trim().toUpperCase();
+  if (!LIVE.car) { alert("請輸入車牌"); return; }
+  try {
+    const r = await fetch("/api/ops/cars/" + encodeURIComponent(LIVE.car) + "/baseline");
+    const j = await r.json();
+    if (!r.ok || !j.photos || !j.photos.length) { alert(LIVE.car + " 沒有完工照可當基準（整備完成並上傳完工照後才有）"); return; }
+    const p = j.photos[0];
+    if (LIVE.urls.pickup && LIVE.urls.pickup.startsWith("blob:")) URL.revokeObjectURL(LIVE.urls.pickup);
+    delete LIVE.files.pickup;
+    LIVE.urls.pickup = p.url;
+    LIVE.baseline = { car: LIVE.car, url: p.url, by: p.by, at: p.at };
+    LIVE.result = null; LIVE.error = null; LIVE.gate = null; renderLive();
+  } catch (e) { alert("取得完工照失敗"); }
 }
 
 function liveFormData() {
   const fd = new FormData();
   fd.append("mode", LIVE.mode);
-  if (LIVE.mode === "pair") { fd.append("pickup", LIVE.files.pickup); fd.append("ret", LIVE.files.ret); }
+  if (LIVE.mode === "pair") {
+    if (LIVE.baseline && !LIVE.files.pickup) fd.append("baseline_car", LIVE.baseline.car);   // server 以完工照當 pickup
+    else fd.append("pickup", LIVE.files.pickup);
+    fd.append("ret", LIVE.files.ret);
+  }
   else fd.append("interior", LIVE.files.interior);
   return fd;
 }
@@ -1838,7 +1861,7 @@ function liveResultHtml(j) {
   const nAnn = ((j.final || {}).damages || (j.final || {}).findings || []).length;
   const photos = j.mode === "pair"
     ? `<div class="photos">
-        <div class="photo d-card"><div class="cap"><span class="before">借車照</span><span class="t">比對基準</span></div>
+        <div class="photo d-card"><div class="cap"><span class="before">借車照</span><span class="t">${j.baseline ? "基準：" + j.baseline.car + " 完工照（環節三）" : "比對基準"}</span></div>
           <div class="imgwrap"><img src="${LIVE.urls.pickup}" alt="借車照"></div></div>
         <div class="photo d-card"><div class="cap"><span class="after">還車照</span><span class="t">${nAnn ? "AI 標註 " + nAnn + " 處" : "本次判定"}</span></div>
           <div class="imgwrap"><img src="${ann || LIVE.urls.ret}" alt="還車照（AI 標註）"></div></div></div>`
@@ -1863,11 +1886,11 @@ function renderLive() {
   const slots = LIVE.mode === "pair"
     ? [["pickup", "借車照", "比對基準"], ["ret", "還車照", "找新增損傷"]]
     : [["interior", "車內照", "整潔分級"]];
-  const ready = slots.every(([k]) => LIVE.files[k]);
+  const ready = slots.every(([k]) => LIVE.files[k] || (k === "pickup" && LIVE.baseline));
   const drops = slots.map(([k, lbl, hint]) => `
     <div class="drop ${""}" ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')"
          ondrop="liveDrop(event,'${k}')" onclick="document.getElementById('lf_${k}').click()">
-      <span class="slotcap">${lbl}</span>
+      <span class="slotcap">${lbl}${k === "pickup" && LIVE.baseline ? "・完工照基準" : ""}</span>
       ${LIVE.urls[k] ? `<img src="${LIVE.urls[k]}" alt="${lbl}">` : `<div class="hint"><b>＋ ${lbl}</b>點擊選取或拖入照片<br><span style="font-size: 13.8px">${hint}</span></div>`}
       <input type="file" id="lf_${k}" accept="image/*" hidden onchange="liveFile(this,'${k}')">
     </div>`).join("");
@@ -1883,6 +1906,12 @@ function renderLive() {
     </div>
     <div class="d-card" style="padding:14px">
       <div class="live-drops ${LIVE.mode === "interior" ? "single" : ""}">${drops}</div>
+      ${LIVE.mode === "pair" ? `<div class="live-ctl" style="margin-top:10px;align-items:center">
+        <input id="lf_car" value="${LIVE.car}" placeholder="車牌，如 RCR-7661" style="padding:6px 10px;border-radius:6px;border:1px solid var(--line2);background:var(--panel2);color:var(--ink);font:inherit;width:170px"
+               onkeydown="if(event.key==='Enter')useBaseline()">
+        <button class="btn" onclick="useBaseline()">用最近完工照當借車基準</button>
+        ${LIVE.baseline ? `<span class="badge soft">基準：${LIVE.baseline.car} 完工照 ・ ${LIVE.baseline.by || "—"} ・ ${(LIVE.baseline.at || "").replace("T", " ").slice(0, 16)}</span>` : `<span style="color:var(--faint);font-size: 13.2px">整備完成上傳的完工照（環節三）可直接當基準，不必再靠用戶自拍的借車照</span>`}
+      </div>` : ""}
       <div class="live-ctl" style="margin-top:12px">
         <button class="btn danger" ${ready && !LIVE.busy ? "" : "disabled"} onclick="runLiveJudge(false)">▶ 開始判定</button>
         <button class="btn" ${LIVE.busy ? "disabled" : ""} onclick="liveReset()">清除重來</button>

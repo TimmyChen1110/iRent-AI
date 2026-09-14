@@ -914,3 +914,22 @@ def _agreement_stats() -> dict:
     n = sum(x["n"] for x in days)
     a = sum(x["agreed"] for x in days)
     return {"days": days, "n": n, "agreed": a, "rate": round(a / n, 3) if n else None}
+
+
+def latest_baseline(car: str) -> dict | None:
+    """該車最近一張完工照（已完成任務），含 bytes；供現場實測／判讀端當借車基準照。"""
+    car = (car or "").strip().upper()
+    if not car:
+        return None
+    with ops_db.db() as conn:
+        r = conn.execute(
+            "SELECT p.* FROM task_photos p JOIN tasks t ON t.id = p.task_id"
+            " WHERE UPPER(p.car)=? AND t.status='completed' ORDER BY p.id DESC LIMIT 1", (car,)).fetchone()
+    if not r:
+        return None
+    r = dict(r)
+    f = PHOTO_ROOT / str(r["task_id"]) / r["filename"]
+    if not f.is_file():
+        return None
+    return {"car": car, "task_id": r["task_id"], "filename": r["filename"], "by": r["by"], "at": r["at"],
+            "url": f"/api/ops/tasks/{r['task_id']}/photos/{r['filename']}", "bytes": f.read_bytes()}

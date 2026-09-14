@@ -181,4 +181,5 @@ ops_settings(key TEXT PK, value TEXT)
   - Dockerfile 改多階段（node 建前端 → python），compose 的 build context 改為 repo 根、根目錄 `.dockerignore`；repo 內 `backend/app/static/ops/` 仍保留供本機 uvicorn 直接使用。
   - `ops_db.py` 方言層：`DATABASE_URL` 為 postgres 時以 psycopg 連線、`?`→`%s`、AUTOINCREMENT→SERIAL；**Postgres 未實測**（本機無 Postgres），等同事的 PR #2 一起驗證。
   - **流程修正（2026-09-14 下午）**：Demo 重置後孤兒事件／紀錄／完工照自動清除；手機版接單防搶單（`expected_assignee`，409）；完工照規則改由後端守門（`server.TASK_COMPLETE_GUARD`，監理台與手機版同一條；清潔預設必附、維修選填、設定頁可調）；系統推播 payload 加 `kind=system_event` 與 `url`（需 `PUBLIC_BASE_URL`）；SLA 逾時自動升級推播（`kind=escalation`，可關）；通知中心預設「需要行動」；任務詳情深連結監理台 `/#case=<id>`；依任務類型預設指派（只做一次）；完工照作基準照 `GET /api/ops/cars/{car}/baseline`；洞察頁加「人工裁決 vs AI 一致率」趨勢。
-  - 待做：Postgres 實測、登入與身分驗證、派單系統真實串接、環節二判讀流程實際取用基準照。
+  - **完工照回寫判讀基準（2026-09-14）**：監理台「現場實測」車損比對可輸入車牌按「用最近完工照當借車基準」；`/api/gate`、`/api/judge` 新增 `baseline_car`（未上傳 pickup 時以該車最近完工照作基準），結果附 `baseline` 資訊，存入案件佇列時車牌與基準來源一併保存。
+  - 待做：Postgres 實測、登入與身分驗證、派單系統真實串接。
