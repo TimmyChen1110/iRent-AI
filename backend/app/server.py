@@ -18,10 +18,12 @@
 import base64
 import io
 import json
+import os
 import sqlite3
 import sys
 import tempfile
 import threading
+import urllib.request
 import uuid
 from collections import OrderedDict
 from datetime import datetime
@@ -96,6 +98,31 @@ def db():
                  note       TEXT)""")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_ev_case ON decision_events(case_id)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_ev_time ON decision_events(decided_at)")
+    # 整備任務（環節三）：confirm 裁決自動建立，UNIQUE(case_id, task_type) 保證重複 confirm 不重複開單。
+    # notification_status 為通知管道預留欄位（LINE/簡訊尚未接入，永遠是 not_sent，UI 不得宣稱已通知）。
+    conn.execute("""CREATE TABLE IF NOT EXISTS tasks(
+                 id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                 case_id    TEXT NOT NULL,
+                 task_type  TEXT NOT NULL,      -- repair | cleaning
+                 car        TEXT,
+                 title      TEXT NOT NULL,
+                 description TEXT,
+                 priority   TEXT,               -- P1 | P2 | P3（沿用案件分級）
+                 assignee   TEXT,
+                 status     TEXT NOT NULL DEFAULT 'pending',  -- pending | in_progress | completed | cancelled
+                 notification_status TEXT NOT NULL DEFAULT 'not_sent',
+                 created_at TEXT NOT NULL,
+                 updated_at TEXT NOT NULL,
+                 resolved_at TEXT,
+                 UNIQUE(case_id, task_type))""")
+    conn.execute("""CREATE TABLE IF NOT EXISTS task_events(
+                 event_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                 task_id  INTEGER NOT NULL,
+                 at       TEXT NOT NULL,
+                 event    TEXT NOT NULL,        -- created | status | assignee | reopened | cancelled
+                 detail   TEXT)""")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_task_case ON tasks(case_id)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_tev_task ON task_events(task_id)")
     return conn
 
 
@@ -168,14 +195,18 @@ def _case_snapshot(case_id: str) -> dict:
         from build_dashboard import build_chain_cases_data
         c_case = next((c for c in build_chain_cases_data() if c["id"] == case_id), None)
         if c_case:
-            a = c_case.get("assessment") or {}
+            a = c_case.get("assessment")
+            evaluated = (c_case.get("evaluation_status") or "evaluated") == "evaluated" and a
+            # 信心只能來自模型輸出；沒有就是 None（曾硬編 0.88 污染訓練標籤，勿回退）
+            conf = max((d.get("confidence") or 0 for d in (a or {}).get("damages") or []),
+                       default=None) if evaluated else None
             return {
                 "mode": "chain", "source": "dataset",
-                "ai_found": int(bool(a.get("new_damage_found"))),
-                "ai_level": c_case.get("level"),
-                "ai_conf": 0.88,
+                "ai_found": int(bool(a.get("new_damage_found"))) if evaluated else None,
+                "ai_level": c_case.get("level") if evaluated else None,
+                "ai_conf": conf,
                 "photos": {"pickup": c_case.get("pickup"), "return": c_case.get("return")},
-                "assessment": a,
+                "assessment": a if evaluated else None,
                 "boxes": [],
             }
     return {"mode": None, "source": None, "ai_found": None, "ai_level": None,
@@ -204,12 +235,252 @@ def get_decisions():
         return {r[0]: r[1] for r in conn.execute("SELECT case_id, decision FROM decisions")}
 
 
+# ---------- 整備任務（環節三：confirm → Task → 指派 → 處理 → 完成） ----------
+# 人工 confirm ＝「確認有車損／髒汙」，後續一定要有人去修／去清 → 自動開整備任務。
+# reject / retake 不開單。任務內容直接引用 AI 判定原文（location/type/severity/理由），
+# 讓整備人員不必回頭翻案件也知道要處理什麼。
+
+_TASK_FLOW = {  # 最簡狀態機：待處理 → 處理中 → 已完成（可取消、可重啟；不做複雜 workflow）
+    "pending": {"in_progress", "cancelled"},
+    "in_progress": {"completed", "pending", "cancelled"},
+    "completed": {"in_progress"},          # 誤按完成可重開；重開即清掉 resolved_at
+    "cancelled": {"pending"},
+}
+
+
+def _case_car(case_id: str) -> str:
+    """從 case_id 推車輛代號（顯示用，推不出來就原樣返回）。"""
+    if case_id.startswith("LIVE-"):
+        return "LIVE"
+    # 車牌本身可含連字號（RDE-0160），一律去前綴後只切掉最後一段（方位/車內前後）
+    for prefix in ("F2-", "CHAIN-"):
+        if case_id.startswith(prefix):
+            return case_id[len(prefix):].rsplit("-", 1)[0]   # "F2-RDE-0160-front" → "RDE-0160"
+    return case_id.rsplit("-", 1)[0]   # "RCR-7661-左後" → "RCR-7661"
+
+
+def _auto_task_spec(case_id: str, snap: dict) -> dict:
+    """confirm 裁決 → 任務內容。車內案件開清潔單，其餘（借還比對／跨單鏈）開維修單。"""
+    a = snap.get("assessment") or {}
+    priority = snap.get("ai_level") if snap.get("ai_level") in ("P1", "P2", "P3") else "P2"
+    if snap.get("mode") == "interior":
+        issues = a.get("issues") or []
+        score = a.get("score")
+        desc = "人工確認車內髒汙，須清潔。"
+        if issues:
+            desc += "\nAI 盤點問題：" + "、".join(issues)
+        if isinstance(score, (int, float)):
+            desc += f"\nCleanliness Score：{score}/100"
+        if a.get("reasoning"):
+            desc += f"\nAI 判定理由：{a['reasoning']}"
+        return {"task_type": "cleaning", "title": "車內清潔", "description": desc,
+                "priority": priority}
+    dmgs = a.get("damages") or []
+    if dmgs:
+        d0 = dmgs[0]
+        title = f'{d0.get("location") or ""}{d0.get("type") or "車損"}維修'
+        lines = [f'{d.get("location") or "—"}·{d.get("type") or "—"}·{d.get("severity") or "—"}'
+                 f'（信心 {d.get("confidence")}）：{d.get("reasoning") or ""}' for d in dmgs]
+        desc = "人工確認新增車損，須維修。\nAI 判定：\n" + "\n".join(lines)
+    else:
+        title = "車損維修"
+        desc = "人工確認車損（AI 未偵測到，人工複核判定為有損），請現場確認維修範圍。"
+    return {"task_type": "repair", "title": title, "description": desc, "priority": priority}
+
+
+def _task_row(conn, task_id: int) -> dict | None:
+    cur = conn.execute("SELECT * FROM tasks WHERE id=?", (task_id,))
+    row = cur.fetchone()
+    if not row:
+        return None
+    t = dict(zip([c[0] for c in cur.description], row))
+    t["events"] = [{"at": at, "event": ev, "detail": det} for at, ev, det in conn.execute(
+        "SELECT at, event, detail FROM task_events WHERE task_id=? ORDER BY event_id", (task_id,))]
+    return t
+
+
+def _ensure_task(conn, case_id: str, snap: dict, now: str) -> dict:
+    """建立（或喚回）整備任務。冪等：同一 case + task_type 永遠只有一張單。"""
+    spec = _auto_task_spec(case_id, snap)
+    row = conn.execute("SELECT id, status FROM tasks WHERE case_id=? AND task_type=?",
+                       (case_id, spec["task_type"])).fetchone()
+    if row:
+        tid, status = row
+        if status == "cancelled":   # 先前 undo 取消過 → 再次 confirm 喚回為待處理
+            conn.execute("UPDATE tasks SET status='pending', updated_at=?, resolved_at=NULL"
+                         " WHERE id=?", (now, tid))
+            conn.execute("INSERT INTO task_events(task_id, at, event, detail) VALUES (?,?,?,?)",
+                         (tid, now, "reopened", "案件再次確認，已取消任務重啟為待處理"))
+    else:
+        cur = conn.execute(
+            "INSERT INTO tasks(case_id, task_type, car, title, description, priority,"
+            " status, created_at, updated_at) VALUES (?,?,?,?,?,?, 'pending', ?, ?)",
+            (case_id, spec["task_type"], _case_car(case_id), spec["title"],
+             spec["description"], spec["priority"], now, now))
+        tid = cur.lastrowid
+        conn.execute("INSERT INTO task_events(task_id, at, event, detail) VALUES (?,?,?,?)",
+                     (tid, now, "created", f"由案件 {case_id} 人工確認自動建立"))
+    return _task_row(conn, tid)
+
+
+# ---------- Demo Mode（DEMO_MODE=true 時啟用；只影響 UI 排序與 demo helper） ----------
+# 鐵則：DEMO_MODE 不得改變 AI 結果、Task 邏輯、Notification 邏輯、Metrics。
+# 它只提供：demo 案例快速入口、上台前健檢、將兩個示範案例重置回
+# 「AI 已判定、尚未人工 confirm」的安全 reset。
+
+DEMO_CASE_DAMAGE = "RCR-7661-左後"       # 新車損示範：P1、三處損傷、標註框準、真實索賠案
+DEMO_CASE_CLEANING = "F2-RDE-0160-front"  # 車內髒汙示範：P1、遺留寶特瓶、有位置框
+DEMO_CASE_IDS = (DEMO_CASE_DAMAGE, DEMO_CASE_CLEANING)
+
+
+def _demo_mode() -> bool:
+    return os.environ.get("DEMO_MODE", "").lower() in ("1", "true", "yes")
+
+
+def _require_demo():
+    if not _demo_mode():   # 非 demo 環境不得暴露清資料 endpoint
+        raise HTTPException(404)
+
+
+@app.get("/api/demo/health")
+def demo_health():
+    """上台前健檢：零 AI 呼叫、零 webhook 發送，只確認東西都在。"""
+    _require_demo()
+    try:
+        with db() as conn:
+            conn.execute("SELECT 1").fetchone()
+        db_ok = True
+    except Exception:
+        db_ok = False
+
+    def case_ok(cid):
+        try:
+            return _case_snapshot(cid)["mode"] is not None
+        except Exception:
+            return False
+
+    return {
+        "server": "ok",
+        "database": "ok" if db_ok else "error",
+        "notification_configured": bool(_webhook_url()),
+        "demo_damage_case": case_ok(DEMO_CASE_DAMAGE),
+        "demo_cleaning_case": case_ok(DEMO_CASE_CLEANING),
+        "demo_cases": {"damage": DEMO_CASE_DAMAGE, "cleaning": DEMO_CASE_CLEANING},
+    }
+
+
+@app.post("/api/demo/reset")
+def demo_reset():
+    """把兩個示範案例重置回「AI 已判定、尚未人工 confirm」。
+
+    只動這兩個 case 的 decisions 與 tasks/task_events（任務刪除後，下次 confirm
+    會建立全新任務、notification_status 從頭開始 → webhook 重新發送）。
+    不動：AI 評測結果、照片、chain 資料、離線指標、其他案件、
+    decision_events（訓練標籤 append-only，僅補記 undo 事件）。
+    """
+    _require_demo()
+    now = datetime.now().isoformat(timespec="seconds")
+    reset = []
+    with db() as conn:
+        for cid in DEMO_CASE_IDS:
+            had = conn.execute("SELECT 1 FROM decisions WHERE case_id=?", (cid,)).fetchone()
+            if had:
+                conn.execute("DELETE FROM decisions WHERE case_id=?", (cid,))
+                conn.execute("INSERT INTO decision_events(case_id, decided_at, decision, note)"
+                             " VALUES (?,?,?,?)", (cid, now, "undo", "Demo 重置"))
+            tids = [r[0] for r in conn.execute(
+                "SELECT id FROM tasks WHERE case_id=?", (cid,)).fetchall()]
+            for tid in tids:
+                conn.execute("DELETE FROM task_events WHERE task_id=?", (tid,))
+                conn.execute("DELETE FROM tasks WHERE id=?", (tid,))
+            if had or tids:
+                reset.append(cid)
+    return {"ok": True, "reset_cases": reset,
+            "note": "示範案例已回到「AI 已判定、尚未人工確認」狀態"}
+
+
+# ---------- 即時通知（Generic Webhook） ----------
+# 設計原則：AI 不直接觸發營運通知——人工 confirm、task 建立成功之後才發。
+# Task 是主業務資料，通知是 side effect：webhook 掛掉/超時/未設定，
+# 一律只反映在 tasks.notification_status，絕不影響 confirm 與 task 建立。
+# 管道：環境變數 NOTIFICATION_WEBHOOK_URL（HTTP POST JSON）。URL 屬機密，
+# 不進版控、不進 log、不進 task_events。
+
+NOTIFY_TIMEOUT_S = 4   # 短 timeout：外部端點掛掉不能拖住 Demo
+
+
+def _webhook_url() -> str | None:
+    return os.environ.get("NOTIFICATION_WEBHOOK_URL") or None
+
+
+def build_notification_payload(task: dict) -> dict:
+    """組通知 payload。內容全部來自既存 task 資料（已引用 AI 判定原文），
+    這一步零 AI 呼叫。與發送邏輯分離，日後要換 LINE/Slack 只改 send 端。"""
+    return {
+        "event": "task_created",
+        "case_id": task["case_id"],
+        "task_id": task["id"],
+        "task_type": task["task_type"],
+        "priority": task.get("priority"),
+        "car": task.get("car"),
+        "title": task["title"],
+        "description": task.get("description"),
+        "assignee": task.get("assignee"),
+        "status": task["status"],
+        "created_at": task["created_at"],
+    }
+
+
+def send_notification(payload: dict) -> bool:
+    """對 NOTIFICATION_WEBHOOK_URL 發 HTTP POST。呼叫前 caller 需確認 URL 存在。
+    回傳是否 2xx；例外由 caller 接住。測試一律 monkeypatch 本函式，不打真網路。"""
+    req = urllib.request.Request(
+        _webhook_url(), data=json.dumps(payload, ensure_ascii=False).encode(),
+        headers={"Content-Type": "application/json"}, method="POST")
+    with urllib.request.urlopen(req, timeout=NOTIFY_TIMEOUT_S) as resp:
+        return 200 <= resp.status < 300
+
+
+def _notify_task(task: dict) -> dict:
+    """嘗試對一張 task 發通知並更新 notification_status，回傳最新 task。
+
+    - 已 sent：冪等，不重發（confirm→undo→confirm 不會轟炸收件端）
+    - 無 webhook 設定：skipped（UI 顯示「通知管道未設定」，不算失敗）
+    - 發送失敗：failed（Task Card 可重新發送）
+    必須在 DB transaction 之外呼叫——HTTP 不能佔著資料庫。
+    """
+    if task.get("notification_status") == "sent":
+        return task
+    if not _webhook_url():
+        status, detail = "skipped", "通知管道未設定（NOTIFICATION_WEBHOOK_URL），未發送"
+    else:
+        try:
+            ok = send_notification(build_notification_payload(task))
+        except Exception:          # timeout / DNS / refused / 5xx——一律不外洩 URL 與細節
+            ok = False
+        status = "sent" if ok else "failed"
+        detail = "通知已送出（webhook）" if ok else "通知發送失敗，可於整備看板重新發送"
+        print(f"notification {status} (task #{task['id']})", file=sys.stderr)
+    try:
+        now = datetime.now().isoformat(timespec="seconds")
+        with db() as conn:
+            conn.execute("UPDATE tasks SET notification_status=?, updated_at=? WHERE id=?",
+                         (status, now, task["id"]))
+            conn.execute("INSERT INTO task_events(task_id, at, event, detail) VALUES (?,?,?,?)",
+                         (task["id"], now, "notify", detail))
+            return _task_row(conn, task["id"])
+    except Exception:              # 連狀態都寫不進去也不能拖垮 confirm
+        task["notification_status"] = status
+        return task
+
+
 @app.post("/api/decision")
 def post_decision(d: Decision):
     """記錄人工裁決。同時寫入兩張表：
       decisions       — 複核狀態（可覆蓋，後台 UI 讀這張）
       decision_events — 訓練標籤存底（append-only，永不覆蓋）
     後者是把「稽核員本來就要做的複核」直接轉成免費的 ground truth。
+    confirm 另自動建立整備任務（tasks 表），回傳於 task 欄位。
     """
     if d.decision not in _LABEL_OF:
         raise HTTPException(400, "decision 必須是 confirm / reject / retake")
@@ -222,6 +493,7 @@ def post_decision(d: Decision):
     label = _LABEL_OF[d.decision]
     ai_found = snap["ai_found"]
     agreed = None if (label is None or ai_found is None) else int(label == ai_found)
+    task = None
     with db() as conn:
         conn.execute("INSERT OR REPLACE INTO decisions VALUES (?,?,?)",
                      (d.case_id, d.decision, now))
@@ -235,19 +507,97 @@ def post_decision(d: Decision):
              json.dumps(snap["assessment"], ensure_ascii=False) if snap["assessment"] else None,
              json.dumps(snap["boxes"], ensure_ascii=False),
              (d.note or None)))
-    return {"ok": True, "labeled": label is not None, "agreed": agreed}
+        if d.decision == "confirm":
+            try:
+                task = _ensure_task(conn, d.case_id, snap, now)
+            except Exception:   # 開單失敗不能擋住裁決本身
+                task = None
+    # 通知在 transaction 之外：task 已落地才發，失敗只反映在 notification_status
+    if task:
+        task = _notify_task(task)
+    return {"ok": True, "labeled": label is not None, "agreed": agreed, "task": task}
 
 
 @app.delete("/api/decision/{case_id}")
 def delete_decision(case_id: str):
     """復原複核狀態。刻意【不刪】decision_events——「先判了又收回」本身是難例訊號，
-    而且訓練標籤一旦刪掉就永遠救不回來。"""
+    而且訓練標籤一旦刪掉就永遠救不回來。
+    連帶把該案【尚未開工】的整備任務取消（只動 pending；已在處理中的工作不因複核反悔而消失）。"""
     now = datetime.now().isoformat(timespec="seconds")
     with db() as conn:
         conn.execute("DELETE FROM decisions WHERE case_id=?", (case_id,))
         conn.execute("INSERT INTO decision_events(case_id, decided_at, decision, note)"
                      " VALUES (?,?,?,?)", (case_id, now, "undo", "使用者復原前次裁決"))
+        for (tid,) in conn.execute(
+                "SELECT id FROM tasks WHERE case_id=? AND status='pending'", (case_id,)).fetchall():
+            conn.execute("UPDATE tasks SET status='cancelled', updated_at=? WHERE id=?", (now, tid))
+            conn.execute("INSERT INTO task_events(task_id, at, event, detail) VALUES (?,?,?,?)",
+                         (tid, now, "cancelled", "來源案件裁決被復原，任務自動取消"))
     return {"ok": True}
+
+
+# ---------- Task API（整備看板） ----------
+
+class TaskUpdate(BaseModel):
+    assignee: str | None = None
+    status: str | None = None
+
+
+@app.get("/api/tasks")
+def get_tasks(status: str | None = None, task_type: str | None = None,
+              priority: str | None = None):
+    """任務清單（含歷程）。可用 status / task_type / priority 篩選。"""
+    conds, params = [], []
+    for col, v in (("status", status), ("task_type", task_type), ("priority", priority)):
+        if v:
+            conds.append(f"{col}=?")
+            params.append(v)
+    where = (" WHERE " + " AND ".join(conds)) if conds else ""
+    with db() as conn:
+        ids = [r[0] for r in conn.execute(
+            "SELECT id FROM tasks" + where +
+            " ORDER BY CASE status WHEN 'pending' THEN 0 WHEN 'in_progress' THEN 1"
+            " WHEN 'completed' THEN 2 ELSE 3 END, priority, created_at DESC", params)]
+        return {"tasks": [_task_row(conn, i) for i in ids]}
+
+
+@app.post("/api/tasks/{task_id}/notify")
+def retry_notify(task_id: int):
+    """重新發送通知。已 sent 者冪等直接回傳；failed / skipped / not_sent 皆可再試。"""
+    with db() as conn:
+        task = _task_row(conn, task_id)
+    if not task:
+        raise HTTPException(404, f"找不到任務 #{task_id}")
+    return _notify_task(task)
+
+
+@app.patch("/api/tasks/{task_id}")
+def patch_task(task_id: int, upd: TaskUpdate):
+    """更新任務：指派 assignee、或依狀態機推進 status。
+    completed 自動寫 resolved_at；離開 completed 自動清掉。"""
+    now = datetime.now().isoformat(timespec="seconds")
+    with db() as conn:
+        row = conn.execute("SELECT status, assignee FROM tasks WHERE id=?", (task_id,)).fetchone()
+        if not row:
+            raise HTTPException(404, f"找不到任務 #{task_id}")
+        cur_status, cur_assignee = row
+        if upd.status is not None:
+            if upd.status not in _TASK_FLOW:
+                raise HTTPException(400, "status 必須是 pending / in_progress / completed / cancelled")
+            if upd.status != cur_status and upd.status not in _TASK_FLOW[cur_status]:
+                raise HTTPException(400, f"狀態不可由 {cur_status} 直接變更為 {upd.status}")
+            if upd.status != cur_status:
+                resolved = now if upd.status == "completed" else None
+                conn.execute("UPDATE tasks SET status=?, resolved_at=?, updated_at=? WHERE id=?",
+                             (upd.status, resolved, now, task_id))
+                conn.execute("INSERT INTO task_events(task_id, at, event, detail) VALUES (?,?,?,?)",
+                             (task_id, now, "status", f"{cur_status} → {upd.status}"))
+        if upd.assignee is not None and upd.assignee != cur_assignee:
+            conn.execute("UPDATE tasks SET assignee=?, updated_at=? WHERE id=?",
+                         (upd.assignee or None, now, task_id))
+            conn.execute("INSERT INTO task_events(task_id, at, event, detail) VALUES (?,?,?,?)",
+                         (task_id, now, "assignee", f"指派給 {upd.assignee or '（未指派）'}"))
+        return _task_row(conn, task_id)
 
 
 @app.get("/api/labels/stats")
@@ -325,6 +675,9 @@ def render_page(force=False):
         importlib.reload(build_dashboard)
         blocks = [
             "const SERVER_MODE=true;",
+            f"const DEMO_MODE={'true' if _demo_mode() else 'false'};",
+            "const DEMO_CASES=" + json.dumps({"damage": DEMO_CASE_DAMAGE,
+                                              "cleaning": DEMO_CASE_CLEANING}) + ";",
             "const CASES=" + json.dumps(build_dashboard.build_cases(embed=False), ensure_ascii=False) + ";",
             "const F2CASES=" + json.dumps(build_dashboard.build_f2cases(embed=False), ensure_ascii=False) + ";",
             "const CHAINCASES=" + json.dumps(build_dashboard.build_chain_cases_data(), ensure_ascii=False) + ";",
@@ -344,14 +697,16 @@ def index():
     return render_page()
 
 
-@app.post("/api/reload")
-def reload_data():
-    """pipeline 資料更新後呼叫，重新組頁。"""
-    render_page(force=True)
-    return {"ok": True}
+# ---------- 環節三 整備中心前端（frontend-admin build 產物，SPA） ----------
+OPS_STATIC = HERE / "static" / "ops"
 
 
-# ---------- AI 現場重判（需 GEMINI_API_KEY，免費層約 10 秒） ----------
+@app.get("/ops")
+@app.get("/ops/{path:path}")
+def ops_
+
+
+INI_API_KEY，免費層約 10 秒） ----------
 # 判定標準不在此重寫：一律走 judge_photos.judge_pair()（Quality Gate → Flash 快篩
 # → 臨界升級 Pro 多數決 → box_2d 標註），與現場實測、離線評測完全同一套規則。
 

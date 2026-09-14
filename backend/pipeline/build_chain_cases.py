@@ -95,16 +95,23 @@ def build_chain_cases(max_eval_cars=50):
             curr_meta = curr_imgs[itype]
             case_id = f"CHAIN-{car}-{angle}"
 
-            # 如果已經有歷史評測過的結果，直接從快取載入
+            # 如果已經有歷史評測過的結果，直接從快取載入。
+            # 舊版快取可能混入「假 assessment」（API 失敗仍被填入預設值後快取）——
+            # 以 desc 指紋識別並丟棄，讓該案件重新走評測/pending 流程。
             if case_id in eval_cache:
                 entry = eval_cache[case_id]
                 c = entry["case"]
-                cases.append(c)
-                if entry.get("ann"):
-                    annotations[case_id] = entry["ann"]
-                continue
+                if c.get("evaluation_status") == "evaluated" or (
+                        "evaluation_status" not in c and "比對中 / 待分析" not in (c.get("desc") or "")):
+                    c.setdefault("evaluation_status", "evaluated")
+                    cases.append(c)
+                    if entry.get("ann"):
+                        annotations[case_id] = entry["ann"]
+                    continue
+                del eval_cache[case_id]   # 假資料快取：作廢重評
 
             a = None
+            attempted = False   # 是否真的嘗試過 AI 評測（區分 pending 與 failed）
             do_ai = (eval_count < max_eval_cars)
             if do_ai:
                 car_dir = CHAIN_DIR / car
@@ -113,6 +120,7 @@ def build_chain_cases(max_eval_cars=50):
                 curr_fp = car_dir / f"{curr_order}_{itype}.png"
 
                 if download_image(prev_meta["url"], prev_fp) and download_image(curr_meta["url"], curr_fp):
+                    attempted = True
                     eval_count += 1
                     print(f"  🔍 AI 評測 #{eval_count} {car} ({angle} / Type {itype}): #{prev_order} vs #{curr_order}...", end="", flush=True)
                     throttle.wait()
@@ -146,6 +154,7 @@ def build_chain_cases(max_eval_cars=50):
                         print(f" [失敗: {str(e)[:40]}]")
 
             ann_item = None
+            eval_status = "evaluated" if a is not None else ("failed" if attempted else "pending")
             if a is not None:
                 # 依 AI 評測結果分級
                 if not a.get("angle_match"):
@@ -177,16 +186,12 @@ def build_chain_cases(max_eval_cars=50):
                     desc = f"比對一致，停放期間無新增車損"
                     print(" -> ✓ P3 (正常無車損)")
             else:
-                # 預設基準項
-                level = "P3"
-                desc = f"比對中 / 待分析（前單 #{prev_order} vs 本單 #{curr_order}）"
-                a = {
-                    "angle_match": True,
-                    "new_damage_found": False,
-                    "damages": [],
-                    "no_damage_confidence": 0.9,
-                    "pre_existing_notes": ""
-                }
+                # ★ 誠實原則：AI 沒真的跑過的案件，絕不填假 assessment、假 confidence、假 P3。
+                #   level=None + evaluation_status 標明狀態，統計與 UI 一律排除/另列。
+                level = None
+                desc = (f"AI 評測失敗，待重跑（前單 #{prev_order} vs 本單 #{curr_order}）"
+                        if eval_status == "failed"
+                        else f"尚未執行 AI 評測（前單 #{prev_order} vs 本單 #{curr_order}）")
 
             c_obj = {
                 "id": case_id,
@@ -196,6 +201,7 @@ def build_chain_cases(max_eval_cars=50):
                 "level": level,
                 "desc": desc,
                 "label": "chain_check",
+                "evaluation_status": eval_status,   # evaluated | pending | failed
                 "prev_order": prev_order,
                 "curr_order": curr_order,
                 "pickup": prev_meta["url"],       # 上一次還車照
@@ -203,19 +209,30 @@ def build_chain_cases(max_eval_cars=50):
                 "prev_ts": prev_meta["ts"],
                 "curr_ts": curr_meta["ts"],
                 "is_chain": True,
-                "assessment": a
+                "assessment": a                   # 未評測/失敗 = None，不得偽造
             }
             cases.append(c_obj)
 
-            # 若經 AI 評測，寫入持久化快取
-            if do_ai and a is not None:
+            # 只有【真的評測成功】才寫入持久化快取——失敗/未評測不得凍結成假結果
+            if eval_status == "evaluated":
                 eval_cache[case_id] = {"case": c_obj, "ann": ann_item}
                 CACHE_FILE.write_text(json.dumps(eval_cache, ensure_ascii=False, indent=2))
 
     return cases, annotations
 
 
-    return cases, annotations
+def chain_summary(cases):
+    """統計摘要。AI 相關分布【只計 evaluated】——pending/failed 只以數量呈現。"""
+    by_status = {"evaluated": 0, "pending": 0, "failed": 0}
+    by_level = {}
+    for c in cases:
+        st = c.get("evaluation_status") or "evaluated"
+        by_status[st] = by_status.get(st, 0) + 1
+        if st == "evaluated" and c.get("level"):
+            by_level[c["level"]] = by_level.get(c["level"], 0) + 1
+    return {"total": len(cases), "by_status": by_status,
+            "evaluated_by_level": by_level,
+            "note": "evaluated_by_level 只統計真正經過 AI 評測的案件；pending/failed 不進任何 AI 指標"}
 
 
 def main():
@@ -225,9 +242,13 @@ def main():
     args = parser.parse_args()
 
     cases, annotations = build_chain_cases(max_eval_cars=args.max_eval_cars)
-    OUT_CASES.write_text(json.dumps({"cases": cases}, ensure_ascii=False, indent=2))
+    summary = chain_summary(cases)
+    OUT_CASES.write_text(json.dumps({"summary": summary, "cases": cases},
+                                    ensure_ascii=False, indent=2))
     OUT_ANN.write_text(json.dumps(annotations, ensure_ascii=False, indent=2))
-    print(f"\n🎉 全量建置完成！共產出 {len(cases)} 筆案件 (683 組車輛 × 4 角度) -> {OUT_CASES.name} & {OUT_ANN.name}")
+    print(f"\n🎉 建置完成：{summary['total']} 筆案件 "
+          f"(已評測 {summary['by_status']['evaluated']} / 未評測 {summary['by_status']['pending']}"
+          f" / 失敗 {summary['by_status']['failed']}) -> {OUT_CASES.name} & {OUT_ANN.name}")
 
 
 if __name__ == "__main__":

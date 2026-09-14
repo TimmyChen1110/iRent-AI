@@ -25,6 +25,7 @@
 ├── backend/                     # ★ 可部署後端（FastAPI + 判定 pipeline，單容器）
 │   ├── app/                     # 監理台 server 與 API（原 dashboard/）
 │   │   ├── server.py            # FastAPI app：監理台頁面 + 複核/判讀 API + 現場實測
+│   │   ├── ops_api.py / ops_db.py # 環節三 整備中心 API（/api/ops）與資料層
 │   │   ├── inspections_api.py   # 非同步判讀 API（/v1/inspections）
 │   │   ├── review_api.py        # 複核介面 API（/v1/review）
 │   │   ├── build_dashboard.py   # 單檔版監理台組裝
@@ -45,7 +46,7 @@
 ├── docker-compose.yml           # backend + (PR#2) postgres
 ├── .env.example                 # GEMINI_API_KEY 等
 ├── frontend-user/               # 使用者前端（待開工，見 IDEAS 提案②車況收據）
-├── frontend-admin/              # 後台前端（暫由 backend server-render，日後拆 SPA）
+├── frontend-admin/              # 環節三 整備中心（React SPA，build 至 backend/app/static/ops → /ops）
 ├── 環節一/二/三_*/              # 比賽文件（README / SETUP / 隊友須知 / 簡報）
 └── iRent - 運用 AI 打造 iRent 智能車況管家…/   # 共用原始資料集
     ├── 沒有進行索賠/            # 負樣本：30 台車 × 4 方位借/還配對（240 張）
@@ -66,6 +67,8 @@ cd backend
 python3.13 -m venv .venv && source .venv/bin/activate
 pip install -r requirements-dev.txt              # runtime + 測試/訓練
 export GEMINI_API_KEY=你的KEY                    # 或寫進 backend/.env（Docker 用 repo 根 .env）
+# 選填：整備任務即時通知（人工 confirm 建立任務後 POST JSON 到此 URL；見 .env.example）
+# export NOTIFICATION_WEBHOOK_URL=http://127.0.0.1:9999/hook   # 本機測試：python3 tools/webhook_receiver.py
 
 # 驗證安裝（零 API 成本）
 python -m pytest tests/ -q                       # 262 passed

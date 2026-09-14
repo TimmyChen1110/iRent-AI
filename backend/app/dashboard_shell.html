@@ -435,6 +435,44 @@
     .mleg{display:flex;flex-wrap:wrap;gap:12px;font-size: 13.8px;color:var(--dim);margin-bottom:4px}
     .mleg i{display:inline-block;width:9px;height:9px;margin-right:4px}
     .mgrid4{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+
+    /* ---------- 整備看板（環節三：Task Kanban） ---------- */
+    .kanban { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; align-items: start; max-width: 1280px; }
+    @media (max-width: 940px) { .kanban { grid-template-columns: 1fr; } }
+    .kcol { background: var(--panel); border: 1px solid var(--line); border-radius: 5px; padding: 10px 12px 4px; }
+    .kcol .khead { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 15.7px; padding: 2px 2px 8px; border-bottom: 1px solid var(--line); margin-bottom: 10px; }
+    .kcol .khead .kdot { width: 8px; height: 8px; border-radius: 50%; }
+    .kcol .khead .cnt { font-family: ui-monospace, Menlo, monospace; font-size: 13.2px; color: var(--faint); font-weight: 700; }
+    .tcard { background: var(--panel2); border: 1px solid var(--line); border-radius: 4px; padding: 10px 12px 10px 15px; margin-bottom: 10px; position: relative; overflow: hidden; }
+    .tcard .stripe { position: absolute; left: 0; top: 0; bottom: 0; width: 3px; }
+    .tcard.lv-p1 .stripe { background: var(--red); }
+    .tcard.lv-p2 .stripe { background: var(--amber); }
+    .tcard.lv-p3 .stripe { background: var(--line2); }
+    .tcard.cancelled { opacity: .5; }
+    .tcard .t-title { font-weight: 800; font-size: 15.7px; display: flex; gap: 7px; align-items: center; flex-wrap: wrap; }
+    .tcard .t-desc { font-size: 13.8px; color: var(--muted); margin: 6px 0 4px; white-space: pre-line; line-height: 1.55; max-height: 130px; overflow-y: auto; }
+    .tcard .t-meta { font-size: 13.2px; color: var(--faint); display: flex; gap: 4px 12px; flex-wrap: wrap; margin-top: 4px; }
+    .tcard .t-actions { display: flex; gap: 8px; margin-top: 9px; align-items: center; flex-wrap: wrap; }
+    .tcard .t-actions .btn { padding: 4px 11px; font-size: 13.8px; }
+    .tcard select { background: var(--panel3); color: var(--ink); border: 1px solid var(--line2); border-radius: 3px; padding: 3px 6px; font: inherit; font-size: 13.2px; cursor: pointer; }
+    .tcard .t-hist { font-size: 12.6px; color: var(--faint); margin-top: 7px; border-top: 1px solid var(--line); padding-top: 5px; line-height: 1.7; }
+    .badge.trepair { background: var(--amber-soft); color: var(--amber); border: 1px solid var(--amber); font-weight: 700; }
+    .badge.tclean { background: var(--acc-soft); color: var(--acc-ink); border: 1px solid rgba(58,221,138,.35); font-weight: 700; }
+
+    /* ---------- Demo bar（僅 DEMO_MODE=true 顯示） ---------- */
+    .demobar {
+      display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+      padding: 6px 22px; background: var(--panel2); border-bottom: 1px solid var(--line2);
+      font-size: 13.8px;
+    }
+    .demobar .dtag { font-weight: 800; letter-spacing: .12em; color: var(--amber); font-size: 12.6px; }
+    .demobar .dbtn {
+      border: 1px solid var(--line2); background: var(--panel); border-radius: 3px;
+      padding: 3px 11px; font-size: 13.8px; font-weight: 700; color: var(--ink);
+    }
+    .demobar .dbtn:hover { border-color: var(--acc); color: var(--acc-ink); }
+    .demobar .dhealth { display: flex; gap: 10px; color: var(--muted); margin-left: auto; flex-wrap: wrap; }
+    .demobar .dhealth .bad { color: var(--amber); font-weight: 700; }
     .mq2{border:1px solid var(--line);background:var(--panel);padding:13px 15px;border-top:2px solid #3fb27f}
     .mqt{font-family:ui-monospace,Menlo,monospace;font-size: 12px;letter-spacing:.11em;color:#3fb27f;margin-bottom:5px}
     .mq2 b{font-size: 15.7px}
@@ -457,6 +495,8 @@
   </div>
 </div>
 
+<div class="demobar" id="demobar" hidden></div>
+
 <div class="statsbar" id="statsbar"></div>
 
 <div class="main" id="main">
@@ -469,7 +509,7 @@
 </div>
 
 <div class="foot">
-  Demo 說明：38 個案例全部來自真實營運照片——車損 32 組（21 組實際索賠、11 組未索賠）＋ 車內整潔 6 張；「資料集標註」為當時是否索賠的事實標籤。AI 標註框為模型輸出之損傷座標。複核動作儲存於瀏覽器本機；實際系統中確認後將自動進入索賠／清潔調度流程。車輛損傷護照：36 台車損傷歸戶，含首次發現訂單與責任歸屬。營運總覽之數據皆為本專案實測值。
+  Demo 說明：38 個案例全部來自真實營運照片——車損 32 組（21 組實際索賠、11 組未索賠）＋ 車內整潔 6 張；「資料集標註」為當時是否索賠的事實標籤。AI 標註框為模型輸出之損傷座標。複核動作於 server 版存 SQLite 全隊共享（單檔版存瀏覽器本機）；確認車損／髒汙後系統自動建立維修／清潔任務，於「整備看板」指派與追蹤（對外通知推播尚未接入）。車輛損傷護照：36 台車損傷歸戶，含首次發現訂單與責任歸屬。營運總覽分兩區：「即時營運狀態」由 SQLite 即時計算；「模型離線評測」為固定資料集的一次性評測結果（口徑標於各卡片）。歸還期間車損分頁明確區分「AI 已評測」與「未評測」案件，未評測案件不含任何 AI 判定。
 </div>
 
 <!--DATA-->
@@ -479,15 +519,36 @@
 /* ================= 資料整備 ================= */
 F2CASES.forEach(c => CASES.push(c));
 const CHAINCASES_LIST = (typeof CHAINCASES !== "undefined") ? CHAINCASES : [];
-{ const ord = { P1: 0, P2: 1, P3: 2 }; CASES.sort((a, b) => ord[a.level] - ord[b.level]); CHAINCASES_LIST.sort((a, b) => ord[a.level] - ord[b.level]); }
+/* 歸還期間車損案件帶 evaluation_status（evaluated | pending | failed）。
+   未評測案件沒有 assessment、沒有 level、沒有 confidence——UI 一律明示「未評測」，
+   絕不混入 AI 統計。 */
+function chainEvaluated(cs) { return !cs.is_chain || (cs.evaluation_status || "evaluated") === "evaluated"; }
+{ const ord = { P1: 0, P2: 1, P3: 2, P4: 3 };
+  const key = c => (c.level in ord) ? ord[c.level] : 9;   // 未評測（level=null）排最後
+  CASES.sort((a, b) => key(a) - key(b)); CHAINCASES_LIST.sort((a, b) => key(a) - key(b)); }
+
+/* ---- Demo Mode（server 注入 DEMO_MODE / DEMO_CASES；單檔版無此變數）----
+   只影響排序、快速入口、健檢與重置；不碰 AI 結果、任務邏輯、通知邏輯、指標。 */
+const IS_DEMO = (typeof DEMO_MODE !== "undefined") && DEMO_MODE;
+const DEMO_IDS = IS_DEMO && typeof DEMO_CASES !== "undefined" ? Object.values(DEMO_CASES) : [];
+if (DEMO_IDS.length) {   // 穩定排序：demo 案例置頂，其餘保持 P 級順序（不隱藏任何真資料）
+  CASES.sort((a, b) => (DEMO_IDS.includes(b.id) ? 1 : 0) - (DEMO_IDS.includes(a.id) ? 1 : 0));
+}
+function isDemoCase(id) { return DEMO_IDS.includes(id); }
 const ANN = (typeof ANNOTATIONS !== "undefined") ? ANNOTATIONS : {};
 const PASSPORTS = (typeof PASSPORT_DATA !== "undefined") ? PASSPORT_DATA : {};
 
-/* 實測 KPI（來源：analyze_autopass.py / quality_gate.py / cleanliness_score.py / photo_chain.py） */
-const OPS = {
-  photos: 27367, orders: 4820, recall: 100, fpr: 0.85,
+/* ★ 離線評測結果（非即時 KPI）——來源：analyze_autopass.py / quality_gate.py /
+   cleanliness_score.py / photo_chain.py 對固定資料集的一次性評測。
+   口徑：recallClaim 85.7%/FPR 3.3% 對照【原始索賠標籤】（n=141）；
+        recallRelabel 100%/FPR 0.85% 對照【人工逐圖重標】（n=137，排除 4 組不可判定）。
+   即時營運數字一律另從 SQLite（TASKS / CASES / decisions）計算，不放這裡。 */
+const OFFLINE_EVAL = {
+  photos: 27367, orders: 4820,
+  recallClaim: 85.7, fprClaim: 3.3, nClaim: 141,
+  recallRelabel: 100, fprRelabel: 0.85, nRelabel: 137,
   autoPass: 83.0, alert: 15.6, human: 1.4, gate: 9.2, escalate: 2.8,
-  interiorReal: 24, interiorMis: 56, chainCars: 1126, chainScanned: 15, chainHits: 1,
+  interiorReal: 24, interiorMis: 56, chainCars: 1126, chainScanned: 16, chainHits: 1,
 };
 
 /* server 版（uvicorn server:app）注入 SERVER_MODE=true：照片走 /photos/ URL、複核決策全隊共享 */
@@ -517,17 +578,52 @@ const LEVEL_META = {
   P3: { label: "P3 正常", ico: "✓" },
   P4: { label: "P4 角度不符", ico: "🚫" },
 };
+/* 文案原則：只寫系統真的做了的事。confirm 的實際行為是自動建立整備任務（見 taskLabel），
+   補件推播、索賠系統對接尚未實作，不得寫成已完成。 */
 const DECISION_META = {
-  confirm: { cls: "confirm", ico: "✓", label: "已確認 — 進入索賠／清潔調度，附照片證據鏈" },
+  confirm: { cls: "confirm", ico: "✓", label: "已確認" },
   reject:  { cls: "reject",  ico: "✕", label: "已駁回誤報 — 回寫為訓練樣本" },
-  retake:  { cls: "retake",  ico: "⟳", label: "已要求補件 — 已推播用戶補拍" },
+  retake:  { cls: "retake",  ico: "⟳", label: "已要求補件 — 已記錄（用戶推播通知尚未接入）" },
 };
+
+/* ================= 整備任務（環節三：confirm → Task → 指派 → 完成） ================= */
+// Demo 用指派名單——集中此處，要改名單只改這一行
+const ASSIGNEES = ["維修組 A", "維修組 B", "清潔組 A", "清潔組 B"];
+const TASK_STATUS_TXT = { pending: "待處理", in_progress: "處理中", completed: "已完成", cancelled: "已取消" };
+const TASK_TYPE_TXT = { repair: "維修", cleaning: "清潔" };
+let TASKS = [];
+async function loadTasks() {
+  if (!SERVER) return false;
+  try {
+    const j = await (await fetch("/api/tasks")).json();
+    if (JSON.stringify(j.tasks) !== JSON.stringify(TASKS)) { TASKS = j.tasks; return true; }
+  } catch (e) {}
+  return false;
+}
+function taskFor(caseId) { return TASKS.find(t => t.case_id === caseId && t.status !== "cancelled"); }
+function taskLabel(cs) {  // confirm 後的實話文案：任務真的建立了才說建立了、通知真的送了才說送了
+  const t = taskFor(cs.id);
+  if (t) {
+    const ns = t.notification_status;
+    const notif = ns === "sent" ? "・🔔 通知已送出"
+      : ns === "failed" ? "・⚠ 通知失敗（可於整備看板重發）"
+      : ns === "skipped" ? "・通知管道未設定" : "";
+    return `已確認 — 已建立${TASK_TYPE_TXT[t.task_type] || ""}任務（${TASK_STATUS_TXT[t.status]}）${notif}`;
+  }
+  if (!SERVER) return "已確認（單檔版不建立任務，僅記錄於本機）";
+  return "已確認";
+}
 
 function save() { if (!SERVER) localStorage.setItem(LS_KEY, JSON.stringify(decisions)); }
 function counts() {
   const pool = viewMode === "chain" ? CHAINCASES_LIST : CASES;
-  const c = { all: pool.length, P1: 0, P2: 0, P3: 0, P4: 0, done: 0 };
-  for (const cs of pool) { if (c[cs.level] !== undefined) c[cs.level]++; if (decisions[cs.id]) c.done++; }
+  const c = { all: pool.length, P1: 0, P2: 0, P3: 0, P4: 0, pend: 0, evaluated: 0, done: 0 };
+  for (const cs of pool) {
+    if (!chainEvaluated(cs)) { c.pend++; continue; }   // 未評測不進 P 級統計
+    c.evaluated++;
+    if (c[cs.level] !== undefined) c[cs.level]++;
+    if (decisions[cs.id]) c.done++;
+  }
   return c;
 }
 
@@ -542,8 +638,9 @@ function renderTabs() {
   document.getElementById("tabs").innerHTML = `
     <button class="tab" role="tab" aria-selected="${viewMode === "ops"}" onclick="setMode('ops')">營運總覽</button>
     <button class="tab" role="tab" aria-selected="${viewMode === "cases"}" onclick="setMode('cases')">案件複核<span class="cnt">${CASES.length}</span></button>
-    <button class="tab" role="tab" aria-selected="${viewMode === "chain"}" onclick="setMode('chain')">歸還期間車損<span class="cnt">${CHAINCASES_LIST.length}</span></button>
+    <button class="tab" role="tab" aria-selected="${viewMode === "chain"}" onclick="setMode('chain')">歸還期間車損<span class="cnt">${CHAINCASES_LIST.filter(chainEvaluated).length}</span></button>
     <button class="tab" role="tab" aria-selected="${viewMode === "passport"}" onclick="setMode('passport')">車輛損傷護照<span class="cnt">${Object.keys(PASSPORTS).length}</span></button>
+    <button class="tab" role="tab" aria-selected="${viewMode === "tasks"}" onclick="setMode('tasks')">整備看板<span class="cnt">${TASKS.filter(t => t.status === "pending" || t.status === "in_progress").length}</span></button>
     <button class="tab" role="tab" aria-selected="${viewMode === "live"}" onclick="setMode('live')">現場實測<span class="cnt">LIVE</span></button>`;
 }
 
@@ -551,18 +648,20 @@ function renderStats() {
   const bar = document.getElementById("statsbar");
   if (viewMode !== "cases" && viewMode !== "chain") { bar.innerHTML = ""; return; }
   const c = counts();
-  const pct = Math.round(c.done / c.all * 100);
+  const denom = c.evaluated || 1;   // 複核進度只對「AI 已評測」案件有意義
+  const pct = Math.round(c.done / denom * 100);
   bar.innerHTML = `
     <div class="progress">
       <span class="lbl">複核進度</span>
       <div class="track"><div class="fill" style="width:${pct}%"></div></div>
-      <span class="pct mono">${c.done}/${c.all}（${pct}%）</span>
+      <span class="pct mono">${c.done}/${c.evaluated}（${pct}%）</span>
     </div>
     <div class="statpills">
       <span class="spill crit"><span class="dot"></span>P1 即時預警 ${c.P1}</span>
       <span class="spill warn"><span class="dot"></span>P2 工單 ${c.P2}</span>
       <span class="spill okp"><span class="dot"></span>P3 正常 ${c.P3}</span>
       ${c.P4 ? `<span class="spill p4"><span class="dot"></span>P4 角度不符 ${c.P4}</span>` : ""}
+      ${c.pend ? `<span class="spill" style="color:var(--faint)"><span class="dot" style="background:var(--faint)"></span>未經 AI 評測 ${c.pend}（不列入以上統計）</span>` : ""}
       ${labelPill()}
     </div>`;
 }
@@ -593,11 +692,13 @@ function renderFilters() {
   const f2n = pool.filter(cs => cs.f2).length;
   const liveN = pool.filter(cs => cs.live).length;
   const defs = [
-    ["all", "全部", c.all], ["P1", "P1", c.P1], ["P2", "P2", c.P2], ["P3", "P3", c.P3],
+    ["all", viewMode === "chain" ? "已評測" : "全部", viewMode === "chain" ? c.evaluated : c.all],
+    ["P1", "P1", c.P1], ["P2", "P2", c.P2], ["P3", "P3", c.P3],
     ...(c.P4 ? [["P4", "P4 角度不符", c.P4]] : []),
+    ...(c.pend ? [["pending", "未評測", c.pend]] : []),
     ...(f2n ? [["f2", "車內", f2n]] : []),
     ...(liveN ? [["live", "現場", liveN]] : []),
-    ["todo", "未複核", c.all - c.done], ["done", "已複核", c.done],
+    ["todo", "未複核", c.evaluated - c.done], ["done", "已複核", c.done],
   ];
   el.innerHTML = defs.map(([k, lbl, n]) =>
     `<button class="chip" aria-pressed="${filter === k}" onclick="setFilter('${k}')">${lbl}<span class="n">${n}</span></button>`).join("");
@@ -606,9 +707,11 @@ function renderFilters() {
 function visible() {
   const pool = viewMode === "chain" ? CHAINCASES_LIST : CASES;
   return pool.filter(cs => {
-    if (filter === "all") return true;
+    if (filter === "pending") return !chainEvaluated(cs);
+    // chain 分頁的「全部/未複核」預設只列已評測案件——未評測的走「未評測」chip，不混入
+    if (filter === "all") return chainEvaluated(cs);
     if (filter === "done") return !!decisions[cs.id];
-    if (filter === "todo") return !decisions[cs.id];
+    if (filter === "todo") return chainEvaluated(cs) && !decisions[cs.id];
     if (filter === "f2") return !!cs.f2;
     if (filter === "live") return !!cs.live;
     return cs.level === filter;
@@ -616,6 +719,7 @@ function visible() {
 }
 
 function summaryText(cs) {
+  if (!chainEvaluated(cs)) return cs.desc || "尚未執行 AI 評測";
   const a = cs.assessment;
   if (!a) return cs.desc || "歸還期間車損比對";
   if (cs.f2) {
@@ -627,16 +731,21 @@ function summaryText(cs) {
   return a.damages.map(d => `${d.location}·${d.type}`).join("；");
 }
 
+const LIST_RENDER_CAP = 300;   // 未評測 chain 案件有數千筆，避免一次灌爆 DOM
 function renderList() {
   if (viewMode === "passport") { renderPassportList(); return; }
   if (viewMode !== "cases" && viewMode !== "chain") return;
   const vis = visible();
   if (vis.length && !vis.some(cs => cs.id === currentId)) currentId = vis[0].id;
-  document.getElementById("list").innerHTML = vis.map(cs => {
+  const shown = vis.slice(0, LIST_RENDER_CAP);
+  document.getElementById("list").innerHTML = shown.map(cs => {
     const d = decisions[cs.id];
     const thumb = cs.return || cs.ret || cs.pickup || cs.photo;
-    return `<button class="item lv-${cs.level.toLowerCase()}" aria-current="${cs.id === currentId}" onclick="selectCase('${cs.id}')">
-      <span class="stripe"></span>
+    const lvBadge = cs.level
+      ? `<span class="badge ${cs.level.toLowerCase()}">${cs.level}</span>`
+      : `<span class="badge soft">未評測</span>`;
+    return `<button class="item lv-${(cs.level || "p3").toLowerCase()}" aria-current="${cs.id === currentId}" onclick="selectCase('${cs.id}')">
+      <span class="stripe" ${cs.level ? "" : 'style="background:var(--line)"'}></span>
       <img class="thumb" src="${imgSrc(thumb)}" alt="" loading="lazy">
       <span class="mid">
         <span class="t1"><span class="plate">${cs.car}</span><span class="angle">${cs.angle}</span>
@@ -644,11 +753,15 @@ function renderList() {
         <span class="desc">${summaryText(cs)}</span>
       </span>
       <span class="right">
-        <span class="badge ${cs.level.toLowerCase()}">${cs.level}</span>
+        ${lvBadge}
         <span class="state">${d ? DECISION_META[d].ico : ""}</span>
       </span>
     </button>`;
   }).join("") || `<div style="padding:20px;color:var(--muted)">此篩選下沒有案件</div>`;
+  if (vis.length > LIST_RENDER_CAP) {
+    document.getElementById("list").innerHTML +=
+      `<div style="padding:12px;color:var(--faint);font-size: 13.8px">僅顯示前 ${LIST_RENDER_CAP} 筆（此篩選共 ${vis.length} 筆）</div>`;
+  }
   scrollCurrentIntoView();
 }
 
@@ -659,6 +772,10 @@ function scrollCurrentIntoView() {
 
 /* ================= 標註疊加 ================= */
 function confBar(v) {
+  // 信心只能來自模型輸出；缺值顯示「—」，絕不補 0.85 之類的假數字
+  if (typeof v !== "number") {
+    return `<div class="conf"><span>信心</span><span class="mono" style="color:var(--faint)">—（模型未提供）</span></div>`;
+  }
   return `<div class="conf"><span>信心</span><div class="track"><div class="fill" style="width:${Math.round(v * 100)}%"></div></div><span class="mono">${v.toFixed(2)}</span></div>`;
 }
 function annBoxes(cs) {
@@ -725,10 +842,13 @@ function armLens() {
 function actionArea(cs) {
   const d = decisions[cs.id];
   if (d) {
-    return `<div class="decided ${DECISION_META[d].cls}"><span>${DECISION_META[d].ico} ${DECISION_META[d].label}</span>
+    const lbl = d === "confirm" ? taskLabel(cs) : DECISION_META[d].label;
+    const goTask = d === "confirm" && taskFor(cs.id)
+      ? `<button class="undo" onclick="setMode('tasks')">→ 整備看板</button>` : "";
+    return `<div class="decided ${DECISION_META[d].cls}"><span>${DECISION_META[d].ico} ${lbl}</span>${goTask}
       <button class="undo" onclick="undoDecision('${cs.id}')">復原</button></div>`;
   }
-  const confirmLbl = cs.f2 ? "✓ 確認髒汙，派遣清潔" : "✓ 確認車損，進入索賠";
+  const confirmLbl = cs.f2 ? "✓ 確認髒汙，建立清潔任務" : "✓ 確認車損，建立維修任務";
   return `<div class="actions">
     <button class="btn danger" onclick="decide('${cs.id}','confirm')">${confirmLbl}</button>
     <button class="btn" onclick="decide('${cs.id}','reject')">✕ 駁回誤報</button>
@@ -741,6 +861,7 @@ function renderDetail() {
   // 「方法論驗證」分頁已從 UI 移除（內容仍在架構設計文件 §08）。
   // renderMethod() 與其樣式刻意保留：要放回來只需在 renderTabs() 加回按鈕。
   if (viewMode === "method") { viewMode = "ops"; renderTabs(); renderOps(); return; }
+  if (viewMode === "tasks") { renderTasksBoard(); return; }
   if (viewMode === "live") { renderLive(); return; }
   if (viewMode === "passport") { renderPassportDetail(); return; }
   const pool = viewMode === "chain" ? CHAINCASES_LIST : CASES;
@@ -748,6 +869,7 @@ function renderDetail() {
   const el = document.getElementById("detail");
   if (!cs) { el.innerHTML = ""; return; }
   if (cs.f2) { renderF2Detail(el, cs); return; }
+  if (!chainEvaluated(cs)) { renderPendingChain(el, cs); return; }
 
   const a = cs.assessment || {};
   let head, sub;
@@ -766,7 +888,7 @@ function renderDetail() {
   const dmgs = annRows(cs) ?? (a.damages || []).map(d => `
     <div class="dmg">
       <div class="l1">${d.location} · ${d.type}<span class="sev ${d.severity || "medium"}">${(d.severity || "medium").toUpperCase()}</span></div>
-      ${confBar(d.confidence || 0.85)}
+      ${confBar(typeof d.confidence === "number" ? d.confidence : null)}
       <div class="why">${d.reasoning || d.description || ""}</div>
     </div>`).join("");
   const pre = a.pre_existing_notes ? `<div class="note"><b>既有舊損備註：</b>${a.pre_existing_notes}（兩照皆存在，不列入本次求償）</div>` : "";
@@ -802,6 +924,30 @@ function renderDetail() {
     </div>
     <div class="d-card verdict">${head}<div class="v-sub">${sub}</div>${dmgs}${pre}</div>
     ${priceBox}`;
+  armLens();
+}
+
+/* 未經 AI 評測的 chain 案件：只給照片與事實，不給任何 AI 判定、信心、分級或裁決按鈕。 */
+function renderPendingChain(el, cs) {
+  const failed = cs.evaluation_status === "failed";
+  el.innerHTML = `
+    <div class="d-card d-head">
+      <span class="plate">${cs.car}</span><span class="angle">${cs.angle}</span>
+      <span class="badge soft">${failed ? "AI 評測失敗，待重跑" : "尚未執行 AI 評測"}</span>
+      <span class="badge soft">歸還期間鏈式比對（前單 #${cs.prev_order} → 本單 #${cs.curr_order}）</span>
+    </div>
+    <div class="photos">
+      <div class="photo d-card"><div class="cap"><span class="before">上一次還車照</span><span class="t">單號 #${cs.prev_order}</span></div>
+        <div class="imgwrap zoomable"><img src="${imgSrc(cs.pickup)}" alt="${cs.car} ${cs.angle} 照片" loading="lazy"></div></div>
+      <div class="photo d-card"><div class="cap"><span class="after">最新一次借車照</span><span class="t">單號 #${cs.curr_order}</span></div>
+        <div class="imgwrap zoomable"><img src="${imgSrc(cs.return)}" alt="${cs.car} ${cs.angle} 照片" loading="lazy"></div></div>
+    </div>
+    <div class="d-card verdict">
+      <h3><span class="ico">◌</span>${failed ? "AI 評測失敗" : "尚未執行 AI 判讀"}</h3>
+      <div class="v-sub">此案件僅為資料庫中的照片配對，${failed ? "先前評測呼叫失敗，" : ""}AI 尚未判讀，
+        因此沒有分級、沒有信心值、也不開放人工裁決。批次評測指令：
+        <span class="mono">python3 pipeline/build_chain_cases.py --max-eval-cars N</span></div>
+    </div>`;
   armLens();
 }
 
@@ -1081,6 +1227,16 @@ function renderMethod() {
   </div>`;
 }
 
+function realtimeKpis() {
+  // 即時營運狀態：全部由 SQLite 資料計算（CASES 裁決 + TASKS，5 秒輪詢），零硬編數字
+  const p1Todo = CASES.filter(c => c.level === "P1" && !decisions[c.id]).length;
+  const tPend = TASKS.filter(t => t.status === "pending").length;
+  const tProg = TASKS.filter(t => t.status === "in_progress").length;
+  const today = (d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`)(new Date());
+  const tDoneToday = TASKS.filter(t => t.status === "completed" && (t.resolved_at || "").startsWith(today)).length;
+  return { p1Todo, tPend, tProg, tDoneToday };
+}
+
 function renderOps() {
   const el = document.getElementById("detail");
   const cnt = partCounts();
@@ -1088,24 +1244,42 @@ function renderOps() {
   const top = Object.entries(cnt).sort((a, b) => b[1] - a[1]).slice(0, 6);
   const maxN = top.length ? top[0][1] : 1;
   const bumperPct = Math.round(100 * ((cnt["前保險桿"] || 0) + (cnt["後保險桿"] || 0)) / total);
-  const misPct = Math.round(100 * OPS.interiorMis / (OPS.interiorMis + OPS.interiorReal));
+  const misPct = Math.round(100 * OFFLINE_EVAL.interiorMis / (OFFLINE_EVAL.interiorMis + OFFLINE_EVAL.interiorReal));
+  const rt = realtimeKpis();
+  const chainTotal = CHAINCASES_LIST.length;
+  const chainEval = CHAINCASES_LIST.filter(chainEvaluated).length;
+  const E = OFFLINE_EVAL;
 
   el.innerHTML = `<div class="ops">
-    <div class="kpis">
-      <div class="kpi"><div class="micro">兩日還車照片</div><div class="num" data-n="${OPS.photos}" data-d="0"></div><div class="sub">4,820 筆訂單 · 全部真實營運資料</div></div>
-      <div class="kpi good"><div class="micro">車損判讀召回</div><div class="num" data-n="${OPS.recall}" data-d="1" data-s="%"></div><div class="sub">141 組逐圖人工重標後 · 誤報 0.85%</div></div>
-      <div class="kpi good"><div class="micro">自動放行</div><div class="num" data-n="${OPS.autoPass}" data-d="1" data-s="%"></div><div class="sub">需人工逐案複核僅 1.4%</div></div>
-      <div class="kpi"><div class="micro">每單判定成本</div><div class="num">&lt;NT$1</div><div class="sub">原型驗證 $0（免費額度完成）</div></div>
+    <div class="panel">
+      <div class="p-title"><b>即時營運狀態</b><span class="micro">SQLite 即時計算 · 5 秒同步</span></div>
+      <div class="kpis">
+        <div class="kpi ${rt.p1Todo ? "crit" : ""}"><div class="micro">P1 未複核案件</div><div class="num">${rt.p1Todo}</div><div class="sub">案件複核佇列中待人工裁決</div></div>
+        <div class="kpi"><div class="micro">待處理任務</div><div class="num">${rt.tPend}</div><div class="sub">整備看板「待處理」欄</div></div>
+        <div class="kpi"><div class="micro">處理中任務</div><div class="num">${rt.tProg}</div><div class="sub">整備看板「處理中」欄</div></div>
+        <div class="kpi good"><div class="micro">今日完成任務</div><div class="num">${rt.tDoneToday}</div><div class="sub">依任務完成時間計算</div></div>
+      </div>
     </div>
 
     <div class="panel">
-      <div class="p-title"><b>AI 判讀流水線</b><span class="micro">Live pipeline · 實測數據</span></div>
+      <div class="p-title"><b>模型離線評測</b><span class="micro">固定資料集一次性評測 · 非即時數字</span></div>
+      <div class="kpis">
+        <div class="kpi"><div class="micro">資料集：兩日還車照片</div><div class="num" data-n="${E.photos}" data-d="0"></div><div class="sub">4,820 筆訂單 · 全部真實營運資料</div></div>
+        <div class="kpi good"><div class="micro">召回（原始索賠標籤）</div><div class="num" data-n="${E.recallClaim}" data-d="1" data-s="%"></div><div class="sub">n=${E.nClaim} · 誤報率 ${E.fprClaim}%</div></div>
+        <div class="kpi good"><div class="micro">召回（人工逐圖重標）</div><div class="num" data-n="${E.recallRelabel}" data-d="0" data-s="%"></div><div class="sub">n=${E.nRelabel}（排除 4 組不可判定）· 誤報率 ${E.fprRelabel}%</div></div>
+        <div class="kpi good"><div class="micro">自動放行</div><div class="num" data-n="${E.autoPass}" data-d="1" data-s="%"></div><div class="sub">需人工逐案複核僅 ${E.human}%</div></div>
+      </div>
+      <div class="note" style="margin-top:8px">兩個召回口徑並列：85.7% 對照當時索賠紀錄；100% 為人工逐圖重標後（帳面 4 筆誤報中 2 筆確認為人工漏登真車損）。API 成本估算尚未納入目前模型版本，不作宣稱。</div>
+    </div>
+
+    <div class="panel">
+      <div class="p-title"><b>AI 判讀流水線</b><span class="micro">離線評測數據（141 組固定配對）</span></div>
       ${flowSvg()}
     </div>
 
     <div class="ops-grid">
       <div class="panel">
-        <div class="p-title"><b>車隊損傷熱點</b><span class="micro">${total} 筆歸戶損傷 · AI 部位定位</span></div>
+        <div class="p-title"><b>車隊損傷熱點</b><span class="micro">${total} 筆歸戶損傷 · AI 部位定位（離線評測）</span></div>
         <div class="hotcar">
           ${hotCarSvg(cnt)}
           <div>
@@ -1116,17 +1290,19 @@ function renderOps() {
       </div>
 
       <div class="panel">
-        <div class="p-title"><b>資料品質即時發現</b><span class="micro">AI 誠實回報</span></div>
+        <div class="p-title"><b>資料品質發現</b><span class="micro">離線評測 · AI 誠實回報</span></div>
         <div class="dq">
           <div class="cell"><div class="big crit">${misPct}%</div><div class="cap2">「車內照」欄位 56/80 未通過 photo_ok 模型檢查（人工抽驗 3 張皆為車外照）——佐證拍攝端防呆必要性</div></div>
           <div class="cell"><div class="big warn">76%</div><div class="cap2">照片帶未套用的 EXIF 旋轉標記，前處理轉正後召回 +10pp</div></div>
-          <div class="cell"><div class="big warn">9.2%</div><div class="cap2">照片過暗/模糊，Quality Gate 上傳當下即攔——含人工也無法複驗的存疑案例</div></div>
+          <div class="cell"><div class="big warn">${E.gate}%</div><div class="cap2">照片過暗/模糊，Quality Gate（純 CV）於離線檢核攔下——實際系統可移至上傳當下執行</div></div>
           <div class="cell"><div class="big good">2 筆</div><div class="cap2">「未索賠」樣本經逐圖定案確認為人工漏登的真車損（另 1 筆不可比、1 筆誤報）</div></div>
         </div>
-        <div class="p-title" style="margin-top:16px"><b>Photo-chain 跨訂單追溯</b><span class="micro">責任回溯到單</span></div>
+        <div class="p-title" style="margin-top:16px"><b>歸還期間車損資料庫</b><span class="micro">誠實拆分：已評測 vs 未評測</span></div>
         <div class="dq">
-          <div class="cell"><div class="big">1,126<span style="font-size: 15.1px;color:var(--muted)"> 台</span></div><div class="cap2">兩日資料中可建立跨訂單車況鏈的車輛</div></div>
-          <div class="cell"><div class="big good">1 / 16</div><div class="cap2">抽掃 16 台即抓到 RDE-0180 跨單新損（3 票一致＋人工證實、未在索賠清單）→ 責任鎖定訂單 #47353795</div></div>
+          <div class="cell"><div class="big">${chainTotal.toLocaleString()}<span style="font-size: 15.1px;color:var(--muted)"> 筆</span></div><div class="cap2">資料庫照片配對總數（歷史候選，含未評測）</div></div>
+          <div class="cell"><div class="big good">${chainEval}</div><div class="cap2">已完成 AI 評測——只有這些案件有 AI 判定結果</div></div>
+          <div class="cell"><div class="big warn">${(chainTotal - chainEval).toLocaleString()}</div><div class="cap2">尚未評測（UI 標示「未評測」，不列入任何 AI 統計）</div></div>
+          <div class="cell"><div class="big good">1 / ${E.chainScanned}</div><div class="cap2">早期抽掃 ${E.chainScanned} 台即抓到 RDE-0180 跨單新損（3 票一致＋人工證實、未在索賠清單）→ 責任鎖定訂單 #47353795</div></div>
         </div>
       </div>
     </div>
@@ -1742,9 +1918,188 @@ async function loadQr() {
   } catch (e) {}
 }
 
+/* ================= 整備看板（Kanban：待處理 → 處理中 → 已完成） ================= */
+function jumpFromTask(caseId) {
+  if (CASES.some(c => c.id === caseId)) { jumpToCase(caseId); return; }
+  if (CHAINCASES_LIST.some(c => c.id === caseId)) { viewMode = "chain"; filter = "all"; currentId = caseId; renderAll(); return; }
+  alert("原案件已不在佇列中（可能已被刪除）");
+}
+
+let TASK_INFLIGHT = false;   // UX 防連點（後端本就冪等，這裡只擋重複 request）
+async function patchTask(id, body, btn) {
+  if (TASK_INFLIGHT) return;
+  TASK_INFLIGHT = true;
+  const old = btn ? btn.textContent : null;
+  if (btn) { btn.disabled = true; btn.textContent = "更新中…"; }
+  try {
+    const r = await fetch("/api/tasks/" + id, { method: "PATCH",
+      headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.detail);
+    await loadTasks();
+    renderAll();   // 成功後整區重繪，按鈕自然更新
+  } catch (e) {
+    console.error("patchTask", e);   // 技術細節留 console，畫面給人話
+    alert("案件更新失敗，請重新操作");
+    if (btn) { btn.disabled = false; btn.textContent = old; }
+  } finally { TASK_INFLIGHT = false; }
+}
+function setTaskStatus(id, s, btn) { patchTask(id, { status: s }, btn); }
+function setTaskAssignee(id, sel) { patchTask(id, { assignee: sel.value }); }
+
+async function retryNotify(id, btn) {
+  btn.disabled = true; btn.textContent = "發送中…";
+  try {
+    const r = await fetch(`/api/tasks/${id}/notify`, { method: "POST" });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.detail);
+    await loadTasks(); renderAll();
+  } catch (e) {
+    console.error("retryNotify", e);
+    alert("通知暫時發送失敗，可稍後重試");
+    btn.disabled = false; btn.textContent = "重新發送";
+  }
+}
+
+/* 通知狀態列——只描述真實發生的事：sent=webhook 真的送出且回 2xx；
+   failed=嘗試過但失敗（可重發）；skipped=NOTIFICATION_WEBHOOK_URL 未設定。 */
+function notifyRow(t) {
+  const ns = t.notification_status || "not_sent";
+  if (ns === "sent") return `<span style="color:var(--ok);font-weight:700">🔔 通知已送出</span>`;
+  if (ns === "failed") return `<span style="color:var(--red);font-weight:700">⚠ 通知失敗</span>
+    <button class="btn" style="padding:2px 9px;font-size: 12.6px" onclick="retryNotify(${t.id}, this)">重新發送</button>`;
+  if (ns === "skipped") return `<span style="color:var(--faint)">通知管道未設定</span>`;
+  return `<span style="color:var(--faint)">通知未發送</span>`;
+}
+
+function taskCard(t) {
+  const caseExists = CASES.some(c => c.id === t.case_id) || CHAINCASES_LIST.some(c => c.id === t.case_id);
+  const opts = [`<option value="" ${t.assignee ? "" : "selected"}>未指派</option>`]
+    .concat(ASSIGNEES.map(a => `<option value="${a}" ${t.assignee === a ? "selected" : ""}>${a}</option>`));
+  if (t.assignee && !ASSIGNEES.includes(t.assignee))
+    opts.push(`<option value="${t.assignee}" selected>${t.assignee}</option>`);
+  // 操作精簡：每個狀態只露出當下該做的事（誤按完成可用小字「重新開啟」救回）
+  let actions = "";
+  if (t.status === "pending") {
+    actions = `<button class="btn danger" onclick="setTaskStatus(${t.id},'in_progress',this)">▶ 開始處理</button>`;
+  } else if (t.status === "in_progress") {
+    actions = `<button class="btn danger" onclick="setTaskStatus(${t.id},'completed',this)">✓ 標記完成</button>`;
+  } else if (t.status === "completed") {
+    actions = `<span style="color:var(--ok);font-weight:800;font-size: 13.8px">✓ 已完成 <span class="mono" style="color:var(--muted);font-weight:600">${(t.resolved_at || "").replace("T", " ")}</span></span>
+      <button class="btn" style="padding:2px 9px;font-size: 12.6px" onclick="setTaskStatus(${t.id},'in_progress',this)">重新開啟</button>`;
+  } else {  // cancelled
+    actions = `<span style="color:var(--faint);font-weight:700;font-size: 13.8px">已取消</span>
+      <button class="btn" style="padding:2px 9px;font-size: 12.6px" onclick="setTaskStatus(${t.id},'pending',this)">重啟任務</button>`;
+  }
+  const histText = e => (e.detail || e.event)
+    .replace(/pending/g, "待處理").replace(/in_progress/g, "處理中")
+    .replace(/completed/g, "已完成").replace(/cancelled/g, "已取消");
+  const hist = (t.events || []).slice(-4).map(e =>
+    `<div>${e.at.replace("T", " ")} · ${histText(e)}</div>`).join("");
+  return `<div class="tcard lv-${(t.priority || "P2").toLowerCase()} ${t.status === "cancelled" ? "cancelled" : ""}">
+    <span class="stripe"></span>
+    <div class="t-title"><span class="plate">${t.car || ""}</span>
+      <span class="badge ${t.task_type === "cleaning" ? "tclean" : "trepair"}">${TASK_TYPE_TXT[t.task_type] || t.task_type}</span>
+      <span class="badge ${(t.priority || "p2").toLowerCase()}">${t.priority || ""}</span></div>
+    <div style="font-weight:700;font-size: 14.6px;margin-top:3px">${t.title}</div>
+    <div class="t-desc">${t.description || ""}</div>
+    <div class="t-meta">
+      <span>建立 <span class="mono">${(t.created_at || "").replace("T", " ")}</span></span>
+      <span>案件 ${caseExists ? `<a class="evlink" onclick="jumpFromTask('${t.case_id}')">${t.case_id} →</a>` : `<span class="mono">${t.case_id}</span>`}</span>
+      <span>${notifyRow(t)}</span>
+    </div>
+    <div class="t-actions">
+      <label style="font-size: 13.2px;color:var(--muted)">指派</label>
+      <select onchange="setTaskAssignee(${t.id}, this)" ${t.status === "completed" || t.status === "cancelled" ? "disabled" : ""}>${opts.join("")}</select>
+      ${actions}
+    </div>
+    ${hist ? `<div class="t-hist">${hist}</div>` : ""}
+  </div>`;
+}
+
+function renderTasksBoard() {
+  const el = document.getElementById("detail");
+  if (!SERVER) {
+    el.innerHTML = `<div class="d-card verdict"><h3 class="warn"><span class="ico">◐</span>整備看板需要 server 版</h3>
+      <div class="v-sub">任務資料存於 SQLite（全隊共享），單檔版無法使用。請啟動：<span class="mono">cd backend/app && uvicorn server:app</span></div></div>`;
+    return;
+  }
+  const cols = [
+    ["pending", "待處理", "var(--red)"],
+    ["in_progress", "處理中", "var(--amber)"],
+    ["completed", "已完成", "var(--ok)"],
+  ];
+  const grouped = { pending: [], in_progress: [], completed: [] };
+  for (const t of TASKS) (grouped[t.status === "cancelled" ? "completed" : t.status] || grouped.pending).push(t);
+  if (DEMO_IDS.length) {   // demo mode：示範案例的任務置頂（穩定排序，不隱藏其他任務）
+    for (const k of Object.keys(grouped)) {
+      grouped[k].sort((a, b) => (isDemoCase(b.case_id) ? 1 : 0) - (isDemoCase(a.case_id) ? 1 : 0));
+    }
+  }
+  const colsHtml = cols.map(([key, lbl, color]) => `
+    <div class="kcol">
+      <div class="khead"><span class="kdot" style="background:${color}"></span>${lbl}<span class="cnt">${grouped[key].length}</span></div>
+      ${grouped[key].map(taskCard).join("") || `<div style="padding:8px 2px 12px;color:var(--faint);font-size: 13.8px">目前沒有任務</div>`}
+    </div>`).join("");
+  el.innerHTML = `
+    <div class="d-card d-head">
+      <span class="plate">整備看板</span>
+      <span class="badge soft">案件確認後自動開單 → 指派 → 處理 → 完成</span>
+      <span class="spacer"></span>
+      <span style="font-size: 13.8px;color:var(--faint)">任務由「案件複核 → 確認」自動建立，資料存 SQLite 全隊共享（5 秒同步）</span>
+    </div>
+    <div class="kanban">${colsHtml}</div>`;
+}
+
+/* ================= Demo bar（快速入口 + 健檢 + 重置） ================= */
+let DEMO_HEALTH = null;
+async function loadDemoHealth() {
+  if (!IS_DEMO) return;
+  try { DEMO_HEALTH = await (await fetch("/api/demo/health")).json(); } catch (e) { DEMO_HEALTH = null; }
+  renderDemoBar();
+}
+function renderDemoBar() {
+  const el = document.getElementById("demobar");
+  if (!el) return;
+  if (!IS_DEMO) { el.hidden = true; return; }
+  el.hidden = false;
+  const h = DEMO_HEALTH;
+  const dot = (ok, lbl, badLbl) => ok
+    ? `<span>✅ ${lbl}</span>`
+    : `<span class="bad">⚠️ ${badLbl || lbl}</span>`;
+  const health = h ? [
+    dot(h.server === "ok", "Server"),
+    dot(h.database === "ok", "Database"),
+    dot(h.notification_configured, "Notification", "Notification 未設定"),
+    dot(h.demo_damage_case, "車損 Demo"),
+    dot(h.demo_cleaning_case, "清潔 Demo"),
+  ].join("") : `<span class="bad">健檢讀取中…</span>`;
+  el.innerHTML = `
+    <span class="dtag">DEMO</span>
+    <button class="dbtn" onclick="jumpToCase(DEMO_CASES.damage)">🚗 新車損 Demo</button>
+    <button class="dbtn" onclick="jumpToCase(DEMO_CASES.cleaning)">🧹 車內髒汙 Demo</button>
+    <button class="dbtn" onclick="resetDemo(this)">↺ 重置 Demo</button>
+    <span class="dhealth">${health}</span>`;
+}
+async function resetDemo(btn) {
+  if (!confirm("重置 Demo 案例？（清除兩個示範案件的裁決與任務；AI 判定結果、其他案件不受影響）")) return;
+  btn.disabled = true; const old = btn.textContent; btn.textContent = "重置中…";
+  try {
+    const r = await fetch("/api/demo/reset", { method: "POST" });
+    if (!r.ok) throw new Error();
+    await loadDecisions(); await loadTasks(); await refreshLabels();
+    renderAll();
+    btn.textContent = "✓ Demo 已重置";
+    setTimeout(() => { btn.textContent = old; btn.disabled = false; }, 2000);
+  } catch (e) {
+    alert("重置失敗，請重新操作");
+    btn.textContent = old; btn.disabled = false;
+  }
+}
+
 /* ================= 事件 ================= */
 function renderAll() {
-  document.getElementById("main").classList.toggle("full", viewMode === "ops" || viewMode === "live" || viewMode === "method");
+  document.getElementById("main").classList.toggle("full", viewMode === "ops" || viewMode === "live" || viewMode === "method" || viewMode === "tasks");
   renderTabs(); renderStats(); renderFilters(); renderList(); renderDetail();
 }
 function setMode(m) {
@@ -1755,6 +2110,9 @@ function setMode(m) {
 function setFilter(f) { viewMode = "cases"; filter = f; renderAll(); }
 function selectCase(id) { currentId = id; renderList(); renderDetail(); }
 function decide(id, kind) {
+  // 未經 AI 評測的案件沒有可裁決的判定（鍵盤快捷鍵也會走到這裡，需擋）
+  const target = CASES.find(c => c.id === id) || CHAINCASES_LIST.find(c => c.id === id);
+  if (target && !chainEvaluated(target)) { alert("此案件尚未經 AI 評測，不開放裁決"); return; }
   const prev = decisions[id];
   decisions[id] = kind; save(); advance(id); renderAll();
   if (SERVER) fetch("/api/decision", { method: "POST", headers: { "Content-Type": "application/json" },
@@ -1769,6 +2127,8 @@ function decide(id, kind) {
         return;
       }
       refreshLabels().then(() => renderStats()).catch(() => {});
+      // confirm 會在後端自動建立整備任務 → 立即同步，讓「已建立任務」文案與看板馬上出現
+      loadTasks().then(ch => { if (ch) renderAll(); }).catch(() => {});
     });
 }
 function undoDecision(id) {
@@ -1784,6 +2144,8 @@ function undoDecision(id) {
         return;
       }
       refreshLabels().then(() => renderStats()).catch(() => {});
+      // 復原 confirm 會取消對應的待處理任務 → 同步看板
+      loadTasks().then(ch => { if (ch) renderAll(); }).catch(() => {});
     });
 }
 
@@ -1896,7 +2258,7 @@ function advance(id) {
 }
 document.addEventListener("keydown", e => {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
-  if (viewMode === "ops" || viewMode === "live" || viewMode === "method") return;
+  if (viewMode === "ops" || viewMode === "live" || viewMode === "method" || viewMode === "tasks") return;
   if (viewMode === "passport") {
     const cars = Object.keys(PASSPORTS).sort((a, b) => PASSPORTS[b].open_new - PASSPORTS[a].open_new || a.localeCompare(b));
     const ci = cars.indexOf(currentCar);
@@ -1917,9 +2279,11 @@ document.addEventListener("keydown", e => {
   await loadDecisions();
   await loadLiveCases();
   await refreshLabels();
+  await loadTasks();
   renderAll();
+  loadDemoHealth();   // demo bar（非 demo mode 為 no-op）
   if (SERVER) {
-    // 每 5 秒同步一次全隊複核狀態與現場案件；有變化才重繪
+    // 每 5 秒同步一次全隊複核狀態、現場案件與整備任務；有變化才重繪
     setInterval(async () => {
       let changed = await syncLiveCases();
       try {
@@ -1929,6 +2293,7 @@ document.addEventListener("keydown", e => {
       const before = LABELS && LABELS.total_events;
       await refreshLabels();
       if (LABELS && LABELS.total_events !== before) changed = true;
+      if (await loadTasks()) changed = true;
       if (changed) renderAll();
     }, 5000);
   }
