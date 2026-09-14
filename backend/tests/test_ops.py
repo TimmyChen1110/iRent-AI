@@ -165,3 +165,120 @@ class TestPeopleSettingsChannels:
         make_task(srv, monkeypatch=monkeypatch)
         s = ops.summary()
         assert s["pending"] == 1 and s["p1_not_started"] == 1 and s["notify_failed"] == 0 and s["server_time"]
+
+
+# ---------- Phase 2：文案、發送、測試通知、SSE ----------
+
+FAKE_GENERATED = {
+    "user_notification": {"title": "還車檢查結果", "body": "本次還車發現左後保險桿刮痕，有取車照片可對比。", "evidence_note": "有取車照片", "dispute_channel_note": "可致電客服申訴"},
+    "cs_brief": {"summary": "RCR-7661 左後刮痕", "confidence_note": "0.97", "coverage_caveat": "無", "recommended_action": "approve", "dispute_risk": "low", "dispute_risk_reason": "清楚"},
+    "work_order": {"type": "repair", "priority": "urgent", "items": ["左後保險桿刮痕修補"], "special_tools": [], "estimated_minutes": 60},
+    "grounding_check": {"passed": True, "problems": []},
+}
+
+
+@pytest.fixture()
+def fake_notify(srv, monkeypatch):
+    import notify
+    calls = []
+    def gen(case, client=None, **kw):
+        calls.append(case)
+        return dict(FAKE_GENERATED)
+    monkeypatch.setattr(notify, "generate", gen)
+    monkeypatch.setattr(srv, "_require_key", lambda: None)
+    monkeypatch.setattr(srv, "_client", lambda: object())
+    return calls
+
+
+def run(coro):
+    import asyncio
+    return asyncio.run(coro)
+
+
+class TestDrafts:
+    def test_生成快取與強制重生(self, srv, ops, monkeypatch, fake_notify):
+        t = make_task(srv, monkeypatch=monkeypatch)
+        r1 = run(ops.generate_case_drafts(t["case_id"]))
+        assert r1["cached"] is False and set(r1["drafts"]) == {"user", "cs", "worker"}
+        assert r1["drafts"]["user"]["content"]["title"] == "還車檢查結果"
+        assert r1["drafts"]["cs"]["grounding_ok"] is True
+        r2 = run(ops.generate_case_drafts(t["case_id"]))
+        assert r2["cached"] is True and len(fake_notify) == 1
+        r3 = run(ops.generate_case_drafts(t["case_id"], force=True))
+        assert r3["cached"] is False and len(fake_notify) == 2
+        # notify 輸入只含結構化資料：損傷 + 估價區間
+        case = fake_notify[0]
+        assert case["vehicle"] == "RCR-7661" and case["damages"][0]["location"] == "左後保險桿"
+        assert "estimate_twd" in case["damages"][0]
+
+    def test_預生成不需任務_詳情以case_id取得(self, srv, ops, monkeypatch, fake_notify):
+        monkeypatch.setattr(srv, "_case_snapshot", lambda cid: snap_pair())
+        run(ops.generate_case_drafts("RCR-7661-左後"))          # confirm 前預生成
+        t = make_task(srv, monkeypatch=monkeypatch)
+        d = ops.get_task(t["id"])
+        assert d["drafts"]["worker"]["content"]["estimated_minutes"] == 60
+
+    def test_人工編輯保留edited_at(self, srv, ops, monkeypatch, fake_notify):
+        t = make_task(srv, monkeypatch=monkeypatch)
+        run(ops.generate_case_drafts(t["case_id"]))
+        d = ops.put_case_draft(t["case_id"], "user", ops.DraftIn(content={"title": "改過", "body": "x"}))
+        assert d["content"]["title"] == "改過" and d["edited_at"]
+        with pytest.raises(HTTPException):
+            ops.put_case_draft(t["case_id"], "boss", ops.DraftIn(content={}))
+
+    def test_找不到案件404(self, srv, ops, monkeypatch, fake_notify):
+        monkeypatch.setattr(srv, "_case_snapshot", lambda cid: {"mode": None, "assessment": None})
+        with pytest.raises(HTTPException) as ei:
+            run(ops.generate_case_drafts("NOPE-1"))
+        assert ei.value.status_code == 404
+
+
+class TestSend:
+    def test_webhook實發並記錄(self, srv, ops, monkeypatch, fake_notify):
+        t = make_task(srv, monkeypatch=monkeypatch)
+        run(ops.generate_case_drafts(t["case_id"]))
+        sent = []
+        monkeypatch.setattr(srv, "send_notification", lambda p: sent.append(p) or True)
+        r = ops.send_draft(t["id"], ops.SendIn(audience="user", channel="webhook"), x_ops_reader="CS")
+        assert r["ok"] and r["entry"]["status"] == "sent"
+        assert sent[0]["event"] == "notification" and sent[0]["content"]["title"] == "還車檢查結果"
+        assert r["notification_log"][-1]["audience"] == "user"
+        assert r["task"]["events"][-1]["detail"].startswith("CS：用戶通知 已送出")
+
+    def test_未接入管道記unsupported不外發(self, srv, ops, monkeypatch, fake_notify):
+        t = make_task(srv, monkeypatch=monkeypatch)
+        run(ops.generate_case_drafts(t["case_id"]))
+        monkeypatch.setattr(srv, "send_notification", lambda p: (_ for _ in ()).throw(AssertionError("must not send")))
+        r = ops.send_draft(t["id"], ops.SendIn(audience="worker", channel="line"))
+        assert r["ok"] is False and r["entry"]["status"] == "unsupported"
+
+    def test_沒文案409_失敗可重試(self, srv, ops, monkeypatch, fake_notify):
+        t = make_task(srv, monkeypatch=monkeypatch)
+        with pytest.raises(HTTPException) as ei:
+            ops.send_draft(t["id"], ops.SendIn(audience="cs"))
+        assert ei.value.status_code == 409
+        run(ops.generate_case_drafts(t["case_id"]))
+        monkeypatch.setattr(srv, "send_notification", lambda p: False)
+        r = ops.send_draft(t["id"], ops.SendIn(audience="cs"))
+        assert r["entry"]["status"] == "failed"
+        monkeypatch.setattr(srv, "send_notification", lambda p: True)
+        r = ops.send_draft(t["id"], ops.SendIn(audience="cs"))
+        assert r["entry"]["status"] == "sent" and len(r["notification_log"]) == 2
+
+    def test_測試通知(self, srv, ops, monkeypatch):
+        monkeypatch.setattr(srv, "send_notification", lambda p: True)
+        assert ops.test_webhook()["status"] == "sent"
+        monkeypatch.delenv("NOTIFICATION_WEBHOOK_URL")
+        assert ops.test_webhook()["status"] == "skipped"
+
+
+class TestSSE:
+    def test_events_after只回新事件(self, srv, ops, monkeypatch):
+        t = make_task(srv, monkeypatch=monkeypatch)
+        with ops.ops_db.db() as conn:
+            ops._refresh_events(conn)
+            last = ops.ops_db.max_event_id(conn)
+        assert ops._events_after(last, "A") == []
+        srv.patch_task(t["id"], srv.TaskUpdate(status="in_progress"))
+        evs = ops._events_after(last, "A")
+        assert len(evs) == 1 and evs[0]["type"] == "task_status" and evs[0]["id"] > last

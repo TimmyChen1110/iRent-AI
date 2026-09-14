@@ -9,8 +9,8 @@
 資料表：
   ops_events        通知中心事件流（由 task_events 增量派生 + SLA 掃描產生）
   event_reads       事件已讀（reader 為前端自選身分，無登入前提）
-  task_drafts       三對象通知文案快取（Phase 2 用，先建表）
-  notification_log  發送紀錄（Phase 2 用，先建表）
+  case_drafts       三對象通知文案快取（以 case_id 為鍵：內容取決於 AI 判定，不隨任務重建而失效）
+  notification_log  發送紀錄（webhook 實發；line / sms 記為 unsupported）
   ops_people        整備人員／組別（取代前端寫死的 ASSIGNEES）
   ops_settings      key/value 設定（SLA 門檻等）
 """
@@ -51,15 +51,16 @@ DDL = [
          reader   TEXT NOT NULL,
          at       TEXT NOT NULL,
          PRIMARY KEY(event_id, reader))""",
-    """CREATE TABLE IF NOT EXISTS task_drafts(
-         task_id   INTEGER NOT NULL,
+    """CREATE TABLE IF NOT EXISTS case_drafts(
+         case_id   TEXT NOT NULL,
          audience  TEXT NOT NULL,      -- user | cs | worker
-         content   TEXT NOT NULL,      -- JSON
+         content   TEXT NOT NULL,      -- JSON（notify.py 對應 schema）
          grounding_ok INTEGER,
-         grounding_notes TEXT,
+         grounding_notes TEXT,         -- JSON list
+         model     TEXT,
          generated_at TEXT,
          edited_at TEXT,
-         PRIMARY KEY(task_id, audience))""",
+         PRIMARY KEY(case_id, audience))""",
     """CREATE TABLE IF NOT EXISTS notification_log(
          id       INTEGER PRIMARY KEY AUTOINCREMENT,
          task_id  INTEGER NOT NULL,
@@ -269,19 +270,71 @@ def mark_read(conn, reader: str, ids: list[int] | None) -> int:
     return cur.rowcount if cur.rowcount is not None else 0
 
 
-# ---------- drafts / notification log（Phase 2 會用；先提供最小存取） ----------
+# ---------- drafts / notification log ----------
 
-def get_drafts(conn, task_id: int) -> dict:
+AUDIENCES = ("user", "cs", "worker")
+# notify.py 輸出欄位 → 對象代號
+AUDIENCE_KEY = {"user": "user_notification", "cs": "cs_brief", "worker": "work_order"}
+
+
+def _loads(v, default):
+    try:
+        return json.loads(v) if v else default
+    except Exception:
+        return default
+
+
+def get_drafts(conn, case_id: str) -> dict:
     out = {}
-    for r in conn.execute("SELECT * FROM task_drafts WHERE task_id=?", (task_id,)):
+    for r in conn.execute("SELECT * FROM case_drafts WHERE case_id=?", (case_id,)):
         d = dict(r)
-        try:
-            d["content"] = json.loads(d["content"])
-        except Exception:
-            pass
+        d["content"] = _loads(d["content"], {})
+        d["grounding_notes"] = _loads(d["grounding_notes"], [])
+        d["grounding_ok"] = bool(d["grounding_ok"])
         out[d["audience"]] = d
     return out
 
 
+def save_generated_drafts(conn, case_id: str, generated: dict, model: str) -> dict:
+    """把 notify.generate() 的輸出拆成三筆存入（覆蓋舊的，含人工編輯）。"""
+    ts = now_iso()
+    gc = generated.get("grounding_check") or {}
+    for aud, key in AUDIENCE_KEY.items():
+        conn.execute(
+            "INSERT OR REPLACE INTO case_drafts(case_id, audience, content, grounding_ok,"
+            " grounding_notes, model, generated_at, edited_at) VALUES (?,?,?,?,?,?,?,NULL)",
+            (case_id, aud, json.dumps(generated.get(key) or {}, ensure_ascii=False),
+             int(bool(gc.get("passed", True))), json.dumps(gc.get("problems") or [], ensure_ascii=False),
+             model, ts))
+    return get_drafts(conn, case_id)
+
+
+def update_draft(conn, case_id: str, audience: str, content: dict) -> dict | None:
+    row = conn.execute("SELECT 1 FROM case_drafts WHERE case_id=? AND audience=?",
+                       (case_id, audience)).fetchone()
+    ts = now_iso()
+    if row:
+        conn.execute("UPDATE case_drafts SET content=?, edited_at=? WHERE case_id=? AND audience=?",
+                     (json.dumps(content, ensure_ascii=False), ts, case_id, audience))
+    else:   # 沒生成過也允許人工直接撰寫
+        conn.execute(
+            "INSERT INTO case_drafts(case_id, audience, content, grounding_ok, grounding_notes,"
+            " model, generated_at, edited_at) VALUES (?,?,?,1,'[]','manual',NULL,?)",
+            (case_id, audience, json.dumps(content, ensure_ascii=False), ts))
+    return get_drafts(conn, case_id).get(audience)
+
+
+def add_notification_log(conn, task_id: int, audience: str | None, channel: str,
+                         status: str, detail: str) -> dict:
+    cur = conn.execute(
+        "INSERT INTO notification_log(task_id, audience, channel, status, detail, at)"
+        " VALUES (?,?,?,?,?,?)", (task_id, audience, channel, status, detail, now_iso()))
+    return dict(conn.execute("SELECT * FROM notification_log WHERE id=?", (cur.lastrowid,)).fetchone())
+
+
 def list_notification_log(conn, task_id: int) -> list[dict]:
     return rows(conn.execute("SELECT * FROM notification_log WHERE task_id=? ORDER BY id", (task_id,)))
+
+
+def max_event_id(conn) -> int:
+    return conn.execute("SELECT COALESCE(MAX(id), 0) FROM ops_events").fetchone()[0]

@@ -2,12 +2,29 @@ import { useEffect, useState } from 'react'
 import { api } from '../lib/api'
 import type { Channel } from '../lib/types'
 import { useToast } from '../components/Toast'
+import { useStore } from '../lib/store'
 
 export function Settings() {
   const [channels, setChannels] = useState<Channel[]>([])
   const [sla, setSla] = useState({ p1: '5', p2: '240', p3: '1440' })
   const [saving, setSaving] = useState(false)
+  const [testing, setTesting] = useState(false)
+  const [pre, setPre] = useState<Record<string, string>>({})
+  const { health } = useStore()
   const toast = useToast()
+
+  const testHook = async () => {
+    setTesting(true)
+    try { const r = await api.testWebhook(); toast(r.detail, r.ok ? 'ok' : 'warn') } catch (e) { toast((e as Error).message, 'warn') } finally { setTesting(false) }
+  }
+  const pregenerate = async (force: boolean) => {
+    if (!health) return
+    for (const [k, cid] of Object.entries(health.demo_cases)) {
+      setPre(p => ({ ...p, [k]: '生成中…' }))
+      try { const r = await api.generateDrafts(cid, force); setPre(p => ({ ...p, [k]: r.cached ? '已有快取' : '已生成' })) }
+      catch (e) { setPre(p => ({ ...p, [k]: `失敗：${(e as Error).message}` })) }
+    }
+  }
 
   useEffect(() => {
     api.health().then(h => setChannels(h.channels)).catch(() => {})
@@ -38,10 +55,22 @@ export function Settings() {
                   <span className={`badge ${!c.available ? 'soft' : c.configured ? 'ok' : 'warn'}`}>{!c.available ? '未接入' : c.configured ? '已設定' : '未設定'}</span></div>
                 <div className="sub" style={{ marginTop: 6 }}>{c.note}</div>
                 {c.id === 'webhook' && !c.configured && <div className="sub">設定環境變數 NOTIFICATION_WEBHOOK_URL 後重啟 server</div>}
+                {c.id === 'webhook' && c.configured && <button className="btn xs" style={{ marginTop: 8 }} disabled={testing} onClick={testHook}>{testing ? '發送中…' : '發送測試通知'}</button>}
               </div>
             ))}
           </div>
         </div>
+        {health?.demo_mode && (
+          <div className="card">
+            <h2>Demo 預生成文案</h2>
+            <div className="small muted" style={{ marginBottom: 8 }}>上台前先對兩個示範案例各呼叫一次 Gemini，現場任務詳情秒開；「重新生成」按鈕仍可現場即時展示。快取依案件保存，重置 Demo 不會清掉。</div>
+            <div className="row wrap">
+              <button className="btn primary sm" onClick={() => pregenerate(false)}>預生成（有快取則略過）</button>
+              <button className="btn sm" onClick={() => pregenerate(true)}>全部重新生成</button>
+              {Object.entries(pre).map(([k, v]) => <span key={k} className="badge soft">{k === 'damage' ? '車損' : '髒汙'}：{v}</span>)}
+            </div>
+          </div>
+        )}
         <div className="card">
           <h2>SLA 門檻（待處理 → 開工，分鐘）</h2>
           <div className="row wrap">

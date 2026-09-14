@@ -45,11 +45,21 @@ export interface CaseView {
   decision: { decision: string; decided_at: string } | null
 }
 
+export type Audience = 'user' | 'cs' | 'worker'
+export interface Draft {
+  case_id: string; audience: Audience
+  content: Record<string, unknown>
+  grounding_ok: boolean; grounding_notes: string[]
+  model: string | null; generated_at: string | null; edited_at: string | null
+}
+export type Drafts = Partial<Record<Audience, Draft>>
+export interface NotificationLogEntry { id: number; audience: string | null; channel: string; status: string; detail: string | null; at: string }
+
 export interface TaskDetail {
   task: Task
   case: CaseView
-  drafts: Record<string, unknown>
-  notification_log: Array<{ id: number; audience: string | null; channel: string; status: string; detail: string | null; at: string }>
+  drafts: Drafts
+  notification_log: NotificationLogEntry[]
   server_time: string
 }
 

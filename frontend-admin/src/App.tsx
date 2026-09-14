@@ -6,6 +6,9 @@ import { Board } from './pages/Board'
 import { TaskDetail } from './pages/TaskDetail'
 import { People } from './pages/People'
 import { Settings } from './pages/Settings'
+import { useEffect } from 'react'
+import { useToast } from './components/Toast'
+import { EVENT_TXT } from './lib/labels'
 
 function Sidebar() {
   const { summary, health } = useStore()
@@ -37,9 +40,21 @@ function Sidebar() {
   )
 }
 
+/** SSE 新事件 → 底部提示（只提示，不打斷） */
+function LiveToasts() {
+  const { lastEvent } = useStore()
+  const toast = useToast()
+  useEffect(() => {
+    if (!lastEvent) return
+    const kind = lastEvent.type === 'notify_failed' || lastEvent.type === 'sla_overdue' ? 'warn' : 'ok'
+    toast(`${EVENT_TXT[lastEvent.type] || lastEvent.type} · ${lastEvent.car || ''} ${lastEvent.title || ''}`, kind)
+  }, [lastEvent, toast])
+  return null
+}
+
 function Topbar() {
   const { conn, reader, setReader, people } = useStore()
-  const label = conn === 'offline' ? '離線' : '每 5 秒同步'
+  const label = conn === 'offline' ? '離線' : conn === 'live' ? '即時連線' : '輪詢中（每 5 秒）'
   return (
     <div className="topbar">
       <span className="spacer" />
@@ -65,6 +80,7 @@ export default function App() {
       <ToastProvider>
         <div className="shell">
           <Sidebar />
+          <LiveToasts />
           <div className="main">
             <Topbar />
             <Routes location={bg || location}>

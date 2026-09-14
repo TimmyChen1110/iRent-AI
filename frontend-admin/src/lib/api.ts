@@ -1,4 +1,4 @@
-import type { Health, OpsEvent, Person, Summary, Task, TaskDetail } from './types'
+import type { Audience, Drafts, Health, NotificationLogEntry, OpsEvent, Person, Summary, Task, TaskDetail } from './types'
 import { getReader } from './reader'
 
 export class ApiError extends Error { status: number; constructor(s: number, m: string) { super(m); this.status = s } }
@@ -44,6 +44,14 @@ export const api = {
   settings: () => call<{ settings: Record<string, string>; sla: Record<string, number> }>('/api/ops/settings'),
   putSettings: (v: Record<string, string | number>) =>
     call<{ settings: Record<string, string>; sla: Record<string, number> }>('/api/ops/settings', { method: 'PUT', body: JSON.stringify(v) }),
+  caseDrafts: (caseId: string) => call<{ case_id: string; drafts: Drafts }>(`/api/ops/cases/${encodeURIComponent(caseId)}/drafts`),
+  generateDrafts: (caseId: string, force = false) =>
+    call<{ case_id: string; drafts: Drafts; cached: boolean }>(`/api/ops/cases/${encodeURIComponent(caseId)}/drafts` + q({ force }), { method: 'POST' }),
+  putDraft: (caseId: string, audience: Audience, content: Record<string, unknown>) =>
+    call<Drafts[Audience]>(`/api/ops/cases/${encodeURIComponent(caseId)}/drafts/${audience}`, { method: 'PUT', body: JSON.stringify({ content }) }),
+  sendDraft: (taskId: number, audience: Audience, channel: string) =>
+    call<TaskDetail & { ok: boolean; entry: NotificationLogEntry }>(`/api/ops/tasks/${taskId}/send`, { method: 'POST', body: JSON.stringify({ audience, channel }) }),
+  testWebhook: () => call<{ ok: boolean; status: string; detail: string }>('/api/ops/settings/test', { method: 'POST' }),
   demoHealth: () => call<Record<string, unknown>>('/api/demo/health'),
   demoReset: () => call<Record<string, unknown>>('/api/demo/reset', { method: 'POST' }),
 }

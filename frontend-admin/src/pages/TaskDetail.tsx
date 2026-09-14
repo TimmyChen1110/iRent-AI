@@ -9,6 +9,7 @@ import { STATUS_TXT, zhStatus } from '../lib/labels'
 import { NotifyBadge, PriorityBadge, SlaChip, TypeBadge } from '../components/Badges'
 import { PhotoWithBoxes } from '../components/PhotoWithBoxes'
 import { useToast } from '../components/Toast'
+import { DraftsPanel } from '../components/DraftsPanel'
 
 const NEXT: Record<string, { status: TaskStatus; label: string; cls: string } | undefined> = {
   pending: { status: 'in_progress', label: '▶ 開始處理', cls: 'primary' },
@@ -27,7 +28,6 @@ export function TaskDetail({ mode }: { mode: 'sheet' | 'page' }) {
   const [busy, setBusy] = useState(false)
   const [note, setNote] = useState('')
   const [hot, setHot] = useState<number | null>(null)
-  const [tab, setTab] = useState<'user' | 'cs' | 'worker'>('cs')
   const toast = useToast()
 
   const load = useCallback(async () => {
@@ -141,21 +141,12 @@ export function TaskDetail({ mode }: { mode: 'sheet' | 'page' }) {
           <div className="desc">{d.task.description || '—'}</div>
         </div>
 
-        {/* 通知（Phase 2：三對象文案；目前只有 webhook 實發） */}
+        {/* 通知：三對象文案（依案件快取）→ 編輯 → 發送（webhook 實發；其他管道標示未接入） */}
         <div className="section">
           <h3>通知</h3>
-          <div className="tabs" style={{ marginBottom: 10 }}>
-            {(['user', 'cs', 'worker'] as const).map(k => <button key={k} className={tab === k ? 'active' : ''} onClick={() => setTab(k)}>{{ user: '用戶通知', cs: '客服摘要', worker: '派工單' }[k]}</button>)}
-          </div>
-          {d.drafts[tab]
-            ? <pre className="desc" style={{ margin: 0 }}>{JSON.stringify((d.drafts[tab] as { content: unknown }).content, null, 2)}</pre>
-            : <div className="notice">三對象文案生成尚未接上 API（規劃 Phase 2）。目前實際發送的是任務建立 webhook，內容為任務欄位，見上方通知狀態。</div>}
-          {d.notification_log.length > 0 && (
-            <table className="table" style={{ marginTop: 10 }}>
-              <thead><tr><th>時間</th><th>對象</th><th>管道</th><th>結果</th></tr></thead>
-              <tbody>{d.notification_log.map(l => <tr key={l.id}><td className="mono small">{fmt(l.at)}</td><td>{l.audience || '—'}</td><td>{l.channel}</td><td>{l.status}</td></tr>)}</tbody>
-            </table>
-          )}
+          <DraftsPanel task={d.task} drafts={d.drafts} log={d.notification_log}
+            onChange={drafts => setD({ ...d, drafts })}
+            onSent={r => { setD({ ...d, task: r.task, notification_log: r.notification_log }); refresh() }} />
         </div>
 
         {/* 歷程 */}

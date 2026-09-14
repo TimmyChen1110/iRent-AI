@@ -12,12 +12,15 @@
     import ops_api
     ops_api.bind(sys.modules[__name__]); app.include_router(ops_api.router)
 """
+import asyncio
 import json
 from datetime import datetime, timedelta
 from pathlib import Path
 from urllib.parse import quote, unquote
 
 from fastapi import APIRouter, Header, HTTPException
+from fastapi.concurrency import run_in_threadpool
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 import ops_db
@@ -220,7 +223,7 @@ def get_task(task_id: int):
         if not t:
             raise HTTPException(404, f"找不到任務 #{task_id}")
         t = _with_sla(t, ops_db.sla_minutes(conn), now)
-        drafts = ops_db.get_drafts(conn, task_id)
+        drafts = ops_db.get_drafts(conn, t["case_id"])
         log = ops_db.list_notification_log(conn, task_id)
     t["is_demo"] = _srv._demo_mode() and t["case_id"] in _srv.DEMO_CASE_IDS
     return {"task": t, "case": _case_view(t["case_id"]), "drafts": drafts,
@@ -346,3 +349,194 @@ def put_settings(values: dict):
     with ops_db.db() as conn:
         ops_db.set_settings(conn, clean)
         return {"settings": ops_db.get_settings(conn), "sla": ops_db.sla_minutes(conn)}
+
+
+# ---------- 三對象文案（notify.py Stage 7）：以 case_id 快取，可於 Demo 前預生成 ----------
+
+def _notify_case_input(case_id: str) -> dict:
+    """把案件快照整理成 notify.generate() 的輸入。只放結構化資料中確實存在的內容；
+    估價走 disposition（純程式）——文案階段的金額只能來自這裡的區間。"""
+    snap = _srv._case_snapshot(case_id)
+    a = snap.get("assessment") or {}
+    if snap.get("mode") is None:
+        raise HTTPException(404, f"找不到案件 {case_id} 的判定結果")
+    case = {"case_id": case_id, "vehicle": _srv._case_car(case_id), "level": snap.get("ai_level")}
+    if snap.get("mode") == "interior":
+        case["new_damage_found"] = False
+        case["damages"] = []
+        case["interior"] = {"level": a.get("level"), "score": a.get("score"),
+                            "items": a.get("issues") or [], "reasoning": a.get("reasoning")}
+        return case
+    case["new_damage_found"] = bool(a.get("new_damage_found"))
+    dmgs = []
+    for d in a.get("damages") or []:
+        row = {"location": d.get("location"), "damage_type_zh": d.get("type"),
+               "severity": d.get("severity"), "raw_confidence": d.get("confidence"),
+               "observation": d.get("reasoning")}
+        try:
+            import disposition  # noqa: PLC0415
+            from diff_new_damage import panel_of  # noqa: PLC0415
+            p = disposition.assess(d, panel=panel_of(d, case_id.rsplit("-", 1)[-1]),
+                                   weighted_confidence=d.get("confidence"))
+            row.update({k: v for k, v in p.items()
+                        if k in ("repair_action", "band", "estimate_twd", "disposition", "panel")})
+        except Exception:
+            pass
+        dmgs.append(row)
+    case["damages"] = dmgs
+    return case
+
+
+@router.get("/cases/{case_id}/drafts")
+def get_case_drafts(case_id: str):
+    with ops_db.db() as conn:
+        return {"case_id": case_id, "drafts": ops_db.get_drafts(conn, case_id)}
+
+
+@router.post("/cases/{case_id}/drafts")
+async def generate_case_drafts(case_id: str, force: bool = False):
+    """生成三對象文案（一次 Gemini 呼叫）。已有快取且未 force 則直接回傳——
+    Demo 前可預生成，現場「重新生成」即 force=1。"""
+    with ops_db.db() as conn:
+        existing = ops_db.get_drafts(conn, case_id)
+    if existing and not force:
+        return {"case_id": case_id, "drafts": existing, "cached": True}
+    _srv._require_key()
+    import notify  # noqa: PLC0415
+    case = _notify_case_input(case_id)
+
+    def run():
+        with _srv._rejudge_lock:     # 免費層 RPM 低，與重判／現場實測共用同一把鎖
+            return notify.generate(case, client=_srv._client())
+    try:
+        generated = await run_in_threadpool(run)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(502, f"文案生成失敗：{str(e)[:200]}")
+    with ops_db.db() as conn:
+        drafts = ops_db.save_generated_drafts(conn, case_id, generated, notify.MODEL)
+    return {"case_id": case_id, "drafts": drafts, "cached": False}
+
+
+class DraftIn(BaseModel):
+    content: dict
+
+
+@router.put("/cases/{case_id}/drafts/{audience}")
+def put_case_draft(case_id: str, audience: str, body: DraftIn):
+    if audience not in ops_db.AUDIENCES:
+        raise HTTPException(400, "audience 必須是 user / cs / worker")
+    with ops_db.db() as conn:
+        return ops_db.update_draft(conn, case_id, audience, body.content)
+
+
+# ---------- 發送（管道：webhook 實發；line / sms 未接入，記錄為 unsupported） ----------
+
+CHANNELS = {"webhook", "line", "sms"}
+
+
+class SendIn(BaseModel):
+    audience: str
+    channel: str = "webhook"
+
+
+def _send_webhook(payload: dict) -> bool:
+    return _srv.send_notification(payload)
+
+
+@router.post("/tasks/{task_id}/send")
+def send_draft(task_id: int, body: SendIn, x_ops_reader: str | None = Header(default=None)):
+    if body.audience not in ops_db.AUDIENCES:
+        raise HTTPException(400, "audience 必須是 user / cs / worker")
+    if body.channel not in CHANNELS:
+        raise HTTPException(400, "channel 必須是 webhook / line / sms")
+    who = _reader(x_ops_reader)
+    with ops_db.db() as conn:
+        t = _srv._task_row(conn, task_id)
+        if not t:
+            raise HTTPException(404, f"找不到任務 #{task_id}")
+        draft = ops_db.get_drafts(conn, t["case_id"]).get(body.audience)
+    if not draft:
+        raise HTTPException(409, "尚未生成此對象的文案")
+    aud_txt = {"user": "用戶通知", "cs": "客服摘要", "worker": "派工單"}[body.audience]
+    if body.channel != "webhook":
+        status, detail = "unsupported", f"{body.channel} 管道尚未接入，未發送"
+    elif not _srv._webhook_url():
+        status, detail = "skipped", "通知管道未設定（NOTIFICATION_WEBHOOK_URL），未發送"
+    else:
+        payload = {"event": "notification", "audience": body.audience, "channel": body.channel,
+                   "task_id": task_id, "case_id": t["case_id"], "car": t.get("car"),
+                   "priority": t.get("priority"), "task_type": t["task_type"],
+                   "content": draft["content"], "sent_by": who,
+                   "sent_at": _iso(_now())}
+        try:
+            ok = _send_webhook(payload)
+        except Exception:
+            ok = False
+        status = "sent" if ok else "failed"
+        detail = f"{aud_txt} 已送出（webhook）" if ok else f"{aud_txt} 發送失敗，可重試"
+    with ops_db.db() as conn:
+        entry = ops_db.add_notification_log(conn, task_id, body.audience, body.channel, status, detail)
+        conn.execute("INSERT INTO task_events(task_id, at, event, detail) VALUES (?,?,?,?)",
+                     (task_id, entry["at"], "notify", f"{who}：{detail}"))
+    return {"ok": status == "sent", "entry": entry, **get_task(task_id)}
+
+
+@router.post("/settings/test")
+def test_webhook():
+    """對 webhook 發一則測試訊息，回傳結果；不寫任何任務紀錄。"""
+    if not _srv._webhook_url():
+        return {"ok": False, "status": "skipped", "detail": "通知管道未設定（NOTIFICATION_WEBHOOK_URL）"}
+    try:
+        ok = _send_webhook({"event": "test", "sent_at": _iso(_now()), "message": "iRent 整備中心測試通知"})
+    except Exception:
+        ok = False
+    return {"ok": ok, "status": "sent" if ok else "failed",
+            "detail": "測試通知已送出" if ok else "測試通知失敗（timeout / 連線被拒 / 非 2xx）"}
+
+
+# ---------- SSE：新事件即時推送（server 端每 2 秒查一次資料庫；15 秒心跳） ----------
+
+SSE_POLL_S = 2.0
+SSE_HEARTBEAT_S = 15.0
+
+
+def _events_after(last_id: int, reader: str) -> list[dict]:
+    with ops_db.db() as conn:
+        _refresh_events(conn)
+        evs = ops_db.list_events(conn, reader, since_id=last_id, limit=50)
+    return list(reversed(evs))   # 由舊到新
+
+
+@router.get("/events/stream")
+async def events_stream(since: int = 0, reader: str | None = None,
+                        x_ops_reader: str | None = Header(default=None)):
+    reader = _reader(reader or x_ops_reader)   # EventSource 不能帶自訂標頭，改用 query
+
+    async def gen():
+        last = since
+        if last == 0:
+            with ops_db.db() as conn:
+                last = ops_db.max_event_id(conn)
+        yield f"event: hello\ndata: {json.dumps({'last_id': last, 'server_time': _iso(_now())})}\n\n"
+        idle = 0.0
+        while True:
+            await asyncio.sleep(SSE_POLL_S)
+            try:
+                evs = await run_in_threadpool(_events_after, last, reader)
+            except Exception:
+                evs = []
+            if evs:
+                for e in evs:
+                    last = max(last, e["id"])
+                    yield f"id: {e['id']}\nevent: ops\ndata: {json.dumps(e, ensure_ascii=False)}\n\n"
+                idle = 0.0
+            else:
+                idle += SSE_POLL_S
+                if idle >= SSE_HEARTBEAT_S:
+                    yield f": ping {_iso(_now())}\n\n"
+                    idle = 0.0
+
+    return StreamingResponse(gen(), media_type="text/event-stream",
+                             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
