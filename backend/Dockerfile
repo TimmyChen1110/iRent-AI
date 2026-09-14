@@ -30,6 +30,11 @@ COPY backend/ .
 # 前端 build 產物（覆蓋 repo 內過渡期進版控的那份，確保與程式碼一致）
 COPY --from=frontend /fe-dist ./app/static/ops
 
+# 時區：任務時間以 ISO 字串（無時區）存檔並直接顯示，容器需與營運現場同一時區
+RUN apt-get update && apt-get install -y --no-install-recommends tzdata \
+    && rm -rf /var/lib/apt/lists/*
+ENV TZ=Asia/Taipei
+
 # 執行期可設定路徑：預設指向容器內 volume 掛載點（見 docker-compose.yml）
 ENV IRENT_UPLOAD_DIR=/data/uploads \
     IRENT_LIVE_SIGNALS=/data/shadow_signals_live.jsonl \
