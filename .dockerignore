@@ -1,0 +1,38 @@
+# build context = repo 根（docker-compose.yml）
+
+# 不進 image 的大件 / 非 runtime
+backend/training/                    # 自訓 CV（torch），不接主流程
+backend/tests/                       # 測試不進生產 image
+backend/requirements-dev.txt
+
+# 執行期產物
+backend/_data/
+backend/app/inspection_uploads/
+backend/app/inspection_photos/
+backend/app/decisions.sqlite3
+backend/pipeline/shadow_signals_live.jsonl
+backend/app/_chk*.js
+
+# 評測斷點檔（批次腳本 resume 用，runtime 不讀）— 保留 shadow_signals.jsonl
+*progress*.jsonl
+
+# 秘密
+**/.gemini_key
+**/.anthropic_key
+
+# 雜訊
+**/__pycache__/
+**/*.pyc
+**/.pytest_cache/
+**/.DS_Store
+.git/
+
+# 根目錄層級：資料集（用 volume 掛進去）、前端 node_modules、文件與其他環節
+iRent - */
+環節一_*/
+環節二_*/
+環節三_*/
+frontend-admin/node_modules/
+frontend-user/
+backend/.venv/
+*.md

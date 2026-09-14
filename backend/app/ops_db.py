@@ -13,13 +13,34 @@
   notification_log  發送紀錄（webhook 實發；line / sms 記為 unsupported）
   ops_people        整備人員／組別（取代前端寫死的 ASSIGNEES）
   fleet_locks       車輛派單鎖定（手動鎖定／解除；模擬，未與派單系統串接）
+  task_photos       整備完工照（站點手機版上傳；日後可作為下一次借車的基準照）
   ops_settings      key/value 設定（SLA 門檻等）
 """
 import json
+import os
 import sqlite3
 from datetime import datetime
 
 import paths
+
+# ---------- 方言層 ----------
+# 同事切換 Postgres 時：設 DATABASE_URL=postgresql://...；本檔以 psycopg 連線並把 `?` 轉成 %s、
+# AUTOINCREMENT 轉成 SERIAL。監理台主表（tasks 等）的遷移由 server.py 那邊處理。
+# ⚠ Postgres 路徑尚未實測（本機無 Postgres）；SQLite 為預設且所有測試都在 SQLite 上跑。
+
+
+def dialect() -> str:
+    url = os.environ.get("DATABASE_URL", "")
+    return "postgres" if url.startswith(("postgres://", "postgresql://")) else "sqlite"
+
+
+def sql(q: str) -> str:
+    """把 SQLite 寫法轉成當前方言：佔位符與 upsert 語法。"""
+    if dialect() == "sqlite":
+        return q
+    return (q.replace("?", "%s")
+             .replace("INSERT OR IGNORE INTO", "INSERT INTO")
+             .replace("INSERT OR REPLACE INTO", "INSERT INTO"))
 
 # 預設整備人員：與監理台 dashboard_shell.html 的 ASSIGNEES 一致，名單值相容
 DEFAULT_PEOPLE = [
@@ -85,6 +106,15 @@ DDL = [
          reason  TEXT,
          by      TEXT,
          at      TEXT NOT NULL)""",
+    """CREATE TABLE IF NOT EXISTS task_photos(
+         id       INTEGER PRIMARY KEY AUTOINCREMENT,
+         task_id  INTEGER NOT NULL,
+         case_id  TEXT,
+         car      TEXT,
+         filename TEXT NOT NULL,
+         by       TEXT,
+         at       TEXT NOT NULL)""",
+    "CREATE INDEX IF NOT EXISTS idx_task_photos_task ON task_photos(task_id)",
     "CREATE INDEX IF NOT EXISTS idx_ops_events_at ON ops_events(at)",
     "CREATE INDEX IF NOT EXISTS idx_ops_events_task ON ops_events(task_id)",
     "CREATE INDEX IF NOT EXISTS idx_nlog_task ON notification_log(task_id)",
@@ -100,15 +130,25 @@ def db_path():
     return paths.DB_PATH
 
 
-def connect() -> sqlite3.Connection:
+def connect():
+    if dialect() == "postgres":
+        import psycopg  # noqa: PLC0415  只有真的切 Postgres 才需要安裝
+        from psycopg.rows import dict_row  # noqa: PLC0415
+        return psycopg.connect(os.environ["DATABASE_URL"], row_factory=dict_row)
     conn = sqlite3.connect(db_path())
     conn.row_factory = sqlite3.Row
     return conn
 
 
+def _ddl_for_dialect(stmt: str) -> str:
+    if dialect() == "sqlite":
+        return stmt
+    return stmt.replace("INTEGER PRIMARY KEY AUTOINCREMENT", "SERIAL PRIMARY KEY")
+
+
 def ensure_schema(conn: sqlite3.Connection) -> None:
     for stmt in DDL:
-        conn.execute(stmt)
+        conn.execute(_ddl_for_dialect(stmt))
     if conn.execute("SELECT COUNT(*) FROM ops_people").fetchone()[0] == 0:
         ts = now_iso()
         conn.executemany(
@@ -357,3 +397,16 @@ def set_lock(conn, car: str, locked: bool, reason: str | None, by: str) -> dict:
     conn.execute("INSERT OR REPLACE INTO fleet_locks(car, locked, reason, by, at) VALUES (?,?,?,?,?)",
                  (car, int(locked), reason, by, now_iso()))
     return dict(conn.execute("SELECT * FROM fleet_locks WHERE car=?", (car,)).fetchone())
+
+
+# ---------- task photos ----------
+
+def add_task_photo(conn, task: dict, filename: str, by: str) -> dict:
+    cur = conn.execute(
+        "INSERT INTO task_photos(task_id, case_id, car, filename, by, at) VALUES (?,?,?,?,?,?)",
+        (task["id"], task.get("case_id"), task.get("car"), filename, by, now_iso()))
+    return dict(conn.execute("SELECT * FROM task_photos WHERE id=?", (cur.lastrowid,)).fetchone())
+
+
+def list_task_photos(conn, task_id: int) -> list[dict]:
+    return rows(conn.execute("SELECT * FROM task_photos WHERE task_id=? ORDER BY id", (task_id,)))

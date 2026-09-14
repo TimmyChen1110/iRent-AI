@@ -177,4 +177,7 @@ ops_settings(key TEXT PK, value TEXT)
 - **Phase 3 部分完成（2026-09-14）**：
   - 車輛派單狀態頁 `/fleet` + `GET/PATCH /api/ops/fleet`：有未完成任務或手動鎖定 → 整備中不可派，完成自動解除；AI 標記未複核者標「待確認」。**模擬狀態，未與派單系統串接**，頁面上明示。
   - 營運洞察頁 `/insights` + `GET /api/ops/insights`：還車時段分布（`pipeline/build_ops_insights.py` 離線彙整真實上傳 log 4,820 單，單日）、整備中位開工／完工時間（即時）、車輛事件排行（任務＋索賠）、車內整潔分布（離線，n=24）。每張圖標口徑與 n，附數值表。
-  - 待做：Postgres 切換配合、站點手機版（完工照回寫基準照）、Dockerfile 多階段 build。
+  - 站點人員手機版 `/ops/m`（同日）：選組別 → 我的任務（指派給我＋未指派）→ 接單開工 → 拍完工照（`POST /api/ops/tasks/{id}/photos`，EXIF 轉正、縮圖、存 `IRENT_UPLOAD_DIR/ops_task_photos/`）→ 完工（前端要求至少一張完工照）。完工照顯示於任務詳情，日後可作下一次借車基準照。
+  - Dockerfile 改多階段（node 建前端 → python），compose 的 build context 改為 repo 根、根目錄 `.dockerignore`；repo 內 `backend/app/static/ops/` 仍保留供本機 uvicorn 直接使用。
+  - `ops_db.py` 方言層：`DATABASE_URL` 為 postgres 時以 psycopg 連線、`?`→`%s`、AUTOINCREMENT→SERIAL；**Postgres 未實測**（本機無 Postgres），等同事的 PR #2 一起驗證。
+  - 待做：Postgres 實測、登入與身分驗證、派單系統真實串接。

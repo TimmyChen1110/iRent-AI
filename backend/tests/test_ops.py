@@ -323,3 +323,63 @@ class TestInsights:
         assert r["interior"]["n"] == sum(r["interior"][k] for k in ("乾淨", "普通", "髒汙"))
         if r["uploads"]:
             assert len(r["uploads"]["by_hour"]) == 24 and r["uploads"]["orders"] == sum(r["uploads"]["by_hour"])
+
+
+# ---------- 站點手機版：完工照與我的任務 ----------
+
+def _jpeg_bytes(w=40, h=30):
+    import io
+    from PIL import Image
+    buf = io.BytesIO(); Image.new("RGB", (w, h), (200, 30, 30)).save(buf, "JPEG"); return buf.getvalue()
+
+
+class TestPhotosAndMyTasks:
+    def test_上傳完工照_存檔並寫歷程(self, srv, ops, monkeypatch, tmp_path):
+        monkeypatch.setattr(ops, "PHOTO_ROOT", tmp_path / "photos")
+        t = make_task(srv, monkeypatch=monkeypatch)
+        import io
+        from starlette.datastructures import UploadFile as SUF
+        up = SUF(filename="done.jpg", file=io.BytesIO(_jpeg_bytes()))
+        r = run(ops.upload_task_photo(t["id"], photo=up, x_ops_reader="清潔組 A"))
+        assert r["ok"] and r["photo"]["url"].startswith(f"/api/ops/tasks/{t['id']}/photos/")
+        assert (tmp_path / "photos" / str(t["id"]) / r["photo"]["filename"]).exists()
+        d = ops.get_task(t["id"])
+        assert len(d["photos"]) == 1 and d["task"]["events"][-1]["event"] == "photo"
+        resp = ops.get_task_photo(t["id"], r["photo"]["filename"])
+        assert resp.media_type == "image/jpeg"
+        with pytest.raises(HTTPException):
+            ops.get_task_photo(t["id"], "../../etc/passwd")
+
+    def test_非影像400_找不到任務404(self, srv, ops, monkeypatch, tmp_path):
+        monkeypatch.setattr(ops, "PHOTO_ROOT", tmp_path / "photos")
+        t = make_task(srv, monkeypatch=monkeypatch)
+        import io
+        from starlette.datastructures import UploadFile as SUF
+        with pytest.raises(HTTPException) as ei:
+            run(ops.upload_task_photo(t["id"], photo=SUF(filename="x.txt", file=io.BytesIO(b"not an image"))))
+        assert ei.value.status_code == 400
+        with pytest.raises(HTTPException) as ei:
+            run(ops.upload_task_photo(999, photo=SUF(filename="x.jpg", file=io.BytesIO(_jpeg_bytes()))))
+        assert ei.value.status_code == 404
+
+    def test_我的任務_指派給我與未指派(self, srv, ops, monkeypatch):
+        monkeypatch.setattr(srv, "_case_snapshot", lambda cid: snap_pair())
+        a = make_task(srv, "RCR-7661-左後")
+        b = make_task(srv, "RCG2235-右前")
+        c = make_task(srv, "RCW-8382-左前")
+        srv.patch_task(b["id"], srv.TaskUpdate(assignee="維修組 A"))
+        srv.patch_task(c["id"], srv.TaskUpdate(assignee="維修組 B"))
+        r = ops.my_tasks(x_ops_reader="維修組 A")
+        ids = [t["id"] for t in r["tasks"]]
+        assert b["id"] in ids and a["id"] in ids and c["id"] not in ids
+        assert r["tasks"][0]["id"] == b["id"] and r["tasks"][0]["mine"] is True
+        srv.patch_task(b["id"], srv.TaskUpdate(status="in_progress"))
+        srv.patch_task(b["id"], srv.TaskUpdate(status="completed"))
+        assert b["id"] not in [t["id"] for t in ops.my_tasks(x_ops_reader="維修組 A")["tasks"]]
+
+    def test_方言層_sqlite不改寫(self, ops, monkeypatch):
+        monkeypatch.delenv("DATABASE_URL", raising=False)
+        assert ops.ops_db.sql("INSERT OR IGNORE INTO x VALUES (?)") == "INSERT OR IGNORE INTO x VALUES (?)"
+        monkeypatch.setenv("DATABASE_URL", "postgresql://u:p@h/db")
+        assert ops.ops_db.dialect() == "postgres"
+        assert ops.ops_db.sql("SELECT * FROM x WHERE a=?") == "SELECT * FROM x WHERE a=%s"

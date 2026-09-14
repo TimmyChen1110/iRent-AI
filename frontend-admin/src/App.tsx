@@ -8,6 +8,7 @@ import { People } from './pages/People'
 import { Settings } from './pages/Settings'
 import { Fleet } from './pages/Fleet'
 import { Insights } from './pages/Insights'
+import { Mobile } from './pages/Mobile'
 import { useEffect } from 'react'
 import { useToast } from './components/Toast'
 import { EVENT_TXT } from './lib/labels'
@@ -43,6 +44,7 @@ function Sidebar() {
       <div className="side-foot">
         {health?.demo_mode && <span>DEMO 模式（只影響排序與示範入口）</span>}
         <a href="/" target="_blank" rel="noreferrer">↗ 開啟車況監理台</a>
+        <NavLink to="/m">📱 站點人員手機版</NavLink>
       </div>
     </aside>
   )
@@ -83,6 +85,9 @@ function Topbar() {
 export default function App() {
   const location = useLocation()
   const bg = (location.state as { background?: Location } | null)?.background
+  if (location.pathname === '/m' || location.pathname.startsWith('/m/')) {
+    return <StoreProvider><ToastProvider><Mobile /></ToastProvider></StoreProvider>
+  }
   return (
     <StoreProvider>
       <ToastProvider>

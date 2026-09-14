@@ -46,7 +46,7 @@
 ├── docker-compose.yml           # backend + (PR#2) postgres
 ├── .env.example                 # GEMINI_API_KEY 等
 ├── frontend-user/               # 使用者前端（待開工，見 IDEAS 提案②車況收據）
-├── frontend-admin/              # 環節三 整備中心（React SPA，build 至 backend/app/static/ops → /ops）
+├── frontend-admin/              # 環節三 整備中心（React SPA；Docker 多階段自動 build，本機 npm run build → backend/app/static/ops → /ops，/ops/m 為站點手機版）
 ├── 環節一/二/三_*/              # 比賽文件（README / SETUP / 隊友須知 / 簡報）
 └── iRent - 運用 AI 打造 iRent 智能車況管家…/   # 共用原始資料集
     ├── 沒有進行索賠/            # 負樣本：30 台車 × 4 方位借/還配對（240 張）

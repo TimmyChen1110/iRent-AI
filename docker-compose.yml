@@ -7,7 +7,9 @@
 
 services:
   backend:
-    build: ./backend
+    build:
+      context: .                    # 根目錄：Dockerfile 第一階段要讀 frontend-admin/
+      dockerfile: backend/Dockerfile
     ports:
       - "8000:8000"
     env_file:
@@ -18,7 +20,7 @@ services:
     volumes:
       - backend_data:/data          # uploads / scratch / shadow_signals_live / decisions.sqlite3
       - "./iRent - 運用 AI 打造 iRent 智能車況管家：優化租還車體驗與營運效率:/dataset:ro"
-      # 開發時想改 code 即時生效可解除下一行（prod 不要）：
+      # 開發時想改 code 即時生效可解除下一行（prod 不要；前端改動仍需 npm run build）：
       # - ./backend:/app
     restart: unless-stopped
     # 紅線：背景判讀是行內 thread + 全域鎖（Gemini 免費層 RPM 8）。

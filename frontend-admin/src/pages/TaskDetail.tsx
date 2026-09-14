@@ -149,6 +149,17 @@ export function TaskDetail({ mode }: { mode: 'sheet' | 'page' }) {
             onSent={r => { setD({ ...d, task: r.task, notification_log: r.notification_log }); refresh() }} />
         </div>
 
+        {/* 完工照（站點手機版上傳） */}
+        {d.photos.length > 0 && (
+          <div className="section">
+            <h3>完工照 · {d.photos.length} 張</h3>
+            <div className="photos">
+              {d.photos.map(p => <div key={p.id} className="photo"><img src={p.url} alt={p.filename} loading="lazy" /><span className="lbl">{p.by || '—'} · {fmt(p.at)}</span></div>)}
+            </div>
+            <div className="small faint" style={{ marginTop: 6 }}>完工照可作為下一次借車的基準照（環節二比對用）。</div>
+          </div>
+        )}
+
         {/* 歷程 */}
         <div className="section">
           <h3>處理歷程</h3>

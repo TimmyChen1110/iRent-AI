@@ -18,12 +18,17 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from urllib.parse import quote, unquote
 
-from fastapi import APIRouter, Header, HTTPException
+import re
+import uuid
+
+from fastapi import APIRouter, File, Header, HTTPException, UploadFile
+from fastapi.responses import FileResponse
 from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 import ops_db
+import paths
 
 router = APIRouter(prefix="/api/ops", tags=["ops"])
 _srv = None   # server 模組（bind() 注入，避免循環 import）
@@ -225,9 +230,11 @@ def get_task(task_id: int):
         t = _with_sla(t, ops_db.sla_minutes(conn), now)
         drafts = ops_db.get_drafts(conn, t["case_id"])
         log = ops_db.list_notification_log(conn, task_id)
+        photos = ops_db.list_task_photos(conn, task_id)
     t["is_demo"] = _srv._demo_mode() and t["case_id"] in _srv.DEMO_CASE_IDS
     return {"task": t, "case": _case_view(t["case_id"]), "drafts": drafts,
-            "notification_log": log, "server_time": _iso(now)}
+            "notification_log": log, "photos": [_photo_row(p) for p in photos],
+            "server_time": _iso(now)}
 
 
 class OpsTaskUpdate(BaseModel):
@@ -707,3 +714,84 @@ def insights():
         "car_ranking": ranking,
         "interior": interior,
     }
+
+
+# ---------- 完工照（站點手機版）：存 paths.UPLOAD_DIR/ops_task_photos/<task_id>/ ----------
+
+PHOTO_ROOT = paths.UPLOAD_DIR / "ops_task_photos"
+MAX_PHOTO_BYTES = 12 * 1024 * 1024
+_SAFE_NAME = re.compile(r"^[A-Za-z0-9_.-]+$")
+
+
+def _photo_row(p: dict) -> dict:
+    return {**p, "url": f"/api/ops/tasks/{p['task_id']}/photos/{p['filename']}"}
+
+
+@router.post("/tasks/{task_id}/photos")
+async def upload_task_photo(task_id: int, photo: UploadFile = File(...),
+                            x_ops_reader: str | None = Header(default=None)):
+    """上傳一張完工照。轉正 EXIF、縮到長邊 1600、存 JPEG；寫 task_photos 與歷程。"""
+    who = _reader(x_ops_reader)
+    with _srv.db() as conn:
+        t = _srv._task_row(conn, task_id)
+    if not t:
+        raise HTTPException(404, f"找不到任務 #{task_id}")
+    raw = await photo.read()
+    if not raw:
+        raise HTTPException(400, "空檔案")
+    if len(raw) > MAX_PHOTO_BYTES:
+        raise HTTPException(413, "照片超過 12 MB")
+    try:
+        from PIL import Image, ImageOps  # noqa: PLC0415
+        import io  # noqa: PLC0415
+        im = ImageOps.exif_transpose(Image.open(io.BytesIO(raw))).convert("RGB")
+        im.thumbnail((1600, 1600))
+        buf = io.BytesIO()
+        im.save(buf, "JPEG", quality=85)
+        data = buf.getvalue()
+    except Exception:
+        raise HTTPException(400, "無法讀取影像（支援 JPEG / PNG / HEIC）")
+    name = f"{datetime.now().strftime('%Y%m%d-%H%M%S')}-{uuid.uuid4().hex[:8]}.jpg"
+    d = PHOTO_ROOT / str(task_id)
+    d.mkdir(parents=True, exist_ok=True)
+    (d / name).write_bytes(data)
+    with ops_db.db() as conn:
+        row = ops_db.add_task_photo(conn, t, name, who)
+        conn.execute("INSERT INTO task_events(task_id, at, event, detail) VALUES (?,?,?,?)",
+                     (task_id, row["at"], "photo", f"{who}：上傳完工照 {name}"))
+        photos = ops_db.list_task_photos(conn, task_id)
+    return {"ok": True, "photo": _photo_row(row), "photos": [_photo_row(p) for p in photos]}
+
+
+@router.get("/tasks/{task_id}/photos/{name}")
+def get_task_photo(task_id: int, name: str):
+    if not _SAFE_NAME.match(name):
+        raise HTTPException(404)
+    f = PHOTO_ROOT / str(task_id) / name
+    if not f.is_file():
+        raise HTTPException(404)
+    return FileResponse(f, media_type="image/jpeg")
+
+
+# ---------- 站點手機版：我的任務（指派給我 + 未指派的待處理） ----------
+
+@router.get("/my-tasks")
+def my_tasks(x_ops_reader: str | None = Header(default=None)):
+    who = _reader(x_ops_reader)
+    now = _now()
+    with ops_db.db() as conn:
+        _refresh_events(conn)
+        sla = ops_db.sla_minutes(conn)
+        ids = [r[0] for r in conn.execute(
+            "SELECT id FROM tasks WHERE status IN ('pending','in_progress')"
+            "   AND (assignee=? OR assignee IS NULL OR assignee='') ORDER BY created_at", (who,))]
+        out = []
+        for i in ids:
+            t = _with_sla(_srv._task_row(conn, i), sla, now)
+            t["photos"] = [_photo_row(p) for p in ops_db.list_task_photos(conn, i)]
+            t["mine"] = t.get("assignee") == who
+            out.append(t)
+    rank = {"P1": 0, "P2": 1, "P3": 2}
+    out.sort(key=lambda t: (0 if t["mine"] else 1, 0 if t["status"] == "in_progress" else 1,
+                            rank.get(t.get("priority") or "P2", 1), t["created_at"]))
+    return {"tasks": out, "reader": who, "server_time": _iso(now)}

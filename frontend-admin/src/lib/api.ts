@@ -1,4 +1,4 @@
-import type { Audience, Drafts, FleetResp, Health, Insights, NotificationLogEntry, OpsEvent, Person, Summary, Task, TaskDetail } from './types'
+import type { Audience, Drafts, FleetResp, Health, Insights, MyTask, TaskPhoto, NotificationLogEntry, OpsEvent, Person, Summary, Task, TaskDetail } from './types'
 import { getReader } from './reader'
 
 export class ApiError extends Error { status: number; constructor(s: number, m: string) { super(m); this.status = s } }
@@ -56,6 +56,14 @@ export const api = {
   lockCar: (car: string, locked: boolean, reason?: string) =>
     call<FleetResp & { lock: unknown }>(`/api/ops/fleet/${encodeURIComponent(car)}`, { method: 'PATCH', body: JSON.stringify({ locked, reason }) }),
   insights: () => call<Insights>('/api/ops/insights'),
+  myTasks: () => call<{ tasks: MyTask[]; reader: string; server_time: string }>('/api/ops/my-tasks'),
+  uploadPhoto: async (taskId: number, file: File) => {
+    const fd = new FormData(); fd.append('photo', file)
+    const r = await fetch(`/api/ops/tasks/${taskId}/photos`, { method: 'POST', body: fd, headers: { 'X-Ops-Reader': encodeURIComponent(getReader() || 'anonymous') } })
+    const j = await r.json().catch(() => null)
+    if (!r.ok) throw new ApiError(r.status, (j as { detail?: string } | null)?.detail || `HTTP ${r.status}`)
+    return j as { ok: boolean; photo: TaskPhoto; photos: TaskPhoto[] }
+  },
   demoHealth: () => call<Record<string, unknown>>('/api/demo/health'),
   demoReset: () => call<Record<string, unknown>>('/api/demo/reset', { method: 'POST' }),
 }

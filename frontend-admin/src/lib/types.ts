@@ -55,13 +55,16 @@ export interface Draft {
 export type Drafts = Partial<Record<Audience, Draft>>
 export interface NotificationLogEntry { id: number; audience: string | null; channel: string; status: string; detail: string | null; at: string }
 
+export interface TaskPhoto { id: number; task_id: number; case_id: string | null; car: string | null; filename: string; by: string | null; at: string; url: string }
 export interface TaskDetail {
   task: Task
   case: CaseView
   drafts: Drafts
   notification_log: NotificationLogEntry[]
+  photos: TaskPhoto[]
   server_time: string
 }
+export type MyTask = Task & { photos: TaskPhoto[]; mine: boolean }
 
 export type EventType = 'task_created' | 'task_status' | 'task_assigned' | 'notify_sent' | 'notify_failed' | 'notify_skipped' | 'sla_overdue' | 'note' | 'fleet_lock' | 'fleet_unlock'
 export interface OpsEvent {
