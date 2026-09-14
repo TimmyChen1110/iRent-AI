@@ -8,7 +8,8 @@
 | 辨識引擎 | Gemini 3.7 Flash（快篩，實測引擎）＋ Pro 級模型（複核，規劃中）；Structured Output 強制 JSON Schema |
 | 前處理 | Python + Pillow/OpenCV（EXIF 方向轉正、模糊/曝光檢核） |
 | 評測 Pipeline | Python（ThreadPool 併發、RPM 節流、斷點續跑 JSONL） |
-| 複核後台 | 單頁 HTML Dashboard（32 個真實案例內嵌、localStorage 複核狀態） |
+| 複核後台 | 監理台（FastAPI server 版：SQLite 全隊共享；另有單檔 HTML 版） |
+| 整備中心（環節三） | React + Vite + motion SPA（`frontend-admin/` → `/ops`）；`/api/ops` FastAPI router；SSE 即時、SQLite（Postgres 方言層預留） |
 | 資料來源 | 既有營運鏈路：iRent App → Azure Blob (carpic/) |
 
 ## 專案結構
@@ -19,6 +20,8 @@ iRent/
 │   ├── 進行索賠資料/        # 正樣本：28 台車爭議方位配對（53 張，含 8 張車況回報特寫）
 │   ├── 車外車內照片上傳清單.xlsx   # 真實上傳 log：27,367 筆 / 4,820 單 / 3,121 車
 │   └── 取車/還車流程圖.png
+├── backend/                 # FastAPI：監理台 + /api/ops 整備中心 API（ops_api.py / ops_db.py）
+├── frontend-admin/          # 環節三 整備中心（含 /ops/m 站點手機版）
 └── pipeline/
     ├── build_pairs.py       # 檔名解析 → 借/還配對（120 負 + 21 正）
     ├── cv_prefilter.py      # 傳統 CV 差異偵測（實測後推翻，保留為證據）
@@ -35,3 +38,4 @@ iRent/
 ## 線上產出
 - 架構設計文件（v1.1 實測版）：https://claude.ai/code/artifact/ab616929-dda5-47a6-9324-8cb6d022c6d2
 - 複核後台 Demo：https://claude.ai/code/artifact/ea7e3f69-18d6-4e5d-bbc2-2d6dd4025058
+- 整備中心（需本機 server）：http://localhost:8000/ops ；站點手機版 http://localhost:8000/ops/m ；上台步驟見 repo 根 DEMO.md
