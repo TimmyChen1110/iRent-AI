@@ -13,7 +13,7 @@ type Filter = 'all' | 'P1' | 'P2' | 'P3' | 'unread' | 'failed' | 'overdue'
 
 const ICO: Record<string, string> = {
   task_created: '🆕', task_status: '↦', task_assigned: '👤', notify_sent: '🔔', notify_failed: '⚠',
-  notify_skipped: '·', sla_overdue: '⏰', note: '✎',
+  notify_skipped: '·', sla_overdue: '⏰', note: '✎', fleet_lock: '🔒', fleet_unlock: '🔓',
 }
 
 export function Inbox() {

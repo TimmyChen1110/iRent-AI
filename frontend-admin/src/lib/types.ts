@@ -63,7 +63,7 @@ export interface TaskDetail {
   server_time: string
 }
 
-export type EventType = 'task_created' | 'task_status' | 'task_assigned' | 'notify_sent' | 'notify_failed' | 'notify_skipped' | 'sla_overdue' | 'note'
+export type EventType = 'task_created' | 'task_status' | 'task_assigned' | 'notify_sent' | 'notify_failed' | 'notify_skipped' | 'sla_overdue' | 'note' | 'fleet_lock' | 'fleet_unlock'
 export interface OpsEvent {
   id: number; at: string; type: EventType; task_id: number | null; case_id: string | null
   priority: Priority | null; car: string | null; title: string | null; detail: string | null; is_read: 0 | 1
@@ -76,3 +76,19 @@ export interface Summary {
 export interface Person { id: number; group_name: string; name: string; active: 0 | 1; created_at: string }
 export interface Channel { id: string; label: string; configured: boolean; available: boolean; note: string }
 export interface Health { server_time: string; demo_mode: boolean; demo_cases: { damage: string; cleaning: string }; channels: Channel[] }
+
+export interface FleetRow {
+  car: string; status: 'locked' | 'review' | 'available'; manual_lock: boolean
+  lock_reason: string | null; lock_by: string | null; lock_at: string | null
+  open_tasks: Array<{ id: number; task_type: TaskType; status: TaskStatus; priority: Priority | null; title: string; overdue: boolean }>
+  completed_tasks: number; last_completed_at: string | null
+  dataset_cases: number; claims: number; unreviewed_flags: number
+}
+export interface FleetResp { fleet: FleetRow[]; server_time: string; counts: Record<'locked' | 'review' | 'available', number>; note: string }
+export interface Insights {
+  server_time: string
+  uploads: { source: string; photos: number; orders: number; vehicles: number; dates: Record<string, number>; by_hour: number[]; interior_uploaded_orders: number; note: string } | null
+  tasks: { total: number; by_type: Record<string, Record<string, number>>; median_minutes_to_start: number | null; median_minutes_to_complete: number | null; n_started: number; n_completed: number }
+  car_ranking: Array<{ car: string; repair: number; cleaning: number; claims: number }>
+  interior: { 乾淨: number; 普通: number; 髒汙: number; n: number; excluded_unreadable: number }
+}

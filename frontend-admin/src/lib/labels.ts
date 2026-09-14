@@ -5,6 +5,6 @@ export const TYPE_TXT: Record<TaskType, string> = { repair: '維修', cleaning: 
 export const NOTIFY_TXT: Record<NotifyStatus, string> = { not_sent: '通知未發送', sent: '通知已送出', failed: '通知失敗', skipped: '通知管道未設定' }
 export const EVENT_TXT: Record<EventType, string> = {
   task_created: '新任務', task_status: '狀態變更', task_assigned: '指派', notify_sent: '通知已送出',
-  notify_failed: '通知失敗', notify_skipped: '通知未設定', sla_overdue: 'SLA 逾時', note: '備註',
+  notify_failed: '通知失敗', notify_skipped: '通知未設定', sla_overdue: 'SLA 逾時', note: '備註', fleet_lock: '鎖定派單', fleet_unlock: '解除鎖定',
 }
 export const zhStatus = (s: string) => s.replace(/pending/g, '待處理').replace(/in_progress/g, '處理中').replace(/completed/g, '已完成').replace(/cancelled/g, '已取消')

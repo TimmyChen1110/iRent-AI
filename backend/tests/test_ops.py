@@ -282,3 +282,44 @@ class TestSSE:
         srv.patch_task(t["id"], srv.TaskUpdate(status="in_progress"))
         evs = ops._events_after(last, "A")
         assert len(evs) == 1 and evs[0]["type"] == "task_status" and evs[0]["id"] > last
+
+
+# ---------- 車輛派單狀態（模擬）與營運洞察 ----------
+
+class TestFleet:
+    def test_未完成任務即鎖定_完成後可派(self, srv, ops, monkeypatch):
+        t = make_task(srv, monkeypatch=monkeypatch)
+        row = next(r for r in ops.fleet()["fleet"] if r["car"] == "RCR-7661")
+        assert row["status"] == "locked" and row["open_tasks"][0]["id"] == t["id"] and row["manual_lock"] is False
+        srv.patch_task(t["id"], srv.TaskUpdate(status="in_progress"))
+        srv.patch_task(t["id"], srv.TaskUpdate(status="completed"))
+        row = next(r for r in ops.fleet()["fleet"] if r["car"] == "RCR-7661")
+        assert row["status"] in ("available", "review") and row["completed_tasks"] == 1 and row["last_completed_at"]
+
+    def test_手動鎖定與解除寫事件(self, srv, ops):
+        r = ops.patch_fleet("abc-123", ops.LockIn(locked=True, reason="輪胎待換"), x_ops_reader="ops")
+        assert r["lock"]["car"] == "ABC-123" and r["fleet"][0]["status"] == "locked"
+        assert r["fleet"][0]["lock_reason"] == "輪胎待換" and r["fleet"][0]["lock_by"] == "ops"
+        types = [e["type"] for e in ops.list_events()["events"]]
+        assert "fleet_lock" in types
+        r = ops.patch_fleet("ABC-123", ops.LockIn(locked=False))
+        assert r["fleet"][0]["status"] == "available"
+        assert ops.fleet(status="locked")["counts"]["locked"] == 0
+
+    def test_篩選與備註說明(self, srv, ops):
+        f = ops.fleet(q="zzz-none")
+        assert f["fleet"] == [] and "模擬" in f["note"]
+
+
+class TestInsights:
+    def test_結構與即時中位數(self, srv, ops, monkeypatch):
+        t = make_task(srv, monkeypatch=monkeypatch)
+        srv.patch_task(t["id"], srv.TaskUpdate(status="in_progress"))
+        srv.patch_task(t["id"], srv.TaskUpdate(status="completed"))
+        r = ops.insights()
+        assert r["tasks"]["total"] == 1 and r["tasks"]["by_type"]["repair"]["completed"] == 1
+        assert r["tasks"]["n_started"] == 1 and r["tasks"]["median_minutes_to_start"] is not None
+        assert r["car_ranking"][0]["car"] == "RCR-7661" and r["car_ranking"][0]["repair"] == 1
+        assert r["interior"]["n"] == sum(r["interior"][k] for k in ("乾淨", "普通", "髒汙"))
+        if r["uploads"]:
+            assert len(r["uploads"]["by_hour"]) == 24 and r["uploads"]["orders"] == sum(r["uploads"]["by_hour"])

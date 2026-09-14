@@ -12,6 +12,7 @@
   case_drafts       三對象通知文案快取（以 case_id 為鍵：內容取決於 AI 判定，不隨任務重建而失效）
   notification_log  發送紀錄（webhook 實發；line / sms 記為 unsupported）
   ops_people        整備人員／組別（取代前端寫死的 ASSIGNEES）
+  fleet_locks       車輛派單鎖定（手動鎖定／解除；模擬，未與派單系統串接）
   ops_settings      key/value 設定（SLA 門檻等）
 """
 import json
@@ -78,6 +79,12 @@ DDL = [
     """CREATE TABLE IF NOT EXISTS ops_settings(
          key   TEXT PRIMARY KEY,
          value TEXT)""",
+    """CREATE TABLE IF NOT EXISTS fleet_locks(
+         car     TEXT PRIMARY KEY,
+         locked  INTEGER NOT NULL DEFAULT 0,
+         reason  TEXT,
+         by      TEXT,
+         at      TEXT NOT NULL)""",
     "CREATE INDEX IF NOT EXISTS idx_ops_events_at ON ops_events(at)",
     "CREATE INDEX IF NOT EXISTS idx_ops_events_task ON ops_events(task_id)",
     "CREATE INDEX IF NOT EXISTS idx_nlog_task ON notification_log(task_id)",
@@ -338,3 +345,15 @@ def list_notification_log(conn, task_id: int) -> list[dict]:
 
 def max_event_id(conn) -> int:
     return conn.execute("SELECT COALESCE(MAX(id), 0) FROM ops_events").fetchone()[0]
+
+
+# ---------- fleet locks ----------
+
+def get_locks(conn) -> dict:
+    return {r["car"]: dict(r) for r in conn.execute("SELECT * FROM fleet_locks")}
+
+
+def set_lock(conn, car: str, locked: bool, reason: str | None, by: str) -> dict:
+    conn.execute("INSERT OR REPLACE INTO fleet_locks(car, locked, reason, by, at) VALUES (?,?,?,?,?)",
+                 (car, int(locked), reason, by, now_iso()))
+    return dict(conn.execute("SELECT * FROM fleet_locks WHERE car=?", (car,)).fetchone())

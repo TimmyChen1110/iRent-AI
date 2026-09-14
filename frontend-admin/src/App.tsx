@@ -6,6 +6,8 @@ import { Board } from './pages/Board'
 import { TaskDetail } from './pages/TaskDetail'
 import { People } from './pages/People'
 import { Settings } from './pages/Settings'
+import { Fleet } from './pages/Fleet'
+import { Insights } from './pages/Insights'
 import { useEffect } from 'react'
 import { useToast } from './components/Toast'
 import { EVENT_TXT } from './lib/labels'
@@ -25,6 +27,12 @@ function Sidebar() {
       </NavLink>
       <NavLink to="/board" className={({ isActive }) => `nav ${isActive ? 'active' : ''}`}>
         <span className="ico">▦</span>整備看板{open > 0 && <span className="cnt">{open}</span>}
+      </NavLink>
+      <NavLink to="/fleet" className={({ isActive }) => `nav ${isActive ? 'active' : ''}`}>
+        <span className="ico">🚗</span>車輛派單狀態
+      </NavLink>
+      <NavLink to="/insights" className={({ isActive }) => `nav ${isActive ? 'active' : ''}`}>
+        <span className="ico">📈</span>營運洞察
       </NavLink>
       <NavLink to="/people" className={({ isActive }) => `nav ${isActive ? 'active' : ''}`}>
         <span className="ico">👥</span>人員與組別
@@ -88,6 +96,8 @@ export default function App() {
               <Route path="/inbox" element={<Inbox />} />
               <Route path="/board" element={<Board />} />
               <Route path="/tasks/:id" element={<TaskDetail mode="page" />} />
+              <Route path="/fleet" element={<Fleet />} />
+              <Route path="/insights" element={<Insights />} />
               <Route path="/people" element={<People />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="*" element={<Navigate to="/inbox" replace />} />

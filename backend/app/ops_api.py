@@ -540,3 +540,170 @@ async def events_stream(since: int = 0, reader: str | None = None,
 
     return StreamingResponse(gen(), media_type="text/event-stream",
                              headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
+
+# ---------- 車輛派單狀態（模擬：未與派單系統串接） ----------
+# 規則：有未完成任務（pending / in_progress）或手動鎖定 → 整備中，不可派；否則可派。
+# 「待確認」= AI 判定 P1/P2 但尚無人工裁決的資料集案件，僅提示，不鎖車。
+
+def _dataset_cars() -> dict[str, dict]:
+    """資料集內車輛：借還配對 + 車內照。回 {car: {"cases": n, "ai_flagged": n, "unreviewed": n}}。"""
+    cars: dict[str, dict] = {}
+    try:
+        with _srv.db() as conn:
+            decided = {r[0] for r in conn.execute("SELECT case_id FROM decisions")}
+        for p in _srv._pairs:
+            car = p["car"]
+            cid = f'{car}-{p["angle"]}'
+            a = _srv._final_assessments().get(cid)
+            lvl = _srv._triage_level(a) if a else None
+            c = cars.setdefault(car, {"cases": 0, "ai_flagged": 0, "unreviewed": 0, "claims": 0})
+            c["cases"] += 1
+            c["claims"] += int(p.get("label") == "positive")
+            if lvl in ("P1", "P2"):
+                c["ai_flagged"] += 1
+                c["unreviewed"] += int(cid not in decided)
+    except Exception:
+        pass
+    return cars
+
+
+@router.get("/fleet")
+def fleet(q: str | None = None, status: str | None = None):
+    now = _now()
+    with ops_db.db() as conn:
+        sla = ops_db.sla_minutes(conn)
+        tasks = [_with_sla(dict(r), sla, now) for r in conn.execute("SELECT * FROM tasks ORDER BY created_at DESC")]
+        locks = ops_db.get_locks(conn)
+    ds = _dataset_cars()
+    cars = set(ds) | {t["car"] for t in tasks if t.get("car")} | set(locks)
+    rows = []
+    for car in cars:
+        mine = [t for t in tasks if t.get("car") == car]
+        open_tasks = [t for t in mine if t["status"] in ("pending", "in_progress")]
+        lock = locks.get(car)
+        manual = bool(lock and lock["locked"])
+        info = ds.get(car, {})
+        if open_tasks or manual:
+            st = "locked"
+        elif info.get("unreviewed"):
+            st = "review"
+        else:
+            st = "available"
+        done = [t for t in mine if t["status"] == "completed" and t.get("resolved_at")]
+        rows.append({
+            "car": car, "status": st, "manual_lock": manual,
+            "lock_reason": (lock or {}).get("reason") if manual else None,
+            "lock_by": (lock or {}).get("by") if manual else None,
+            "lock_at": (lock or {}).get("at") if manual else None,
+            "open_tasks": [{"id": t["id"], "task_type": t["task_type"], "status": t["status"],
+                            "priority": t["priority"], "title": t["title"], "overdue": t["overdue"]}
+                           for t in open_tasks],
+            "completed_tasks": len(done),
+            "last_completed_at": max((t["resolved_at"] for t in done), default=None),
+            "dataset_cases": info.get("cases", 0), "claims": info.get("claims", 0),
+            "unreviewed_flags": info.get("unreviewed", 0),
+        })
+    if q:
+        rows = [r for r in rows if q.upper() in r["car"].upper()]
+    if status:
+        rows = [r for r in rows if r["status"] == status]
+    order = {"locked": 0, "review": 1, "available": 2}
+    rows.sort(key=lambda r: (order[r["status"]], -len(r["open_tasks"]), r["car"]))
+    return {"fleet": rows, "server_time": _iso(now),
+            "counts": {k: sum(r["status"] == k for r in rows) for k in order},
+            "note": "派單鎖定為模擬狀態：未與派單系統串接，僅反映整備任務與手動鎖定。"}
+
+
+class LockIn(BaseModel):
+    locked: bool
+    reason: str | None = None
+
+
+@router.patch("/fleet/{car}")
+def patch_fleet(car: str, body: LockIn, x_ops_reader: str | None = Header(default=None)):
+    who = _reader(x_ops_reader)
+    car = car.strip().upper()
+    if not car:
+        raise HTTPException(400, "car 不可為空")
+    with ops_db.db() as conn:
+        lock = ops_db.set_lock(conn, car, body.locked, (body.reason or "").strip()[:200] or None, who)
+        ops_db.add_event(conn, "fleet_lock" if body.locked else "fleet_unlock",
+                         {"car": car, "title": "手動鎖定派單" if body.locked else "解除派單鎖定", "priority": "P3"},
+                         f"{who}：{'鎖定' if body.locked else '解除鎖定'} {car}" + (f"（{lock['reason']}）" if lock.get("reason") else ""))
+    return {"lock": lock, **fleet(q=car)}
+
+
+# ---------- 營運洞察：離線 log 彙整（ops_insights.json）+ 即時整備數據 ----------
+
+INSIGHTS_PATH = Path(__file__).resolve().parent / "ops_insights.json"
+
+
+def _minutes(a: str | None, b: str | None) -> float | None:
+    try:
+        return (datetime.fromisoformat(b) - datetime.fromisoformat(a)).total_seconds() / 60
+    except Exception:
+        return None
+
+
+def _median(xs: list[float]) -> float | None:
+    xs = sorted(x for x in xs if x is not None)
+    if not xs:
+        return None
+    m = len(xs) // 2
+    return round(xs[m] if len(xs) % 2 else (xs[m - 1] + xs[m]) / 2, 1)
+
+
+@router.get("/insights")
+def insights():
+    now = _now()
+    static = json.loads(INSIGHTS_PATH.read_text()) if INSIGHTS_PATH.exists() else None
+    with ops_db.db() as conn:
+        tasks = [_srv._task_row(conn, r[0]) for r in conn.execute("SELECT id FROM tasks")]
+    # 即時整備數據
+    to_start, to_done = [], []
+    by_type = {"repair": {"pending": 0, "in_progress": 0, "completed": 0, "cancelled": 0},
+               "cleaning": {"pending": 0, "in_progress": 0, "completed": 0, "cancelled": 0}}
+    for t in tasks:
+        by_type.setdefault(t["task_type"], {"pending": 0, "in_progress": 0, "completed": 0, "cancelled": 0})[t["status"]] += 1
+        started = next((e["at"] for e in t["events"] if e["event"] == "status" and "in_progress" in (e["detail"] or "")), None)
+        if started:
+            to_start.append(_minutes(t["created_at"], started))
+        if t.get("resolved_at"):
+            to_done.append(_minutes(t["created_at"], t["resolved_at"]))
+    # 車輛事件排行：人工確認任務（即時）＋ 資料集索賠正樣本
+    ds = _dataset_cars()
+    per_car: dict[str, dict] = {}
+    for t in tasks:
+        if t["status"] == "cancelled" or not t.get("car"):
+            continue
+        c = per_car.setdefault(t["car"], {"car": t["car"], "repair": 0, "cleaning": 0, "claims": 0})
+        c[t["task_type"]] = c.get(t["task_type"], 0) + 1
+    for car, info in ds.items():
+        if info.get("claims"):
+            per_car.setdefault(car, {"car": car, "repair": 0, "cleaning": 0, "claims": 0})["claims"] = info["claims"]
+    ranking = sorted(per_car.values(), key=lambda c: -(c["repair"] + c["cleaning"] + c["claims"]))[:10]
+    # 車內整潔分布（資料集離線分類）。結果檔無 photo_ok 欄位；模型在 reasoning 註明「無法」
+    # 判讀者（多為車外照誤傳）排除，避免把不可判讀照片算成「普通」。
+    interior = {"乾淨": 0, "普通": 0, "髒汙": 0, "n": 0, "excluded_unreadable": 0}
+    try:
+        for r in json.loads(_srv.INTERIOR_RESULTS.read_text())["results"]:
+            a = r.get("assessment") or {}
+            lvl = a.get("level")
+            if "無法" in (a.get("reasoning") or ""):
+                interior["excluded_unreadable"] += 1
+                continue
+            if lvl in interior:
+                interior[lvl] += 1
+                interior["n"] += 1
+    except Exception:
+        pass
+    return {
+        "server_time": _iso(now),
+        "uploads": static,
+        "tasks": {"total": len(tasks), "by_type": by_type,
+                  "median_minutes_to_start": _median(to_start), "median_minutes_to_complete": _median(to_done),
+                  "n_started": len(to_start), "n_completed": len(to_done)},
+        "car_ranking": ranking,
+        "interior": interior,
+    }

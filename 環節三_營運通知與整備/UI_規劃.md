@@ -174,4 +174,7 @@ ops_settings(key TEXT PK, value TEXT)
   - 與規劃差異：`/tasks/{id}/drafts`、`/send` 與 SSE 未做（Phase 2）；任務詳情「通知」區先顯示 Phase 2 說明與既有 webhook 狀態。
 - **Phase 2 完成（2026-09-14）**：SSE `GET /api/ops/events/stream`（斷線退回輪詢、10 秒重連、新事件底部提示）；三對象文案 `GET/POST /api/ops/cases/{case_id}/drafts`（呼叫 `notify.py`，**以 case_id 快取**，重置 Demo 不清）、`PUT .../drafts/{audience}` 人工編輯；`POST /api/ops/tasks/{id}/send`（webhook 實發、line/sms 記 unsupported、寫 `notification_log` 與歷程）；`POST /api/ops/settings/test` 測試通知；通知設定頁 Demo 模式「預生成文案」。`tests/test_ops.py` 24 項。
   - 與規劃差異：文案改以案件為鍵（原規劃 `task_drafts` 以任務為鍵），因內容取決於 AI 判定且要在 confirm 前預生成。
-- **Phase 3 待做**：Postgres 切換配合、站點手機版、派單鎖定、Dockerfile 多階段 build（由本環節維護）。
+- **Phase 3 部分完成（2026-09-14）**：
+  - 車輛派單狀態頁 `/fleet` + `GET/PATCH /api/ops/fleet`：有未完成任務或手動鎖定 → 整備中不可派，完成自動解除；AI 標記未複核者標「待確認」。**模擬狀態，未與派單系統串接**，頁面上明示。
+  - 營運洞察頁 `/insights` + `GET /api/ops/insights`：還車時段分布（`pipeline/build_ops_insights.py` 離線彙整真實上傳 log 4,820 單，單日）、整備中位開工／完工時間（即時）、車輛事件排行（任務＋索賠）、車內整潔分布（離線，n=24）。每張圖標口徑與 n，附數值表。
+  - 待做：Postgres 切換配合、站點手機版（完工照回寫基準照）、Dockerfile 多階段 build。

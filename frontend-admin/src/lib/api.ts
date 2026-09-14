@@ -1,4 +1,4 @@
-import type { Audience, Drafts, Health, NotificationLogEntry, OpsEvent, Person, Summary, Task, TaskDetail } from './types'
+import type { Audience, Drafts, FleetResp, Health, Insights, NotificationLogEntry, OpsEvent, Person, Summary, Task, TaskDetail } from './types'
 import { getReader } from './reader'
 
 export class ApiError extends Error { status: number; constructor(s: number, m: string) { super(m); this.status = s } }
@@ -52,6 +52,10 @@ export const api = {
   sendDraft: (taskId: number, audience: Audience, channel: string) =>
     call<TaskDetail & { ok: boolean; entry: NotificationLogEntry }>(`/api/ops/tasks/${taskId}/send`, { method: 'POST', body: JSON.stringify({ audience, channel }) }),
   testWebhook: () => call<{ ok: boolean; status: string; detail: string }>('/api/ops/settings/test', { method: 'POST' }),
+  fleet: (f: { q?: string; status?: string } = {}) => call<FleetResp>('/api/ops/fleet' + q(f)),
+  lockCar: (car: string, locked: boolean, reason?: string) =>
+    call<FleetResp & { lock: unknown }>(`/api/ops/fleet/${encodeURIComponent(car)}`, { method: 'PATCH', body: JSON.stringify({ locked, reason }) }),
+  insights: () => call<Insights>('/api/ops/insights'),
   demoHealth: () => call<Record<string, unknown>>('/api/demo/health'),
   demoReset: () => call<Record<string, unknown>>('/api/demo/reset', { method: 'POST' }),
 }
