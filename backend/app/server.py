@@ -65,6 +65,11 @@ from review_api import router as review_router  # noqa: E402
 app.include_router(review_router)
 app.include_router(inspections_router)
 
+# 環節三 整備中心 API（/api/ops）與前端（/ops）；規則不重寫，router 內回呼本模組函式
+import ops_api  # noqa: E402
+ops_api.bind(sys.modules[__name__])
+app.include_router(ops_api.router)
+
 
 # ---------- 決策 DB（全隊共享） ----------
 # decisions      : 複核狀態（後台 UI 用，一案一列，可覆蓋）
@@ -703,10 +708,26 @@ OPS_STATIC = HERE / "static" / "ops"
 
 @app.get("/ops")
 @app.get("/ops/{path:path}")
-def ops_
+def ops_frontend(path: str = ""):
+    """/ops/* 靜態檔；找不到就回 index.html 讓前端 router 接手。未 build 時回 404 說明。"""
+    index_file = OPS_STATIC / "index.html"
+    if not index_file.exists():
+        raise HTTPException(404, "整備中心前端尚未 build：cd frontend-admin && npm run build")
+    if path:
+        f = (OPS_STATIC / path).resolve()
+        if f.is_file() and str(f).startswith(str(OPS_STATIC.resolve())):
+            return FileResponse(f)
+    return FileResponse(index_file)
 
 
-INI_API_KEY，免費層約 10 秒） ----------
+@app.post("/api/reload")
+def reload_data():
+    """pipeline 資料更新後呼叫，重新組頁。"""
+    render_page(force=True)
+    return {"ok": True}
+
+
+# ---------- AI 現場重判（需 GEMINI_API_KEY，免費層約 10 秒） ----------
 # 判定標準不在此重寫：一律走 judge_photos.judge_pair()（Quality Gate → Flash 快篩
 # → 臨界升級 Pro 多數決 → box_2d 標註），與現場實測、離線評測完全同一套規則。
 
