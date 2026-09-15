@@ -1,40 +1,38 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
 import { AnimatePresence, motion } from 'motion/react'
 import { api } from '../lib/api'
-import type { MyTask, TaskStatus } from '../lib/types'
-import { useStore } from '../lib/store'
+import type { MyTask, TaskAction } from '../lib/types'
+import { useStore } from '../lib/store-context'
 import { rel, syncClock } from '../lib/time'
 import { PriorityBadge, SlaChip, TypeBadge } from '../components/Badges'
-import { useToast } from '../components/Toast'
+import { useToast } from '../components/toast-context'
+import { useAuth } from '../lib/auth'
 
-/** 站點整備人員手機版：選身分 → 我的任務 → 開工 → 拍完工照 → 完工。大按鈕、單欄、不依賴側欄。 */
+/** 站點整備人員手機版：登入身分 → 我的任務 → 開工 → 拍完工照 → 完工。 */
 export function Mobile() {
-  const { people, reader, setReader, conn, tick, refresh } = useStore()
+  const { conn, tick, refresh } = useStore()
+  const { user, logout } = useAuth()
   const [tasks, setTasks] = useState<MyTask[]>([])
   const [busy, setBusy] = useState<number | null>(null)
   const [open, setOpen] = useState<number | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
   const [uploadFor, setUploadFor] = useState<number | null>(null)
   const toast = useToast()
-  const [params] = useSearchParams()
-  // QR 連結可帶 ?as=清潔組%20A 直接預選身分（站點貼 QR 用）
-  useEffect(() => { const as = params.get('as'); if (as && !reader) setReader(as) }, [params, reader, setReader])
 
   const load = useCallback(async () => {
-    if (!reader) return
     try { const r = await api.myTasks(); syncClock(r.server_time); setTasks(r.tasks) } catch { /* offline */ }
-  }, [reader])
-  useEffect(() => { load() }, [load, tick])
+  }, [])
+  useEffect(() => { const id = setTimeout(load, 0); return () => clearTimeout(id) }, [load, tick])
 
-  const setStatus = async (t: MyTask, status: TaskStatus) => {
+  const runAction = async (t: MyTask, action: TaskAction) => {
     setBusy(t.id)
     const prev = tasks
-    setTasks(l => status === 'completed' ? l.filter(x => x.id !== t.id) : l.map(x => x.id === t.id ? { ...x, status } : x))
+    const target = t.action_targets[action]
+    if (!target) { toast(t.completion_requirements.message || '目前不能執行這個操作', 'warn'); setBusy(null); return }
+    setTasks(l => target === 'completed' ? l.filter(x => x.id !== t.id) : l.map(x => x.id === t.id ? { ...x, status: target } : x))
     try {
-      if (status === 'in_progress' && !t.assignee) await api.patchTask(t.id, { assignee: reader, expected_assignee: '' })   // 防搶單：只有仍未指派才接
-      await api.patchTask(t.id, { status }); refresh(); load()
-      toast(status === 'completed' ? `✓ ${t.car} 完工` : `▶ ${t.car} 開工`)
+      await api.patchTask(t.id, { action }); refresh(); load()
+      toast(action === 'claim' ? `✓ 已接下 ${t.car}` : action === 'complete' ? `✓ ${t.car} 完工` : `▶ ${t.car} 開工`)
     } catch (e) { setTasks(prev); toast((e as Error).message, 'warn') } finally { setBusy(null) }
   }
   const pickPhoto = (id: number) => { setUploadFor(id); fileRef.current?.click() }
@@ -42,7 +40,7 @@ export function Mobile() {
     const f = e.target.files?.[0]; e.target.value = ''
     if (!f || uploadFor == null) return
     setBusy(uploadFor)
-    try { const r = await api.uploadPhoto(uploadFor, f); setTasks(l => l.map(x => x.id === uploadFor ? { ...x, photos: r.photos } : x)); toast('完工照已上傳') }
+    try { const r = await api.uploadPhoto(uploadFor, f); setTasks(l => l.map(x => x.id === uploadFor ? { ...x, ...r.task, photos: r.photos } : x)); toast('完工照已上傳') }
     catch (err) { toast((err as Error).message, 'warn') } finally { setBusy(null) }
   }
 
@@ -54,22 +52,16 @@ export function Mobile() {
           <div><b style={{ fontSize: 16 }}>整備任務</b><small className="faint" style={{ display: 'block', fontSize: 11 }}>站點人員手機版</small></div></div>
         <span className="spacer" />
         <span className={`conn ${conn}`}><i />{conn === 'live' ? '即時' : conn === 'offline' ? '離線' : '同步'}</span>
+        <button className="btn xs" onClick={logout}>登出</button>
       </div>
 
-      <label className="card row" style={{ gap: 10 }}>
-        <span className="micro">我是</span>
-        <select className="select" style={{ flex: 1, minWidth: 0, width: '100%', fontSize: 16 }} value={reader} onChange={e => setReader(e.target.value)}>
-          <option value="">請選擇組別</option>
-          {people.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
-        </select>
-      </label>
+      <div className="card row" style={{ gap: 10 }}><span className="micro">登入身分</span><b>{user?.name}</b><span className="badge ok">Station Staff</span></div>
 
-      {!reader ? <div className="empty card"><b>先選擇你的組別</b>會列出指派給你與未指派的待處理任務</div> : (
-        <>
+      <>
           <div className="small muted">{tasks.filter(t => t.mine).length} 件指派給我 · {tasks.filter(t => !t.mine).length} 件未指派可接</div>
           <AnimatePresence initial={false}>
             {tasks.map(t => {
-              const canFinish = t.status === 'in_progress' && t.photos.length > 0
+              const canFinish = t.allowed_actions.includes('complete')
               const expanded = open === t.id
               return (
                 <motion.div key={t.id} layout initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: 60 }}
@@ -80,6 +72,7 @@ export function Mobile() {
                     <span className="plate" style={{ fontSize: 18 }}>{t.car}</span>
                     <TypeBadge t={t.task_type} /><PriorityBadge p={t.priority} />
                     {!t.mine && <span className="badge soft">未指派</span>}
+                    {t.mine && t.status === 'pending' && <span className="badge ok">已接單 · 待開工</span>}
                     <span className="spacer" /><SlaChip task={t} />
                   </div>
                   <div className="title" style={{ fontSize: 15 }}>{t.title}</div>
@@ -89,25 +82,27 @@ export function Mobile() {
                     <div className="row wrap" style={{ gap: 6 }}>{t.photos.map(p => <img key={p.id} src={p.url} alt="" style={{ width: 72, height: 54, objectFit: 'cover', borderRadius: 6 }} />)}</div>
                   )}
                   <div className="actions" style={{ marginTop: 6 }}>
-                    {t.status === 'pending' && (
-                      <button className="btn primary" style={{ flex: 1, padding: '12px 14px', fontSize: 16 }} disabled={busy === t.id} onClick={() => setStatus(t, 'in_progress')}>▶ {t.mine ? '開工' : '接單並開工'}</button>
+                    {t.allowed_actions.includes('claim') && (
+                      <button className="btn primary" style={{ flex: 1, padding: '12px 14px', fontSize: 16 }} disabled={busy === t.id} onClick={() => runAction(t, 'claim')}>我來接單</button>
                     )}
-                    {t.status === 'in_progress' && (
+                    {t.allowed_actions.includes('start') && (
+                      <button className="btn primary" style={{ flex: 1, padding: '12px 14px', fontSize: 16 }} disabled={busy === t.id} onClick={() => runAction(t, 'start')}>▶ 開工</button>
+                    )}
+                    {t.allowed_actions.includes('upload_photo') && (
                       <>
                         <button className="btn" style={{ flex: 1, padding: '12px 14px', fontSize: 16 }} disabled={busy === t.id} onClick={() => pickPhoto(t.id)}>📷 拍完工照</button>
-                        <button className="btn primary" style={{ flex: 1, padding: '12px 14px', fontSize: 16 }} disabled={busy === t.id || !canFinish} title={canFinish ? '' : '完工前需至少一張完工照'} onClick={() => setStatus(t, 'completed')}>✓ 完工</button>
+                        <button className="btn primary" style={{ flex: 1, padding: '12px 14px', fontSize: 16 }} disabled={busy === t.id || !canFinish} title={canFinish ? '' : (t.completion_requirements.message || '')} onClick={() => runAction(t, 'complete')}>✓ 完工</button>
                       </>
                     )}
                   </div>
-                  {t.status === 'in_progress' && !canFinish && <div className="small faint">完工前需上傳至少一張完工照，照片會成為下次借車的基準照</div>}
+                  {t.allowed_actions.includes('upload_photo') && !canFinish && <div className="small faint">{t.completion_requirements.message}，照片會成為下次借車的基準照</div>}
                 </motion.div>
               )
             })}
           </AnimatePresence>
           {tasks.length === 0 && <div className="empty card"><b>目前沒有任務</b>新任務會自動出現</div>}
-        </>
-      )}
-      <div className="small faint" style={{ textAlign: 'center' }}>身分為自選未驗證 · <a href="/ops/inbox">管理者介面</a></div>
+      </>
+      <div className="small faint" style={{ textAlign: 'center' }}>操作會以 {user?.name} 身分寫入任務歷程{user?.role === 'admin' && <> · <a href="/ops/inbox">管理者介面</a></>}</div>
     </div>
   )
 }

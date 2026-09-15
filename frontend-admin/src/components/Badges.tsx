@@ -17,7 +17,7 @@ export function NotifyBadge({ s }: { s: NotifyStatus }) {
 }
 
 /** SLA 倒數：每 15 秒自行重算，不用父層重繪。 */
-export function SlaChip({ task }: { task: { status: string; sla_due_at: string; sla_minutes: number; resolved_at?: string | null } }) {
+export function SlaChip({ task }: { task: { status: string; sla_due_at: string; sla_minutes: number; sla_status: 'normal' | 'approaching' | 'overdue' | 'inactive'; resolved_at?: string | null } }) {
   const [, tick] = useState(0)
   useEffect(() => { const id = setInterval(() => tick(x => x + 1), 15000); return () => clearInterval(id) }, [])
   if (task.status === 'completed') return <span className="sla done">✓ 完成</span>

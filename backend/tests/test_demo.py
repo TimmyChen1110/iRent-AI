@@ -82,9 +82,10 @@ class TestReset:
         assert srv.get_decisions() == {}                       # 裁決清空
         assert srv.get_tasks()["tasks"] == []                  # 任務清空
         # 重演：confirm 再次建立全新任務，notification 從頭開始
-        t2 = self._play(srv, monkeypatch)
-        assert t2["status"] == "pending" or True                # _play 內已推進
-        assert len(srv.get_tasks()["tasks"]) == 1
+        self._play(srv, monkeypatch)
+        replayed = srv.get_tasks()["tasks"]
+        assert len(replayed) == 1
+        assert replayed[0]["status"] == "completed"             # 第二輪也完整跑完
 
     def test_reset後通知重新發送(self, srv, monkeypatch):
         monkeypatch.setenv("DEMO_MODE", "true")

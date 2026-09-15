@@ -1,5 +1,6 @@
 import { Navigate, NavLink, Route, Routes, useLocation, type Location } from 'react-router-dom'
-import { StoreProvider, useStore } from './lib/store'
+import { StoreProvider } from './lib/store'
+import { useStore } from './lib/store-context'
 import { ToastProvider } from './components/Toast'
 import { Inbox } from './pages/Inbox'
 import { Board } from './pages/Board'
@@ -10,8 +11,10 @@ import { Fleet } from './pages/Fleet'
 import { Insights } from './pages/Insights'
 import { Mobile } from './pages/Mobile'
 import { useEffect } from 'react'
-import { useToast } from './components/Toast'
+import { useToast } from './components/toast-context'
 import { EVENT_TXT } from './lib/labels'
+import { AuthProvider, useAuth } from './lib/auth'
+import { Login } from './pages/Login'
 
 function Sidebar() {
   const { summary, health } = useStore()
@@ -63,26 +66,20 @@ function LiveToasts() {
 }
 
 function Topbar() {
-  const { conn, reader, setReader, people } = useStore()
+  const { conn } = useStore()
+  const { user, logout } = useAuth()
   const label = conn === 'offline' ? '離線' : conn === 'live' ? '即時連線' : '輪詢中（每 5 秒）'
   return (
     <div className="topbar">
       <span className="spacer" />
       <span className={`conn ${conn}`} title="任務與事件存於後端資料庫，全隊共享"><i />{label}</span>
-      <label className="who" title="無登入：自選身分只用於已讀與歷程署名，未驗證">
-        <span className="faint">我是</span>
-        <select value={reader} onChange={e => setReader(e.target.value)}>
-          <option value="">未選擇</option>
-          <option value="客服">客服</option>
-          <option value="營運主管">營運主管</option>
-          {people.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
-        </select>
-      </label>
+      <span className="who"><span className="faint">已登入</span><b>{user?.name}</b><span className="badge soft">Admin</span></span>
+      <button className="btn xs" onClick={logout}>登出</button>
     </div>
   )
 }
 
-export default function App() {
+function AdminApp() {
   const location = useLocation()
   const bg = (location.state as { background?: Location } | null)?.background
   if (location.pathname === '/m' || location.pathname.startsWith('/m/')) {
@@ -117,4 +114,21 @@ export default function App() {
       </ToastProvider>
     </StoreProvider>
   )
+}
+
+function RoleApp() {
+  const { user, loading } = useAuth()
+  if (loading) return <div className="login-page"><div className="card">確認登入狀態…</div></div>
+  if (!user) return <Login />
+  if (user.role === 'station') {
+    return <StoreProvider station><ToastProvider><Routes>
+      <Route path="/m" element={<Mobile />} />
+      <Route path="*" element={<Navigate to="/m" replace />} />
+    </Routes></ToastProvider></StoreProvider>
+  }
+  return <AdminApp />
+}
+
+export default function App() {
+  return <AuthProvider><RoleApp /></AuthProvider>
 }

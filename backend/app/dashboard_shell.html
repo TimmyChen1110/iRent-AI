@@ -509,7 +509,7 @@
 </div>
 
 <div class="foot">
-  Demo 說明：38 個案例全部來自真實營運照片——車損 32 組（21 組實際索賠、11 組未索賠）＋ 車內整潔 6 張；「資料集標註」為當時是否索賠的事實標籤。AI 標註框為模型輸出之損傷座標。複核動作於 server 版存 SQLite 全隊共享（單檔版存瀏覽器本機）；確認車損／髒汙後系統自動建立維修／清潔任務，於「整備看板」指派與追蹤（對外通知推播尚未接入）。車輛損傷護照：36 台車損傷歸戶，含首次發現訂單與責任歸屬。營運總覽分兩區：「即時營運狀態」由 SQLite 即時計算；「模型離線評測」為固定資料集的一次性評測結果（口徑標於各卡片）。歸還期間車損分頁明確區分「AI 已評測」與「未評測」案件，未評測案件不含任何 AI 判定。
+  Demo 說明：38 個案例全部來自真實營運照片——車損 32 組（21 組實際索賠、11 組未索賠）＋ 車內整潔 6 張；「資料集標註」為當時是否索賠的事實標籤。AI 標註框為模型輸出之損傷座標。複核動作於 server 版存 SQLite 全隊共享（單檔版存瀏覽器本機）；確認車損／髒汙後系統自動建立維修／清潔任務，於「整備看板」指派與追蹤（Webhook 可選配；LINE／簡訊尚未接入）。車輛損傷護照：36 台車損傷歸戶，含首次發現訂單與責任歸屬。營運總覽分兩區：「即時營運狀態」由 SQLite 即時計算；「模型離線評測」為固定資料集的一次性評測結果（口徑標於各卡片）。歸還期間車損分頁明確區分「AI 已評測」與「未評測」案件，未評測案件不含任何 AI 判定。
 </div>
 
 <!--DATA-->
@@ -555,6 +555,24 @@ const OFFLINE_EVAL = {
 const SERVER = (typeof SERVER_MODE !== "undefined") && SERVER_MODE;
 function imgSrc(v) { return v && (v.startsWith("/photos/") || v.startsWith("http")) ? v : "data:image/jpeg;base64," + v; }
 
+/* Phase 4：舊監理台不重寫登入流程，但 API 401 不再靜默失敗。 */
+if (SERVER) {
+  const nativeFetch = window.fetch.bind(window);
+  let authNoticeShown = false;
+  window.fetch = async (...args) => {
+    const response = await nativeFetch(...args);
+    if (response.status === 401 && !authNoticeShown) {
+      authNoticeShown = true;
+      const notice = document.createElement("div");
+      notice.setAttribute("role", "alert");
+      notice.style.cssText = "position:fixed;inset:0;z-index:99999;background:#07131dcc;display:grid;place-items:center;padding:24px";
+      notice.innerHTML = '<div style="max-width:420px;background:white;color:#17212b;border-radius:14px;padding:24px;box-shadow:0 20px 70px #0008;text-align:center"><h2 style="margin-top:0">登入狀態已失效</h2><p>請先登入管理系統，再回到車況監理台。</p><a href="/ops/login" style="display:inline-block;background:#00a6a6;color:white;padding:10px 16px;border-radius:8px;text-decoration:none;font-weight:700">前往管理系統登入</a></div>';
+      document.body.appendChild(notice);
+    }
+    return response;
+  };
+}
+
 const LS_KEY = "irent-review-demo-v1";
 let decisions = {};
 async function loadDecisions() {
@@ -595,7 +613,8 @@ let TASKS = [];
 async function loadTasks() {
   if (!SERVER) return false;
   try {
-    const j = await (await fetch("/api/tasks")).json();
+    // 整備操作讀 ops task view；可執行動作與完工條件都由後端提供。
+    const j = await (await fetch("/api/ops/tasks")).json();
     if (JSON.stringify(j.tasks) !== JSON.stringify(TASKS)) { TASKS = j.tasks; return true; }
   } catch (e) {}
   return false;
@@ -1966,7 +1985,7 @@ async function patchTask(id, body, btn) {
   const old = btn ? btn.textContent : null;
   if (btn) { btn.disabled = true; btn.textContent = "更新中…"; }
   try {
-    const r = await fetch("/api/tasks/" + id, { method: "PATCH",
+    const r = await fetch("/api/ops/tasks/" + id, { method: "PATCH",
       headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
     const j = await r.json();
     if (!r.ok) throw new Error(j.detail);
@@ -1978,8 +1997,8 @@ async function patchTask(id, body, btn) {
     if (btn) { btn.disabled = false; btn.textContent = old; }
   } finally { TASK_INFLIGHT = false; }
 }
-function setTaskStatus(id, s, btn) { patchTask(id, { status: s }, btn); }
-function setTaskAssignee(id, sel) { patchTask(id, { assignee: sel.value }); }
+function setTaskAction(id, action, btn) { patchTask(id, { action }, btn); }
+function setTaskAssignee(id, sel) { patchTask(id, { action: "assign", assignee: sel.value }); }
 
 async function retryNotify(id, btn) {
   btn.disabled = true; btn.textContent = "發送中…";
@@ -2012,18 +2031,21 @@ function taskCard(t) {
     .concat(ASSIGNEES.map(a => `<option value="${a}" ${t.assignee === a ? "selected" : ""}>${a}</option>`));
   if (t.assignee && !ASSIGNEES.includes(t.assignee))
     opts.push(`<option value="${t.assignee}" selected>${t.assignee}</option>`);
-  // 操作精簡：每個狀態只露出當下該做的事（誤按完成可用小字「重新開啟」救回）
+  // 只呈現後端回傳的 allowed_actions；此處僅負責顯示文案。
+  const allowed = t.allowed_actions || [];
   let actions = "";
-  if (t.status === "pending") {
-    actions = `<button class="btn danger" onclick="setTaskStatus(${t.id},'in_progress',this)">▶ 開始處理</button>`;
-  } else if (t.status === "in_progress") {
-    actions = `<button class="btn danger" onclick="setTaskStatus(${t.id},'completed',this)">✓ 標記完成</button>`;
-  } else if (t.status === "completed") {
+  if (allowed.includes("start")) {
+    actions = `<button class="btn danger" onclick="setTaskAction(${t.id},'start',this)">▶ 開始處理</button>`;
+  } else if (allowed.includes("complete")) {
+    actions = `<button class="btn danger" onclick="setTaskAction(${t.id},'complete',this)">✓ 標記完成</button>`;
+  } else if (allowed.includes("reopen") && t.status === "completed") {
     actions = `<span style="color:var(--ok);font-weight:800;font-size: 13.8px">✓ 已完成 <span class="mono" style="color:var(--muted);font-weight:600">${(t.resolved_at || "").replace("T", " ")}</span></span>
-      <button class="btn" style="padding:2px 9px;font-size: 12.6px" onclick="setTaskStatus(${t.id},'in_progress',this)">重新開啟</button>`;
-  } else {  // cancelled
+      <button class="btn" style="padding:2px 9px;font-size: 12.6px" onclick="setTaskAction(${t.id},'reopen',this)">重新開啟</button>`;
+  } else if (allowed.includes("reopen")) {
     actions = `<span style="color:var(--faint);font-weight:700;font-size: 13.8px">已取消</span>
-      <button class="btn" style="padding:2px 9px;font-size: 12.6px" onclick="setTaskStatus(${t.id},'pending',this)">重啟任務</button>`;
+      <button class="btn" style="padding:2px 9px;font-size: 12.6px" onclick="setTaskAction(${t.id},'reopen',this)">重啟任務</button>`;
+  } else if (t.completion_requirements && !t.completion_requirements.satisfied) {
+    actions = `<span style="color:var(--amber);font-weight:700;font-size:13.2px">${t.completion_requirements.message}</span>`;
   }
   const histText = e => (e.detail || e.event)
     .replace(/pending/g, "待處理").replace(/in_progress/g, "處理中")
@@ -2044,7 +2066,7 @@ function taskCard(t) {
     </div>
     <div class="t-actions">
       <label style="font-size: 13.2px;color:var(--muted)">指派</label>
-      <select onchange="setTaskAssignee(${t.id}, this)" ${t.status === "completed" || t.status === "cancelled" ? "disabled" : ""}>${opts.join("")}</select>
+      <select onchange="setTaskAssignee(${t.id}, this)" ${allowed.includes("assign") ? "" : "disabled"}>${opts.join("")}</select>
       ${actions}
     </div>
     ${hist ? `<div class="t-hist">${hist}</div>` : ""}

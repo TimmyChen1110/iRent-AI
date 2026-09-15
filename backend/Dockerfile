@@ -29,10 +29,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY backend/ .
 # 前端 build 產物（覆蓋 repo 內過渡期進版控的那份，確保與程式碼一致）
 COPY --from=frontend /fe-dist ./app/static/ops
+RUN chmod +x /app/docker-entrypoint.sh
 
-# 時區：任務時間以 ISO 字串（無時區）存檔並直接顯示，容器需與營運現場同一時區
-RUN apt-get update && apt-get install -y --no-install-recommends tzdata \
-    && rm -rf /var/lib/apt/lists/*
+# python:3.13-slim 已含 /usr/share/zoneinfo；不在 source COPY 後重複 apt upgrade。
+# 任務時間以現場時區的 ISO 字串儲存與顯示。
 ENV TZ=Asia/Taipei
 
 # 執行期可設定路徑：預設指向容器內 volume 掛載點（見 docker-compose.yml）
@@ -44,5 +44,9 @@ ENV IRENT_UPLOAD_DIR=/data/uploads \
 
 EXPOSE 8000
 
+HEALTHCHECK --interval=10s --timeout=5s --start-period=20s --retries=5 \
+  CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=3)" || exit 1
+
 # server.py 於 import 時執行 prompt 凍結檢查（prompts/ 缺檔即拒絕啟動）。
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
 CMD ["uvicorn", "app.server:app", "--host", "0.0.0.0", "--port", "8000"]

@@ -14,7 +14,7 @@
   - 監理台「整備看板」分頁：待處理 → 處理中 → 已完成 Kanban、指派人員、完成時間、`task_events` 處理歷程
   - 復原裁決自動取消待處理任務；`GET/PATCH /api/tasks` 完整 API；19 項零 API 成本回歸測試
 - **整備中心管理者介面 第一期（2026-09-14 實作）**：`frontend-admin/`（React + Vite + motion）→ build 至 `backend/app/static/ops/`，由監理台 server 於 **http://localhost:8000/ops** 提供；API 為 `backend/app/ops_api.py`（`/api/ops/*`）+ `ops_db.py`，規劃見 `UI_規劃.md`
-  - 通知中心：事件流（由 `task_events` 增量派生）、未讀／已讀（依自選身分）、KPI、篩選
+  - 通知中心：事件流（由 `task_events` 增量派生）、未讀／已讀（依登入帳號）、KPI、篩選
   - 整備看板：三欄拖曳／按鈕推進（同一套狀態機）、SLA 倒數、負責人／類型／逾時篩選
   - 任務詳情（側板）：借還照 + AI 標註框、工作內容、通知狀態與重發、處理歷程與備註
   - 人員與組別、通知設定（管道狀態只回布林、SLA 門檻可調）

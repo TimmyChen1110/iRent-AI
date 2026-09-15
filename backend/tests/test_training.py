@@ -33,7 +33,8 @@ class TestDataset:
     @pytest.fixture(scope="class")
     @classmethod
     def rows(cls):
-        rows, _ = build()
+        # 單元測試只驗證版本庫內的固定 relabel 資料，不應被本機 Demo DB 汙染。
+        rows, _ = build(decisions_db=None)
         return rows
 
     def test_有樣本(self, rows):
@@ -72,7 +73,7 @@ class TestSplitIntegrity:
 
     def test_同車不可跨train與val(self):
         from sklearn.model_selection import GroupKFold
-        rows, _ = build()
+        rows, _ = build(decisions_db=None)
         groups = [r["car"] for r in rows]
         y = [r["label"] for r in rows]
         for itr, iva in GroupKFold(n_splits=5).split(rows, y, groups):
@@ -81,7 +82,7 @@ class TestSplitIntegrity:
             assert not (tr_cars & va_cars), "同一台車同時出現在 train 與 val＝資料洩漏"
 
     def test_每台車的樣本都在同一組(self):
-        rows, _ = build()
+        rows, _ = build(decisions_db=None)
         by_car = {}
         for r in rows:
             by_car.setdefault(r["car"], []).append(r)

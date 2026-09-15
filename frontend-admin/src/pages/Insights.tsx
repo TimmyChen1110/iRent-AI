@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { api } from '../lib/api'
 import type { Insights as InsightsT } from '../lib/types'
-import { useStore } from '../lib/store'
+import { useStore } from '../lib/store-context'
 import { Columns, HBars } from '../components/Bars'
 
 const TYPE_COLOR: Record<string, string> = { repair: 'var(--brand)', cleaning: '#1B7F6E', claims: 'var(--brand-deep)' }
@@ -30,7 +30,7 @@ export function Insights() {
   return (
     <>
       <div className="topbar" style={{ position: 'static', background: 'transparent', backdropFilter: 'none', borderBottom: 0, paddingBottom: 0 }}>
-        <div><h1>營運洞察</h1><div className="sub">從真實上傳 log 與整備資料算出來的排班依據；每張圖標明口徑與 n</div></div>
+        <div><h1>營運洞察</h1><div className="sub">混合資料看板；每一區都標明 DB、離線彙整或 Demo dataset，避免誤解為正式全車隊分析</div></div>
         <span className="spacer" />
         <label className="small muted row"><input type="checkbox" checked={showTable} onChange={e => setShowTable(e.target.checked)} /> 顯示數值表</label>
       </div>
@@ -38,6 +38,7 @@ export function Insights() {
         {up ? (
           <div className="card">
             <h2>還車時段分布 — 清潔／整備人力該排在哪</h2>
+            <div className="badge accent" style={{ marginBottom: 8 }}>來源：離線上傳 log 彙整 · 非即時</div>
             <div className="small muted" style={{ marginBottom: 10 }}>
               以訂單去重的還車上傳時間，n = {up.orders.toLocaleString()} 單（{up.photos.toLocaleString()} 張照片、{up.vehicles.toLocaleString()} 台車），資料日期 {dateStr}。單日資料，不做星期分布。
             </div>
@@ -46,7 +47,7 @@ export function Insights() {
               <span className="badge accent">尖峰 {peak.map(h => `${h}時`).join('、')} 佔 {peakShare}%</span>
               <span className="badge soft">離峰 {low[0]}–{low[low.length - 1]} 時 → 適合排維修與深度清潔</span>
             </div>
-            <div className="small faint" style={{ marginTop: 6 }}>建議：清潔組上班時段對齊 15–23 時；P2 維修派在凌晨 3–7 時車輛閒置窗口。</div>
+            <div className="small faint" style={{ marginTop: 6 }}>Demo 解讀（固定文案、非模型即時建議）：清潔組上班時段可對齊 15–23 時；P2 維修可排在凌晨 3–7 時車輛閒置窗口。</div>
             {showTable && (
               <table className="table" style={{ marginTop: 10 }}><thead><tr><th>時</th>{hours.map(h => <th key={h.label}>{h.label}</th>)}</tr></thead>
                 <tbody><tr><td>單數</td>{hours.map(h => <td key={h.label} className="mono">{h.value}</td>)}</tr></tbody></table>
@@ -55,14 +56,15 @@ export function Insights() {
         ) : <div className="notice">尚未產生上傳 log 彙整：執行 <span className="mono">python3 backend/pipeline/build_ops_insights.py</span></div>}
 
         <div className="kpis">
-          <div className="kpi"><div className="micro">整備任務總數</div><div className="num">{d.tasks.total}</div><div className="sub">維修 {sum(d.tasks.by_type.repair)} · 清潔 {sum(d.tasks.by_type.cleaning)}（即時）</div></div>
+          <div className="kpi"><div className="micro">整備任務總數 · SQLite 即時</div><div className="num">{d.tasks.total}</div><div className="sub">維修 {sum(d.tasks.by_type.repair)} · 清潔 {sum(d.tasks.by_type.cleaning)}</div></div>
           <div className="kpi"><div className="micro">中位開工時間</div><div className="num">{d.tasks.median_minutes_to_start == null ? '—' : fmtMin(d.tasks.median_minutes_to_start)}</div><div className="sub">建立 → 開始處理，n = {d.tasks.n_started}</div></div>
           <div className="kpi"><div className="micro">中位完工時間</div><div className="num">{d.tasks.median_minutes_to_complete == null ? '—' : fmtMin(d.tasks.median_minutes_to_complete)}</div><div className="sub">建立 → 完成，n = {d.tasks.n_completed}</div></div>
-          <div className="kpi"><div className="micro">車內整潔（離線分類）</div><div className="num">{d.interior.n ? `${Math.round(d.interior.髒汙 / d.interior.n * 100)}%` : '—'}</div><div className="sub">髒汙比例；乾淨 {d.interior.乾淨}／普通 {d.interior.普通}／髒汙 {d.interior.髒汙}，n = {d.interior.n}（排除模型註明無法判讀的 {d.interior.excluded_unreadable} 張）</div></div>
+          <div className="kpi"><div className="micro">車內整潔 · Demo dataset</div><div className="num">{d.interior.n ? `${Math.round(d.interior.髒汙 / d.interior.n * 100)}%` : '—'}</div><div className="sub">離線分類；乾淨 {d.interior.乾淨}／普通 {d.interior.普通}／髒汙 {d.interior.髒汙}，n = {d.interior.n}（排除無法判讀 {d.interior.excluded_unreadable} 張）</div></div>
         </div>
 
         <div className="card">
           <h2>人工裁決 vs AI 判定一致率 — 系統越用越準的證據</h2>
+          <div className="badge ok" style={{ marginBottom: 8 }}>來源：SQLite decision_events · 即時</div>
           <div className="small muted" style={{ marginBottom: 10 }}>每一次人工 confirm／reject 都自動存成標籤（decision_events，append-only）。一致率 = 人工真值與 AI 判定相同的比例；n = {d.agreement.n}{d.agreement.rate != null && <>，整體 <b>{Math.round(d.agreement.rate * 100)}%</b></>}。</div>
           {d.agreement.days.length === 0 ? <div className="empty">尚無裁決紀錄</div> : (
             <>
@@ -77,6 +79,7 @@ export function Insights() {
 
         <div className="card">
           <h2>車輛事件排行 — 哪些車該優先巡檢</h2>
+          <div className="badge soft" style={{ marginBottom: 8 }}>混合來源：SQLite 任務 + Demo dataset 索賠樣本</div>
           <div className="small muted" style={{ marginBottom: 10 }}>人工確認的維修／清潔任務（即時）＋ 資料集索賠正樣本（離線，n = 21）。取前 10。</div>
           {d.car_ranking.length === 0 ? <div className="empty">尚無資料</div> : (
             <>

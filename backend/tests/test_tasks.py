@@ -100,6 +100,18 @@ class TestAutoCreate:
         assert t["task_type"] == "repair"
         assert "人工複核判定" in t["description"]
 
+    def test_confirm建單失敗時裁決與事件一併回滾(self, srv, monkeypatch):
+        monkeypatch.setattr(srv, "_case_snapshot", lambda cid: snap_pair())
+        monkeypatch.setattr(srv, "_ensure_task",
+                            lambda *args: (_ for _ in ()).throw(RuntimeError("disk full")))
+        with pytest.raises(HTTPException) as exc:
+            confirm(srv, "RCR-7661-左後", snap_pair())
+        assert exc.value.status_code == 500
+        with srv.db() as conn:
+            assert conn.execute("SELECT COUNT(*) FROM decisions").fetchone()[0] == 0
+            assert conn.execute("SELECT COUNT(*) FROM decision_events").fetchone()[0] == 0
+            assert conn.execute("SELECT COUNT(*) FROM tasks").fetchone()[0] == 0
+
 
 # ---------- 狀態機 ----------
 

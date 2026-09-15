@@ -40,7 +40,7 @@
 │   │   ├── prompts/             # 凍結的 prompt 檔 + MANIFEST（啟動時 sha256 比對）
 │   │   ├── relabels.json        # 141 組逐圖重標結果（含二次複驗依據）
 │   │   └── eval_results_*.json  # 各輪評測完整結果
-│   ├── tests/                   # 判定骨幹回歸測試（262 項，零 API 成本）
+│   ├── tests/                   # Backend 與環節三回歸測試（零 Gemini API 成本）
 │   ├── training/                # 自訓 CV 模型流程驗證（不接主流程）
 │   ├── Dockerfile / requirements.txt / requirements-dev.txt
 ├── docker-compose.yml           # backend + (PR#2) postgres
@@ -71,7 +71,7 @@ export GEMINI_API_KEY=你的KEY                    # 或寫進 backend/.env（Do
 # export NOTIFICATION_WEBHOOK_URL=http://127.0.0.1:9999/hook   # 本機測試：python3 tools/webhook_receiver.py
 
 # 驗證安裝（零 API 成本）
-python -m pytest tests/ -q                       # 262 passed
+python -m pytest tests/ -q                       # Backend 全套回歸
 python pipeline/quality_gate.py                  # 282 張檢核，攔下 26 張（9.2%）
 
 python pipeline/build_pairs.py                   # 建立借/還配對
@@ -84,21 +84,65 @@ python pipeline/judge_photos.py 借.jpg 還.jpg     # 現場實測（--interior 
 cd app && uvicorn server:app --host 0.0.0.0 --port 8000
 ```
 
-### Docker
+## Demo Quick Start
 
-```bash
-make up        # 確保 colima 在跑 → 建 .env → build → 背景起 → http://localhost:8000
-make logs      # 看 backend log
-make down      # 停（留 volume 資料）        make help   全部指令
-```
+這是本機／內網 Demo 啟動方式，不是 Production deployment guide。需要 Docker Compose；資料集照片不進 image，而是由 `docker-compose.yml` 唯讀掛載。
 
-macOS 需先有容器 runtime（`brew install colima docker docker-compose`）；`make up` 會自動 `colima start`。
-手動等價：`cp .env.example .env && docker compose up --build -d`。
-資料集照片不進 image，`docker-compose.yml` 已把資料夾唯讀掛進容器（見 `IRENT_DATASET_ROOT`）。
+1. 建立環境檔並啟動：
+
+   ```bash
+   cp .env.example .env
+   docker compose up --build -d
+   ```
+
+   若目前開發主機的 Docker CLI 因 buildx plugin 失敗，repository 不需修改，改用：
+
+   ```bash
+   DOCKER_BUILDKIT=0 docker compose build
+   docker compose up -d
+   ```
+
+2. 確認服務健康：
+
+   ```bash
+   docker compose ps
+   curl http://localhost:8000/api/health
+   ```
+
+   `backend` 應顯示 `healthy`，health API 應回 `status: ok`。若 `.env` 的 `IRENT_PORT` 有修改，網址也要改成相同 port。
+
+3. 開啟車況監理台 <http://localhost:8000/> 或登入頁 <http://localhost:8000/ops/login>。`DEMO_MODE=true` 且仍使用標準帳密時，登入頁會提供一鍵填入：
+
+   - Admin：`admin / admin-demo`
+   - Station Staff：`station / station-demo`
+
+   這些弱帳密在 `DEMO_MODE=false` 時不會啟用或顯示。
+
+4. 建議展示固定車內髒汙案例 `F2-RDE-0160-front`：在監理台人工 Confirm，接著走完 `Cleaning Task → Admin Inbox → Station Claim → Start → Completion Photo → Complete → Admin Timeline → Baseline Available`。Demo 前或每輪結束後，可在監理台頂端按「重置 Demo」；它只重置兩個固定示範案件的裁決、任務、衍生事件與完工照，不影響 AI 固定結果及其他案件。
+
+5. `GEMINI_API_KEY` 可留空。AI 重新判讀與通知文案生成會停用，但固定案例、Admin、Station、Task、SQLite、完工照與 baseline 流程仍可完整操作。`NOTIFICATION_WEBHOOK_URL` 也是選填；未設定會清楚顯示 Not configured，不會影響任務。LINE／SMS 尚未接入。
+
+6. SQLite、session metadata 與 uploads 共用 `backend_data` named volume；普通 restart 或 `docker compose down` 不會遺失，只有 `docker compose down -v` 會刪除。Browser E2E 使用自己的暫存 SQLite／uploads，不會污染 Demo volume：
+
+   ```bash
+   cd frontend-admin
+   npm run test:e2e
+   # 沒有 Google Chrome 時：
+   npx playwright install chromium
+   PLAYWRIGHT_CHANNEL=chromium npm run test:e2e
+   ```
+
+7. Demo 結束後停止容器（保留資料）：
+
+   ```bash
+   docker compose down
+   ```
+
+macOS 亦可用 `make up`、`make logs`、`make down`；`make up` 會啟動 Colima 並執行相同流程。
 
 免費額度建議 `--rpm 8` 節流；中斷可直接重跑（斷點續跑）。
 
-> ⚠️ 單容器、單 replica、無認證機制 → 僅限本機／內網，禁止對公網開放。
+> ⚠️ 單容器、單 replica，且只有 Demo 帳密／session（無 MFA、分散式 rate limit、SSO；登入限流以來源 IP 計數，經反向代理時所有人共用同一個計數） → 僅限本機／內網，禁止對公網開放。
 
 ## 線上交付物（私有 Artifact）
 

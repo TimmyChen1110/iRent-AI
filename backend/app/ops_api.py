@@ -6,7 +6,7 @@
     通知重發仍呼叫 server._notify_task，規則只有一份。
   - 事件流由 task_events 增量派生（ops_db.derive_events_from_tasks），加上 SLA 逾時掃描。
   - 所有回應附 server_time，前端 SLA 倒數以此校正時鐘。
-  - 身分：無登入，前端自選身分經 X-Ops-Reader 標頭送來，只用於已讀與歷程署名。
+  - 身分：Phase 3 起由 HttpOnly session 驗證；X-Ops-Reader 只保留供直接函式測試相容。
 
 掛載方式（server.py）：
     import ops_api
@@ -27,8 +27,10 @@ from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
+import ops_auth
 import ops_db
 import paths
+import task_service
 
 router = APIRouter(prefix="/api/ops", tags=["ops"])
 _srv = None   # server 模組（bind() 注入，避免循環 import）
@@ -50,9 +52,9 @@ def _complete_guard(conn, task_id: int) -> str | None:
         return None
     with ops_db.db() as oconn:
         s = ops_db.get_settings(oconn)
-        need = s.get(f"require_photo_{row[0]}", "0") == "1"
-        n = ops_db.photo_count(oconn, task_id) if need else 0
-    if need and n == 0:
+        n = ops_db.photo_count(oconn, task_id)
+    requirement = task_service.completion_requirements(row[0], s, n)
+    if not requirement["satisfied"]:
         return "完工前需至少一張完工照（可於站點手機版上傳；規則可在通知設定調整）"
     return None
 
@@ -66,10 +68,18 @@ def _iso(dt: datetime) -> str:
 
 
 def _reader(h: str | None) -> str:
-    """X-Ops-Reader：前端以 encodeURIComponent 編碼（HTTP 標頭不能直接放中文）。"""
+    """可信 actor 優先來自 session；header 僅供舊單元測試直接呼叫函式。"""
+    actor = ops_auth.current_actor()
+    if actor:
+        return actor.name
     if not isinstance(h, str):   # 直接呼叫函式（測試）時拿到的是 Header 預設物件
         h = ""
     return unquote(h).strip()[:40] or "anonymous"
+
+
+def _station_owns(task: dict, actor: ops_auth.Actor) -> bool:
+    """Station ownership 只比對 stable People ID，不再以 display name 當 identity。"""
+    return actor.person_id is not None and task.get("assignee_id") == actor.person_id
 
 
 # ---------- SLA ----------
@@ -89,9 +99,41 @@ def _with_sla(task: dict, sla: dict, now: datetime) -> dict:
     if t.get("status") == "pending":
         t["sla_remaining_s"] = int((due - now).total_seconds())
         t["overdue"] = t["sla_remaining_s"] < 0
+        if t["overdue"]:
+            t["sla_status"] = "overdue"
+        elif t["sla_remaining_s"] <= minutes * 60 * 0.2:
+            t["sla_status"] = "approaching"
+        else:
+            t["sla_status"] = "normal"
     else:
         t["sla_remaining_s"] = None
         t["overdue"] = False
+        t["sla_status"] = "inactive"
+    return t
+
+
+def _with_rules(conn, task: dict, settings: dict | None = None) -> dict:
+    """把後端業務能力附在 task response；前端不再自行維護狀態機或完工規則。"""
+    t = dict(task)
+    t["assignee_name"] = t.get("assignee")
+    if t.get("assignee_id") is not None:
+        person = conn.execute("SELECT name FROM ops_people WHERE id=?", (t["assignee_id"],)).fetchone()
+        if person:
+            t["assignee_name"] = person[0]
+    settings = settings or ops_db.get_settings(conn)
+    caps = task_service.capabilities(t, settings, ops_db.photo_count(conn, t["id"]))
+    actor = ops_auth.current_actor()
+    if actor and actor.role == "station":
+        if t.get("assignee_id") is None and not t.get("assignee"):
+            permitted = {"claim"}
+        elif _station_owns(t, actor):
+            permitted = {"start", "complete", "upload_photo"}
+        else:
+            permitted = set()
+        caps["allowed_actions"] = [a for a in caps["allowed_actions"] if a in permitted]
+        caps["action_targets"] = {a: target for a, target in caps["action_targets"].items()
+                                  if a in permitted}
+    t.update(caps)
     return t
 
 
@@ -131,23 +173,35 @@ def _escalate(tasks: list[dict]) -> None:
             status = "sent" if ok else "failed"
             detail = "逾時升級推播已送出（webhook）" if ok else "逾時升級推播失敗"
         with ops_db.db() as conn:
-            entry = ops_db.add_notification_log(conn, t["id"], "escalation", "webhook", status, detail)
-            conn.execute("INSERT INTO task_events(task_id, at, event, detail) VALUES (?,?,?,?)",
-                         (t["id"], entry["at"], "notify", detail))
+            entry = ops_db.add_notification_log(conn, t["id"], "escalation", "webhook", status, detail,
+                                                actor=ops_auth.SYSTEM_ACTOR)
+            _srv._add_task_event(conn, t["id"], entry["at"], "notify", detail,
+                                 actor=ops_auth.SYSTEM_ACTOR)
 
 
 def _auto_assign(conn) -> int:
     """依設定把尚未指派、且從未被人指派過的待處理任務自動指派（每任務只做一次）。"""
     s = ops_db.get_settings(conn)
     n = 0
-    for r in conn.execute("SELECT id, task_type FROM tasks WHERE status='pending' AND (assignee IS NULL OR assignee='')"):
-        who = (s.get(f"default_assignee_{r[1]}") or "").strip()
-        if not who or ops_db.has_assignee_event(conn, r[0]):
+    for r in conn.execute("SELECT id, task_type FROM tasks WHERE status='pending'"
+                          " AND assignee_id IS NULL AND (assignee IS NULL OR assignee='')"):
+        raw_id = (s.get(f"default_assignee_{r[1]}_id") or "").strip()
+        person = conn.execute("SELECT id, name FROM ops_people WHERE id=? AND active=1",
+                              (raw_id,)).fetchone() if raw_id.isdigit() else None
+        # Legacy setting compatibility: resolve the old name only when it is unique.
+        if not person:
+            legacy = (s.get(f"default_assignee_{r[1]}") or "").strip()
+            matches = conn.execute(
+                "SELECT id, name FROM ops_people WHERE name=? AND active=1", (legacy,)).fetchall()
+            person = matches[0] if len(matches) == 1 else None
+        if not person or ops_db.has_assignee_event(conn, r[0]):
             continue
+        person_id, who = person[0], person[1]
         now = ops_db.now_iso()
-        conn.execute("UPDATE tasks SET assignee=?, updated_at=? WHERE id=?", (who, now, r[0]))
-        conn.execute("INSERT INTO task_events(task_id, at, event, detail) VALUES (?,?,?,?)",
-                     (r[0], now, "assignee", f"依類型規則自動指派給 {who}"))
+        conn.execute("UPDATE tasks SET assignee_id=?, assignee=?, updated_at=? WHERE id=?",
+                     (person_id, who, now, r[0]))
+        _srv._add_task_event(conn, r[0], now, "assignee", f"依類型規則自動指派給 {who}",
+                             actor=ops_auth.SYSTEM_ACTOR)
         n += 1
     return n
 
@@ -225,7 +279,9 @@ def ops_health():
     return {
         "server_time": _iso(_now()),
         "demo_mode": _srv._demo_mode(),
+        "gemini_configured": _srv._gemini_configured(),
         "demo_cases": {"damage": _srv.DEMO_CASE_DAMAGE, "cleaning": _srv.DEMO_CASE_CLEANING},
+        "demo_credentials": ops_auth.demo_login_hints(),
         "channels": _channels(),
     }
 
@@ -274,6 +330,7 @@ def summary(x_ops_reader: str | None = Header(default=None)):
 @router.get("/tasks")
 def list_tasks(status: str | None = None, task_type: str | None = None,
                priority: str | None = None, assignee: str | None = None,
+               assignee_id: int | None = None,
                overdue: bool | None = None):
     now = _now()
     with ops_db.db() as conn:
@@ -285,10 +342,15 @@ def list_tasks(status: str | None = None, task_type: str | None = None,
             if v:
                 where.append(f"{col}=?")
                 params.append(v)
+        if assignee_id is not None:
+            where.append("assignee_id=?")
+            params.append(assignee_id)
         q = "SELECT id FROM tasks" + (" WHERE " + " AND ".join(where) if where else "") + \
             " ORDER BY created_at DESC"
         ids = [r[0] for r in conn.execute(q, params)]
-        out = [_with_sla(_srv._task_row(conn, i), sla, now) for i in ids]
+        settings = ops_db.get_settings(conn)
+        out = [_with_rules(conn, _with_sla(_srv._task_row(conn, i), sla, now), settings)
+               for i in ids]
     _flush_escalations()
     if overdue:
         out = [t for t in out if t["overdue"]]
@@ -306,7 +368,11 @@ def get_task(task_id: int):
         t = _srv._task_row(conn, task_id)
         if not t:
             raise HTTPException(404, f"找不到任務 #{task_id}")
+        actor = ops_auth.current_actor()
+        if actor and actor.role == "station" and not _station_owns(t, actor):
+            raise HTTPException(403, "只能查看分配給自己的任務")
         t = _with_sla(t, ops_db.sla_minutes(conn), now)
+        t = _with_rules(conn, t)
         drafts = ops_db.get_drafts(conn, t["case_id"])
         log = ops_db.list_notification_log(conn, task_id)
         photos = ops_db.list_task_photos(conn, task_id)
@@ -318,32 +384,71 @@ def get_task(task_id: int):
 
 class OpsTaskUpdate(BaseModel):
     status: str | None = None
+    action: str | None = None
     assignee: str | None = None
+    assignee_id: int | None = None
     note: str | None = None
     expected_assignee: str | None = None   # 防搶單：指派前確認目前負責人仍是此值（"" = 未指派）
+    expected_assignee_id: int | None = None
 
 
 @router.patch("/tasks/{task_id}")
 def update_task(task_id: int, upd: OpsTaskUpdate, x_ops_reader: str | None = Header(default=None)):
-    """狀態 / 指派走監理台的 patch_task（同一套狀態機）；備註另寫 task_events(note)。"""
+    """Action / 狀態 / 指派走同一個 TaskService；備註另寫 task_events(note)。
+
+    `status` 保留給舊監理台相容；新前端只送後端回傳的 allowed_actions。
+    claim 會使用單一 compare-and-set UPDATE，沒有「先查再改」的競態窗口。
+    """
     who = _reader(x_ops_reader)
-    if upd.expected_assignee is not None:
+    actor = ops_auth.current_actor()
+    current = None
+    if upd.action is not None:
         with _srv.db() as conn:
-            row = conn.execute("SELECT assignee FROM tasks WHERE id=?", (task_id,)).fetchone()
-        if not row:
+            current = _srv._task_row(conn, task_id)
+        if not current:
             raise HTTPException(404, f"找不到任務 #{task_id}")
-        cur = row[0] or ""
-        if cur != upd.expected_assignee:
-            raise HTTPException(409, f"任務已由「{cur or '其他人'}」接手，請重新整理")
-    if upd.status is not None or upd.assignee is not None:
-        _srv.patch_task(task_id, _srv.TaskUpdate(status=upd.status, assignee=upd.assignee))
+    if actor and actor.role == "station":
+        if (upd.status is not None or "assignee" in upd.model_fields_set
+                or "assignee_id" in upd.model_fields_set or upd.note
+                or upd.action not in {"claim", "start", "complete"}):
+            raise HTTPException(403, "站點人員只能接單、開工與完工")
+        if upd.action != "claim" and not _station_owns(current, actor):
+            raise HTTPException(403, "只能操作分配給自己的任務")
+    if upd.action is not None:
+        with ops_db.db() as conn:
+            ruled = _with_rules(conn, current)
+        if upd.action not in ruled["allowed_actions"]:
+            raise HTTPException(409, f"任務目前不可執行 {upd.action}")
+    if upd.action == "claim":
+        if upd.status is not None or "assignee" in upd.model_fields_set or "assignee_id" in upd.model_fields_set:
+            raise HTTPException(400, "claim 不可同時提供 status 或 assignee")
+        if actor:
+            if actor.person_id is None:
+                raise HTTPException(403, "站點帳號未連結 People，請由 Admin 修正")
+            _srv.patch_task(task_id, _srv.TaskUpdate(
+                assignee_id=actor.person_id, expected_assignee_id=0))
+        else:  # 舊單元測試／直接 function call 相容
+            _srv.patch_task(task_id, _srv.TaskUpdate(assignee=who, expected_assignee=""))
+    elif upd.action == "assign":
+        has_identity = "assignee_id" in upd.model_fields_set or "assignee" in upd.model_fields_set
+        if not has_identity or upd.status is not None:
+            raise HTTPException(400, "assign 需要 assignee，且不可同時提供 status")
+        fields = {k: getattr(upd, k) for k in (
+            "assignee", "assignee_id", "expected_assignee", "expected_assignee_id")
+                  if k in upd.model_fields_set}
+        _srv.patch_task(task_id, _srv.TaskUpdate(**fields))
+    elif upd.status is not None or upd.action is not None or "assignee" in upd.model_fields_set or "assignee_id" in upd.model_fields_set:
+        fields = {k: getattr(upd, k) for k in (
+            "assignee", "assignee_id", "expected_assignee", "expected_assignee_id")
+                  if k in upd.model_fields_set}
+        _srv.patch_task(task_id, _srv.TaskUpdate(
+            status=upd.status, action=upd.action, **fields))
     note = (upd.note or "").strip()
     if note:
         with _srv.db() as conn:
             if not conn.execute("SELECT 1 FROM tasks WHERE id=?", (task_id,)).fetchone():
                 raise HTTPException(404, f"找不到任務 #{task_id}")
-            conn.execute("INSERT INTO task_events(task_id, at, event, detail) VALUES (?,?,?,?)",
-                         (task_id, _iso(_now()), "note", f"{who}：{note[:500]}"))
+            _srv._add_task_event(conn, task_id, _iso(_now()), "note", f"{who}：{note[:500]}")
     return get_task(task_id)
 
 
@@ -410,16 +515,38 @@ def add_person(p: PersonIn):
     with ops_db.db() as conn:
         if conn.execute("SELECT 1 FROM ops_people WHERE name=?", (name,)).fetchone():
             raise HTTPException(409, f"「{name}」已存在")
-        return ops_db.add_person(conn, group, name)
+        person = ops_db.add_person(conn, group, name)
+        ops_db.add_audit(conn, "create", "person", person["id"], f"{group} / {name}")
+        return person
 
 
 @router.patch("/people/{pid}")
 def patch_person(pid: int, p: PersonPatch):
+    group = p.group_name.strip() if p.group_name is not None else None
+    name = p.name.strip() if p.name is not None else None
+    if group == "" or name == "":
+        raise HTTPException(400, "group_name 與 name 不可為空")
     with ops_db.db() as conn:
-        r = ops_db.update_person(conn, pid, group_name=p.group_name, name=p.name,
+        current = conn.execute("SELECT * FROM ops_people WHERE id=?", (pid,)).fetchone()
+        if not current:
+            raise HTTPException(404, "找不到人員")
+        current = dict(current)
+        if name and name != current["name"] and conn.execute(
+                "SELECT 1 FROM ops_people WHERE name=? AND id<>?", (name, pid)).fetchone():
+            raise HTTPException(409, f"「{name}」已存在")
+        r = ops_db.update_person(conn, pid, group_name=group, name=name,
                                  active=None if p.active is None else int(p.active))
-    if not r:
-        raise HTTPException(404, "找不到人員")
+        if name and name != current["name"]:
+            # Stable identity 不變；只同步 legacy display name，舊 audit snapshot 不回寫。
+            # 不在每張任務寫 assignee 事件：改名不是指派，時間軸會誤判成「重新指派」；
+            # 改名紀錄由下方 ops_audit_log 保存。
+            conn.execute("UPDATE tasks SET assignee=?, updated_at=? WHERE assignee_id=?",
+                         (name, _iso(_now()), pid))
+            conn.execute("UPDATE ops_settings SET value=? WHERE key LIKE 'default_assignee_%' AND value=?",
+                         (name, current["name"]))
+            conn.execute("UPDATE ops_users SET display_name=? WHERE person_id=?", (name, pid))
+        ops_db.add_audit(conn, "update", "person", pid,
+                         f"{current['group_name']} / {current['name']} → {r['group_name']} / {r['name']}; active={r['active']}")
     return r
 
 
@@ -443,10 +570,30 @@ def put_settings(values: dict):
             clean[k] = iv
         elif k in ("require_photo_cleaning", "require_photo_repair", "escalate_on_overdue"):
             clean[k] = "1" if v in (True, 1, "1", "true", "on") else "0"
+        elif k in ("default_assignee_cleaning_id", "default_assignee_repair_id"):
+            clean[k] = str(v).strip()
         elif isinstance(k, str) and len(k) <= 64:
             clean[k] = str(v)[:500]
     with ops_db.db() as conn:
+        for kind in ("cleaning", "repair"):
+            id_key, name_key = f"default_assignee_{kind}_id", f"default_assignee_{kind}"
+            if id_key in clean:
+                raw = clean[id_key]
+                if raw:
+                    person = conn.execute(
+                        "SELECT id, name FROM ops_people WHERE id=? AND active=1", (raw,)).fetchone()
+                    if not person:
+                        raise HTTPException(400, f"{id_key} 找不到啟用中人員")
+                    clean[id_key], clean[name_key] = str(person[0]), person[1]
+                else:
+                    clean[name_key] = ""
+            elif name_key in clean:
+                name = clean[name_key].strip()
+                matches = conn.execute(
+                    "SELECT id FROM ops_people WHERE name=? AND active=1", (name,)).fetchall() if name else []
+                clean[id_key] = str(matches[0][0]) if len(matches) == 1 else ""
         ops_db.set_settings(conn, clean)
+        ops_db.add_audit(conn, "update", "settings", "ops", ", ".join(sorted(clean)))
         return {"settings": ops_db.get_settings(conn), "sla": ops_db.sla_minutes(conn)}
 
 
@@ -577,8 +724,7 @@ def send_draft(task_id: int, body: SendIn, x_ops_reader: str | None = Header(def
         detail = f"{aud_txt} 已送出（webhook）" if ok else f"{aud_txt} 發送失敗，可重試"
     with ops_db.db() as conn:
         entry = ops_db.add_notification_log(conn, task_id, body.audience, body.channel, status, detail)
-        conn.execute("INSERT INTO task_events(task_id, at, event, detail) VALUES (?,?,?,?)",
-                     (task_id, entry["at"], "notify", f"{who}：{detail}"))
+        _srv._add_task_event(conn, task_id, entry["at"], "notify", f"{who}：{detail}")
     return {"ok": status == "sent", "entry": entry, **get_task(task_id)}
 
 
@@ -612,7 +758,7 @@ def _events_after(last_id: int, reader: str) -> list[dict]:
 @router.get("/events/stream")
 async def events_stream(since: int = 0, reader: str | None = None,
                         x_ops_reader: str | None = Header(default=None)):
-    reader = _reader(reader or x_ops_reader)   # EventSource 不能帶自訂標頭，改用 query
+    reader = _reader(reader or x_ops_reader)   # runtime 一律以 session actor 覆蓋 query/header
 
     async def gen():
         last = since
@@ -675,6 +821,9 @@ def fleet(q: str | None = None, status: str | None = None):
         sla = ops_db.sla_minutes(conn)
         tasks = [_with_sla(dict(r), sla, now) for r in conn.execute("SELECT * FROM tasks ORDER BY created_at DESC")]
         locks = ops_db.get_locks(conn)
+        baseline_counts = {r[0]: r[1] for r in conn.execute(
+            "SELECT UPPER(p.car), COUNT(*) FROM task_photos p JOIN tasks t ON t.id=p.task_id"
+            " WHERE t.status='completed' GROUP BY UPPER(p.car)")}
     ds = _dataset_cars()
     cars = set(ds) | {t["car"] for t in tasks if t.get("car")} | set(locks)
     rows = []
@@ -701,6 +850,7 @@ def fleet(q: str | None = None, status: str | None = None):
                            for t in open_tasks],
             "completed_tasks": len(done),
             "last_completed_at": max((t["resolved_at"] for t in done), default=None),
+            "baseline_count": baseline_counts.get(car.upper(), 0),
             "dataset_cases": info.get("cases", 0), "claims": info.get("claims", 0),
             "unreviewed_flags": info.get("unreviewed", 0),
         })
@@ -731,6 +881,7 @@ def patch_fleet(car: str, body: LockIn, x_ops_reader: str | None = Header(defaul
         ops_db.add_event(conn, "fleet_lock" if body.locked else "fleet_unlock",
                          {"car": car, "title": "手動鎖定派單" if body.locked else "解除派單鎖定", "priority": "P3"},
                          f"{who}：{'鎖定' if body.locked else '解除鎖定'} {car}" + (f"（{lock['reason']}）" if lock.get("reason") else ""))
+        ops_db.add_audit(conn, "lock" if body.locked else "unlock", "fleet", car, lock.get("reason"))
     return {"lock": lock, **fleet(q=car)}
 
 
@@ -830,6 +981,13 @@ async def upload_task_photo(task_id: int, photo: UploadFile = File(...),
         t = _srv._task_row(conn, task_id)
     if not t:
         raise HTTPException(404, f"找不到任務 #{task_id}")
+    actor = ops_auth.current_actor()
+    if actor and actor.role == "station" and not _station_owns(t, actor):
+        raise HTTPException(403, "只能替分配給自己的任務上傳照片")
+    with ops_db.db() as conn:
+        ruled = _with_rules(conn, t)
+    if "upload_photo" not in ruled["allowed_actions"]:
+        raise HTTPException(409, "只有處理中的任務可以上傳完工照")
     raw = await photo.read()
     if not raw:
         raise HTTPException(400, "空檔案")
@@ -851,14 +1009,21 @@ async def upload_task_photo(task_id: int, photo: UploadFile = File(...),
     (d / name).write_bytes(data)
     with ops_db.db() as conn:
         row = ops_db.add_task_photo(conn, t, name, who)
-        conn.execute("INSERT INTO task_events(task_id, at, event, detail) VALUES (?,?,?,?)",
-                     (task_id, row["at"], "photo", f"{who}：上傳完工照 {name}"))
+        _srv._add_task_event(conn, task_id, row["at"], "photo", f"{who}：上傳完工照 {name}")
         photos = ops_db.list_task_photos(conn, task_id)
-    return {"ok": True, "photo": _photo_row(row), "photos": [_photo_row(p) for p in photos]}
+    detail = get_task(task_id)
+    return {"ok": True, "photo": _photo_row(row), "photos": [_photo_row(p) for p in photos],
+            "task": detail["task"]}
 
 
 @router.get("/tasks/{task_id}/photos/{name}")
 def get_task_photo(task_id: int, name: str):
+    actor = ops_auth.current_actor()
+    if actor and actor.role == "station":
+        with _srv.db() as conn:
+            task = _srv._task_row(conn, task_id)
+        if not task or not _station_owns(task, actor):
+            raise HTTPException(403, "只能查看自己的任務照片")
     if not _SAFE_NAME.match(name):
         raise HTTPException(404)
     f = PHOTO_ROOT / str(task_id) / name
@@ -872,18 +1037,27 @@ def get_task_photo(task_id: int, name: str):
 @router.get("/my-tasks")
 def my_tasks(x_ops_reader: str | None = Header(default=None)):
     who = _reader(x_ops_reader)
+    actor = ops_auth.current_actor()
     now = _now()
     with ops_db.db() as conn:
         _refresh_events(conn)
         sla = ops_db.sla_minutes(conn)
-        ids = [r[0] for r in conn.execute(
-            "SELECT id FROM tasks WHERE status IN ('pending','in_progress')"
-            "   AND (assignee=? OR assignee IS NULL OR assignee='') ORDER BY created_at", (who,))]
+        if actor and actor.role == "station":
+            ids = [r[0] for r in conn.execute(
+                "SELECT id FROM tasks WHERE status IN ('pending','in_progress')"
+                " AND (assignee_id=? OR (assignee_id IS NULL AND (assignee IS NULL OR assignee='')))"
+                " ORDER BY created_at", (actor.person_id,))]
+        else:
+            ids = [r[0] for r in conn.execute(
+                "SELECT id FROM tasks WHERE status IN ('pending','in_progress')"
+                " AND (assignee=? OR (assignee_id IS NULL AND (assignee IS NULL OR assignee='')))"
+                " ORDER BY created_at", (who,))]
         out = []
         for i in ids:
             t = _with_sla(_srv._task_row(conn, i), sla, now)
+            t = _with_rules(conn, t)
             t["photos"] = [_photo_row(p) for p in ops_db.list_task_photos(conn, i)]
-            t["mine"] = t.get("assignee") == who
+            t["mine"] = _station_owns(t, actor) if actor and actor.role == "station" else t.get("assignee") == who
             out.append(t)
     rank = {"P1": 0, "P2": 1, "P3": 2}
     out.sort(key=lambda t: (0 if t["mine"] else 1, 0 if t["status"] == "in_progress" else 1,

@@ -2,14 +2,14 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'motion/react'
 import { api } from '../lib/api'
-import type { OpsEvent } from '../lib/types'
-import { useStore } from '../lib/store'
+import type { OpsEvent, Task } from '../lib/types'
+import { useStore } from '../lib/store-context'
 import { EVENT_TXT, zhStatus } from '../lib/labels'
-import { rel, syncClock } from '../lib/time'
-import { PriorityBadge } from '../components/Badges'
-import { useToast } from '../components/Toast'
+import { rel, slaState, syncClock } from '../lib/time'
+import { PriorityBadge, SlaChip, TypeBadge } from '../components/Badges'
+import { useToast } from '../components/toast-context'
 
-type Filter = 'action' | 'all' | 'P1' | 'P2' | 'P3' | 'unread' | 'failed' | 'overdue'
+type Filter = 'action' | 'all' | 'P1' | 'P2' | 'P3' | 'unread' | 'failed' | 'approaching' | 'overdue'
 const ACTION_TYPES = new Set(['task_created', 'notify_failed', 'sla_overdue'])
 
 const ICO: Record<string, string> = {
@@ -20,6 +20,7 @@ const ICO: Record<string, string> = {
 export function Inbox() {
   const { summary, tick, refresh } = useStore()
   const [events, setEvents] = useState<OpsEvent[]>([])
+  const [tasks, setTasks] = useState<Task[]>([])
   const [filter, setFilter] = useState<Filter>('action')
   const [loaded, setLoaded] = useState(false)
   const nav = useNavigate()
@@ -28,20 +29,22 @@ export function Inbox() {
 
   const load = useCallback(async () => {
     try {
-      const r = await api.events({ limit: 200 })
-      syncClock(r.server_time); setEvents(r.events); setLoaded(true)
+      const [r, tr] = await Promise.all([api.events({ limit: 200 }), api.tasks()])
+      syncClock(r.server_time); setEvents(r.events); setTasks(tr.tasks); setLoaded(true)
     } catch { /* store 會標示離線 */ }
   }, [])
-  useEffect(() => { load() }, [load, tick])
+  useEffect(() => { const id = setTimeout(load, 0); return () => clearTimeout(id) }, [load, tick])
 
   const shown = useMemo(() => events.filter(e => {
     if (filter === 'unread') return !e.is_read
     if (filter === 'failed') return e.type === 'notify_failed'
     if (filter === 'overdue') return e.type === 'sla_overdue'
+    if (filter === 'approaching') return false
     if (filter === 'all') return true
     if (filter === 'action') return ACTION_TYPES.has(e.type)
     return e.priority === filter
   }), [events, filter])
+  const approaching = useMemo(() => tasks.filter(t => slaState(t).kind === 'soon'), [tasks])
 
   const open = async (e: OpsEvent) => {
     if (!e.is_read) {
@@ -57,6 +60,7 @@ export function Inbox() {
 
   const count = (f: Filter) => f === 'all' ? events.length : f === 'action' ? events.filter(e => ACTION_TYPES.has(e.type)).length : f === 'unread' ? events.filter(e => !e.is_read).length
     : f === 'failed' ? events.filter(e => e.type === 'notify_failed').length
+    : f === 'approaching' ? approaching.length
     : f === 'overdue' ? events.filter(e => e.type === 'sla_overdue').length
     : events.filter(e => e.priority === f).length
 
@@ -78,19 +82,33 @@ export function Inbox() {
           <button className={`kpi ${filter === 'overdue' ? 'active' : ''}`} onClick={() => setFilter('overdue')}>
             <div className="micro">SLA 逾時</div><div className={`num ${(summary?.overdue || 0) > 0 ? 'warn' : ''}`}>{summary?.overdue ?? '—'}</div><div className="sub">待處理且超過開工期限</div>
           </button>
+          <button className={`kpi ${filter === 'approaching' ? 'active' : ''}`} onClick={() => setFilter('approaching')}>
+            <div className="micro">SLA 即將到期</div><div className={`num ${approaching.length > 0 ? 'warn' : ''}`}>{approaching.length}</div><div className="sub">剩餘時間低於 SLA 的 20%</div>
+          </button>
           <button className={`kpi ${filter === 'failed' ? 'active' : ''}`} onClick={() => setFilter('failed')}>
             <div className="micro">推播失敗</div><div className={`num ${(summary?.notify_failed || 0) > 0 ? 'warn' : ''}`}>{summary?.notify_failed ?? '—'}</div><div className="sub">可於任務詳情重發</div>
           </button>
         </div>
 
         <div className="chips">
-          {(['action', 'all', 'unread', 'P1', 'P2', 'P3', 'failed', 'overdue'] as Filter[]).map(f => (
+          {(['action', 'all', 'unread', 'P1', 'P2', 'P3', 'failed', 'approaching', 'overdue'] as Filter[]).map(f => (
             <button key={f} className={`chip ${filter === f ? 'active' : ''}`} onClick={() => setFilter(f)}>
-              {{ action: '需要行動', all: '全部', unread: '未讀', P1: 'P1', P2: 'P2', P3: 'P3', failed: '推播失敗', overdue: '逾時' }[f]}
+              {{ action: '需要行動', all: '全部', unread: '未讀', P1: 'P1', P2: 'P2', P3: 'P3', failed: '推播失敗', approaching: '即將逾時', overdue: '逾時' }[f]}
               <span className="n">{count(f)}</span>
             </button>
           ))}
         </div>
+
+        {(filter === 'action' || filter === 'approaching') && approaching.length > 0 && (
+          <div className="card" style={{ borderLeft: '4px solid var(--accent)' }}>
+            <h2>SLA 即將到期 · 需安排開工</h2>
+            <div className="events">
+              {approaching.map(t => <button key={t.id} className="ev p2" onClick={() => nav(`/tasks/${t.id}`, { state: { background: loc } })}>
+                <span className="stripe" /><div><div className="t1"><span>⏱ 即將逾時</span><span className="plate">{t.car}</span><PriorityBadge p={t.priority} /><TypeBadge t={t.task_type} /></div><div className="t2">{t.title} · {t.assignee_name || '尚未指派'}</div></div><SlaChip task={t} />
+              </button>)}
+            </div>
+          </div>
+        )}
 
         <div className="events">
           <AnimatePresence initial={false}>
@@ -113,7 +131,7 @@ export function Inbox() {
               </motion.button>
             ))}
           </AnimatePresence>
-          {loaded && shown.length === 0 && (
+          {loaded && shown.length === 0 && !(filter === 'approaching' && approaching.length > 0) && (
             <div className="empty card"><b>目前沒有事件</b>案件在監理台確認後，任務與通知結果會出現在這裡</div>
           )}
         </div>

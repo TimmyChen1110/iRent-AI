@@ -164,6 +164,7 @@ class TestPayload:
         assert p == {"event": "task_created", "case_id": "X-左後", "task_id": 7,
                      "task_type": "repair", "priority": "P1", "car": "X",
                      "title": "T", "description": "D", "assignee": None,
+                     "assignee_id": None, "assignee_name": None,
                      "status": "pending", "created_at": "2026-09-05T00:00:00",
                      "kind": "system_event", "url": None}
 

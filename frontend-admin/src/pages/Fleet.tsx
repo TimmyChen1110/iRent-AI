@@ -2,10 +2,10 @@ import { useCallback, useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
 import type { FleetResp, FleetRow, TaskPhoto } from '../lib/types'
-import { useStore } from '../lib/store'
+import { useStore } from '../lib/store-context'
 import { fmt, rel, syncClock } from '../lib/time'
 import { PriorityBadge, TypeBadge } from '../components/Badges'
-import { useToast } from '../components/Toast'
+import { useToast } from '../components/toast-context'
 
 const ST: Record<FleetRow['status'], { label: string; cls: string }> = {
   locked: { label: '整備中・不可派', cls: 'warn' },
@@ -26,7 +26,7 @@ export function Fleet() {
   const load = useCallback(async () => {
     try { const r = await api.fleet(); syncClock(r.server_time); setData(r) } catch { /* offline */ }
   }, [])
-  useEffect(() => { load() }, [load, tick])
+  useEffect(() => { const id = setTimeout(load, 0); return () => clearTimeout(id) }, [load, tick])
 
   const toggle = async (row: FleetRow) => {
     const locked = !row.manual_lock
@@ -74,7 +74,7 @@ export function Fleet() {
         </div>
         <div className="card" style={{ overflowX: 'auto' }}>
           <table className="table">
-            <thead><tr><th>車牌</th><th>狀態</th><th>未完成任務</th><th>資料集</th><th>最近完工</th><th /></tr></thead>
+            <thead><tr><th>車牌</th><th>狀態 / 原因</th><th>未完成任務</th><th>待複核（Demo dataset）</th><th>Baseline</th><th>最近完工</th><th /></tr></thead>
             <tbody>
               {rows.map(r => (
                 <tr key={r.car}>
@@ -92,13 +92,16 @@ export function Fleet() {
                       </button>
                     ))}
                   </td>
-                  <td className="small muted">{r.dataset_cases > 0 ? <>{r.dataset_cases} 案{r.claims > 0 && <> · 索賠 {r.claims}</>}{r.unreviewed_flags > 0 && <> · <span style={{ color: '#7A5D00' }}>待複核 {r.unreviewed_flags}</span></>}</> : '—'}</td>
-                  <td className="mono small">{r.last_completed_at ? fmt(r.last_completed_at) : '—'}{r.completed_tasks > 0 && <> <span className="faint">（{r.completed_tasks} 次）</span> <button className="btn xs ghost" onClick={() => showBaseline(r.car)}>基準照</button></>}
+                  <td className="small muted">{r.dataset_cases > 0 ? <>{r.dataset_cases} 案{r.claims > 0 && <> · 索賠樣本 {r.claims}</>}{r.unreviewed_flags > 0 && <> · <span style={{ color: '#7A5D00' }}>待複核 {r.unreviewed_flags}</span></>}</> : '—'}</td>
+                  <td>{r.baseline_count > 0
+                    ? <button className="btn xs ghost" onClick={() => showBaseline(r.car)}>✓ Available · {r.baseline_count} 張</button>
+                    : <span className="badge soft">尚無完工照</span>}
                     {baseline[r.car] && <div className="row wrap" style={{ gap: 4, marginTop: 4 }}>{baseline[r.car].length === 0 ? <span className="faint">無完工照</span> : baseline[r.car].map(p => <img key={p.id} src={p.url} alt="" style={{ width: 64, height: 48, objectFit: 'cover', borderRadius: 4 }} title={`${p.by || ''} ${fmt(p.at)}`} />)}</div>}</td>
+                  <td className="mono small">{r.last_completed_at ? fmt(r.last_completed_at) : '—'}{r.completed_tasks > 0 && <span className="faint">（{r.completed_tasks} 次）</span>}</td>
                   <td style={{ textAlign: 'right' }}><button className="btn xs" onClick={() => toggle(r)}>{r.manual_lock ? '🔓 解除' : '🔒 鎖定'}</button></td>
                 </tr>
               ))}
-              {data && rows.length === 0 && <tr><td colSpan={6} className="empty">沒有符合的車輛</td></tr>}
+              {data && rows.length === 0 && <tr><td colSpan={7} className="empty">沒有符合的車輛</td></tr>}
             </tbody>
           </table>
         </div>

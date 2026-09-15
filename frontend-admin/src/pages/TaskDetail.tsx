@@ -2,20 +2,36 @@ import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { AnimatePresence, motion } from 'motion/react'
 import { api } from '../lib/api'
-import type { Damage, TaskDetail as Detail, TaskStatus } from '../lib/types'
-import { useStore } from '../lib/store'
+import type { Damage, TaskAction, TaskDetail as Detail, TaskEvent } from '../lib/types'
+import { useStore } from '../lib/store-context'
 import { fmt, syncClock } from '../lib/time'
 import { STATUS_TXT, zhStatus } from '../lib/labels'
 import { NotifyBadge, PriorityBadge, SlaChip, TypeBadge } from '../components/Badges'
 import { PhotoWithBoxes } from '../components/PhotoWithBoxes'
-import { useToast } from '../components/Toast'
+import { useToast } from '../components/toast-context'
 import { DraftsPanel } from '../components/DraftsPanel'
 
-const NEXT: Record<string, { status: TaskStatus; label: string; cls: string } | undefined> = {
-  pending: { status: 'in_progress', label: '▶ 開始處理', cls: 'primary' },
-  in_progress: { status: 'completed', label: '✓ 標記完成', cls: 'primary' },
-  completed: { status: 'in_progress', label: '重新開啟', cls: '' },
-  cancelled: { status: 'pending', label: '重啟任務', cls: '' },
+const ACTION_VIEW: Array<{ action: TaskAction; label: string; cls: string }> = [
+  { action: 'start', label: '▶ 開始處理', cls: 'primary' },
+  { action: 'complete', label: '✓ 標記完成', cls: 'primary' },
+  { action: 'reopen', label: '重新開啟', cls: '' },
+]
+
+const DECISION_TXT: Record<string, string> = { confirm: '確認異常並建立任務', reject: '駁回 AI 判定', retake: '要求補件' }
+
+function timelineView(e: TaskEvent) {
+  const detail = e.detail || ''
+  if (e.event === 'created') return { icon: '①', label: 'Task Created', cls: 'brand' }
+  if (e.event === 'reopened') return { icon: '↻', label: 'Task Reopened', cls: 'brand' }
+  if (e.event === 'assignee') return { icon: '②', label: detail.includes('自動') ? 'Auto Assigned' : 'Assigned / Claimed', cls: 'brand' }
+  if (e.event === 'photo') return { icon: '④', label: 'Photo Uploaded', cls: 'brand' }
+  if (e.event === 'note') return { icon: '✎', label: 'Note Added', cls: '' }
+  if (e.event === 'notify') return { icon: '🔔', label: 'Notification', cls: detail.includes('已送出') ? 'ok' : detail.includes('未設定') ? '' : 'warn' }
+  if (detail.includes('→ in_progress')) return { icon: '③', label: 'Started', cls: 'brand' }
+  if (detail.includes('→ completed')) return { icon: '⑤', label: 'Completed', cls: 'ok' }
+  if (detail.includes('→ pending')) return { icon: '↩', label: 'Returned to Pending', cls: '' }
+  if (detail.includes('→ cancelled')) return { icon: '×', label: 'Cancelled', cls: 'warn' }
+  return { icon: '·', label: 'Task Updated', cls: '' }
 }
 
 export function TaskDetail({ mode }: { mode: 'sheet' | 'page' }) {
@@ -34,14 +50,13 @@ export function TaskDetail({ mode }: { mode: 'sheet' | 'page' }) {
     try { const r = await api.task(tid); syncClock(r.server_time); setD(r); setErr(null) }
     catch (e) { setErr((e as Error).message) }
   }, [tid])
-  useEffect(() => { load() }, [load, tick])
+  const close = useCallback(() => (mode === 'sheet' ? nav(-1) : nav('/board')), [mode, nav])
+  useEffect(() => { const id = setTimeout(load, 0); return () => clearTimeout(id) }, [load, tick])
   useEffect(() => {
     if (mode !== 'sheet') return
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') close() }
     window.addEventListener('keydown', onKey); return () => window.removeEventListener('keydown', onKey)
-  })
-
-  const close = () => (mode === 'sheet' ? nav(-1) : nav('/board'))
+  }, [mode, close])
 
   const act = async (fn: () => Promise<Detail>, okMsg?: string) => {
     setBusy(true)
@@ -49,15 +64,19 @@ export function TaskDetail({ mode }: { mode: 'sheet' | 'page' }) {
     catch (e) { toast((e as Error).message || '操作失敗', 'warn'); load() }
     finally { setBusy(false) }
   }
-  const setStatus = (status: TaskStatus) => {
+  const runAction = (action: TaskAction) => {
     if (!d) return
+    const status = d.task.action_targets[action]
+    if (!status) return
     setD({ ...d, task: { ...d.task, status } })   // 樂觀
-    act(() => api.patchTask(tid, { status }))
+    act(() => api.patchTask(tid, { action }))
   }
-  const setAssignee = (assignee: string) => {
+  const setAssignee = (value: string) => {
     if (!d) return
-    setD({ ...d, task: { ...d.task, assignee: assignee || null } })
-    act(() => api.patchTask(tid, { assignee }))
+    const assigneeId = value ? Number(value) : null
+    const person = people.find(p => p.id === assigneeId)
+    setD({ ...d, task: { ...d.task, assignee_id: assigneeId, assignee_name: person?.name || null, assignee: person?.name || null } })
+    act(() => api.patchTask(tid, { action: 'assign', assignee_id: assigneeId }))
   }
   const addNote = () => { if (!note.trim()) return; act(() => api.patchTask(tid, { note }), '備註已加入歷程'); setNote('') }
   const retry = () => act(() => api.retryNotify(tid))
@@ -78,18 +97,23 @@ export function TaskDetail({ mode }: { mode: 'sheet' | 'page' }) {
           <div style={{ fontWeight: 800, fontSize: 17, marginBottom: 10 }}>{d.task.title}</div>
           <div className="kv">
             <div><div className="k">負責人</div>
-              <select className="select" value={d.task.assignee || ''} disabled={busy || d.task.status === 'completed' || d.task.status === 'cancelled'} onChange={e => setAssignee(e.target.value)}>
+              <select className="select" value={d.task.assignee_id ?? (d.task.assignee_name ? 'legacy' : '')} disabled={busy || !d.task.allowed_actions.includes('assign')} onChange={e => setAssignee(e.target.value)}>
                 <option value="">未指派</option>
-                {people.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
-                {d.task.assignee && !people.some(p => p.name === d.task.assignee) && <option value={d.task.assignee}>{d.task.assignee}</option>}
+                {people.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                {d.task.assignee_id == null && d.task.assignee_name && <option value="legacy" disabled>{d.task.assignee_name}（需重新指派）</option>}
               </select></div>
+            <div><div className="k">任務類型</div><div className="v">{d.task.task_type === 'cleaning' ? '清潔' : '維修'}</div></div>
+            <div><div className="k">目前狀態</div><div className="v">{STATUS_TXT[d.task.status]}</div></div>
+            <div><div className="k">SLA</div><div className="v">{d.task.sla_minutes} 分鐘內開工</div></div>
             <div><div className="k">建立</div><div className="v mono">{fmt(d.task.created_at)}</div></div>
             <div><div className="k">開工期限</div><div className="v mono">{fmt(d.task.sla_due_at)}</div></div>
             <div><div className="k">完成</div><div className="v mono">{fmt(d.task.resolved_at)}</div></div>
           </div>
           <div className="row wrap" style={{ marginTop: 14 }}>
-            {NEXT[d.task.status] && <button className={`btn ${NEXT[d.task.status]!.cls}`} disabled={busy} onClick={() => setStatus(NEXT[d.task.status]!.status)}>{NEXT[d.task.status]!.label}</button>}
-            {d.task.status === 'in_progress' && <button className="btn sm ghost" disabled={busy} onClick={() => setStatus('pending')}>退回待處理</button>}
+            {ACTION_VIEW.filter(x => d.task.allowed_actions.includes(x.action)).map(x =>
+              <button key={x.action} className={`btn ${x.cls}`} disabled={busy} onClick={() => runAction(x.action)}>{x.label}</button>)}
+            {d.task.allowed_actions.includes('return_to_pending') && <button className="btn sm ghost" disabled={busy} onClick={() => runAction('return_to_pending')}>退回待處理</button>}
+            {!d.task.completion_requirements.satisfied && <span className="small muted">{d.task.completion_requirements.message}</span>}
             <span className="spacer" />
             <NotifyBadge s={d.task.notification_status} />
             {d.task.notification_status === 'failed' && <button className="btn sm" disabled={busy} onClick={retry}>重新發送</button>}
@@ -99,12 +123,17 @@ export function TaskDetail({ mode }: { mode: 'sheet' | 'page' }) {
         {/* 證據 */}
         <div className="section">
           <h3>證據 · AI 判定</h3>
+          <div className="decision-strip">
+            <div><span className="micro">AI 判定</span><b>{d.case.mode === 'interior' ? String(d.case.assessment?.level || '無法確認') : d.case.assessment?.new_damage_found ? '發現新增車損' : '未發現新增車損'}</b><span className="small muted">{d.case.ai_level || '未分級'}{typeof d.case.ai_conf === 'number' ? ` · 信心 ${Math.round(d.case.ai_conf * 100)}%` : ''}</span></div>
+            <span className="flow-arrow">→</span>
+            <div><span className="micro">人工裁決</span><b>{d.case.decision ? (DECISION_TXT[d.case.decision.decision] || d.case.decision.decision) : '尚未裁決'}</b><span className="small muted">{d.case.decision ? fmt(d.case.decision.decided_at) : '等待人工複核'}</span></div>
+          </div>
           <div className="photos">
             {d.case.mode === 'interior'
-              ? <PhotoWithBoxes src={d.case.photos.photo} label="還車車內照" boxes={d.case.boxes} hot={hot} />
+              ? <PhotoWithBoxes src={d.case.photos.photo} label="還車車內照（AI Evidence）" boxes={d.case.boxes} hot={hot} />
               : <>
-                <PhotoWithBoxes src={d.case.photos.pickup} label="借車照" />
-                <PhotoWithBoxes src={d.case.photos.return} label="還車照" boxes={d.case.boxes} hot={hot} />
+                <PhotoWithBoxes src={d.case.photos.pickup} label="Before · 借車基準照" />
+                <PhotoWithBoxes src={d.case.photos.return} label="After · 還車 AI Evidence" boxes={d.case.boxes} hot={hot} />
               </>}
           </div>
           <div style={{ marginTop: 10 }}>
@@ -149,25 +178,31 @@ export function TaskDetail({ mode }: { mode: 'sheet' | 'page' }) {
             onSent={r => { setD({ ...d, task: r.task, notification_log: r.notification_log }); refresh() }} />
         </div>
 
-        {/* 完工照（站點手機版上傳） */}
-        {d.photos.length > 0 && (
-          <div className="section">
-            <h3>完工照 · {d.photos.length} 張</h3>
+        {/* 完工照與 baseline feedback（由既有任務及照片資料推導，不新增 schema） */}
+        <div className="section">
+          <div className="row wrap" style={{ marginBottom: 10 }}><h3 style={{ margin: 0 }}>完工照 · Completion Evidence</h3><span className="spacer" />
+            {d.task.status === 'completed' && d.photos.length > 0
+              ? <span className="badge ok">✓ Baseline Available</span>
+              : d.photos.length > 0 ? <span className="badge accent">完成任務後成為 Baseline</span>
+                : <span className="badge soft">尚無完工照</span>}
+          </div>
+          {d.photos.length > 0 ? <>
             <div className="photos">
               {d.photos.map(p => <div key={p.id} className="photo"><img src={p.url} alt={p.filename} loading="lazy" /><span className="lbl">{p.by || '—'} · {fmt(p.at)}</span></div>)}
             </div>
-            <div className="small faint" style={{ marginTop: 6 }}>完工照可作為下一次借車的基準照（環節二比對用）。</div>
-          </div>
-        )}
+            <div className="small faint" style={{ marginTop: 6 }}>{d.task.status === 'completed' ? '此照片已可由環節二作為下一次 AI 比對的借車 baseline。' : '照片已保存；任務完成後才會正式出現在 baseline API。'}</div>
+          </> : <div className="notice">{d.task.completion_requirements.photo_required ? d.task.completion_requirements.message : '此類任務不強制完工照；仍可由站點手機版上傳，作為下一次借車 baseline。'}</div>}
+        </div>
 
         {/* 歷程 */}
         <div className="section">
           <h3>處理歷程</h3>
           <div className="timeline">
             {d.task.events.map((e, i) => {
-              const cls = e.event === 'created' || e.event === 'reopened' ? 'brand' : e.event === 'notify' ? ((e.detail || '').includes('已送出') ? 'ok' : 'warn') : (e.detail || '').includes('completed') ? 'ok' : ''
-              return <div key={i} className="tl"><span className={`pt ${cls}`} /><div><span className="when">{fmt(e.at)}</span> · {zhStatus(e.detail || e.event)}</div></div>
+              const view = timelineView(e)
+              return <div key={i} className="tl"><span className={`pt ${view.cls}`} /><div><div className="tl-title"><span>{view.icon}</span>{view.label}{e.actor_name && <span className="badge soft">{e.actor_name} · {e.actor_role}</span>}</div><div className="small muted">{zhStatus(e.detail || e.event)}</div><span className="when">{fmt(e.at)}</span></div></div>
             })}
+            {d.task.status === 'completed' && d.photos.length > 0 && <div className="tl"><span className="pt ok" /><div><div className="tl-title"><span>⑥</span>Baseline Available <span className="badge soft">Derived</span></div><div className="small muted">完工任務的照片已可供下一次 AI 比對使用</div><span className="when">{fmt(d.task.resolved_at)}</span></div></div>}
           </div>
           <div className="row" style={{ marginTop: 10 }}>
             <input className="input" placeholder="加入備註（寫進處理歷程）" value={note} onChange={e => setNote(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') addNote() }} />

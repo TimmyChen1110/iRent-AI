@@ -3,7 +3,7 @@
 # 現況（重構 PR #1）：單一 backend 容器，狀態仍走 SQLite（掛在 data volume）。
 # 下一步（PR #2）：啟用下方註解的 postgres 區塊，backend 改讀 DATABASE_URL。
 #
-# ⚠️ 資料含真實車牌照片 + 無認證機制 → 僅限本機／內網，禁止對公網開放。
+# ⚠️ 資料含真實車牌照片，且只有 Demo 帳密／session → 僅限本機／內網，禁止對公網開放。
 
 services:
   backend:
@@ -11,18 +11,26 @@ services:
       context: .                    # 根目錄：Dockerfile 第一階段要讀 frontend-admin/
       dockerfile: backend/Dockerfile
     ports:
-      - "8000:8000"
+      - "${IRENT_PORT:-8000}:8000"
     env_file:
       - .env
     environment:
       # 原始照片資料集不進 image（太大、非公開）。掛進容器供監理台 /photos/* 讀。
       IRENT_DATASET_ROOT: /dataset
+      PUBLIC_BASE_URL: "${PUBLIC_BASE_URL:-http://localhost:8000}"
     volumes:
       - backend_data:/data          # uploads / scratch / shadow_signals_live / decisions.sqlite3
       - "./iRent - 運用 AI 打造 iRent 智能車況管家：優化租還車體驗與營運效率:/dataset:ro"
       # 開發時想改 code 即時生效可解除下一行（prod 不要；前端改動仍需 npm run build）：
       # - ./backend:/app
     restart: unless-stopped
+    init: true
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      start_period: 20s
+      retries: 5
     # 紅線：背景判讀是行內 thread + 全域鎖（Gemini 免費層 RPM 8）。
     # 勿設 replicas > 1，會有兩個 worker 重複打 API。
     deploy:

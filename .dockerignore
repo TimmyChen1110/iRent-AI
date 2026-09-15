@@ -17,6 +17,10 @@ backend/app/_chk*.js
 *progress*.jsonl
 
 # 秘密
+.env
+.env.*
+**/.env
+**/.env.*
 **/.gemini_key
 **/.anthropic_key
 
@@ -33,6 +37,10 @@ iRent - */
 環節二_*/
 環節三_*/
 frontend-admin/node_modules/
+frontend-admin/dist/
+frontend-admin/test-results/
+frontend-admin/playwright-report/
+frontend-admin/blob-report/
 frontend-user/
 backend/.venv/
 *.md

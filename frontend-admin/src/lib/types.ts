@@ -2,8 +2,11 @@ export type Priority = 'P1' | 'P2' | 'P3'
 export type TaskStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled'
 export type TaskType = 'repair' | 'cleaning'
 export type NotifyStatus = 'not_sent' | 'sent' | 'failed' | 'skipped'
+export type TaskAction = 'claim' | 'assign' | 'start' | 'complete' | 'return_to_pending' | 'reopen' | 'cancel' | 'upload_photo'
+export type Role = 'admin' | 'station'
+export interface AuthUser { id: number; username: string; name: string; role: Role; person_id: number | null }
 
-export interface TaskEvent { at: string; event: string; detail: string | null }
+export interface TaskEvent { at: string; event: string; detail: string | null; actor_id: number | null; actor_name: string | null; actor_role: Role | 'system' | null }
 
 export interface Task {
   id: number
@@ -13,6 +16,8 @@ export interface Task {
   title: string
   description: string | null
   priority: Priority | null
+  assignee_id: number | null
+  assignee_name: string | null
   assignee: string | null
   status: TaskStatus
   notification_status: NotifyStatus
@@ -25,6 +30,15 @@ export interface Task {
   sla_due_at: string
   sla_remaining_s: number | null
   overdue: boolean
+  sla_status: 'normal' | 'approaching' | 'overdue' | 'inactive'
+  allowed_actions: TaskAction[]
+  action_targets: Partial<Record<TaskAction, TaskStatus>>
+  completion_requirements: {
+    photo_required: boolean
+    photo_count: number
+    satisfied: boolean
+    message: string | null
+  }
   is_demo?: boolean
 }
 
@@ -53,9 +67,9 @@ export interface Draft {
   model: string | null; generated_at: string | null; edited_at: string | null
 }
 export type Drafts = Partial<Record<Audience, Draft>>
-export interface NotificationLogEntry { id: number; audience: string | null; channel: string; status: string; detail: string | null; at: string }
+export interface NotificationLogEntry { id: number; audience: string | null; channel: string; status: string; detail: string | null; at: string; actor_id: number | null; actor_name: string | null; actor_role: Role | 'system' | null }
 
-export interface TaskPhoto { id: number; task_id: number; case_id: string | null; car: string | null; filename: string; by: string | null; at: string; url: string }
+export interface TaskPhoto { id: number; task_id: number; case_id: string | null; car: string | null; filename: string; by: string | null; actor_id: number | null; actor_role: Role | 'system' | null; at: string; url: string }
 export interface TaskDetail {
   task: Task
   case: CaseView
@@ -78,13 +92,14 @@ export interface Summary {
 }
 export interface Person { id: number; group_name: string; name: string; active: 0 | 1; created_at: string }
 export interface Channel { id: string; label: string; configured: boolean; available: boolean; note: string }
-export interface Health { server_time: string; demo_mode: boolean; demo_cases: { damage: string; cleaning: string }; channels: Channel[] }
+export interface DemoCredential { username: string; password: string; label: string }
+export interface Health { server_time: string; demo_mode: boolean; gemini_configured: boolean; demo_cases: { damage: string; cleaning: string }; demo_credentials: DemoCredential[]; channels: Channel[] }
 
 export interface FleetRow {
   car: string; status: 'locked' | 'review' | 'available'; manual_lock: boolean
   lock_reason: string | null; lock_by: string | null; lock_at: string | null
   open_tasks: Array<{ id: number; task_type: TaskType; status: TaskStatus; priority: Priority | null; title: string; overdue: boolean }>
-  completed_tasks: number; last_completed_at: string | null
+  completed_tasks: number; last_completed_at: string | null; baseline_count: number
   dataset_cases: number; claims: number; unreviewed_flags: number
 }
 export interface FleetResp { fleet: FleetRow[]; server_time: string; counts: Record<'locked' | 'review' | 'available', number>; note: string }

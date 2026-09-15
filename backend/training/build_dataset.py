@@ -56,11 +56,14 @@ def from_relabels() -> dict:
     return out
 
 
-def from_decisions() -> dict:
+def from_decisions(db_path: Path | None = DB) -> dict:
     """監理台累積的裁決。現在多半是空的，上線後會是主要來源。"""
-    if not DB.exists():
+    if db_path is None:
         return {}
-    conn = sqlite3.connect(DB)
+    db_path = Path(db_path)
+    if not db_path.exists():
+        return {}
+    conn = sqlite3.connect(db_path)
     try:
         rows = conn.execute(
             "SELECT case_id, label, photos FROM decision_events"
@@ -85,10 +88,10 @@ def from_decisions() -> dict:
     return out
 
 
-def build():
+def build(decisions_db: Path | None = DB):
     data = from_relabels()
     n_relabel = len(data)
-    data.update(from_decisions())           # 監理台裁決優先（較新、人工當下確認）
+    data.update(from_decisions(decisions_db))  # 監理台裁決優先（較新、人工當下確認）
     rows = [v for v in data.values() if Path(v["photo"]).exists()]
     return rows, n_relabel
 

@@ -151,7 +151,7 @@ ops_people(id INTEGER PK, group_name TEXT, name TEXT, active INTEGER, created_at
 ops_settings(key TEXT PK, value TEXT)
 ```
 
-`reader` 暫以前端選擇的身分名稱（無登入）；日後接帳號再改。
+> 本文件保留早期規劃脈絡；目前已由 HttpOnly session 登入身分取代前端自選 `reader`，後端會驗證 Admin／Station 權限。
 
 ## 7. 分期
 
@@ -164,7 +164,7 @@ ops_settings(key TEXT PK, value TEXT)
 ## 8. 已決定（2026-09-14）
 
 1. **技術棧**：Vite + React + TypeScript + motion。
-2. **身分**：無登入，前端選身分（介面標明「未驗證身分」）；帳號與登入等 PostgreSQL 與帳號表就位後再做。
+2. **身分（原規劃，已完成替換）**：目前使用 SQLite 帳號與 HttpOnly session，具 Admin／Station RBAC；不再由前端自選身分。
 3. **文案**：Demo 前對示範案例預生成三對象文案並快取；保留「重新生成」按鈕供現場即時展示。重置 Demo 時保留快取。
 4. **Docker**：過渡期把前端 build 產物進版控（`backend/app/static/ops/`）讓第一期能動；之後 Dockerfile 多階段 build 與 compose 調整由本環節自行維護，不依賴同事排程。
 

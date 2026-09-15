@@ -8,20 +8,26 @@
 
 資料表：
   ops_events        通知中心事件流（由 task_events 增量派生 + SLA 掃描產生）
-  event_reads       事件已讀（reader 為前端自選身分，無登入前提）
+  event_reads       事件已讀（reader 由登入身分提供）
   case_drafts       三對象通知文案快取（以 case_id 為鍵：內容取決於 AI 判定，不隨任務重建而失效）
   notification_log  發送紀錄（webhook 實發；line / sms 記為 unsupported）
   ops_people        整備人員／組別（取代前端寫死的 ASSIGNEES）
   fleet_locks       車輛派單鎖定（手動鎖定／解除；模擬，未與派單系統串接）
   task_photos       整備完工照（站點手機版上傳；日後可作為下一次借車的基準照）
   ops_settings      key/value 設定（SLA 門檻等）
+  ops_users/sessions 最小 Demo 登入與 HttpOnly session
+  ops_audit_log     People / Settings / Fleet 的管理操作稽核
 """
 import json
+import logging
 import os
 import sqlite3
 from datetime import datetime
 
 import paths
+
+logger = logging.getLogger(__name__)
+_warned_assignees: set[str] = set()
 
 # ---------- 方言層 ----------
 # 同事切換 Postgres 時：設 DATABASE_URL=postgresql://...；本檔以 psycopg 連線並把 `?` 轉成 %s、
@@ -58,6 +64,8 @@ DEFAULT_SETTINGS = {
     "escalate_on_overdue": "1",        # SLA 逾時自動再發一次 webhook（升級）
     "default_assignee_cleaning": "",   # 建立時依類型自動指派（空＝不自動）
     "default_assignee_repair": "",
+    "default_assignee_cleaning_id": "",  # Phase 4 stable ops_people.id；name key 保留相容
+    "default_assignee_repair_id": "",
 }
 
 DDL = [
@@ -118,11 +126,41 @@ DDL = [
          car      TEXT,
          filename TEXT NOT NULL,
          by       TEXT,
+         actor_id INTEGER,
+         actor_name TEXT,
+         actor_role TEXT,
          at       TEXT NOT NULL)""",
+    """CREATE TABLE IF NOT EXISTS ops_users(
+         id            INTEGER PRIMARY KEY AUTOINCREMENT,
+         username      TEXT NOT NULL UNIQUE,
+         display_name  TEXT NOT NULL,
+         role          TEXT NOT NULL,
+         password_hash TEXT NOT NULL,
+         password_salt TEXT NOT NULL,
+         active        INTEGER NOT NULL DEFAULT 1,
+         person_id     INTEGER,
+         created_at    TEXT NOT NULL)""",
+    """CREATE TABLE IF NOT EXISTS ops_sessions(
+         token_hash TEXT PRIMARY KEY,
+         user_id    INTEGER NOT NULL,
+         created_at TEXT NOT NULL,
+         expires_at TEXT NOT NULL)""",
+    """CREATE TABLE IF NOT EXISTS ops_audit_log(
+         id         INTEGER PRIMARY KEY AUTOINCREMENT,
+         at         TEXT NOT NULL,
+         actor_id   INTEGER,
+         actor_name TEXT,
+         actor_role TEXT,
+         action     TEXT NOT NULL,
+         resource   TEXT NOT NULL,
+         resource_id TEXT,
+         detail     TEXT)""",
     "CREATE INDEX IF NOT EXISTS idx_task_photos_task ON task_photos(task_id)",
     "CREATE INDEX IF NOT EXISTS idx_ops_events_at ON ops_events(at)",
     "CREATE INDEX IF NOT EXISTS idx_ops_events_task ON ops_events(task_id)",
     "CREATE INDEX IF NOT EXISTS idx_nlog_task ON notification_log(task_id)",
+    "CREATE INDEX IF NOT EXISTS idx_sessions_user ON ops_sessions(user_id)",
+    "CREATE INDEX IF NOT EXISTS idx_audit_resource ON ops_audit_log(resource, resource_id)",
 ]
 
 
@@ -151,16 +189,89 @@ def _ddl_for_dialect(stmt: str) -> str:
     return stmt.replace("INTEGER PRIMARY KEY AUTOINCREMENT", "SERIAL PRIMARY KEY")
 
 
+_migrated: set[str] = set()   # 已完成 DDL / seed / migration 的資料庫（以路徑或 URL 為 key）
+
+
+def _schema_key() -> str:
+    return os.environ.get("DATABASE_URL") or str(db_path())
+
+
+def reset_schema_cache() -> None:
+    """測試或切換資料庫路徑時呼叫，強制下一條連線重跑 migration。"""
+    _migrated.clear()
+
+
 def ensure_schema(conn: sqlite3.Connection) -> None:
+    """每條連線都會呼叫；但 DDL、seed、migration 每個 process 對同一顆 DB 只跑一次。
+
+    原因：Python sqlite3 對任何 DML（含被 IGNORE 的 INSERT）都會隱式開寫入交易；
+    Admin 5 秒輪詢 + SSE + 站點手機同時在跑時，每條連線都寫會搶 SQLite 單一寫鎖。
+    hot path 只保留純 SELECT 的 legacy assignee 對應（通常零筆）。
+    """
+    key = _schema_key()
+    if key not in _migrated:
+        _migrate(conn)
+        _migrated.add(key)
+    _backfill_assignee_ids(conn)
+
+
+def _migrate(conn: sqlite3.Connection) -> None:
     for stmt in DDL:
         conn.execute(_ddl_for_dialect(stmt))
-    if conn.execute("SELECT COUNT(*) FROM ops_people").fetchone()[0] == 0:
-        ts = now_iso()
-        conn.executemany(
-            "INSERT INTO ops_people(group_name, name, active, created_at) VALUES (?,?,1,?)",
-            [(g, n, ts) for g, n in DEFAULT_PEOPLE])
+    # Multiple requests can enter schema setup together on a fresh database.
+    # Seed each row idempotently instead of doing a racy count-then-insert.
+    ts = now_iso()
+    seed_sql = (
+        "INSERT OR IGNORE INTO ops_people(group_name, name, active, created_at) VALUES (?,?,1,?)"
+        if dialect() == "sqlite"
+        else "INSERT INTO ops_people(group_name, name, active, created_at) VALUES (%s,%s,1,%s) "
+             "ON CONFLICT(name) DO NOTHING"
+    )
+    conn.executemany(seed_sql, [(g, n, ts) for g, n in DEFAULT_PEOPLE])
     for k, v in DEFAULT_SETTINGS.items():
         conn.execute("INSERT OR IGNORE INTO ops_settings(key, value) VALUES (?,?)", (k, v))
+    for kind in ("cleaning", "repair"):
+        name_key, id_key = f"default_assignee_{kind}", f"default_assignee_{kind}_id"
+        legacy = conn.execute("SELECT value FROM ops_settings WHERE key=?", (name_key,)).fetchone()
+        stable = conn.execute("SELECT value FROM ops_settings WHERE key=?", (id_key,)).fetchone()
+        if legacy and legacy[0] and (not stable or not stable[0]):
+            matches = conn.execute("SELECT id FROM ops_people WHERE name=?", (legacy[0],)).fetchall()
+            if len(matches) == 1:
+                conn.execute("UPDATE ops_settings SET value=? WHERE key=?",
+                             (str(matches[0][0]), id_key))
+    # Phase 3 additive SQLite migration；既有 Demo DB 不需清除或重建。
+    if dialect() == "sqlite":
+        for table, columns in {
+            "task_photos": {"actor_id": "INTEGER", "actor_name": "TEXT", "actor_role": "TEXT"},
+            "notification_log": {"actor_id": "INTEGER", "actor_name": "TEXT", "actor_role": "TEXT"},
+        }.items():
+            existing = {r[1] for r in conn.execute(f"PRAGMA table_info({table})")}
+            for name, typ in columns.items():
+                if name not in existing:
+                    conn.execute(f"ALTER TABLE {table} ADD COLUMN {name} {typ}")
+        # `by` 是 Phase 2 的顯示快照；保留相容並補到一致的 actor contract。
+        conn.execute("UPDATE task_photos SET actor_name=by WHERE actor_name IS NULL AND by IS NOT NULL")
+
+
+def _backfill_assignee_ids(conn) -> None:
+    """Phase 4 additive backfill：只有 name 唯一對應 People 時才寫 stable id。
+
+    無法對應的 legacy assignment 保留 name / NULL id，等 Admin 重新指派。
+    每條連線都跑，但只有 SELECT；有 legacy 列才會寫入。
+    """
+    for task_id, assignee in conn.execute(
+            "SELECT id, assignee FROM tasks"
+            " WHERE assignee_id IS NULL AND assignee IS NOT NULL AND assignee<>''").fetchall():
+        matches = conn.execute("SELECT id FROM ops_people WHERE name=?", (assignee,)).fetchall()
+        if len(matches) == 1:
+            conn.execute("UPDATE tasks SET assignee_id=? WHERE id=?", (matches[0][0], task_id))
+        else:
+            key = f"{task_id}:{assignee}"
+            if key not in _warned_assignees:
+                logger.warning(
+                    "assignee migration skipped task_id=%s name=%r matches=%s; Admin must reassign",
+                    task_id, assignee, len(matches))
+                _warned_assignees.add(key)
 
 
 # ops 表依賴監理台的 tasks / task_events；ops_api.bind() 會把它設成「先跑 server.db() 建基礎表」
@@ -377,10 +488,12 @@ def update_draft(conn, case_id: str, audience: str, content: dict) -> dict | Non
 
 
 def add_notification_log(conn, task_id: int, audience: str | None, channel: str,
-                         status: str, detail: str) -> dict:
+                         status: str, detail: str, actor=None) -> dict:
+    import ops_auth  # noqa: PLC0415
+    aid, aname, arole = ops_auth.actor_values(actor)
     cur = conn.execute(
-        "INSERT INTO notification_log(task_id, audience, channel, status, detail, at)"
-        " VALUES (?,?,?,?,?,?)", (task_id, audience, channel, status, detail, now_iso()))
+        "INSERT INTO notification_log(task_id, audience, channel, status, detail, at, actor_id, actor_name, actor_role)"
+        " VALUES (?,?,?,?,?,?,?,?,?)", (task_id, audience, channel, status, detail, now_iso(), aid, aname, arole))
     return dict(conn.execute("SELECT * FROM notification_log WHERE id=?", (cur.lastrowid,)).fetchone())
 
 
@@ -406,10 +519,13 @@ def set_lock(conn, car: str, locked: bool, reason: str | None, by: str) -> dict:
 
 # ---------- task photos ----------
 
-def add_task_photo(conn, task: dict, filename: str, by: str) -> dict:
+def add_task_photo(conn, task: dict, filename: str, by: str, actor=None) -> dict:
+    import ops_auth  # noqa: PLC0415
+    aid, aname, arole = ops_auth.actor_values(actor)
     cur = conn.execute(
-        "INSERT INTO task_photos(task_id, case_id, car, filename, by, at) VALUES (?,?,?,?,?,?)",
-        (task["id"], task.get("case_id"), task.get("car"), filename, by, now_iso()))
+        "INSERT INTO task_photos(task_id, case_id, car, filename, by, at, actor_id, actor_name, actor_role)"
+        " VALUES (?,?,?,?,?,?,?,?,?)",
+        (task["id"], task.get("case_id"), task.get("car"), filename, by, now_iso(), aid, aname, arole))
     return dict(conn.execute("SELECT * FROM task_photos WHERE id=?", (cur.lastrowid,)).fetchone())
 
 
@@ -444,3 +560,15 @@ def photo_count(conn, task_id: int) -> int:
 
 def has_assignee_event(conn, task_id: int) -> bool:
     return conn.execute("SELECT 1 FROM task_events WHERE task_id=? AND event='assignee'", (task_id,)).fetchone() is not None
+
+
+def add_audit(conn, action: str, resource: str, resource_id=None, detail: str | None = None,
+              actor=None) -> dict:
+    import ops_auth  # noqa: PLC0415
+    aid, aname, arole = ops_auth.actor_values(actor)
+    cur = conn.execute(
+        "INSERT INTO ops_audit_log(at, actor_id, actor_name, actor_role, action, resource, resource_id, detail)"
+        " VALUES (?,?,?,?,?,?,?,?)",
+        (now_iso(), aid, aname, arole, action, resource,
+         None if resource_id is None else str(resource_id), detail))
+    return dict(conn.execute("SELECT * FROM ops_audit_log WHERE id=?", (cur.lastrowid,)).fetchone())

@@ -3,10 +3,14 @@
 覆蓋：事件流由 task_events 派生（冪等）、已讀、SLA 計算與逾時事件、任務詳情（案件快照→照片 URL）、
 狀態變更走同一套狀態機、備註、人員、設定、管道狀態不外洩 URL。
 """
+import json
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
+from threading import Barrier
 
 import pytest
 from fastapi import HTTPException
+from fastapi.testclient import TestClient
 
 
 @pytest.fixture()
@@ -88,6 +92,7 @@ class TestSLA:
         with srv.db() as conn:
             conn.execute("UPDATE tasks SET created_at=? WHERE id=?", (old, t["id"]))
         assert ops.summary()["overdue"] == 1
+        assert ops.list_tasks()["tasks"][0]["sla_status"] == "overdue"
         ops.list_events(); ops.list_tasks()
         evs = [e for e in ops.list_events()["events"] if e["type"] == "sla_overdue"]
         assert len(evs) == 1 and evs[0]["task_id"] == t["id"]
@@ -95,7 +100,8 @@ class TestSLA:
     def test_設定門檻影響計算(self, srv, ops, monkeypatch):
         make_task(srv, monkeypatch=monkeypatch)
         ops.put_settings({"sla_minutes_p1": 60})
-        assert ops.list_tasks()["tasks"][0]["sla_minutes"] == 60
+        task = ops.list_tasks()["tasks"][0]
+        assert task["sla_minutes"] == 60 and task["sla_status"] == "normal"
         with pytest.raises(HTTPException):
             ops.put_settings({"sla_minutes_p1": "abc"})
         with pytest.raises(HTTPException):
@@ -161,11 +167,52 @@ class TestPeopleSettingsChannels:
         assert "維修組 C" not in [x["name"] for x in ops.people()["people"]]
         assert "維修組 C" in [x["name"] for x in ops.people(all=True)["people"]]
 
+    def test_人員改名同步任務與自動指派設定(self, srv, ops, monkeypatch):
+        t = make_task(srv, monkeypatch=monkeypatch)
+        person = next(p for p in ops.people(all=True)["people"] if p["name"] == "維修組 A")
+        ops.update_task(t["id"], ops.OpsTaskUpdate(action="assign", assignee="維修組 A"))
+        ops.put_settings({"default_assignee_repair": "維修組 A"})
+
+        changed = ops.patch_person(person["id"], ops.PersonPatch(group_name="車體組", name="車體組 A"))
+        assert changed["group_name"] == "車體組" and changed["name"] == "車體組 A"
+        detail = ops.get_task(t["id"])["task"]
+        assert detail["assignee"] == detail["assignee_name"] == "車體組 A"
+        # 改名不是指派：任務時間軸不新增 assignee 事件，紀錄在 audit log
+        assert sum(e["event"] == "assignee" for e in detail["events"]) == 1
+        with srv.db() as conn:
+            audit = conn.execute("SELECT detail FROM ops_audit_log WHERE resource='person' AND resource_id=?",
+                                 (str(person["id"]),)).fetchall()
+        assert any("維修組 A → 車體組 / 車體組 A" in row[0] for row in audit)
+        assert ops.get_settings()["settings"]["default_assignee_repair"] == "車體組 A"
+        with pytest.raises(HTTPException) as exc:
+            ops.patch_person(person["id"], ops.PersonPatch(name=""))
+        assert exc.value.status_code == 400
+
     def test_管道狀態不外洩URL(self, srv, ops):
         h = ops.ops_health()
         wh = next(c for c in h["channels"] if c["id"] == "webhook")
         assert wh["configured"] is True and "http" not in str(wh)
         assert all(c["available"] is False for c in h["channels"] if c["id"] in ("line", "sms"))
+
+    def test_Demo登入提示只在標準Demo帳密顯示(self, srv, ops, monkeypatch):
+        monkeypatch.setenv("DEMO_MODE", "true")
+        monkeypatch.delenv("IRENT_ADMIN_PASSWORD", raising=False)
+        monkeypatch.delenv("IRENT_STATION_PASSWORD", raising=False)
+        assert {c["username"] for c in ops.ops_health()["demo_credentials"]} == {"admin", "station"}
+        monkeypatch.setenv("IRENT_ADMIN_PASSWORD", "custom-secret")
+        assert {c["username"] for c in ops.ops_health()["demo_credentials"]} == {"station"}
+        monkeypatch.setenv("DEMO_MODE", "false")
+        assert ops.ops_health()["demo_credentials"] == []
+
+    def test_健康檢查不依賴Gemini或Webhook(self, srv, ops, monkeypatch):
+        monkeypatch.setattr(srv, "_gemini_configured", lambda: False)
+        monkeypatch.delenv("NOTIFICATION_WEBHOOK_URL", raising=False)
+        response = srv.health()
+        body = json.loads(response.body)
+        assert response.status_code == 200
+        assert body == {"status": "ok", "database": "ok", "admin_ui": "ok",
+                        "gemini_configured": False, "notification_configured": False}
+        assert ops.ops_health()["gemini_configured"] is False
 
     def test_summary計數(self, srv, ops, monkeypatch):
         make_task(srv, monkeypatch=monkeypatch)
@@ -343,6 +390,7 @@ class TestPhotosAndMyTasks:
     def test_上傳完工照_存檔並寫歷程(self, srv, ops, monkeypatch, tmp_path):
         monkeypatch.setattr(ops, "PHOTO_ROOT", tmp_path / "photos")
         t = make_task(srv, monkeypatch=monkeypatch)
+        srv.patch_task(t["id"], srv.TaskUpdate(action="start"))
         import io
         from starlette.datastructures import UploadFile as SUF
         up = SUF(filename="done.jpg", file=io.BytesIO(_jpeg_bytes()))
@@ -359,6 +407,7 @@ class TestPhotosAndMyTasks:
     def test_非影像400_找不到任務404(self, srv, ops, monkeypatch, tmp_path):
         monkeypatch.setattr(ops, "PHOTO_ROOT", tmp_path / "photos")
         t = make_task(srv, monkeypatch=monkeypatch)
+        srv.patch_task(t["id"], srv.TaskUpdate(action="start"))
         import io
         from starlette.datastructures import UploadFile as SUF
         with pytest.raises(HTTPException) as ei:
@@ -394,19 +443,52 @@ class TestPhotosAndMyTasks:
 # ---------- 流程修正：孤兒清理、防搶單、完工照守門、逾時升級、自動指派、一致率 ----------
 
 class TestFlowFixes:
+    def test_assignee_id_additive_backfill_idempotent_and_unknown_warns(self, srv, ops, monkeypatch, caplog):
+        known = make_task(srv, "RCR-7661-左後", monkeypatch)
+        unknown = make_task(srv, "RCR-7662-左後", monkeypatch)
+        with srv.db() as conn:
+            conn.execute("UPDATE tasks SET assignee='清潔組 A', assignee_id=NULL WHERE id=?", (known["id"],))
+            conn.execute("UPDATE tasks SET assignee='不存在的人', assignee_id=NULL WHERE id=?", (unknown["id"],))
+
+        first = {t["id"]: t for t in ops.list_tasks()["tasks"]}
+        second = {t["id"]: t for t in ops.list_tasks()["tasks"]}  # 重複啟動／執行仍冪等
+        with srv.db() as conn:
+            person_id = conn.execute("SELECT id FROM ops_people WHERE name='清潔組 A'").fetchone()[0]
+        assert first[known["id"]]["assignee_id"] == person_id
+        assert first[known["id"]]["assignee_name"] == "清潔組 A"
+        assert second[known["id"]]["assignee_id"] == person_id
+        assert first[unknown["id"]]["assignee_id"] is None
+        assert "migration skipped" in caplog.text and "不存在的人" in caplog.text
+
+    def test_assign_api_uses_stable_id_and_dual_writes_name(self, srv, ops, monkeypatch):
+        task = make_task(srv, monkeypatch=monkeypatch)
+        people = ops.people()["people"]
+        person = next(p for p in people if p["name"] == "維修組 A")
+        detail = ops.update_task(
+            task["id"], ops.OpsTaskUpdate(action="assign", assignee_id=person["id"]))["task"]
+        assert detail["assignee_id"] == person["id"]
+        assert detail["assignee_name"] == detail["assignee"] == "維修組 A"
+
     def test_Demo重置後事件與紀錄跟著清(self, srv, ops, monkeypatch, tmp_path):
+        monkeypatch.setenv("DEMO_MODE", "true")
         monkeypatch.setattr(ops, "PHOTO_ROOT", tmp_path / "photos")
         t = make_task(srv, monkeypatch=monkeypatch)
+        srv.patch_task(t["id"], srv.TaskUpdate(action="start"))
         import io
         from starlette.datastructures import UploadFile as SUF
         r = run(ops.upload_task_photo(t["id"], photo=SUF(filename="a.jpg", file=io.BytesIO(_jpeg_bytes()))))
         f = tmp_path / "photos" / str(t["id"]) / r["photo"]["filename"]
         assert ops.list_events()["events"] and f.exists()
-        with srv.db() as conn:   # 模擬 /api/demo/reset：直接刪任務
-            conn.execute("DELETE FROM task_events WHERE task_id=?", (t["id"],))
-            conn.execute("DELETE FROM tasks WHERE id=?", (t["id"],))
-        assert ops.list_events()["events"] == [] and not f.exists()
+        assert srv.demo_reset()["ok"] is True
+        # 不依賴下一次 Ops API 的 lazy purge；reset 回傳時 metadata 與檔案都已清除。
+        with srv.db() as conn:
+            assert conn.execute("SELECT count(*) FROM ops_events WHERE task_id=?", (t["id"],)).fetchone()[0] == 0
+            assert conn.execute("SELECT count(*) FROM task_photos WHERE task_id=?", (t["id"],)).fetchone()[0] == 0
+            assert conn.execute("SELECT count(*) FROM notification_log WHERE task_id=?", (t["id"],)).fetchone()[0] == 0
+        assert not f.exists()
+        assert ops.list_events()["events"] == []
         assert ops.summary()["unread"] == 0
+        assert ops.car_baseline("RCR-7661")["photos"] == []
 
     def test_防搶單(self, srv, ops, monkeypatch):
         t = make_task(srv, monkeypatch=monkeypatch)
@@ -416,6 +498,29 @@ class TestFlowFixes:
         assert ei.value.status_code == 409 and "清潔組 A" in ei.value.detail
         d = ops.update_task(t["id"], ops.OpsTaskUpdate(assignee="清潔組 B", expected_assignee="清潔組 A"))
         assert d["task"]["assignee"] == "清潔組 B"
+
+    def test_兩人同時claim只有一人成功(self, srv, ops, monkeypatch):
+        t = make_task(srv, monkeypatch=monkeypatch)
+        barrier = Barrier(2)
+
+        def claim(reader):
+            barrier.wait()
+            try:
+                result = ops.update_task(t["id"], ops.OpsTaskUpdate(action="claim"),
+                                         x_ops_reader=reader)
+                return "ok", result["task"]["assignee"]
+            except HTTPException as exc:
+                return "error", exc.status_code
+
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            results = list(pool.map(claim, ("worker-a", "worker-b")))
+
+        assert sorted(kind for kind, _ in results) == ["error", "ok"]
+        assert next(value for kind, value in results if kind == "error") == 409
+        winner = next(value for kind, value in results if kind == "ok")
+        detail = ops.get_task(t["id"])["task"]
+        assert detail["assignee"] == winner
+        assert sum(e["event"] == "assignee" for e in detail["events"]) == 1
 
     def test_清潔任務完工須有照片_監理台路徑也擋(self, srv, ops, monkeypatch, tmp_path):
         monkeypatch.setattr(ops, "PHOTO_ROOT", tmp_path / "photos")
@@ -483,13 +588,254 @@ class TestFlowFixes:
     def test_基準照只取已完成任務(self, srv, ops, monkeypatch, tmp_path):
         monkeypatch.setattr(ops, "PHOTO_ROOT", tmp_path / "photos")
         t = make_task(srv, monkeypatch=monkeypatch)
+        srv.patch_task(t["id"], srv.TaskUpdate(action="start"))
         import io
         from starlette.datastructures import UploadFile as SUF
         run(ops.upload_task_photo(t["id"], photo=SUF(filename="a.jpg", file=io.BytesIO(_jpeg_bytes()))))
         assert ops.car_baseline("rcr-7661")["photos"] == []
-        srv.patch_task(t["id"], srv.TaskUpdate(status="in_progress"))
-        srv.patch_task(t["id"], srv.TaskUpdate(status="completed"))
+        srv.patch_task(t["id"], srv.TaskUpdate(action="complete"))
         assert len(ops.car_baseline("RCR-7661")["photos"]) == 1
+
+    def test_環節三核心流程與後端能力完整閉環(self, srv, ops, monkeypatch, tmp_path):
+        """Backend integration acceptance：不呼叫 Gemini，覆蓋 Demo 的整條關鍵路徑。"""
+        monkeypatch.setattr(ops, "PHOTO_ROOT", tmp_path / "photos")
+        monkeypatch.setattr(srv, "_case_snapshot", lambda cid: snap_interior())
+
+        created = srv.post_decision(
+            srv.Decision(case_id="F2-RDE-0160-front", decision="confirm"))["task"]
+        task_id = created["id"]
+
+        # Admin 看得到任務；Mobile/UI 所需規則由後端提供。
+        pending = next(t for t in ops.list_tasks()["tasks"] if t["id"] == task_id)
+        assert pending["status"] == "pending"
+        assert {"claim", "start"} <= set(pending["allowed_actions"])
+        assert pending["completion_requirements"] == {
+            "photo_required": True, "photo_count": 0, "satisfied": False,
+            "message": "完工前需至少一張完工照",
+        }
+
+        claimed = ops.update_task(task_id, ops.OpsTaskUpdate(action="claim"),
+                                  x_ops_reader="%E6%B8%85%E6%BD%94%E7%B5%84%20A")["task"]
+        assert claimed["assignee"] == "清潔組 A"
+        started = ops.update_task(task_id, ops.OpsTaskUpdate(action="start"))["task"]
+        assert started["status"] == "in_progress"
+        assert "upload_photo" in started["allowed_actions"]
+        assert "complete" not in started["allowed_actions"]
+
+        import io
+        from starlette.datastructures import UploadFile as SUF
+        uploaded = run(ops.upload_task_photo(
+            task_id, photo=SUF(filename="done.jpg", file=io.BytesIO(_jpeg_bytes())),
+            x_ops_reader="%E6%B8%85%E6%BD%94%E7%B5%84%20A"))
+        assert uploaded["task"]["completion_requirements"]["satisfied"] is True
+        assert "complete" in uploaded["task"]["allowed_actions"]
+
+        completed = ops.update_task(task_id, ops.OpsTaskUpdate(action="complete"))["task"]
+        assert completed["status"] == "completed" and completed["resolved_at"]
+        events = [event["event"] for event in completed["events"]]
+        for required in ("created", "assignee", "photo"):
+            assert required in events
+        assert events.count("status") == 2
+
+        baseline = ops.car_baseline("RDE-0160")["photos"]
+        assert len(baseline) == 1 and baseline[0]["task_id"] == task_id
+        fleet_row = next(row for row in ops.fleet()["fleet"] if row["car"] == "RDE-0160")
+        assert fleet_row["baseline_count"] == 1
+
+
+class TestAuthenticationRBAC:
+    @staticmethod
+    def login(client, username, password):
+        response = client.post("/api/auth/login", json={"username": username, "password": password})
+        assert response.status_code == 200, response.text
+        return response.json()["user"]
+
+    def test_未登入401_admin可用_station管理API為403(self, srv, monkeypatch):
+        monkeypatch.setenv("DEMO_MODE", "true")
+        with TestClient(srv.app) as anonymous:
+            assert anonymous.get("/api/ops/summary").status_code == 401
+
+        with TestClient(srv.app) as admin:
+            user = self.login(admin, "admin", "admin-demo")
+            assert user["role"] == "admin"
+            assert admin.get("/api/ops/settings").status_code == 200
+            assert admin.put("/api/ops/settings", json={"sla_minutes_p1": 6}).status_code == 200
+
+        with TestClient(srv.app) as station:
+            user = self.login(station, "station", "station-demo")
+            assert user["role"] == "station" and user["name"] == "清潔組 A"
+            assert station.get("/api/ops/my-tasks").status_code == 200
+            assert station.put("/api/ops/settings", json={"sla_minutes_p1": 7}).status_code == 403
+            assert station.get("/api/ops/people").status_code == 403
+
+    def test_監理台寫入與燒額度端點需admin_唯讀端點不擋(self, srv, monkeypatch):
+        monkeypatch.setenv("DEMO_MODE", "true")
+        guarded = [("post", "/api/judge"), ("post", "/api/gate"), ("get", "/api/live_cases"),
+                   ("post", "/api/live_case"), ("delete", "/api/live_case/x"),
+                   ("post", "/api/decision"), ("get", "/api/tasks")]
+        with TestClient(srv.app) as anonymous:
+            for method, path in guarded:
+                assert getattr(anonymous, method)(path).status_code == 401, path
+            assert anonymous.get("/api/health").status_code == 200
+            assert anonymous.get("/api/ops/health").status_code == 200
+            assert anonymous.get("/api/labels/stats").status_code == 200
+        with TestClient(srv.app) as station:
+            self.login(station, "station", "station-demo")
+            for method, path in guarded:
+                assert getattr(station, method)(path).status_code == 403, path
+
+    def test_station名稱不在People時啟動自動建立並連結(self, srv, monkeypatch, caplog):
+        monkeypatch.setenv("DEMO_MODE", "true")
+        monkeypatch.setenv("IRENT_STATION_NAME", "夜班組 Z")
+        with TestClient(srv.app) as station:
+            user = self.login(station, "station", "station-demo")
+        assert user["name"] == "夜班組 Z" and user["person_id"] is not None
+        assert "已自動建立" in caplog.text
+        with srv.db() as conn:
+            person = conn.execute("SELECT group_name, name FROM ops_people WHERE id=?",
+                                  (user["person_id"],)).fetchone()
+        assert tuple(person) == ("夜班組", "夜班組 Z")
+
+    def test_session驗證不寫入資料庫(self, srv, monkeypatch):
+        import ops_auth
+        monkeypatch.setenv("DEMO_MODE", "true")
+        with TestClient(srv.app) as admin:
+            self.login(admin, "admin", "admin-demo")
+            with srv.db() as conn:
+                before = conn.execute("PRAGMA data_version").fetchone()[0]
+                token = admin.cookies.get(ops_auth.COOKIE)
+                for _ in range(3):
+                    assert admin.get("/api/ops/summary").status_code == 200
+                assert ops_auth.session_actor(token) is not None
+                after = conn.execute("PRAGMA data_version").fetchone()[0]
+        # summary 本身只讀；若 session 驗證或 schema 檢查偷寫入，data_version 會變
+        assert before == after
+
+    def test_station生命週期寫入可信actor且header不能偽造(self, srv, ops, monkeypatch, tmp_path):
+        monkeypatch.setenv("DEMO_MODE", "true")
+        monkeypatch.setattr(ops, "PHOTO_ROOT", tmp_path / "photos")
+        monkeypatch.setattr(srv, "_case_snapshot", lambda cid: snap_interior())
+        task = srv.post_decision(srv.Decision(case_id="F2-RDE-0160-front", decision="confirm"))["task"]
+
+        with TestClient(srv.app) as station:
+            self.login(station, "station", "station-demo")
+            headers = {"X-Ops-Reader": "forged-admin"}
+            before = station.get("/api/ops/my-tasks").json()["tasks"][0]
+            assert before["allowed_actions"] == ["claim"]
+            assert station.patch(f"/api/ops/tasks/{task['id']}", json={"action": "start"}, headers=headers).status_code == 403
+            assert station.patch(f"/api/ops/tasks/{task['id']}", json={"action": "claim"}, headers=headers).status_code == 200
+            after_claim = station.get("/api/ops/my-tasks").json()["tasks"][0]
+            assert "start" in after_claim["allowed_actions"] and "assign" not in after_claim["allowed_actions"]
+            assert station.patch(f"/api/ops/tasks/{task['id']}", json={"action": "start"}, headers=headers).status_code == 200
+            photo = {"photo": ("done.jpg", _jpeg_bytes(), "image/jpeg")}
+            assert station.post(f"/api/ops/tasks/{task['id']}/photos", files=photo, headers=headers).status_code == 200
+            assert station.patch(f"/api/ops/tasks/{task['id']}", json={"action": "complete"}, headers=headers).status_code == 200
+            assert station.patch(f"/api/ops/tasks/{task['id']}", json={"action": "claim"}, headers=headers).status_code == 409
+
+        detail = ops.get_task(task["id"])["task"]
+        assert detail["status"] == "completed" and detail["assignee"] == "清潔組 A"
+        acted = [e for e in detail["events"] if e["event"] in ("assignee", "status", "photo")]
+        assert acted and all(e["actor_name"] == "清潔組 A" for e in acted)
+        assert all(e["actor_role"] == "station" for e in acted)
+        assert "forged-admin" not in str(acted)
+
+    def test_admin人員與設定變更寫audit_log(self, srv, monkeypatch):
+        monkeypatch.setenv("DEMO_MODE", "true")
+        with TestClient(srv.app) as admin:
+            self.login(admin, "admin", "admin-demo")
+            assert admin.post("/api/ops/people", json={"group_name": "測試組", "name": "Demo User"}).status_code == 200
+            assert admin.put("/api/ops/settings", json={"sla_minutes_p2": 120}).status_code == 200
+        with srv.db() as conn:
+            rows = conn.execute("SELECT actor_name, actor_role, resource FROM ops_audit_log ORDER BY id").fetchall()
+        assert ("營運主管", "admin", "person") in rows
+        assert ("營運主管", "admin", "settings") in rows
+
+    def test_station以person_id授權_改名後仍可完成_舊audit不改寫(
+            self, srv, ops, monkeypatch, tmp_path):
+        monkeypatch.setenv("DEMO_MODE", "true")
+        monkeypatch.setattr(ops, "PHOTO_ROOT", tmp_path / "photos")
+        monkeypatch.setattr(srv, "_case_snapshot", lambda cid: snap_interior())
+        own = srv.post_decision(
+            srv.Decision(case_id="F2-RDE-0160-front", decision="confirm"))["task"]
+        other = srv.post_decision(
+            srv.Decision(case_id="F2-RDE-0180-front", decision="confirm"))["task"]
+
+        with TestClient(srv.app) as station:
+            user = self.login(station, "station", "station-demo")
+            assert user["person_id"] is not None
+            assert station.patch(f"/api/ops/tasks/{own['id']}", json={"action": "claim"}).status_code == 200
+
+            with TestClient(srv.app) as admin:
+                self.login(admin, "admin", "admin-demo")
+                people = admin.get("/api/ops/people").json()["people"]
+                station_person = next(p for p in people if p["id"] == user["person_id"])
+                assert admin.patch(
+                    f"/api/ops/people/{station_person['id']}",
+                    json={"name": "清潔組 改名"}).status_code == 200
+                other_person = next(p for p in people if p["name"] == "清潔組 B")
+                assert admin.patch(
+                    f"/api/ops/tasks/{other['id']}",
+                    json={"action": "assign", "assignee_id": other_person["id"]}).status_code == 200
+
+            mine = station.get("/api/ops/my-tasks")
+            assert mine.status_code == 200
+            mine_task = next(t for t in mine.json()["tasks"] if t["id"] == own["id"])
+            assert mine_task["mine"] and mine_task["assignee_id"] == user["person_id"]
+            assert mine_task["assignee_name"] == "清潔組 改名"
+            assert station.get(f"/api/ops/tasks/{own['id']}").status_code == 200
+            assert station.patch(f"/api/ops/tasks/{own['id']}", json={"action": "start"}).status_code == 200
+            photo = {"photo": ("done.jpg", _jpeg_bytes(), "image/jpeg")}
+            assert station.post(f"/api/ops/tasks/{own['id']}/photos", files=photo).status_code == 200
+            assert station.patch(f"/api/ops/tasks/{own['id']}", json={"action": "complete"}).status_code == 200
+
+            assert station.get(f"/api/ops/tasks/{other['id']}").status_code == 403
+            assert station.patch(f"/api/ops/tasks/{other['id']}", json={"action": "start"}).status_code == 403
+            assert station.post(f"/api/ops/tasks/{other['id']}/photos", files=photo).status_code == 403
+            assert station.patch(f"/api/ops/tasks/{other['id']}", json={"action": "complete"}).status_code == 403
+
+        detail = ops.get_task(own["id"])["task"]
+        lifecycle = [e for e in detail["events"] if e["event"] in ("assignee", "status", "photo")]
+        assert lifecycle[0]["actor_name"] == "清潔組 A"  # 改名前 snapshot 不回寫
+        assert lifecycle[0]["actor_id"] == user["id"]
+        assert all(e["actor_id"] == user["id"] for e in lifecycle if e["actor_role"] == "station")
+        assert any(e["actor_name"] == "清潔組 改名" for e in lifecycle[1:])
+        with srv.db() as conn:
+            photo_actor = conn.execute(
+                "SELECT actor_id, actor_name, actor_role FROM task_photos WHERE task_id=?", (own["id"],)).fetchone()
+        assert tuple(photo_actor) == (user["id"], "清潔組 改名", "station")
+
+    def test_login_rate_limit_logout_revoke_and_demo_credentials(self, srv, monkeypatch):
+        import ops_auth
+        ops_auth._login_failures.clear()
+        monkeypatch.setenv("DEMO_MODE", "true")
+        with TestClient(srv.app) as client:
+            for _ in range(ops_auth.LOGIN_MAX_FAILURES):
+                assert client.post("/api/auth/login", json={
+                    "username": "admin", "password": "wrong"}).status_code == 401
+            limited = client.post("/api/auth/login", json={
+                "username": "admin", "password": "admin-demo"})
+            assert limited.status_code == 429 and limited.headers["retry-after"] == "60"
+
+        ops_auth._login_failures.clear()
+        with TestClient(srv.app) as client:
+            self.login(client, "admin", "admin-demo")
+            old_token = client.cookies.get(ops_auth.COOKIE)
+            assert old_token
+            assert client.post("/api/auth/logout").status_code == 200
+            assert client.get("/api/auth/me", headers={
+                "Cookie": f"{ops_auth.COOKIE}={old_token}"}).status_code == 401
+
+        monkeypatch.setenv("DEMO_MODE", "false")
+        monkeypatch.setenv("IRENT_ADMIN_USERNAME", "admin")
+        monkeypatch.setenv("IRENT_ADMIN_PASSWORD", "admin-demo")
+        monkeypatch.setenv("IRENT_STATION_USERNAME", "station")
+        monkeypatch.setenv("IRENT_STATION_PASSWORD", "station-demo")
+        with TestClient(srv.app) as client:
+            assert client.post("/api/auth/login", json={
+                "username": "admin", "password": "admin-demo"}).status_code == 401
+            assert client.post("/api/auth/login", json={
+                "username": "station", "password": "station-demo"}).status_code == 401
+        ops_auth._login_failures.clear()
 
 
 # ---------- 完工照 → 現場實測的借車基準照 ----------
@@ -498,11 +844,11 @@ class TestBaselineInJudge:
     def _done_with_photo(self, srv, ops, monkeypatch, tmp_path):
         monkeypatch.setattr(ops, "PHOTO_ROOT", tmp_path / "photos")
         t = make_task(srv, monkeypatch=monkeypatch)
+        srv.patch_task(t["id"], srv.TaskUpdate(action="start"))
         import io
         from starlette.datastructures import UploadFile as SUF
         run(ops.upload_task_photo(t["id"], photo=SUF(filename="a.jpg", file=io.BytesIO(_jpeg_bytes(640, 480)))))
-        srv.patch_task(t["id"], srv.TaskUpdate(status="in_progress"))
-        srv.patch_task(t["id"], srv.TaskUpdate(status="completed"))
+        srv.patch_task(t["id"], srv.TaskUpdate(action="complete"))
         return t
 
     def test_latest_baseline(self, srv, ops, monkeypatch, tmp_path):

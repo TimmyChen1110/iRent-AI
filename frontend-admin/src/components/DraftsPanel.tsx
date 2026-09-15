@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import { api } from '../lib/api'
 import type { Audience, Draft, Drafts, NotificationLogEntry, Task } from '../lib/types'
-import { useStore } from '../lib/store'
+import { useStore } from '../lib/store-context'
 import { fmt } from '../lib/time'
-import { useToast } from './Toast'
+import { useToast } from './toast-context'
 
 const AUD: Array<{ key: Audience; label: string; hint: string }> = [
   { key: 'user', label: '用戶通知', hint: '中性、不歸咎、無術語與分數，附申訴管道' },
@@ -34,7 +34,7 @@ export function DraftsPanel({ task, drafts, log, onChange, onSent }: Props) {
   const [channel, setChannel] = useState('webhook')
   const [sending, setSending] = useState(false)
   const draft: Draft | undefined = drafts[tab]
-  useEffect(() => { setEdit(null) }, [tab, draft?.generated_at, draft?.edited_at])
+  useEffect(() => { const id = setTimeout(() => setEdit(null), 0); return () => clearTimeout(id) }, [tab, draft?.generated_at, draft?.edited_at])
 
   const generate = async (force: boolean) => {
     setGen(true)
@@ -69,13 +69,15 @@ export function DraftsPanel({ task, drafts, log, onChange, onSent }: Props) {
         </div>
         <span className="spacer" />
         {Object.keys(drafts).length === 0
-          ? <button className="btn primary sm" disabled={gen} onClick={() => generate(false)}>{gen ? '生成中（約 10 秒）…' : '✦ 生成三對象文案'}</button>
-          : <button className="btn sm" disabled={gen} onClick={() => generate(true)}>{gen ? '生成中…' : '↻ 重新生成'}</button>}
+          ? <button className="btn primary sm" disabled={gen || !health?.gemini_configured} onClick={() => generate(false)}>{gen ? '生成中（約 10 秒）…' : '✦ 生成三對象文案'}</button>
+          : <button className="btn sm" disabled={gen || !health?.gemini_configured} onClick={() => generate(true)}>{gen ? '生成中…' : '↻ 重新生成'}</button>}
       </div>
       <div className="small faint" style={{ marginBottom: 8 }}>{AUD.find(a => a.key === tab)?.hint}</div>
 
       {!draft ? (
-        <div className="notice">尚未生成文案。生成會呼叫一次 Gemini（三個對象一次產出），結果依案件快取，Demo 前可在「通知設定」預先生成。</div>
+        <div className="notice">{health?.gemini_configured
+          ? '尚未生成文案。生成會呼叫一次 Gemini（三個對象一次產出），結果依案件快取。'
+          : 'Gemini API Key 未設定，因此無法生成文案；任務處理、完工照與 baseline 流程不受影響。'}</div>
       ) : (
         <>
           <div className="row wrap small" style={{ marginBottom: 8 }}>
@@ -113,9 +115,10 @@ export function DraftsPanel({ task, drafts, log, onChange, onSent }: Props) {
 
       {log.length > 0 && (
         <table className="table" style={{ marginTop: 12 }}>
-          <thead><tr><th>時間</th><th>對象</th><th>管道</th><th>結果</th></tr></thead>
+          <thead><tr><th>時間</th><th>操作人</th><th>對象</th><th>管道</th><th>結果</th></tr></thead>
           <tbody>{log.map(l => (
             <tr key={l.id}><td className="mono small">{fmt(l.at)}</td>
+              <td>{l.actor_name ? <span className="badge soft">{l.actor_name} · {l.actor_role}</span> : <span className="faint">System / Legacy</span>}</td>
               <td>{{ user: '用戶通知', cs: '客服摘要', worker: '派工單' }[l.audience || ''] || l.audience || '—'}</td>
               <td>{l.channel}</td>
               <td><span className={`badge ${l.status === 'sent' ? 'ok' : l.status === 'failed' ? 'warn' : 'soft'}`}>{{ sent: '已送出', failed: '失敗', unsupported: '未接入', skipped: '未設定' }[l.status] || l.status}</span> <span className="small faint">{l.detail}</span></td></tr>

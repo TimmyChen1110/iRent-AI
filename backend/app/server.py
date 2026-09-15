@@ -16,9 +16,11 @@
 注意：資料含真實車牌照片，僅限 localhost / 隊內區網，勿部署公網。
 """
 import base64
+import contextlib
 import io
 import json
 import os
+import shutil
 import sqlite3
 import sys
 import tempfile
@@ -32,7 +34,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.concurrency import run_in_threadpool
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from PIL import Image, ImageOps
 from pydantic import BaseModel
 
@@ -43,13 +45,22 @@ sys.path.insert(0, str(PIPE))
 from pairs_io import load_pairs  # noqa: E402
 
 import paths  # noqa: E402  執行期可設定的路徑與金鑰檢查
+import task_service  # noqa: E402  整備任務狀態與 action 的 single source of truth
 from build_dashboard import build_cases, build_f2cases, car_model_block  # noqa: E402
 from results_config import FINAL_RESULTS, INTERIOR_RESULTS  # noqa: E402
 
 DB_PATH = paths.DB_PATH
 
+@contextlib.asynccontextmanager
+async def _lifespan(_app):
+    # Demo 帳號 seed（或 DEMO_MODE 關閉後停用弱密碼帳號）只在啟動時跑一次，不在每個 request。
+    ops_auth.startup_seed()
+    yield
+
+
 app = FastAPI(
     title="iRent 車況監理台",
+    lifespan=_lifespan,
     # 預設關閉；本機開發設 IRENT_ENABLE_DOCS=1 開啟（見 app/paths.py）
     docs_url="/docs" if paths.DOCS_ENABLED else None,
     redoc_url="/redoc" if paths.DOCS_ENABLED else None,
@@ -70,8 +81,11 @@ TASK_COMPLETE_GUARD = None
 
 # 環節三 整備中心 API（/api/ops）與前端（/ops）；規則不重寫，router 內回呼本模組函式
 import ops_api  # noqa: E402
+import ops_auth  # noqa: E402
 ops_api.bind(sys.modules[__name__])
 app.include_router(ops_api.router)
+app.include_router(ops_auth.router)
+app.middleware("http")(ops_auth.auth_middleware)
 
 
 # ---------- 決策 DB（全隊共享） ----------
@@ -117,6 +131,7 @@ def db():
                  description TEXT,
                  priority   TEXT,               -- P1 | P2 | P3（沿用案件分級）
                  assignee   TEXT,
+                 assignee_id INTEGER,            -- ops_people.id；name 欄保留作 legacy display snapshot
                  status     TEXT NOT NULL DEFAULT 'pending',  -- pending | in_progress | completed | cancelled
                  notification_status TEXT NOT NULL DEFAULT 'not_sent',
                  created_at TEXT NOT NULL,
@@ -128,8 +143,20 @@ def db():
                  task_id  INTEGER NOT NULL,
                  at       TEXT NOT NULL,
                  event    TEXT NOT NULL,        -- created | status | assignee | reopened | cancelled
-                 detail   TEXT)""")
+                 detail   TEXT,
+                 actor_id INTEGER,
+                 actor_name TEXT,
+                 actor_role TEXT)""")
+    # Phase 3/4 additive migrations：保留既有 SQLite 資料，不需重建 DB。
+    task_columns = {r[1] for r in conn.execute("PRAGMA table_info(tasks)")}
+    if "assignee_id" not in task_columns:
+        conn.execute("ALTER TABLE tasks ADD COLUMN assignee_id INTEGER")
+    existing = {r[1] for r in conn.execute("PRAGMA table_info(task_events)")}
+    for name, typ in (("actor_id", "INTEGER"), ("actor_name", "TEXT"), ("actor_role", "TEXT")):
+        if name not in existing:
+            conn.execute(f"ALTER TABLE task_events ADD COLUMN {name} {typ}")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_task_case ON tasks(case_id)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_task_assignee_id ON tasks(assignee_id)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_tev_task ON task_events(task_id)")
     return conn
 
@@ -248,14 +275,6 @@ def get_decisions():
 # reject / retake 不開單。任務內容直接引用 AI 判定原文（location/type/severity/理由），
 # 讓整備人員不必回頭翻案件也知道要處理什麼。
 
-_TASK_FLOW = {  # 最簡狀態機：待處理 → 處理中 → 已完成（可取消、可重啟；不做複雜 workflow）
-    "pending": {"in_progress", "cancelled"},
-    "in_progress": {"completed", "pending", "cancelled"},
-    "completed": {"in_progress"},          # 誤按完成可重開；重開即清掉 resolved_at
-    "cancelled": {"pending"},
-}
-
-
 def _case_car(case_id: str) -> str:
     """從 case_id 推車輛代號（顯示用，推不出來就原樣返回）。"""
     if case_id.startswith("LIVE-"):
@@ -302,9 +321,23 @@ def _task_row(conn, task_id: int) -> dict | None:
     if not row:
         return None
     t = dict(zip([c[0] for c in cur.description], row))
-    t["events"] = [{"at": at, "event": ev, "detail": det} for at, ev, det in conn.execute(
-        "SELECT at, event, detail FROM task_events WHERE task_id=? ORDER BY event_id", (task_id,))]
+    # Phase 4 API contract：assignee 保留給 legacy client；新 client 用 stable id + display name。
+    t["assignee_name"] = t.get("assignee")
+    t["events"] = [
+        {"at": at, "event": event, "detail": detail, "actor_id": actor_id,
+         "actor_name": actor_name, "actor_role": actor_role}
+        for at, event, detail, actor_id, actor_name, actor_role in conn.execute(
+            "SELECT at, event, detail, actor_id, actor_name, actor_role"
+            " FROM task_events WHERE task_id=? ORDER BY event_id", (task_id,))
+    ]
     return t
+
+
+def _add_task_event(conn, task_id: int, at: str, event: str, detail: str, actor=None) -> None:
+    aid, aname, arole = ops_auth.actor_values(actor)
+    conn.execute(
+        "INSERT INTO task_events(task_id, at, event, detail, actor_id, actor_name, actor_role)"
+        " VALUES (?,?,?,?,?,?,?)", (task_id, at, event, detail, aid, aname, arole))
 
 
 def _ensure_task(conn, case_id: str, snap: dict, now: str) -> dict:
@@ -315,10 +348,10 @@ def _ensure_task(conn, case_id: str, snap: dict, now: str) -> dict:
     if row:
         tid, status = row
         if status == "cancelled":   # 先前 undo 取消過 → 再次 confirm 喚回為待處理
-            conn.execute("UPDATE tasks SET status='pending', updated_at=?, resolved_at=NULL"
-                         " WHERE id=?", (now, tid))
-            conn.execute("INSERT INTO task_events(task_id, at, event, detail) VALUES (?,?,?,?)",
-                         (tid, now, "reopened", "案件再次確認，已取消任務重啟為待處理"))
+            target = task_service.target_for_action(status, "reopen")
+            conn.execute("UPDATE tasks SET status=?, updated_at=?, resolved_at=NULL"
+                         " WHERE id=?", (target, now, tid))
+            _add_task_event(conn, tid, now, "reopened", "案件再次確認，已取消任務重啟為待處理")
     else:
         cur = conn.execute(
             "INSERT INTO tasks(case_id, task_type, car, title, description, priority,"
@@ -326,8 +359,7 @@ def _ensure_task(conn, case_id: str, snap: dict, now: str) -> dict:
             (case_id, spec["task_type"], _case_car(case_id), spec["title"],
              spec["description"], spec["priority"], now, now))
         tid = cur.lastrowid
-        conn.execute("INSERT INTO task_events(task_id, at, event, detail) VALUES (?,?,?,?)",
-                     (tid, now, "created", f"由案件 {case_id} 人工確認自動建立"))
+        _add_task_event(conn, tid, now, "created", f"由案件 {case_id} 人工確認自動建立")
     return _task_row(conn, tid)
 
 
@@ -381,15 +413,18 @@ def demo_health():
 def demo_reset():
     """把兩個示範案例重置回「AI 已判定、尚未人工 confirm」。
 
-    只動這兩個 case 的 decisions 與 tasks/task_events（任務刪除後，下次 confirm
-    會建立全新任務、notification_status 從頭開始 → webhook 重新發送）。
-    不動：AI 評測結果、照片、chain 資料、離線指標、其他案件、
+    只動這兩個 case 的 decisions、任務、衍生事件／通知與完工照（任務刪除後，
+    下次 confirm 會建立全新任務、notification_status 從頭開始 → webhook 重新發送）。
+    不動：AI 評測結果、來源照片、chain 資料、離線指標、其他案件、
     decision_events（訓練標籤 append-only，僅補記 undo 事件）。
     """
     _require_demo()
     now = datetime.now().isoformat(timespec="seconds")
     reset = []
+    removed_task_ids = []
     with db() as conn:
+        tables = {r[0] for r in conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table'").fetchall()}
         for cid in DEMO_CASE_IDS:
             had = conn.execute("SELECT 1 FROM decisions WHERE case_id=?", (cid,)).fetchone()
             if had:
@@ -399,10 +434,26 @@ def demo_reset():
             tids = [r[0] for r in conn.execute(
                 "SELECT id FROM tasks WHERE case_id=?", (cid,)).fetchall()]
             for tid in tids:
+                # Ops 衍生資料也在 reset transaction 內清掉，避免必須等下一次
+                # Inbox 輪詢才移除舊通知、未讀與照片 metadata。
+                if "ops_events" in tables:
+                    if "event_reads" in tables:
+                        conn.execute(
+                            "DELETE FROM event_reads WHERE event_id IN"
+                            " (SELECT id FROM ops_events WHERE task_id=?)", (tid,))
+                    conn.execute("DELETE FROM ops_events WHERE task_id=?", (tid,))
+                if "notification_log" in tables:
+                    conn.execute("DELETE FROM notification_log WHERE task_id=?", (tid,))
+                if "task_photos" in tables:
+                    conn.execute("DELETE FROM task_photos WHERE task_id=?", (tid,))
                 conn.execute("DELETE FROM task_events WHERE task_id=?", (tid,))
                 conn.execute("DELETE FROM tasks WHERE id=?", (tid,))
+                removed_task_ids.append(tid)
             if had or tids:
                 reset.append(cid)
+    # 照片檔不在 SQLite transaction 內；Task metadata 成功刪除後移除專屬目錄。
+    for tid in removed_task_ids:
+        shutil.rmtree(ops_api.PHOTO_ROOT / str(tid), ignore_errors=True)
     return {"ok": True, "reset_cases": reset,
             "note": "示範案例已回到「AI 已判定、尚未人工確認」狀態"}
 
@@ -433,7 +484,9 @@ def build_notification_payload(task: dict) -> dict:
         "car": task.get("car"),
         "title": task["title"],
         "description": task.get("description"),
-        "assignee": task.get("assignee"),
+        "assignee": task.get("assignee"),  # legacy compatibility
+        "assignee_id": task.get("assignee_id"),
+        "assignee_name": task.get("assignee_name") or task.get("assignee"),
         "status": task["status"],
         "created_at": task["created_at"],
         "kind": "system_event",          # 系統事件推播（非人工發送的三對象文案）
@@ -482,8 +535,7 @@ def _notify_task(task: dict) -> dict:
         with db() as conn:
             conn.execute("UPDATE tasks SET notification_status=?, updated_at=? WHERE id=?",
                          (status, now, task["id"]))
-            conn.execute("INSERT INTO task_events(task_id, at, event, detail) VALUES (?,?,?,?)",
-                         (task["id"], now, "notify", detail))
+            _add_task_event(conn, task["id"], now, "notify", detail)
             return _task_row(conn, task["id"])
     except Exception:              # 連狀態都寫不進去也不能拖垮 confirm
         task["notification_status"] = status
@@ -510,24 +562,29 @@ def post_decision(d: Decision):
     ai_found = snap["ai_found"]
     agreed = None if (label is None or ai_found is None) else int(label == ai_found)
     task = None
-    with db() as conn:
-        conn.execute("INSERT OR REPLACE INTO decisions VALUES (?,?,?)",
-                     (d.case_id, d.decision, now))
-        conn.execute(
-            "INSERT INTO decision_events(case_id, decided_at, decision, mode, source, label,"
-            " ai_found, agreed, ai_level, ai_conf, photos, assessment, boxes, note)"
-            " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-            (d.case_id, now, d.decision, snap["mode"], snap["source"], label,
-             ai_found, agreed, snap["ai_level"], snap["ai_conf"],
-             json.dumps(snap["photos"], ensure_ascii=False),
-             json.dumps(snap["assessment"], ensure_ascii=False) if snap["assessment"] else None,
-             json.dumps(snap["boxes"], ensure_ascii=False),
-             (d.note or None)))
-        if d.decision == "confirm":
-            try:
+    try:
+        with db() as conn:
+            conn.execute("INSERT OR REPLACE INTO decisions VALUES (?,?,?)",
+                         (d.case_id, d.decision, now))
+            conn.execute(
+                "INSERT INTO decision_events(case_id, decided_at, decision, mode, source, label,"
+                " ai_found, agreed, ai_level, ai_conf, photos, assessment, boxes, note)"
+                " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                (d.case_id, now, d.decision, snap["mode"], snap["source"], label,
+                 ai_found, agreed, snap["ai_level"], snap["ai_conf"],
+                 json.dumps(snap["photos"], ensure_ascii=False),
+                 json.dumps(snap["assessment"], ensure_ascii=False) if snap["assessment"] else None,
+                 json.dumps(snap["boxes"], ensure_ascii=False),
+                 (d.note or None)))
+            if d.decision == "confirm":
+                # 裁決與建單是同一個核心操作：任一失敗就整筆 rollback，不能留下
+                # 「已確認但沒有整備任務」的半套狀態。
                 task = _ensure_task(conn, d.case_id, snap, now)
-            except Exception:   # 開單失敗不能擋住裁決本身
-                task = None
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"decision transaction failed ({d.case_id}): {type(e).__name__}", file=sys.stderr)
+        raise HTTPException(500, "裁決未儲存：整備任務建立失敗，請重試")
     # 通知在 transaction 之外：task 已落地才發，失敗只反映在 notification_status
     if task:
         task = _notify_task(task)
@@ -546,9 +603,9 @@ def delete_decision(case_id: str):
                      " VALUES (?,?,?,?)", (case_id, now, "undo", "使用者復原前次裁決"))
         for (tid,) in conn.execute(
                 "SELECT id FROM tasks WHERE case_id=? AND status='pending'", (case_id,)).fetchall():
-            conn.execute("UPDATE tasks SET status='cancelled', updated_at=? WHERE id=?", (now, tid))
-            conn.execute("INSERT INTO task_events(task_id, at, event, detail) VALUES (?,?,?,?)",
-                         (tid, now, "cancelled", "來源案件裁決被復原，任務自動取消"))
+            target = task_service.target_for_action("pending", "cancel")
+            conn.execute("UPDATE tasks SET status=?, updated_at=? WHERE id=?", (target, now, tid))
+            _add_task_event(conn, tid, now, "cancelled", "來源案件裁決被復原，任務自動取消")
     return {"ok": True}
 
 
@@ -556,7 +613,11 @@ def delete_decision(case_id: str):
 
 class TaskUpdate(BaseModel):
     assignee: str | None = None
+    assignee_id: int | None = None
     status: str | None = None
+    action: str | None = None
+    expected_assignee: str | None = None
+    expected_assignee_id: int | None = None
 
 
 
@@ -594,30 +655,84 @@ def patch_task(task_id: int, upd: TaskUpdate):
     completed 自動寫 resolved_at；離開 completed 自動清掉。"""
     now = datetime.now().isoformat(timespec="seconds")
     with db() as conn:
-        row = conn.execute("SELECT status, assignee FROM tasks WHERE id=?", (task_id,)).fetchone()
+        row = conn.execute("SELECT status, assignee, assignee_id FROM tasks WHERE id=?", (task_id,)).fetchone()
         if not row:
             raise HTTPException(404, f"找不到任務 #{task_id}")
-        cur_status, cur_assignee = row
-        if upd.status is not None:
-            if upd.status not in _TASK_FLOW:
-                raise HTTPException(400, "status 必須是 pending / in_progress / completed / cancelled")
-            if upd.status != cur_status and upd.status not in _TASK_FLOW[cur_status]:
-                raise HTTPException(400, f"狀態不可由 {cur_status} 直接變更為 {upd.status}")
-            if upd.status == "completed" and cur_status != "completed" and TASK_COMPLETE_GUARD:
+        cur_status, cur_assignee, cur_assignee_id = row
+        if upd.action is not None and upd.status is not None:
+            raise HTTPException(400, "action 與 status 不可同時提供")
+        target_status = upd.status
+        if upd.action is not None:
+            try:
+                target_status = task_service.target_for_action(cur_status, upd.action)
+            except task_service.TaskRuleError as e:
+                raise HTTPException(409, str(e))
+        if target_status is not None:
+            try:
+                task_service.validate_transition(cur_status, target_status)
+            except task_service.TaskRuleError as e:
+                raise HTTPException(400, str(e))
+            if target_status == "completed" and cur_status != "completed" and TASK_COMPLETE_GUARD:
                 why = TASK_COMPLETE_GUARD(conn, task_id)
                 if why:
                     raise HTTPException(409, why)
-            if upd.status != cur_status:
-                resolved = now if upd.status == "completed" else None
+            if target_status != cur_status:
+                resolved = now if target_status == "completed" else None
                 conn.execute("UPDATE tasks SET status=?, resolved_at=?, updated_at=? WHERE id=?",
-                             (upd.status, resolved, now, task_id))
-                conn.execute("INSERT INTO task_events(task_id, at, event, detail) VALUES (?,?,?,?)",
-                             (task_id, now, "status", f"{cur_status} → {upd.status}"))
-        if upd.assignee is not None and upd.assignee != cur_assignee:
-            conn.execute("UPDATE tasks SET assignee=?, updated_at=? WHERE id=?",
-                         (upd.assignee or None, now, task_id))
-            conn.execute("INSERT INTO task_events(task_id, at, event, detail) VALUES (?,?,?,?)",
-                         (task_id, now, "assignee", f"指派給 {upd.assignee or '（未指派）'}"))
+                             (target_status, resolved, now, task_id))
+                _add_task_event(conn, task_id, now, "status", f"{cur_status} → {target_status}")
+        id_supplied = "assignee_id" in upd.model_fields_set
+        name_supplied = "assignee" in upd.model_fields_set
+        if id_supplied or name_supplied:
+            new_id, new_name = cur_assignee_id, cur_assignee
+            if id_supplied:
+                if upd.assignee_id is None:
+                    new_id, new_name = None, None
+                else:
+                    person = conn.execute(
+                        "SELECT id, name FROM ops_people WHERE id=?", (upd.assignee_id,)).fetchone()
+                    if not person:
+                        raise HTTPException(400, f"找不到人員 #{upd.assignee_id}")
+                    new_id, new_name = person[0], person[1]
+                    if name_supplied and (upd.assignee or "").strip() not in ("", new_name):
+                        raise HTTPException(400, "assignee_id 與 assignee 不一致")
+            elif name_supplied:
+                new_name = (upd.assignee or "").strip() or None
+                new_id = None
+                if new_name:
+                    # Legacy client 仍可送 name；只有唯一對應時才建立 stable identity。
+                    has_people = conn.execute(
+                        "SELECT 1 FROM sqlite_master WHERE type='table' AND name='ops_people'").fetchone()
+                    people = conn.execute(
+                        "SELECT id FROM ops_people WHERE name=?", (new_name,)).fetchall() if has_people else []
+                    new_id = people[0][0] if len(people) == 1 else None
+
+            if new_id != cur_assignee_id or new_name != cur_assignee:
+                if "expected_assignee_id" in upd.model_fields_set:
+                    if upd.expected_assignee_id in (None, 0):
+                        guard, guard_params = (
+                            "assignee_id IS NULL AND COALESCE(assignee,'')=''", ())
+                    else:
+                        guard, guard_params = "assignee_id=?", (upd.expected_assignee_id,)
+                    changed = conn.execute(
+                        f"UPDATE tasks SET assignee_id=?, assignee=?, updated_at=? WHERE id=? AND {guard}",
+                        (new_id, new_name, now, task_id, *guard_params)).rowcount
+                elif upd.expected_assignee is not None:
+                    # Legacy name CAS 相容；新 Claim 走 expected_assignee_id。
+                    changed = conn.execute(
+                        "UPDATE tasks SET assignee_id=?, assignee=?, updated_at=?"
+                        " WHERE id=? AND COALESCE(assignee,'')=?",
+                        (new_id, new_name, now, task_id, upd.expected_assignee)).rowcount
+                else:
+                    changed = conn.execute(
+                        "UPDATE tasks SET assignee_id=?, assignee=?, updated_at=? WHERE id=?",
+                        (new_id, new_name, now, task_id)).rowcount
+                if changed != 1:
+                    actual = conn.execute(
+                        "SELECT assignee FROM tasks WHERE id=?", (task_id,)).fetchone()
+                    who = (actual[0] if actual else None) or "其他人"
+                    raise HTTPException(409, f"任務已由「{who}」接手，請重新整理")
+                _add_task_event(conn, task_id, now, "assignee", f"指派給 {new_name or '（未指派）'}")
         return _task_row(conn, task_id)
 
 
@@ -761,15 +876,39 @@ def _client():
     return _gclient
 
 
-def _require_key():
-    """呼叫 Gemini 前的統一守門：找不到 key（環境變數 / .env / 舊 .gemini_key）就 503。"""
+def _gemini_configured() -> bool:
+    """只檢查 Gemini 是否可用，不回傳 key，也不建立 client 或發出網路請求。"""
     try:
         from run_eval_gemini import find_key  # noqa: PLC0415
-        ok = find_key() is not None
+        return find_key() is not None
     except ImportError:  # google-genai 未安裝，同樣無法呼叫
-        ok = False
-    if not ok:
+        return False
+
+
+def _require_key():
+    """呼叫 Gemini 前的統一守門：找不到 key（環境變數 / .env / 舊 .gemini_key）就 503。"""
+    if not _gemini_configured():
         raise HTTPException(503, "此機器沒有 Gemini API key：請在 環節二/.env 設定 GEMINI_API_KEY")
+
+
+@app.get("/api/health")
+def health():
+    """容器與開發環境的無外部依賴健康檢查；不呼叫 Gemini 或 webhook。"""
+    try:
+        with db() as conn:
+            conn.execute("SELECT 1").fetchone()
+        database = "ok"
+    except Exception:
+        database = "error"
+    admin_ui = (HERE / "static" / "ops" / "index.html").is_file()
+    payload = {
+        "status": "ok" if database == "ok" and admin_ui else "error",
+        "database": database,
+        "admin_ui": "ok" if admin_ui else "missing",
+        "gemini_configured": _gemini_configured(),
+        "notification_configured": bool(_webhook_url()),
+    }
+    return JSONResponse(payload, status_code=200 if payload["status"] == "ok" else 503)
 
 
 # ---------- 判定後加值：估價分流（S6）＋ 多對象文案（S7） ----------

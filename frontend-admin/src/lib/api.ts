@@ -1,16 +1,17 @@
-import type { Audience, Drafts, FleetResp, Health, Insights, MyTask, TaskPhoto, NotificationLogEntry, OpsEvent, Person, Summary, Task, TaskDetail } from './types'
-import { getReader } from './reader'
+import type { Audience, AuthUser, Drafts, FleetResp, Health, Insights, MyTask, TaskAction, TaskPhoto, NotificationLogEntry, OpsEvent, Person, Summary, Task, TaskDetail } from './types'
 
 export class ApiError extends Error { status: number; constructor(s: number, m: string) { super(m); this.status = s } }
 
 async function call<T>(path: string, init: RequestInit = {}): Promise<T> {
   const r = await fetch(path, {
     ...init,
-    headers: { 'Content-Type': 'application/json', 'X-Ops-Reader': encodeURIComponent(getReader() || 'anonymous'), ...(init.headers || {}) },
+    credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json', ...(init.headers || {}) },
   })
   let body: unknown = null
   try { body = await r.json() } catch { /* empty */ }
   if (!r.ok) {
+    if (r.status === 401 && !path.endsWith('/login')) window.dispatchEvent(new Event('ops:unauthorized'))
     const d = (body as { detail?: unknown } | null)?.detail
     throw new ApiError(r.status, typeof d === 'string' ? d : `HTTP ${r.status}`)
   }
@@ -24,12 +25,15 @@ const q = (o: Record<string, string | number | boolean | undefined | null>) => {
 }
 
 export const api = {
+  login: (username: string, password: string) => call<{ user: AuthUser }>('/api/auth/login', { method: 'POST', body: JSON.stringify({ username, password }) }),
+  logout: () => call<{ ok: boolean }>('/api/auth/logout', { method: 'POST' }),
+  me: () => call<{ user: AuthUser }>('/api/auth/me'),
   health: () => call<Health>('/api/ops/health'),
   summary: () => call<Summary>('/api/ops/summary'),
-  tasks: (f: { status?: string; task_type?: string; priority?: string; assignee?: string; overdue?: boolean } = {}) =>
+  tasks: (f: { status?: string; task_type?: string; priority?: string; assignee_id?: number; overdue?: boolean } = {}) =>
     call<{ tasks: Task[]; server_time: string; sla: Record<string, number> }>('/api/ops/tasks' + q(f)),
   task: (id: number) => call<TaskDetail>(`/api/ops/tasks/${id}`),
-  patchTask: (id: number, body: { status?: string; assignee?: string; note?: string; expected_assignee?: string }) =>
+  patchTask: (id: number, body: { status?: string; action?: TaskAction; assignee_id?: number | null; note?: string; expected_assignee_id?: number | null }) =>
     call<TaskDetail>(`/api/ops/tasks/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
   retryNotify: (id: number) => call<TaskDetail>(`/api/ops/tasks/${id}/notify`, { method: 'POST' }),
   events: (f: { since?: number; priority?: string; unread?: boolean; types?: string; limit?: number } = {}) =>
@@ -60,10 +64,10 @@ export const api = {
   myTasks: () => call<{ tasks: MyTask[]; reader: string; server_time: string }>('/api/ops/my-tasks'),
   uploadPhoto: async (taskId: number, file: File) => {
     const fd = new FormData(); fd.append('photo', file)
-    const r = await fetch(`/api/ops/tasks/${taskId}/photos`, { method: 'POST', body: fd, headers: { 'X-Ops-Reader': encodeURIComponent(getReader() || 'anonymous') } })
+    const r = await fetch(`/api/ops/tasks/${taskId}/photos`, { method: 'POST', body: fd, credentials: 'same-origin' })
     const j = await r.json().catch(() => null)
     if (!r.ok) throw new ApiError(r.status, (j as { detail?: string } | null)?.detail || `HTTP ${r.status}`)
-    return j as { ok: boolean; photo: TaskPhoto; photos: TaskPhoto[] }
+    return j as { ok: boolean; photo: TaskPhoto; photos: TaskPhoto[]; task: Task }
   },
   demoHealth: () => call<Record<string, unknown>>('/api/demo/health'),
   demoReset: () => call<Record<string, unknown>>('/api/demo/reset', { method: 'POST' }),

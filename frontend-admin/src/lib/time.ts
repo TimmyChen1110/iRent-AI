@@ -26,11 +26,11 @@ export function dur(sec: number): string {
   if (s < 86400) return `${Math.floor(s / 3600)} 時 ${Math.floor((s % 3600) / 60)} 分`
   return `${Math.floor(s / 86400)} 天`
 }
-/** SLA 狀態：以 sla_due_at 與校正後時間即時計算（不依賴伺服器回傳的 remaining）。 */
-export function slaState(t: { status: string; sla_due_at: string; sla_minutes: number }) {
-  if (t.status !== 'pending') return { kind: 'none' as const, label: '' }
+/** SLA 分級由 Backend 決定；前端只以 due_at 計算持續更新的顯示文字。 */
+export function slaState(t: { sla_due_at: string; sla_status: 'normal' | 'approaching' | 'overdue' | 'inactive' }) {
+  if (t.sla_status === 'inactive') return { kind: 'none' as const, label: '' }
   const remain = (Date.parse(t.sla_due_at) - now()) / 1000
-  if (remain < 0) return { kind: 'over' as const, label: `逾時 ${dur(remain)}` }
-  if (remain < t.sla_minutes * 60 * 0.2) return { kind: 'soon' as const, label: `剩 ${dur(remain)}` }
+  if (t.sla_status === 'overdue') return { kind: 'over' as const, label: `逾時 ${dur(remain)}` }
+  if (t.sla_status === 'approaching') return { kind: 'soon' as const, label: `剩 ${dur(remain)}` }
   return { kind: 'ok' as const, label: `剩 ${dur(remain)}` }
 }
