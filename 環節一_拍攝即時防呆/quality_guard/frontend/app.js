@@ -64,17 +64,34 @@ function percent(value) {
  * 版面位置跑（視窗縮放、圖片載入時序、外層置中都會影響），而這裡的圖片是固定的
  * 檢查結果，直接畫成一張圖最穩，也方便使用者截圖回報。
  */
-function renderAnnotatedPhoto(bbox) {
+function renderAnnotatedPhoto(bbox, rotation = 0) {
   if (!preview.naturalWidth) return "";
 
+  // rotation 是後端方向防護網套用的逆時針角度（見 backend/app/checks/orientation.py）。
+  // 不是 0 的時候 bbox 是「轉正後」的座標，預覽圖必須先轉同樣的角度，框才會對齊。
+  const swapped = rotation === 90 || rotation === 270;
+  const sourceWidth = swapped ? preview.naturalHeight : preview.naturalWidth;
+  const sourceHeight = swapped ? preview.naturalWidth : preview.naturalHeight;
+
   const maxWidth = 520;
-  const scale = Math.min(1, maxWidth / preview.naturalWidth);
+  const scale = Math.min(1, maxWidth / sourceWidth);
   const canvas = document.createElement("canvas");
-  canvas.width = Math.round(preview.naturalWidth * scale);
-  canvas.height = Math.round(preview.naturalHeight * scale);
+  canvas.width = Math.round(sourceWidth * scale);
+  canvas.height = Math.round(sourceHeight * scale);
 
   const ctx = canvas.getContext("2d");
-  ctx.drawImage(preview, 0, 0, canvas.width, canvas.height);
+  if (rotation) {
+    // 先把原點移到轉正後畫布的中心，轉完再以原圖尺寸置中畫上去。
+    // canvas 的 rotate() 是順時針，所以逆時針 rotation 度要傳負值。
+    ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.rotate((-rotation * Math.PI) / 180);
+    const drawWidth = Math.round(preview.naturalWidth * scale);
+    const drawHeight = Math.round(preview.naturalHeight * scale);
+    ctx.drawImage(preview, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+  } else {
+    ctx.drawImage(preview, 0, 0, canvas.width, canvas.height);
+  }
 
   if (bbox) {
     const [x1, y1, x2, y2] = bbox.map((v) => v * scale);
@@ -123,7 +140,7 @@ function renderStage(stage, index, data) {
   let extra = "";
   // 第 2 關通過時，把標了車牌框的照片放在這一關底下——這是這一關的「證據」。
   if (stage.id === "plate" && stage.status !== "skipped" && data.debug.plate_bbox) {
-    extra = renderAnnotatedPhoto(data.debug.plate_bbox);
+    extra = renderAnnotatedPhoto(data.debug.plate_bbox, data.debug.orientation_rotation || 0);
   }
   // 第 3 關無論過不過，只要跑過就把判定結果與機率分布攤出來。
   if (stage.id === "view" && stage.status !== "skipped") {
@@ -162,6 +179,7 @@ function renderDebug(data) {
     ["車牌偵測信心（YOLO）", debug.plate_detect_confidence == null ? null : percent(debug.plate_detect_confidence)],
     ["車牌面積佔畫面比例", debug.plate_area_ratio?.toFixed(5)],
     ["車牌 bbox", debug.plate_bbox ? `[${debug.plate_bbox.join(", ")}]` : null],
+    ["方向防護網旋轉角度", debug.orientation_rotation ? `逆時針 ${debug.orientation_rotation}°` : null],
     ["模型原始角度標籤", debug.view_model_label],
     ["車外/車內猜測（僅供參考）", debug.exterior_interior_guess],
     ["後端處理耗時", `${debug.elapsed_ms} ms`],

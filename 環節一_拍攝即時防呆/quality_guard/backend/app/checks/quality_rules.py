@@ -39,6 +39,7 @@ import numpy as np
 from app.checks.blur import compute_blur_score, is_blurry
 from app.checks.brightness import BrightnessStats, brightness_verdict, compute_brightness_stats
 from app.checks.framing import FramingResult, estimate_framing
+from app.checks.orientation import resolve_upright
 from app.checks.plate_yolo import PlateCandidate, detect_plate, plate_character_count
 from app.checks.view import ExteriorInteriorResult, classify_exterior_interior
 from app.checks.view_classifier import ViewClassification, classify_corner
@@ -108,6 +109,10 @@ class QualityResult:
     stages: list[StageOutcome] = field(default_factory=list)
     image_width: Optional[int] = None
     image_height: Optional[int] = None
+    # 方向防護網實際套用的逆時針角度（0 = 原圖就是正的，見 orientation.py）。
+    # 不是 0 的時候，plate_bbox 與 image_width/height 都是「轉正後」的座標系，
+    # 前端要畫框就得先把預覽圖轉同樣的角度。
+    orientation_rotation: int = 0
 
     # Stage 1（預設不擋關，只計算）
     blur_score: Optional[float] = None
@@ -201,12 +206,33 @@ def run_quality_check(
 
     # ---------- Stage 2：車牌偵測 + OCR ----------
     result.stages_run.append("stage2_plate")
-    plate = detect_plate(
-        image_bgr,
-        min_conf=thresholds.plate_detect_min_conf,
-        imgsz=thresholds.plate_detect_imgsz,
-        padding=thresholds.plate_crop_padding,
-    )
+    if thresholds.enable_orientation_probe:
+        # 偵測不到車牌時會試著把圖轉正再測一次（見 orientation.py）。第一次就
+        # 測到的話成本與直接呼叫 detect_plate 完全相同。
+        oriented = resolve_upright(
+            image_bgr,
+            min_conf=thresholds.plate_detect_min_conf,
+            imgsz=thresholds.plate_detect_imgsz,
+            padding=thresholds.plate_crop_padding,
+            valid_lengths=thresholds.plate_text_valid_lengths,
+        )
+        plate = oriented.plate
+        if oriented.rotation:
+            # 從這裡開始所有東西都活在「轉正後」的座標系：bbox、面積比例、
+            # 送進視角分類器的圖都是。gray 與寬高必須跟著換，否則 framing 會拿
+            # 轉正前的尺寸去除轉正後的 bbox 面積，比例直接算錯。
+            image_bgr = oriented.image_bgr
+            gray = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2GRAY)
+            height, width = image_bgr.shape[:2]
+            result.image_width, result.image_height = width, height
+            result.orientation_rotation = oriented.rotation
+    else:
+        plate = detect_plate(
+            image_bgr,
+            min_conf=thresholds.plate_detect_min_conf,
+            imgsz=thresholds.plate_detect_imgsz,
+            padding=thresholds.plate_crop_padding,
+        )
 
     if plate is None:
         # 找不到車牌時，用「大片平滑烤漆」訊號區分兩種失敗：貼太近拍局部特寫

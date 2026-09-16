@@ -170,6 +170,7 @@ def _to_response(result: QualityResult, elapsed_ms: float) -> PhotoQualityCheckR
         errors=[QualityErrorResponse(code=e.code, message=e.message) for e in result.errors],
         debug=DebugInfo(
             stages_run=result.stages_run,
+            orientation_rotation=result.orientation_rotation,
             blur_score=result.blur_score,
             brightness=brightness_debug,
             stage1_advisories=result.stage1_advisories,

@@ -61,6 +61,10 @@ class DebugInfo(BaseModel):
     # 第 1 關注意到但不擋關的觀察，例如「照片偏暗」
     stage1_advisories: list[str] = Field(default_factory=list)
 
+    # 方向防護網套用的逆時針角度（0/90/270）。不是 0 時 plate_bbox 是轉正後的
+    # 座標，前端畫框前要先把圖轉同樣角度。
+    orientation_rotation: int = 0
+
     plate_bbox: Optional[tuple[int, int, int, int]] = None
     plate_area_ratio: Optional[float] = None
     plate_detect_confidence: Optional[float] = None  # YOLO 偵測信心值 0-1

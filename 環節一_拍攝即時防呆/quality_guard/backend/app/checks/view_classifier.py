@@ -1,14 +1,16 @@
 """Stage 3：四角視角分類（左前/右前/左後/右後），MobileNetV2 transfer learning。
 
 取代 `app/checks/view.py` 裡 Tier B 的 heuristic 猜測（那版靠車牌在畫面的左右
-位置 + 尾燈紅色比例，沒有訓練資料支撐）。模型載入與前處理跟
-`scripts/classify_tool.py` 完全一致——**前處理只要跟訓練時差一點，準確率就會
-無聲無息地掉**，所以 Resize(256) → CenterCrop(image_size) 這組順序不要「順手優化」
-成直接 resize 成 224x224。
+位置 + 尾燈紅色比例，沒有訓練資料支撐）。
+
+**前處理只要跟訓練時差一點，準確率就會無聲無息地掉**，所以這裡不自己寫
+transform，一律從 `app/checks/view_preprocess.py` 建——訓練腳本 import 的是
+同一份實作。要改前處理就改那個模組，不要在這裡「順手優化」。
 
 checkpoint 不是單純的 state_dict，是一個 dict（見 `整合計畫_四階段辨識.md`）：
-    classes / image_size / normalize_mean / normalize_std / state_dict
-類別順序以 checkpoint 內的 `classes` 為準，不要在程式裡硬編碼順序。
+    classes / image_size / normalize_mean / normalize_std / state_dict / preprocess
+類別順序以 checkpoint 內的 `classes` 為準，不要在程式裡硬編碼順序；`preprocess`
+決定要建哪一版 transform，舊的 .pt 沒有這個欄位就當第一版的 CenterCrop。
 """
 
 from __future__ import annotations
@@ -56,7 +58,8 @@ def _build_model(num_classes: int):
 
 def _load() -> _LoadedClassifier:
     import torch
-    from torchvision import transforms
+
+    from app.checks.view_preprocess import build_eval_transform_for_checkpoint
 
     if not VIEW_CLASSIFIER_PATH.exists():
         raise FileNotFoundError(
@@ -69,16 +72,7 @@ def _load() -> _LoadedClassifier:
     # 反序列化任意 python 物件，關掉可以避免載入不明 .pt 時的執行風險。
     checkpoint = torch.load(VIEW_CLASSIFIER_PATH, map_location="cpu", weights_only=True)
     classes = list(checkpoint["classes"])
-    image_size = checkpoint["image_size"]
-
-    transform = transforms.Compose(
-        [
-            transforms.Resize(256),
-            transforms.CenterCrop(image_size),
-            transforms.ToTensor(),
-            transforms.Normalize(checkpoint["normalize_mean"], checkpoint["normalize_std"]),
-        ]
-    )
+    transform = build_eval_transform_for_checkpoint(checkpoint)
 
     model = _build_model(len(classes))
     model.load_state_dict(checkpoint["state_dict"])

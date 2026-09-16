@@ -126,6 +126,9 @@ def run_real_photo_pass(rows: list[dict]) -> None:
                 "passed": result.passed,
                 "error_codes": ";".join(e.code for e in result.errors),
                 "stages_run": ";".join(result.stages_run),
+                # 方向防護網套用的逆時針角度（0 = 沒動）。會被套用代表這張照片的
+                # 內容是橫躺的，原本會直接卡在 PLATE_NOT_FOUND。
+                "orientation_rotation": result.orientation_rotation,
                 "blur_score": result.blur_score,
                 "brightness_mean": result.brightness.mean if result.brightness else None,
                 "brightness_dark_ratio": result.brightness.dark_ratio if result.brightness else None,
@@ -255,6 +258,10 @@ def summarize_real_pass(rows: list[dict]) -> dict:
         "stage2_reached_rate": round(len(stage2_rows) / len(real_rows), 3) if real_rows else None,
         # 以下三個分母都是「跑到 Stage 2 的張數」，不是全部 285 張。
         "plate_detection_rate": round(plate_detected_count / len(stage2_rows), 3) if stage2_rows else None,
+        # 方向防護網救回來的張數：這些照片第一次偵測失敗，轉正後才找到車牌。
+        "orientation_corrected_count": sum(
+            1 for r in real_rows if r.get("orientation_rotation")
+        ),
         "plate_exact_match_rate": round(exact_match_count / len(stage2_rows), 3) if stage2_rows else None,
         "plate_near_match_rate": round(near_match_count / len(stage2_rows), 3) if stage2_rows else None,
         "error_code_counts_on_real_photos": error_code_counts,

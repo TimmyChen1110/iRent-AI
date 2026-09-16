@@ -14,21 +14,47 @@
 learning rate），讓模型有能力學到左右側這種更細緻的視覺差異，而不是完全依賴
 凍結的 ImageNet 預訓練特徵。
 
+## 第三版改了兩件跟「手機怎麼拿」有關的事（見 app/checks/view_preprocess.py）
+
+1. **EXIF 轉正**：`ImageFolder` 預設的 PIL loader 不套 EXIF，但推論端的
+   `cv2.imdecode` 會套。第一/二版因此有 293/578 張（51%）訓練樣本是橫躺著
+   餵進模型的，推論時卻永遠拿到正立圖。改用 `load_image_upright` 當 loader。
+2. **letterbox 取代 CenterCrop**：`Resize(256)+CenterCrop(224)` 保留的畫面
+   範圍取決於原圖長寬比，橫幅照片的左右兩端（判斷四角的關鍵線索）會被裁掉。
+   改成補邊成正方形，並加上 `RandomAspectCrop` 讓模型看過各種長寬比的取景。
+
 用法：
-    cd backend && ../.venv/bin/python scripts/train_view_classifier.py
+    cd backend && .venv/bin/python scripts/train_view_classifier.py
+    cd backend && .venv/bin/python scripts/train_view_classifier.py --output /tmp/try.pt
 """
+import argparse
+import os
 import random
+import sys
 from pathlib import Path
 
 import torch
 from torch import nn
 from torch.utils.data import DataLoader, Dataset
-from torchvision import datasets, models, transforms
+from torchvision import datasets, models
 from torchvision.transforms import functional as TF
 
-ROOT = Path(__file__).resolve().parent.parent.parent
-DATASET_DIR = ROOT / "dataset"
-OUTPUT_PATH = Path(__file__).resolve().parent.parent / "app" / "models" / "view_classifier.pt"
+BACKEND_DIR = Path(__file__).resolve().parent.parent
+if str(BACKEND_DIR) not in sys.path:
+    sys.path.insert(0, str(BACKEND_DIR))
+
+from app.checks.view_preprocess import (  # noqa: E402  (要先設好 sys.path)
+    LETTERBOX,
+    build_eval_transform,
+    build_train_transform,
+    load_image_upright,
+)
+
+ROOT = BACKEND_DIR.parent
+# 訓練資料集刻意不進 repo（幾百張真實車輛照片）。預設找 quality_guard/dataset，
+# 放在別處就用 IRENT_VIEW_DATASET 指過去，比照 config.py 的模型路徑慣例。
+DATASET_DIR = Path(os.environ.get("IRENT_VIEW_DATASET") or ROOT / "dataset").expanduser()
+OUTPUT_PATH = BACKEND_DIR / "app" / "models" / "view_classifier.pt"
 
 IMAGE_SIZE = 224
 BATCH_SIZE = 16
@@ -80,21 +106,11 @@ class MirrorAugmentDataset(Dataset):
 
 
 def build_transforms():
-    train_tf = transforms.Compose([
-        transforms.Resize(256),
-        transforms.RandomCrop(IMAGE_SIZE),
-        transforms.RandomRotation(5),
-        transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.15),
-        transforms.ToTensor(),
-        transforms.Normalize(IMAGENET_MEAN, IMAGENET_STD),
-    ])
-    val_tf = transforms.Compose([
-        transforms.Resize(256),
-        transforms.CenterCrop(IMAGE_SIZE),
-        transforms.ToTensor(),
-        transforms.Normalize(IMAGENET_MEAN, IMAGENET_STD),
-    ])
-    return train_tf, val_tf
+    """一律走 app/checks/view_preprocess.py，跟推論端共用同一份實作。"""
+    return (
+        build_train_transform(IMAGE_SIZE, IMAGENET_MEAN, IMAGENET_STD),
+        build_eval_transform(IMAGE_SIZE, IMAGENET_MEAN, IMAGENET_STD),
+    )
 
 
 def build_model(num_classes: int, unfreeze_last_n: int = UNFREEZE_LAST_N_BLOCKS) -> nn.Module:
@@ -149,16 +165,33 @@ def run_epoch(model, loader, device, criterion, optimizer=None):
     return total_loss / total, correct / total, confusion
 
 
+def parse_args():
+    parser = argparse.ArgumentParser(description="訓練四角視角分類器")
+    parser.add_argument("--output", type=Path, default=OUTPUT_PATH,
+                        help="checkpoint 輸出路徑（預設覆寫正式模型，想試訓練請指到別處）")
+    parser.add_argument("--epochs", type=int, default=EPOCHS)
+    parser.add_argument("--dataset", type=Path, default=DATASET_DIR)
+    return parser.parse_args()
+
+
 def main():
+    args = parse_args()
     random.seed(SEED)
     torch.manual_seed(SEED)
+
+    if not (args.dataset / "train").is_dir():
+        raise SystemExit(
+            f"找不到訓練資料集：{args.dataset / 'train'}\n"
+            f"資料集刻意不進 repo，請用 --dataset 或環境變數 IRENT_VIEW_DATASET 指到實際位置。"
+        )
 
     device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
     print(f"使用裝置: {device}")
 
     train_tf, val_tf = build_transforms()
-    train_folder = datasets.ImageFolder(DATASET_DIR / "train")
-    val_ds = datasets.ImageFolder(DATASET_DIR / "val", transform=val_tf)
+    # loader=load_image_upright：套 EXIF 轉正，跟推論端的 cv2.imdecode 對齊。
+    train_folder = datasets.ImageFolder(args.dataset / "train", loader=load_image_upright)
+    val_ds = datasets.ImageFolder(args.dataset / "val", transform=val_tf, loader=load_image_upright)
     train_ds = MirrorAugmentDataset(train_folder, transform=train_tf, mirror_prob=MIRROR_PROB)
 
     print(f"train: {len(train_ds)} 張（含鏡像增量, 每次 epoch 約半數會被翻轉+換標籤）, val: {len(val_ds)} 張")
@@ -180,7 +213,7 @@ def main():
     best_state = None
     best_confusion = None
 
-    for epoch in range(1, EPOCHS + 1):
+    for epoch in range(1, args.epochs + 1):
         train_loss, train_acc, _ = run_epoch(model, train_loader, device, criterion, optimizer)
         val_loss, val_acc, val_confusion = run_epoch(model, val_loader, device, criterion)
 
@@ -201,15 +234,18 @@ def main():
     print("混淆矩陣（列=真實, 欄=預測）:")
     print(best_confusion)
 
-    OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    args.output.parent.mkdir(parents=True, exist_ok=True)
     torch.save({
         "state_dict": best_state,
         "classes": train_folder.classes,
         "image_size": IMAGE_SIZE,
         "normalize_mean": IMAGENET_MEAN,
         "normalize_std": IMAGENET_STD,
-    }, OUTPUT_PATH)
-    print(f"\n模型已存到: {OUTPUT_PATH}")
+        # 推論端照這個欄位決定建哪一版 transform。改前處理一定要同步改這個字串，
+        # 否則新權重會被舊 transform 餵，準確率無聲下降。
+        "preprocess": LETTERBOX,
+    }, args.output)
+    print(f"\n模型已存到: {args.output}")
 
 
 if __name__ == "__main__":
