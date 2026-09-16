@@ -1,0 +1,249 @@
+:root {
+  color-scheme: light dark;
+  --bg: #f5f6f8;
+  --panel: #ffffff;
+  --ink: #14161a;
+  --muted: #5d636e;
+  --line: #dfe2e8;
+  --accent: #0b6bcb;
+  --pass-bg: #e8f6ec;
+  --pass-ink: #16653a;
+  --pass-line: #9ad3ae;
+  --fail-bg: #fdecec;
+  --fail-ink: #a1281f;
+  --fail-line: #f0aca6;
+  --chip: #eef1f5;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #14161a;
+    --panel: #1c1f25;
+    --ink: #eceef2;
+    --muted: #9aa2b0;
+    --line: #2c313a;
+    --accent: #6fb2f5;
+    --pass-bg: #14301f;
+    --pass-ink: #86d9a5;
+    --pass-line: #2c5c3d;
+    --fail-bg: #341a19;
+    --fail-ink: #f2a49c;
+    --fail-line: #63302c;
+    --chip: #262a32;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: 24px 16px 64px;
+  background: var(--bg);
+  color: var(--ink);
+  font: 15px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC",
+    "PingFang TC", "Microsoft JhengHei", sans-serif;
+}
+
+header, main { max-width: 720px; margin: 0 auto; }
+
+h1 { margin: 0 0 4px; font-size: 22px; letter-spacing: -0.01em; }
+
+.lede { margin: 0 0 20px; color: var(--muted); }
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 18px;
+  margin-bottom: 16px;
+}
+
+.field { margin-bottom: 16px; }
+
+label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 14px; }
+
+select {
+  width: 100%;
+  padding: 9px 10px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--panel);
+  color: var(--ink);
+  font: inherit;
+}
+
+.hint { margin: 6px 0 0; font-size: 13px; color: var(--muted); }
+
+.dropzone {
+  position: relative;
+  border: 2px dashed var(--line);
+  border-radius: 12px;
+  min-height: 190px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: var(--bg);
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.dropzone:focus-visible, .dropzone.dragover {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, var(--bg));
+  outline: none;
+}
+
+.dropzone-empty { text-align: center; color: var(--muted); padding: 24px; }
+.dropzone-empty p { margin: 4px 0; }
+.dropzone-icon { font-size: 34px; }
+
+kbd {
+  background: var(--chip);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 1px 5px;
+  font-size: 12px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/* 上傳預覽只是「你選到的是這張」的確認，真正要看的是第 2 關那張標了車牌框的圖，
+   所以這裡刻意壓低高度，讓三關結果不用捲很久才看得到。 */
+#preview { display: none; max-width: 100%; max-height: 34vh; }
+#preview.active { display: block; }
+
+.controls { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+
+.btn {
+  display: inline-block;
+  padding: 9px 16px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: var(--accent);
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn.secondary { background: var(--panel); color: var(--ink); border-color: var(--line); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.status { margin: 12px 0 0; color: var(--muted); font-size: 14px; }
+
+.verdict {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: -18px -18px 16px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--line);
+  border-radius: 14px 14px 0 0;
+  font-weight: 700;
+  font-size: 17px;
+}
+
+.verdict.pass { background: var(--pass-bg); color: var(--pass-ink); border-bottom-color: var(--pass-line); }
+.verdict.fail { background: var(--fail-bg); color: var(--fail-ink); border-bottom-color: var(--fail-line); }
+.verdict .score { font-weight: 500; font-size: 14px; opacity: 0.85; }
+
+.stages { list-style: none; margin: 0; padding: 0; counter-reset: stage; }
+
+.stage {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 13px 15px;
+  background: var(--chip);
+}
+.stage + .stage { margin-top: 10px; }
+
+.stage-passed { border-color: var(--pass-line); background: var(--pass-bg); }
+.stage-failed { border-color: var(--fail-line); background: var(--fail-bg); }
+.stage-skipped { opacity: 0.62; }
+
+.stage-head { display: flex; align-items: center; gap: 9px; }
+.stage-icon { font-size: 16px; line-height: 1; }
+.stage-name { font-weight: 700; font-size: 16px; flex: 1; }
+
+.stage-no {
+  display: inline-block;
+  margin-right: 8px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  vertical-align: 1px;
+}
+
+.stage-status { font-size: 13px; font-weight: 600; color: var(--muted); }
+.stage-passed .stage-status { color: var(--pass-ink); }
+.stage-failed .stage-status { color: var(--fail-ink); }
+
+.stage-summary {
+  margin: 8px 0 0;
+  padding-left: 25px;
+  font-size: 14px;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+.stage-passed .stage-summary { color: var(--pass-ink); }
+
+.annotated {
+  display: block;
+  margin: 12px 0 0 25px;
+  /* 直拍照片很高，不限高的話第 3 關會被擠到要捲很久才看得到。
+     width:auto 讓高度受限時仍維持原比例，車牌框不會被壓扁。 */
+  max-width: calc(100% - 25px);
+  max-height: 360px;
+  width: auto;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+}
+
+.bars { margin: 12px 0 0 25px; display: grid; gap: 5px; }
+
+.bar-row { display: grid; grid-template-columns: 3em 1fr 4em; align-items: center; gap: 9px; }
+.bar-label { font-size: 13px; color: var(--muted); }
+
+.bar-track {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  overflow: hidden;
+}
+.bar-fill { display: block; height: 100%; background: var(--accent); }
+.bar-value {
+  font-size: 12px;
+  text-align: right;
+  color: var(--muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.problems { margin: 10px 0 0 25px; padding: 0; list-style: none; }
+
+.problems li {
+  padding: 9px 12px;
+  border-radius: 9px;
+  background: var(--panel);
+  border: 1px solid var(--fail-line);
+  color: var(--fail-ink);
+}
+.problems li + li { margin-top: 7px; }
+.problems .msg { font-weight: 600; font-size: 14px; }
+.problems .why { display: block; font-weight: 400; font-size: 13px; opacity: 0.9; margin-top: 3px; }
+
+details.debug { margin-top: 18px; }
+details.debug summary { cursor: pointer; color: var(--muted); font-size: 13px; }
+
+.debug-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+.debug-table th, .debug-table td {
+  text-align: left;
+  padding: 5px 8px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+.debug-table th { color: var(--muted); font-weight: 500; width: 45%; }
+.debug-table td { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; overflow-wrap: anywhere; }

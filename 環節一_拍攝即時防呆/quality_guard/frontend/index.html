@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>iRent 拍照即時防呆</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header>
+      <h1>iRent 拍照即時防呆</h1>
+      <p class="lede">
+        上傳或貼上一張車輛照片，系統會讀出車牌、判斷拍攝角度，
+        並在照片模糊、沒拍到車牌、太遠或太近時告訴你哪裡要重拍。
+      </p>
+    </header>
+
+    <main>
+      <section class="panel">
+        <div class="field">
+          <label for="view-select">指定角度</label>
+          <select id="view-select">
+            <option value="">不指定（只辨識，不檢查角度）</option>
+            <option value="左前">左前</option>
+            <option value="右前">右前</option>
+            <option value="左後">左後</option>
+            <option value="右後">右後</option>
+            <option value="前車內">前車內</option>
+            <option value="後車內">後車內</option>
+          </select>
+          <p class="hint">選了角度才會檢查「拍錯角度」；不指定時只回報照片實際是哪個角度。</p>
+        </div>
+
+        <div id="dropzone" class="dropzone" tabindex="0">
+          <img id="preview" alt="上傳的照片" />
+          <div id="dropzone-empty" class="dropzone-empty">
+            <div class="dropzone-icon">📷</div>
+            <p><strong>把照片拖進來</strong>，或按 <kbd>⌘</kbd>+<kbd>V</kbd> 貼上</p>
+            <p class="hint">也可以點下方按鈕選檔案／用手機相機拍</p>
+          </div>
+        </div>
+
+        <div class="controls">
+          <label class="btn" for="file-input">選擇照片 / 用相機拍</label>
+          <input id="file-input" type="file" accept="image/*" capture="environment" hidden />
+          <button id="reset-btn" class="btn secondary" disabled>清除</button>
+        </div>
+
+        <p id="status" class="status">尚未選擇照片</p>
+      </section>
+
+      <section id="result" class="panel result" hidden></section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<title>照片快速審視</title>
+<style>
+  :root { color-scheme: dark; }
+  body {
+    margin: 0; font-family: -apple-system, "PingFang TC", sans-serif;
+    background: #111; color: #eee; height: 100vh; display: flex; flex-direction: column;
+  }
+  header {
+    padding: 10px 16px; display: flex; justify-content: space-between; align-items: center;
+    background: #1b1b1b; border-bottom: 1px solid #333;
+  }
+  header .progress { font-variant-numeric: tabular-nums; color: #aaa; }
+  main { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; position: relative; }
+  .warning { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); background: #7a2222; color: #fff; padding: 6px 14px; border-radius: 6px; font-size: 14px; }
+  .current-decision { position: absolute; top: 12px; right: 16px; background: #2a4a2a; color: #bfe8bf; padding: 6px 14px; border-radius: 6px; font-size: 13px; }
+  img { max-width: 92vw; max-height: 72vh; object-fit: contain; border-radius: 6px; box-shadow: 0 4px 24px rgba(0,0,0,0.5); }
+  .meta { text-align: center; color: #ccc; font-size: 14px; }
+  .meta .label { font-size: 22px; font-weight: 600; color: #fff; }
+  .keys { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 6px; }
+  .keys button {
+    background: #2a2a2a; border: 1px solid #444; color: #eee; padding: 10px 16px;
+    border-radius: 8px; font-size: 14px; cursor: pointer;
+  }
+  .keys button:hover { background: #3a3a3a; }
+  .keys button.reject { border-color: #7a2222; }
+  .keys button.keep { border-color: #1f5f3a; }
+  .keys button.borderline { border-color: #8a6d1f; }
+  .keys button.active { outline: 2px solid #7ed99a; }
+  kbd { background: #333; padding: 1px 6px; border-radius: 4px; font-size: 12px; }
+  .done { text-align: center; font-size: 20px; color: #8f8; }
+  .empty-state { text-align: center; color: #999; }
+  .nav-hint { color:#777; font-size:12px; }
+</style>
+</head>
+<body>
+  <header>
+    <div>照片快速審視</div>
+    <div class="progress" id="progress">載入中...</div>
+  </header>
+  <main id="main">
+    <div class="empty-state">載入中...</div>
+  </main>
+
+<script>
+let items = [];
+let cursor = 0;
+
+async function loadItems() {
+  const res = await fetch('/api/items');
+  items = await res.json();
+  // 一開始停在第一張「還沒審過」的照片,而不是強迫從頭開始
+  const firstPending = items.findIndex(it => !it.decision);
+  cursor = firstPending === -1 ? 0 : firstPending;
+  render();
+}
+
+function updateProgress() {
+  const total = items.length;
+  const done = items.filter(it => it.decision).length;
+  document.getElementById('progress').textContent = `已審視 ${done} / ${total}`;
+}
+
+function render() {
+  updateProgress();
+  const main = document.getElementById('main');
+  if (items.length === 0) {
+    main.innerHTML = '<div class="empty-state">沒有資料</div>';
+    return;
+  }
+  if (items.every(it => it.decision)) {
+    main.innerHTML = '<div class="done">✅ 這批全部審視完成了（用 ← 還是可以回去改）</div>';
+  }
+
+  const it = items[cursor];
+  const mismatchBanner = it.label_mismatch
+    ? `<div class="warning">⚠️ 系統角度(${it.claimed_label}) 跟上傳分類(${it.upload_category || '無'})不一致,請仔細確認</div>`
+    : '';
+  const decisionBanner = it.decision
+    ? `<div class="current-decision">目前判定：${describeDecision(it)}（可重新選擇覆蓋）</div>`
+    : '';
+
+  const isActive = (decision, label) =>
+    it.decision === decision && (label === undefined || it.final_label === label) ? 'active' : '';
+
+  main.innerHTML = `
+    ${mismatchBanner}
+    ${decisionBanner}
+    <img src="/files/${it.local_path}" />
+    <div class="meta">
+      <div class="label">系統角度：${it.claimed_label}</div>
+      <div>車牌 ${it.plate} ・ 訂單 ${it.order_number} ・ 第 ${cursor + 1} / ${items.length} 張</div>
+    </div>
+    <div class="keys">
+      <button class="keep ${isActive('keep', it.claimed_label)}" onclick="decide('keep', it_claimed())"><kbd>Enter</kbd> 保留(角度正確)</button>
+      <button class="keep ${isActive('keep', '左前')}" onclick="decide('keep', '左前')"><kbd>1</kbd> 保留為左前</button>
+      <button class="keep ${isActive('keep', '右前')}" onclick="decide('keep', '右前')"><kbd>2</kbd> 保留為右前</button>
+      <button class="keep ${isActive('keep', '左後')}" onclick="decide('keep', '左後')"><kbd>3</kbd> 保留為左後</button>
+      <button class="keep ${isActive('keep', '右後')}" onclick="decide('keep', '右後')"><kbd>4</kbd> 保留為右後</button>
+      <button class="borderline ${isActive('borderline')}" onclick="decide('borderline', '邊界模糊')"><kbd>5</kbd> 邊界模糊(角度卡在交界,車輛本身清楚完整)</button>
+      <button class="reject ${isActive('reject')}" onclick="decide('reject', null)"><kbd>Backspace</kbd> 拒絕(模糊/沒拍到車/局部特寫/太近太遠等)</button>
+    </div>
+    <div class="nav-hint">← 回上一張（可重新選擇，會覆蓋原本的判定）　→ 下一張</div>
+  `;
+}
+
+function describeDecision(it) {
+  if (it.decision === 'keep') return `保留為「${it.final_label}」`;
+  if (it.decision === 'reject') return '拒絕';
+  if (it.decision === 'borderline') return '邊界模糊';
+  return it.decision;
+}
+
+function it_claimed() {
+  return items[cursor].claimed_label;
+}
+
+function findNextPending(fromIndex) {
+  for (let i = fromIndex + 1; i < items.length; i++) {
+    if (!items[i].decision) return i;
+  }
+  for (let i = 0; i <= fromIndex; i++) {
+    if (!items[i].decision) return i;
+  }
+  return fromIndex;
+}
+
+async function decide(decision, finalLabel) {
+  const it = items[cursor];
+  await fetch('/api/decision', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: it.id, decision, final_label: finalLabel }),
+  });
+  it.decision = decision;
+  it.final_label = finalLabel;
+  cursor = findNextPending(cursor);
+  render();
+}
+
+document.addEventListener('keydown', (e) => {
+  if (items.length === 0) return;
+  if (e.key === 'Enter') decide('keep', it_claimed());
+  else if (e.key === '1') decide('keep', '左前');
+  else if (e.key === '2') decide('keep', '右前');
+  else if (e.key === '3') decide('keep', '左後');
+  else if (e.key === '4') decide('keep', '右後');
+  else if (e.key === '5') decide('borderline', '邊界模糊');
+  else if (e.key === 'Backspace' || e.key === 'x' || e.key === 'X') decide('reject', null);
+  else if (e.key === 'ArrowLeft') { cursor = Math.max(0, cursor - 1); render(); }
+  else if (e.key === 'ArrowRight') { cursor = Math.min(items.length - 1, cursor + 1); render(); }
+});
+
+loadItems();
+</script>
+</body>
+</html>
