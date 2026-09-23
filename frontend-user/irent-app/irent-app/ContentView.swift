@@ -169,3 +169,9 @@ private struct SettingsView: View {
         }
     }
 }
+
+
+#Preview("取車檢查") {
+    ContentView()
+        .environment(RentalStore())
+}
