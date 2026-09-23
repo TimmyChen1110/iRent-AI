@@ -31,3 +31,11 @@ __pycache__/
 # 訓練產物（可由 training/ 腳本重生；權重 45MB 不進版控）
 **/damage_classifier.pt
 **/dataset.json
+
+build/
+DerivedData/
+
+# xcode projects
+*.xcuserstate
+project.xcworkspace/xcuserdata/
+*.xcuserdatad/

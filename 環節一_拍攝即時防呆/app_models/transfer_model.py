@@ -9,7 +9,9 @@ from pathlib import Path
 
 
 APP_MODELS = Path(__file__).resolve().parent
+QUALITY_BACKEND = APP_MODELS.parent / "quality_guard" / "backend"
 DEFAULT_OUTPUT = APP_MODELS / "coreml"
+VIEW_CLASS_ORDER = ["左前", "右前", "左後", "右後"]
 
 
 def parse_args() -> argparse.Namespace:
@@ -31,6 +33,11 @@ def parse_args() -> argparse.Namespace:
         "--skip-ocr",
         action="store_true",
         help="Only convert the YOLO detector.",
+    )
+    parser.add_argument(
+        "--skip-view",
+        action="store_true",
+        help="Skip the view classifier.",
     )
     return parser.parse_args()
 
@@ -93,16 +100,80 @@ def export_ocr(output: Path) -> None:
     converted_model.save(str(destination))
 
 
+def export_view_classifier(output: Path) -> None:
+    import coremltools as ct
+    import torch
+    from torch import nn
+    from torchvision import models
+
+    source_model = QUALITY_BACKEND / "app" / "models" / "view_classifier.pt"
+    destination = output / "ViewClassifier.mlpackage"
+    checkpoint = torch.load(str(source_model), map_location="cpu", weights_only=True)
+    classes = list(checkpoint["classes"])
+    if set(classes) != set(VIEW_CLASS_ORDER) or len(classes) != len(VIEW_CLASS_ORDER):
+        raise ValueError(f"Unexpected view-class order: {classes}")
+    output_indices = [classes.index(label) for label in VIEW_CLASS_ORDER]
+
+    model = models.mobilenet_v2(weights=None)
+    model.classifier[-1] = nn.Linear(model.classifier[-1].in_features, len(classes))
+    model.load_state_dict(checkpoint["state_dict"])
+    model.eval()
+
+    class NormalizedClassifier(nn.Module):
+        def __init__(
+            self,
+            classifier: nn.Module,
+            mean: list[float],
+            std: list[float],
+            output_indices: list[int],
+        ):
+            super().__init__()
+            self.classifier = classifier
+            self.register_buffer("mean", torch.tensor(mean).view(1, 3, 1, 1))
+            self.register_buffer("std", torch.tensor(std).view(1, 3, 1, 1))
+            self.register_buffer("output_indices", torch.tensor(output_indices))
+
+        def forward(self, image: torch.Tensor):
+            logits = self.classifier((image - self.mean) / self.std)
+            return logits.index_select(1, self.output_indices)
+
+    normalized_model = NormalizedClassifier(
+        model,
+        checkpoint["normalize_mean"],
+        checkpoint["normalize_std"],
+        output_indices,
+    ).eval()
+    sample = torch.rand(1, 3, 224, 224)
+    traced_model = torch.jit.trace(normalized_model, sample)
+    converted_model = ct.convert(
+        traced_model,
+        inputs=[
+            ct.ImageType(
+                name="image",
+                shape=sample.shape,
+                scale=1.0 / 255.0,
+                color_layout=ct.colorlayout.RGB,
+            )
+        ],
+        convert_to="mlprogram",
+        minimum_deployment_target=ct.target.iOS16,
+    )
+    replace_package(destination)
+    converted_model.save(str(destination))
+
+
 def main() -> None:
     args = parse_args()
-    if args.skip_detector and args.skip_ocr:
-        raise ValueError("At least one of detector or OCR must be enabled.")
+    if args.skip_detector and args.skip_ocr and args.skip_view:
+        raise ValueError("At least one model must be enabled.")
 
     args.output.mkdir(parents=True, exist_ok=True)
     if not args.skip_detector:
         export_detector(args.output)
     if not args.skip_ocr:
         export_ocr(args.output)
+    if not args.skip_view:
+        export_view_classifier(args.output)
     print(f"Generated Core ML packages in {args.output}")
 
 
