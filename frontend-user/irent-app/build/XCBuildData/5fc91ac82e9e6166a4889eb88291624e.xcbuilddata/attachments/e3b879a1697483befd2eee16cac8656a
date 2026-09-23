@@ -1,0 +1,76 @@
+{
+  "" : {
+    "const-values" : "/Users/jiangyanhong/Desktop/iRent-AI/frontend-user/irent-app/build/irent-app.build/Release-iphonesimulator/irent-app.build/Objects-normal/arm64/irent-app-primary.swiftconstvalues",
+    "dependencies" : "/Users/jiangyanhong/Desktop/iRent-AI/frontend-user/irent-app/build/irent-app.build/Release-iphonesimulator/irent-app.build/Objects-normal/arm64/irent-app-primary.d",
+    "diagnostics" : "/Users/jiangyanhong/Desktop/iRent-AI/frontend-user/irent-app/build/irent-app.build/Release-iphonesimulator/irent-app.build/Objects-normal/arm64/irent-app-primary.dia",
+    "emit-module-dependencies" : "/Users/jiangyanhong/Desktop/iRent-AI/frontend-user/irent-app/build/irent-app.build/Release-iphonesimulator/irent-app.build/Objects-normal/arm64/irent-app-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Users/jiangyanhong/Desktop/iRent-AI/frontend-user/irent-app/build/irent-app.build/Release-iphonesimulator/irent-app.build/Objects-normal/arm64/irent-app-primary-emit-module.dia",
+    "pch" : "/Users/jiangyanhong/Desktop/iRent-AI/frontend-user/irent-app/build/irent-app.build/Release-iphonesimulator/irent-app.build/Objects-normal/arm64/irent-app-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Users/jiangyanhong/Desktop/iRent-AI/frontend-user/irent-app/build/irent-app.build/Release-iphonesimulator/irent-app.build/Objects-normal/arm64/irent-app-primary.swiftdeps"
+  },
+  "/Users/jiangyanhong/Desktop/iRent-AI/frontend-user/irent-app/build/irent-app.build/Release-iphonesimulator/irent-app.build/DerivedSources/CoreMLGenerated/PlateDetector/PlateDetector.swift" : {
+    "index-unit-output-path" : "/irent-app.build/Release-iphonesimulator/irent-app.build/Objects-normal/arm64/PlateDetector.o",
+    "llvm-bc" : "/Users/jiangyanhong/Desktop/iRent-AI/frontend-user/irent-app/build/irent-app.build/Release-iphonesimulator/irent-app.build/Objects-normal/arm64/PlateDetector.bc",
+    "object" : "/Users/jiangyanhong/Desktop/iRent-AI/frontend-user/irent-app/build/irent-app.build/Release-iphonesimulator/irent-app.build/Objects-normal/arm64/PlateDetector.o"
+  },
+  "/Users/jiangyanhong/Desktop/iRent-AI/frontend-user/irent-app/build/irent-app.build/Release-iphonesimulator/irent-app.build/DerivedSources/CoreMLGenerated/PlateOCR/PlateOCR.swift" : {
+    "index-unit-output-path" : "/irent-app.build/Release-iphonesimulator/irent-app.build/Objects-normal/arm64/PlateOCR.o",
+    "llvm-bc" : "/Users/jiangyanhong/Desktop/iRent-AI/frontend-user/irent-app/build/irent-app.build/Release-iphonesimulator/irent-app.build/Objects-normal/arm64/PlateOCR.bc",
+    "object" : "/Users/jiangyanhong/Desktop/iRent-AI/frontend-user/irent-app/build/irent-app.build/Release-iphonesimulator/irent-app.build/Objects-normal/arm64/PlateOCR.o"
+  },
+  "/Users/jiangyanhong/Desktop/iRent-AI/frontend-user/irent-app/build/irent-app.build/Release-iphonesimulator/irent-app.build/DerivedSources/CoreMLGenerated/ViewClassifier/ViewClassifier.swift" : {
+    "index-unit-output-path" : "/irent-app.build/Release-iphonesimulator/irent-app.build/Objects-normal/arm64/ViewClassifier.o",
+    "llvm-bc" : "/Users/jiangyanhong/Desktop/iRent-AI/frontend-user/irent-app/build/irent-app.build/Release-iphonesimulator/irent-app.build/Objects-normal/arm64/ViewClassifier.bc",
+    "object" : "/Users/jiangyanhong/Desktop/iRent-AI/frontend-user/irent-app/build/irent-app.build/Release-iphonesimulator/irent-app.build/Objects-normal/arm64/ViewClassifier.o"
+  },
+  "/Users/jiangyanhong/Desktop/iRent-AI/frontend-user/irent-app/build/irent-app.build/Release-iphonesimulator/irent-app.build/DerivedSources/GeneratedAssetSymbols.swift" : {
+    "index-unit-output-path" : "/irent-app.build/Release-iphonesimulator/irent-app.build/Objects-normal/arm64/GeneratedAssetSymbols.o",
+    "llvm-bc" : "/Users/jiangyanhong/Desktop/iRent-AI/frontend-user/irent-app/build/irent-app.build/Release-iphonesimulator/irent-app.build/Objects-normal/arm64/GeneratedAssetSymbols.bc",
+    "object" : "/Users/jiangyanhong/Desktop/iRent-AI/frontend-user/irent-app/build/irent-app.build/Release-iphonesimulator/irent-app.build/Objects-normal/arm64/GeneratedAssetSymbols.o"
+  },
+  "/Users/jiangyanhong/Desktop/iRent-AI/frontend-user/irent-app/irent-app/ContentView.swift" : {
+    "index-unit-output-path" : "/irent-app.build/Release-iphonesimulator/irent-app.build/Objects-normal/arm64/ContentView.o",
+    "llvm-bc" : "/Users/jiangyanhong/Desktop/iRent-AI/frontend-user/irent-app/build/irent-app.build/Release-iphonesimulator/irent-app.build/Objects-normal/arm64/ContentView.bc",
+    "object" : "/Users/jiangyanhong/Desktop/iRent-AI/frontend-user/irent-app/build/irent-app.build/Release-iphonesimulator/irent-app.build/Objects-normal/arm64/ContentView.o"
+  },
+  "/Users/jiangyanhong/Desktop/iRent-AI/frontend-user/irent-app/irent-app/Models.swift" : {
+    "index-unit-output-path" : "/irent-app.build/Release-iphonesimulator/irent-app.build/Objects-normal/arm64/Models.o",
+    "llvm-bc" : "/Users/jiangyanhong/Desktop/iRent-AI/frontend-user/irent-app/build/irent-app.build/Release-iphonesimulator/irent-app.build/Objects-normal/arm64/Models.bc",
+    "object" : "/Users/jiangyanhong/Desktop/iRent-AI/frontend-user/irent-app/build/irent-app.build/Release-iphonesimulator/irent-app.build/Objects-normal/arm64/Models.o"
+  },
+  "/Users/jiangyanhong/Desktop/iRent-AI/frontend-user/irent-app/irent-app/Services/InspectionSyncService.swift" : {
+    "index-unit-output-path" : "/irent-app.build/Release-iphonesimulator/irent-app.build/Objects-normal/arm64/InspectionSyncService.o",
+    "llvm-bc" : "/Users/jiangyanhong/Desktop/iRent-AI/frontend-user/irent-app/build/irent-app.build/Release-iphonesimulator/irent-app.build/Objects-normal/arm64/InspectionSyncService.bc",
+    "object" : "/Users/jiangyanhong/Desktop/iRent-AI/frontend-user/irent-app/build/irent-app.build/Release-iphonesimulator/irent-app.build/Objects-normal/arm64/InspectionSyncService.o"
+  },
+  "/Users/jiangyanhong/Desktop/iRent-AI/frontend-user/irent-app/irent-app/Services/OnDeviceRecognitionService.swift" : {
+    "index-unit-output-path" : "/irent-app.build/Release-iphonesimulator/irent-app.build/Objects-normal/arm64/OnDeviceRecognitionService.o",
+    "llvm-bc" : "/Users/jiangyanhong/Desktop/iRent-AI/frontend-user/irent-app/build/irent-app.build/Release-iphonesimulator/irent-app.build/Objects-normal/arm64/OnDeviceRecognitionService.bc",
+    "object" : "/Users/jiangyanhong/Desktop/iRent-AI/frontend-user/irent-app/build/irent-app.build/Release-iphonesimulator/irent-app.build/Objects-normal/arm64/OnDeviceRecognitionService.o"
+  },
+  "/Users/jiangyanhong/Desktop/iRent-AI/frontend-user/irent-app/irent-app/Services/PendingUploadSync.swift" : {
+    "index-unit-output-path" : "/irent-app.build/Release-iphonesimulator/irent-app.build/Objects-normal/arm64/PendingUploadSync.o",
+    "llvm-bc" : "/Users/jiangyanhong/Desktop/iRent-AI/frontend-user/irent-app/build/irent-app.build/Release-iphonesimulator/irent-app.build/Objects-normal/arm64/PendingUploadSync.bc",
+    "object" : "/Users/jiangyanhong/Desktop/iRent-AI/frontend-user/irent-app/build/irent-app.build/Release-iphonesimulator/irent-app.build/Objects-normal/arm64/PendingUploadSync.o"
+  },
+  "/Users/jiangyanhong/Desktop/iRent-AI/frontend-user/irent-app/irent-app/Services/PhotoStore.swift" : {
+    "index-unit-output-path" : "/irent-app.build/Release-iphonesimulator/irent-app.build/Objects-normal/arm64/PhotoStore.o",
+    "llvm-bc" : "/Users/jiangyanhong/Desktop/iRent-AI/frontend-user/irent-app/build/irent-app.build/Release-iphonesimulator/irent-app.build/Objects-normal/arm64/PhotoStore.bc",
+    "object" : "/Users/jiangyanhong/Desktop/iRent-AI/frontend-user/irent-app/build/irent-app.build/Release-iphonesimulator/irent-app.build/Objects-normal/arm64/PhotoStore.o"
+  },
+  "/Users/jiangyanhong/Desktop/iRent-AI/frontend-user/irent-app/irent-app/Views/CameraPicker.swift" : {
+    "index-unit-output-path" : "/irent-app.build/Release-iphonesimulator/irent-app.build/Objects-normal/arm64/CameraPicker.o",
+    "llvm-bc" : "/Users/jiangyanhong/Desktop/iRent-AI/frontend-user/irent-app/build/irent-app.build/Release-iphonesimulator/irent-app.build/Objects-normal/arm64/CameraPicker.bc",
+    "object" : "/Users/jiangyanhong/Desktop/iRent-AI/frontend-user/irent-app/build/irent-app.build/Release-iphonesimulator/irent-app.build/Objects-normal/arm64/CameraPicker.o"
+  },
+  "/Users/jiangyanhong/Desktop/iRent-AI/frontend-user/irent-app/irent-app/Views/CaptureView.swift" : {
+    "index-unit-output-path" : "/irent-app.build/Release-iphonesimulator/irent-app.build/Objects-normal/arm64/CaptureView.o",
+    "llvm-bc" : "/Users/jiangyanhong/Desktop/iRent-AI/frontend-user/irent-app/build/irent-app.build/Release-iphonesimulator/irent-app.build/Objects-normal/arm64/CaptureView.bc",
+    "object" : "/Users/jiangyanhong/Desktop/iRent-AI/frontend-user/irent-app/build/irent-app.build/Release-iphonesimulator/irent-app.build/Objects-normal/arm64/CaptureView.o"
+  },
+  "/Users/jiangyanhong/Desktop/iRent-AI/frontend-user/irent-app/irent-app/irent_appApp.swift" : {
+    "index-unit-output-path" : "/irent-app.build/Release-iphonesimulator/irent-app.build/Objects-normal/arm64/irent_appApp.o",
+    "llvm-bc" : "/Users/jiangyanhong/Desktop/iRent-AI/frontend-user/irent-app/build/irent-app.build/Release-iphonesimulator/irent-app.build/Objects-normal/arm64/irent_appApp.bc",
+    "object" : "/Users/jiangyanhong/Desktop/iRent-AI/frontend-user/irent-app/build/irent-app.build/Release-iphonesimulator/irent-app.build/Objects-normal/arm64/irent_appApp.o"
+  }
+}

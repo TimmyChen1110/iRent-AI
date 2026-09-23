@@ -1,8 +1,35 @@
 import CoreImage
 import CoreML
 import Foundation
+@preconcurrency import Vision
+
+#if canImport(UIKit)
 import UIKit
-import Vision
+typealias RecognitionImage = UIImage
+#elseif canImport(AppKit)
+import AppKit
+typealias RecognitionImage = NSImage
+#endif
+
+enum VehicleView: String, Codable, CaseIterable, Identifiable {
+    case leftFront = "左前"
+    case rightFront = "右前"
+    case leftRear = "左後"
+    case rightRear = "右後"
+
+    var id: String { rawValue }
+    var instruction: String { "請拍攝車輛(rawValue)角，並讓車牌清楚入鏡。" }
+}
+
+struct LocalInspectionResult: Codable, Equatable {
+    let passed: Bool
+    let plateText: String?
+    let plateConfidence: Double?
+    let detectedView: VehicleView?
+    let viewConfidence: Double?
+    let errors: [String]
+    let modelVersions: [String: String]
+}
 
 enum RecognitionError: LocalizedError {
     case modelMissing(String)
@@ -15,11 +42,11 @@ enum RecognitionError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .modelMissing(let name): "離線模型 (name) 尚未安裝。"
+        case .modelMissing(_): "離線模型 (name) 尚未安裝。"
         case .noPlate: "沒有偵測到車牌，請讓車牌完整清楚入鏡。"
         case .unreadablePlate: "車牌文字無法辨識，請靠近並重新拍攝。"
-        case .wrongPlate(let expected, let actual): "辨識到 (actual)，與租約車牌 (expected) 不符。"
-        case .wrongView(let expected, let actual): "目前照片判定為 (actual)，請改拍 (expected.rawValue)角。"
+        case .wrongPlate(_, _): "辨識到 (actual)，與租約車牌 (expected) 不符。"
+        case .wrongView(_, _): "目前照片判定為 (actual)，請改拍 (expected.rawValue)角。"
         case .lowResolution: "照片解析度不足，請重新拍攝。"
         case .unsupportedOutput: "離線模型輸出格式不符合預期，請重新匯出模型。"
         }
@@ -27,19 +54,26 @@ enum RecognitionError: LocalizedError {
 }
 
 struct OnDeviceRecognitionService {
-    private let plateDetector = CoreMLModel(named: "PlateDetector")
-    private let plateOCR = CoreMLModel(named: "PlateOCR")
-    private let viewClassifier = CoreMLModel(named: "ViewClassifier")
+    private let plateDetector = CoreMLModel(name: "PlateDetector")
+    private let plateOCR = CoreMLModel(name: "PlateOCR")
+    private let viewClassifier = CoreMLModel(name: "ViewClassifier")
 
     func evaluate(
-        image: UIImage,
+        image: RecognitionImage,
         expectedPlate: String,
         expectedView: VehicleView
     ) async -> LocalInspectionResult {
         do {
-            guard let cgImage = image.cgImage,
-                  cgImage.width >= 640,
-                  cgImage.height >= 480 else {
+#if canImport(UIKit)
+            guard let cgImage = image.cgImage else {
+                throw RecognitionError.lowResolution
+            }
+#elseif canImport(AppKit)
+            guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
+                throw RecognitionError.lowResolution
+            }
+#endif
+            guard cgImage.width >= 640, cgImage.height >= 480 else {
                 throw RecognitionError.lowResolution
             }
 

@@ -24,16 +24,6 @@ enum InspectionStage: String, Codable, CaseIterable {
     var title: String { self == .pickup ? "取車拍攝" : "還車拍攝" }
 }
 
-enum VehicleView: String, Codable, CaseIterable, Identifiable {
-    case leftFront = "左前"
-    case rightFront = "右前"
-    case leftRear = "左後"
-    case rightRear = "右後"
-
-    var id: String { rawValue }
-    var instruction: String { "請拍攝車輛(rawValue)角，並讓車牌清楚入鏡。" }
-}
-
 struct DemoRental: Codable {
     let id: String
     let carID: String
@@ -46,16 +36,6 @@ struct DemoRental: Codable {
         plateNumber: "RCG-2235",
         carName: "Toyota Yaris"
     )
-}
-
-struct LocalInspectionResult: Codable, Equatable {
-    let passed: Bool
-    let plateText: String?
-    let plateConfidence: Double?
-    let detectedView: VehicleView?
-    let viewConfidence: Double?
-    let errors: [String]
-    let modelVersions: [String: String]
 }
 
 struct CapturedPhoto: Codable, Identifiable {
