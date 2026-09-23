@@ -32,8 +32,8 @@ __pycache__/
 **/damage_classifier.pt
 **/dataset.json
 
-build/
-DerivedData/
+**/build/
+**/DerivedData/
 
 # xcode projects
 *.xcuserstate
