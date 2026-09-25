@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3B6BD6"/>
+      <stop offset="1" stop-color="#2446A3"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="1024" fill="url(#bg)"/>
+
+  <!-- 四角取景角標 -->
+  <g fill="none" stroke="#FFFFFF" stroke-width="56" stroke-linecap="round" stroke-linejoin="round" opacity="0.92">
+    <path d="M168 300 V168 H300"/>
+    <path d="M724 168 H856 V300"/>
+    <path d="M168 724 V856 H300"/>
+    <path d="M856 724 V856 H724"/>
+  </g>
+
+  <!-- 車側面剪影 -->
+  <g fill="none" stroke="#FFFFFF" stroke-width="56" stroke-linecap="round" stroke-linejoin="round">
+    <!-- 車身：底盤 + 引擎蓋 + 車頂 -->
+    <path d="M232 612
+             L232 536
+             Q232 500 268 492
+             L346 476
+             L418 384
+             Q436 360 468 360
+             L620 360
+             Q652 360 672 386
+             L736 476
+             L788 492
+             Q824 500 824 536
+             L824 612"/>
+    <!-- 底線（輪子之間留空） -->
+    <path d="M232 612 H300"/>
+    <path d="M436 612 H588"/>
+    <path d="M724 612 H824"/>
+    <!-- 車窗分隔 -->
+    <path d="M540 366 V476 M346 476 H736"/>
+  </g>
+
+  <!-- 輪子 -->
+  <g fill="#2446A3" stroke="#FFFFFF" stroke-width="56">
+    <circle cx="368" cy="612" r="52"/>
+    <circle cx="656" cy="612" r="52"/>
+  </g>
+
+  <!-- 車牌：黃色點綴 -->
+  <rect x="452" y="520" width="120" height="52" rx="12" fill="#EFCB37"/>
+</svg>

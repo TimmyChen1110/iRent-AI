@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- 相機：拍攝車況照片 -->
+	<key>NSCameraUsageDescription</key>
+	<string>需要使用相機拍攝車輛照片，以進行車況檢查。</string>
+	<!-- 相簿走 PhotosPicker 不需要授權；這條是保險，若之後改用其他 API 也不會漏 -->
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>需要讀取你選擇的車輛照片，以進行車況檢查。</string>
+	<!-- 實體 iPhone 連 Mac 區網 IP 的 FastAPI 時，iOS 會詢問本地網路權限 -->
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>開發測試時需要連線到同一個網路內的檢查伺服器。</string>
+	<!-- 開發環境的 FastAPI 走 HTTP；只放行 localhost 與區網，不開 NSAllowsArbitraryLoads -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
+</dict>
+</plist>

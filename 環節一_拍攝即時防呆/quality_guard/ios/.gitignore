@@ -1,0 +1,6 @@
+# Xcode 使用者狀態與建置產物
+xcuserdata/
+*.xcuserstate
+DerivedData/
+*.xcresult
+.DS_Store
