@@ -2,54 +2,97 @@
 <html lang="zh-Hant">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>iRent 拍照即時防呆</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#F7F9FC" />
+    <title>iRent 車況拍攝</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%278%27 fill=%27%233764CA%27/%3E%3Ccircle cx=%2716%27 cy=%2717%27 r=%276%27 fill=%27none%27 stroke=%27%23fff%27 stroke-width=%272.5%27/%3E%3C/svg%3E" />
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <header>
-      <h1>iRent 拍照即時防呆</h1>
-      <p class="lede">
-        上傳或貼上一張車輛照片，系統會讀出車牌、判斷拍攝角度，
-        並在照片模糊、沒拍到車牌、太遠或太近時告訴你哪裡要重拍。
-      </p>
+    <header class="app-header">
+      <div class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 17h14M7 17l1.5-5.5A2 2 0 0 1 10.4 10h3.2a2 2 0 0 1 1.9 1.5L17 17" />
+          <path d="M3 17v2m18-2v2M6 10l1-3h10l1 3" />
+        </svg>
+      </div>
+      <div class="app-header-text">
+        <h1>車況拍攝</h1>
+        <p class="app-sub">請依照指定角度拍攝車輛照片</p>
+      </div>
     </header>
 
     <main>
-      <section class="panel">
-        <div class="field">
-          <label for="view-select">指定角度</label>
-          <select id="view-select">
-            <option value="">不指定（只辨識，不檢查角度）</option>
-            <option value="左前">左前</option>
-            <option value="右前">右前</option>
-            <option value="左後">左後</option>
-            <option value="右後">右後</option>
-            <option value="前車內">前車內</option>
-            <option value="後車內">後車內</option>
-          </select>
-          <p class="hint">選了角度才會檢查「拍錯角度」；不指定時只回報照片實際是哪個角度。</p>
+      <!-- 拍攝角度：chips 只是視覺，實際送給 API 的值仍是 data-view 上的中文字串 -->
+      <section class="block" aria-labelledby="angle-label">
+        <div class="block-head">
+          <h2 id="angle-label" class="block-title">拍攝角度</h2>
+          <span id="angle-hint" class="block-hint">不指定時只回報角度，不檢查是否拍錯</span>
         </div>
+        <div id="angle-chips" class="chips" role="radiogroup" aria-labelledby="angle-label">
+          <button type="button" class="chip" role="radio" data-view="" aria-checked="true">不指定</button>
+          <button type="button" class="chip" role="radio" data-view="左前" aria-checked="false">左前</button>
+          <button type="button" class="chip" role="radio" data-view="右前" aria-checked="false">右前</button>
+          <button type="button" class="chip" role="radio" data-view="左後" aria-checked="false">左後</button>
+          <button type="button" class="chip" role="radio" data-view="右後" aria-checked="false">右後</button>
+          <button type="button" class="chip" role="radio" data-view="前車內" aria-checked="false">前車內</button>
+          <button type="button" class="chip" role="radio" data-view="後車內" aria-checked="false">後車內</button>
+        </div>
+      </section>
 
-        <div id="dropzone" class="dropzone" tabindex="0">
-          <img id="preview" alt="上傳的照片" />
-          <div id="dropzone-empty" class="dropzone-empty">
-            <div class="dropzone-icon">📷</div>
-            <p><strong>把照片拖進來</strong>，或按 <kbd>⌘</kbd>+<kbd>V</kbd> 貼上</p>
-            <p class="hint">也可以點下方按鈕選檔案／用手機相機拍</p>
+      <!-- 相機／照片區：同時是 drop target、點擊選檔區與預覽區 -->
+      <section class="block">
+        <div id="camera" class="camera" tabindex="0" role="button" aria-label="拍攝或選擇車況照片">
+          <img id="preview" alt="你選擇的車況照片" />
+
+          <div class="guide" aria-hidden="true">
+            <span class="guide-corner tl"></span><span class="guide-corner tr"></span>
+            <span class="guide-corner bl"></span><span class="guide-corner br"></span>
+          </div>
+
+          <div class="camera-pill" id="camera-pill">未指定角度</div>
+
+          <div id="camera-empty" class="camera-empty">
+            <div class="camera-empty-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 8.5A2.5 2.5 0 0 1 6.5 6H8l1.2-1.8A1 1 0 0 1 10 3.8h4a1 1 0 0 1 .8.4L16 6h1.5A2.5 2.5 0 0 1 20 8.5v8a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 16.5z" />
+                <circle cx="12" cy="12.5" r="3.5" />
+              </svg>
+            </div>
+            <p class="camera-empty-title">拍攝車況照片</p>
+            <p class="camera-empty-sub">請讓車牌與整台車完整入鏡</p>
+          </div>
+
+          <!-- 分析中的遮罩；aria-live 讓螢幕閱讀器也知道狀態 -->
+          <div id="camera-overlay" class="camera-overlay" role="status" aria-live="polite" hidden>
+            <span class="spinner" aria-hidden="true"></span>
+            <p class="overlay-title">正在檢查照片</p>
+            <p class="overlay-sub">正在確認清晰度、車牌與拍攝角度</p>
           </div>
         </div>
 
-        <div class="controls">
-          <label class="btn" for="file-input">選擇照片 / 用相機拍</label>
+        <div class="actions">
+          <!-- 手機：capture=environment 直接開後鏡頭 -->
+          <label class="btn btn-primary" for="file-input" id="camera-btn">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M4 8.5A2.5 2.5 0 0 1 6.5 6H8l1.2-1.8A1 1 0 0 1 10 3.8h4a1 1 0 0 1 .8.4L16 6h1.5A2.5 2.5 0 0 1 20 8.5v8a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 16.5z" />
+              <circle cx="12" cy="12.5" r="3.5" />
+            </svg>
+            開啟相機拍攝
+          </label>
           <input id="file-input" type="file" accept="image/*" capture="environment" hidden />
-          <button id="reset-btn" class="btn secondary" disabled>清除</button>
+
+          <label class="btn btn-secondary" for="album-input" id="album-btn">從相簿選擇</label>
+          <input id="album-input" type="file" accept="image/*" hidden />
+
+          <button id="reset-btn" type="button" class="btn btn-ghost" disabled>清除</button>
         </div>
 
-        <p id="status" class="status">尚未選擇照片</p>
+        <p class="desktop-hint">也可以把照片拖曳到上方區域，或直接按 <kbd>⌘</kbd>+<kbd>V</kbd> 貼上圖片。</p>
+        <p id="status" class="status" aria-live="polite">尚未選擇照片</p>
       </section>
 
-      <section id="result" class="panel result" hidden></section>
+      <section id="result" class="result" aria-live="polite" hidden></section>
     </main>
 
     <script src="app.js"></script>
