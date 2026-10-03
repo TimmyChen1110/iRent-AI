@@ -1,3 +1,6 @@
 ultralytics>=8.4.0
 opencv-python>=4.8.0
 fast-plate-ocr[onnx]>=1.1.0
+onnx2torch>=1.5.15
+coremltools>=8.0
+onnx2torch>=1.5.15

@@ -73,8 +73,10 @@ assert_frozen()   # Prompt 凍結檢查：hash 不符即拒絕啟動（服務化
 
 from inspections_api import router as inspections_router  # noqa: E402
 from review_api import router as review_router  # noqa: E402
+from user_capture_api import router as user_capture_router  # noqa: E402
 app.include_router(review_router)
 app.include_router(inspections_router)
+app.include_router(user_capture_router)
 
 # 完成前守門（環節三 ops_api 於 bind() 註冊；例如清潔任務須先有完工照）。回傳錯誤訊息字串即拒絕。
 TASK_COMPLETE_GUARD = None
