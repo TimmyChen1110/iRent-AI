@@ -12,6 +12,7 @@ struct CaptureView: View {
     @State private var isChecking = false
     @State private var message: String?
     @State private var passed = false
+    @State private var recognitionResult: LocalInspectionResult?
 
     private let recognizer = OnDeviceRecognitionService()
     private let photoStore = PhotoStore()
@@ -142,6 +143,7 @@ struct CaptureView: View {
                 }
                 Button("清除") {
                     previewImage = nil
+                    recognitionResult = nil
                     message = nil
                     passed = false
                 }
@@ -165,6 +167,15 @@ struct CaptureView: View {
                     Text(passed ? "離線辨識通過" : "請重新拍攝")
                         .font(.headline)
                         .foregroundStyle(AppTheme.Colors.text)
+                    if let plate = recognitionResult?.plateText {
+                        Text("辨識車牌：\(plate)")
+                            .font(.headline)
+                        if let confidence = recognitionResult?.plateConfidence {
+                            Text("OCR 信心：\(confidence.formatted(.percent.precision(.fractionLength(1))))")
+                                .font(.footnote)
+                                .foregroundStyle(AppTheme.Colors.textSecondary)
+                        }
+                    }
                     Text(message)
                         .font(.footnote)
                         .foregroundStyle(AppTheme.Colors.textSecondary)
@@ -183,6 +194,7 @@ struct CaptureView: View {
         isChecking = true
         passed = false
         message = nil
+        recognitionResult = nil
 
         Task {
             let result = await recognizer.evaluate(
@@ -191,6 +203,7 @@ struct CaptureView: View {
                 expectedView: view
             )
             isChecking = false
+            recognitionResult = result
             guard result.passed else {
                 message = result.errors.first ?? "照片未通過檢查。"
                 return
