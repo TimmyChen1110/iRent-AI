@@ -1,6 +1,7 @@
 import CoreImage
 import CoreML
 import Foundation
+import ImageIO
 @preconcurrency import Vision
 
 #if canImport(UIKit)
@@ -18,7 +19,7 @@ enum VehicleView: String, Codable, CaseIterable, Identifiable {
     case rightRear = "右後"
 
     var id: String { rawValue }
-    var instruction: String { "請拍攝車輛(rawValue)角，並讓車牌清楚入鏡。" }
+    var instruction: String { "請拍攝車輛\(rawValue)角，並讓車牌清楚入鏡。" }
 }
 
 struct LocalInspectionResult: Codable, Equatable {
@@ -65,9 +66,16 @@ struct OnDeviceRecognitionService {
     ) async -> LocalInspectionResult {
         do {
 #if canImport(UIKit)
-            guard let cgImage = image.cgImage else {
+            guard let sourceImage = image.cgImage else {
                 throw RecognitionError.lowResolution
             }
+            // cgImage contains sensor pixels; UIImage keeps their display
+            // orientation separately. Normalize once so detection, cropping,
+            // OCR and view classification all use the same coordinate space.
+            let cgImage = try Self.uprightCGImage(
+                sourceImage,
+                orientation: Self.exifOrientation(image.imageOrientation)
+            )
 #elseif canImport(AppKit)
             guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
                 throw RecognitionError.lowResolution
@@ -122,6 +130,35 @@ struct OnDeviceRecognitionService {
         ]
     }
 
+    static func uprightCGImage(
+        _ image: CGImage,
+        orientation: CGImagePropertyOrientation
+    ) throws -> CGImage {
+        guard orientation != .up else { return image }
+        let oriented = CIImage(cgImage: image).oriented(orientation)
+        guard let result = CIContext().createCGImage(oriented, from: oriented.extent) else {
+            throw RecognitionError.lowResolution
+        }
+        return result
+    }
+
+#if canImport(UIKit)
+    private static func exifOrientation(_ orientation: UIImage.Orientation) -> CGImagePropertyOrientation {
+        // UIKit and EXIF use different raw values, so map each case explicitly.
+        switch orientation {
+        case .up: .up
+        case .upMirrored: .upMirrored
+        case .down: .down
+        case .downMirrored: .downMirrored
+        case .left: .left
+        case .leftMirrored: .leftMirrored
+        case .right: .right
+        case .rightMirrored: .rightMirrored
+        @unknown default: .up
+        }
+    }
+#endif
+
     private func detectPlate(in image: CGImage, model: MLModel) async throws -> VNRecognizedObjectObservation {
         let visionModel = try VNCoreMLModel(for: model)
         return try await withCheckedThrowingContinuation { continuation in
@@ -130,8 +167,11 @@ struct OnDeviceRecognitionService {
                     continuation.resume(throwing: error)
                     return
                 }
-                guard let observation = (request.results as? [VNRecognizedObjectObservation])?
-                    .max(by: { $0.confidence < $1.confidence }),
+                guard let observations = request.results as? [VNRecognizedObjectObservation] else {
+                    continuation.resume(throwing: RecognitionError.unsupportedOutput)
+                    return
+                }
+                guard let observation = observations.max(by: { $0.confidence < $1.confidence }),
                       observation.confidence >= 0.25 else {
                     continuation.resume(throwing: RecognitionError.noPlate)
                     return

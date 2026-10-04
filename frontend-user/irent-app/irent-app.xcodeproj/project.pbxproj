@@ -247,6 +247,8 @@
 				DEVELOPMENT_TEAM = YQN2UV8J9M;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "需要使用相機拍攝車輛照片，以進行離線車況辨識。";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "需要讀取你選擇的車輛照片，以進行離線車況辨識。";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -281,6 +283,8 @@
 				DEVELOPMENT_TEAM = YQN2UV8J9M;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "需要使用相機拍攝車輛照片，以進行離線車況辨識。";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "需要讀取你選擇的車輛照片，以進行離線車況辨識。";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
