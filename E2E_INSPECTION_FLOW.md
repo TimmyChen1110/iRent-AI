@@ -82,4 +82,6 @@ cd backend/app && DEMO_MODE=true uvicorn server:app --host 0.0.0.0 --port 8000
 6. 管理者端 總覽／事件中心：LIVE INCIDENT ABC-1234（還車 20:42 ‧ 2 件待裁決）；檢查紀錄 `/ops/inspections` → `RNT-20261005-1842` 看 Before/After、EXISTING_DAMAGE 不開案、車內 findings。
 7. 指揮中心 → 台灣 → 台北 → ABC-1234 → 數位分身右後車門 hotspot → 查看證據（取車右後 vs 還車右後）→ 執行 AI 建議方案 → 維修＋清潔任務 → 完工 → 車輛恢復上線 → 重置 Demo。App 還車完成頁按「完成」→ 回到尋找附近車輛，可重演。
 
+證據完整性：還車照若與同租約的取車照內容完全相同（SHA-256 一致），該角度標為 `DUPLICATE_PHOTO`、不送 AI 比對，並開一件「照片重複」P2 案件待人工複核（要求補拍）；App 端不擋還車、不告知。只在真實 pipeline 生效，示範租約固定劇本不受影響。
+
 離線：沒網路時照片仍在手機完成拍攝與存檔，清單顯示「待上傳 n 張」，開 App 或按「重試」自動重送；後端對重送的同一張照片回 `deduplicated: true`。

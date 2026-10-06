@@ -100,7 +100,7 @@ export interface Health { server_time: string; demo_mode: boolean; gemini_config
 
 export type RentalStatus = 'CREATED' | 'PICKUP_IN_PROGRESS' | 'PICKUP_COMPLETE' | 'RETURN_IN_PROGRESS' | 'RETURN_COMPLETE' | 'ANALYZING' | 'ANALYSIS_COMPLETE' | 'ANALYSIS_FAILED'
 export type InspectionResult = 'ISSUES' | 'PASSED' | 'PENDING' | 'ANALYZING' | 'FAILED'
-export type ComparisonResult = 'NEW_DAMAGE' | 'EXISTING_DAMAGE' | 'NO_NEW_DAMAGE' | 'UNCOMPARABLE' | 'NO_BASELINE' | 'CLEANING_REQUIRED' | 'CLEAN' | 'UNREADABLE'
+export type ComparisonResult = 'NEW_DAMAGE' | 'EXISTING_DAMAGE' | 'NO_NEW_DAMAGE' | 'UNCOMPARABLE' | 'NO_BASELINE' | 'CLEANING_REQUIRED' | 'CLEAN' | 'UNREADABLE' | 'DUPLICATE_PHOTO'
 export interface InspectionCompleteness { required: string[]; received: string[]; missing: string[]; complete: boolean; exterior: { received: number; required: number }; interior: { received: number; required: number }; status: string | null; completed_at: string | null }
 export interface InspectionIncidentRef { case_id: string; kind: 'damage' | 'cleaning'; view_angle: string; region: string | null; label: string | null; confidence: number | null; ai_level: Priority | null; review_status?: ReviewStatus; decision?: { decision: string; decided_at: string } | null; tasks?: CaseTaskRef[] }
 export interface InspectionRow {

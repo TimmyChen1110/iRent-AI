@@ -33,6 +33,7 @@ const CMP_META: Record<ComparisonResult, { label: string; tone: "danger" | "succ
   EXISTING_DAMAGE: { label: "既有損傷（不開案）", tone: "info" },
   NO_NEW_DAMAGE: { label: "無新增車損", tone: "success" },
   UNCOMPARABLE: { label: "無法比對", tone: "warning" },
+  DUPLICATE_PHOTO: { label: "照片與取車相同", tone: "danger" },
   NO_BASELINE: { label: "缺取車基準", tone: "warning" },
   CLEANING_REQUIRED: { label: "需要清潔", tone: "danger" },
   CLEAN: { label: "整潔可接受", tone: "success" },

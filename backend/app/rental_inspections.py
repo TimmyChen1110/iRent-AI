@@ -48,8 +48,21 @@ TYPE_TO_STAGE = {v: k for k, v in STAGE_TO_TYPE.items()}
 # Rental 狀態機（線性；照片補傳不會倒退）
 STATUS_ORDER = ("CREATED", "PICKUP_IN_PROGRESS", "PICKUP_COMPLETE", "RETURN_IN_PROGRESS",
                 "RETURN_COMPLETE", "ANALYZING", "ANALYSIS_COMPLETE", "ANALYSIS_FAILED")
-COMPARISON_RESULTS = ("NEW_DAMAGE", "EXISTING_DAMAGE", "NO_NEW_DAMAGE", "UNCOMPARABLE", "NO_BASELINE")
-INTERIOR_RESULTS = ("CLEANING_REQUIRED", "CLEAN", "UNREADABLE")
+COMPARISON_RESULTS = ("NEW_DAMAGE", "EXISTING_DAMAGE", "NO_NEW_DAMAGE", "UNCOMPARABLE", "NO_BASELINE", "DUPLICATE_PHOTO")
+INTERIOR_RESULTS = ("CLEANING_REQUIRED", "CLEAN", "UNREADABLE", "DUPLICATE_PHOTO")
+
+# 證據完整性：還車照與取車照內容完全相同（SHA-256 一致）。AI 比對兩張一樣的照片一定是「無新增」，
+# 但這張照片不能證明還車當下的車況，所以另開一件待人工複核的案件（不擋還車、App 不告知）。
+DUPLICATE_SUMMARY = "還車照與取車照內容完全相同（SHA-256 一致），無法作為還車當下的車況證據，請要求補拍或人工複核。"
+
+
+def _is_duplicate(pickup_photo: dict | None, return_photo: dict | None) -> bool:
+    return bool(pickup_photo and return_photo and pickup_photo.get("image_sha256")
+                and pickup_photo["image_sha256"] == return_photo["image_sha256"])
+
+
+def _duplicate_result() -> dict:
+    return {"result": "DUPLICATE_PHOTO", "findings": [], "boxes": [], "summary": DUPLICATE_SUMMARY}
 
 CASE_PREFIX = "RI-"
 MOBILE_UPLOAD_DIRNAME = "mobile-inspections"
@@ -451,12 +464,18 @@ def _real_analysis(rental: dict, pickup: dict, ret: dict, baseline: dict) -> dic
             out["exterior"][angle] = {"result": "NO_BASELINE", "findings": [], "boxes": [],
                                       "summary": "缺少取車基準照，無法比對。"}
             continue
+        if _is_duplicate(p, r):
+            out["exterior"][angle] = _duplicate_result()   # 同一張照片不必送 AI
+            continue
         res, _img = judge_pair(p["storage_path"], r["storage_path"], angle=angle)
         out["exterior"][angle] = _map_pair_result(res, angle)
     r = ret.get(INTERIOR_ANGLE)
     if r and r.get("storage_path"):
-        res, _img = judge_interior(r["storage_path"])
-        out["interior"] = _map_interior_result(res)
+        if _is_duplicate(pickup.get(INTERIOR_ANGLE), r):
+            out["interior"] = _duplicate_result()
+        else:
+            res, _img = judge_interior(r["storage_path"])
+            out["interior"] = _map_interior_result(res)
     return out
 
 
@@ -533,6 +552,8 @@ def _write_results(conn, rental: dict, result: dict, pickup: dict, ret: dict) ->
              json.dumps(cmp.get("boxes") or [], ensure_ascii=False), cmp.get("summary"),
              p["photo_id"] if p else None, r["photo_id"] if r else None,
              json.dumps(cmp.get("assessment"), ensure_ascii=False, default=str) if cmp.get("assessment") else None, now))
+        if cmp["result"] == "DUPLICATE_PHOTO":
+            wanted[case_id_for(rid, angle)] = _integrity_incident(angle, cmp, p, r)
         new = [f for f in cmp.get("findings") or [] if f.get("status") == "NEW_DAMAGE"]
         if cmp["result"] == "NEW_DAMAGE" and new:
             top = max(new, key=lambda f: f.get("confidence") or 0)
@@ -554,6 +575,8 @@ def _write_results(conn, rental: dict, result: dict, pickup: dict, ret: dict) ->
              json.dumps(interior.get("boxes") or [], ensure_ascii=False), interior.get("summary"),
              p["photo_id"] if p else None, r["photo_id"] if r else None,
              json.dumps({k: v for k, v in interior.items() if k not in ("findings", "boxes")}, ensure_ascii=False, default=str), now))
+        if interior["result"] == "DUPLICATE_PHOTO":
+            wanted[case_id_for(rid, INTERIOR_ANGLE)] = _integrity_incident(INTERIOR_ANGLE, interior, p, r)
         if interior["result"] == "CLEANING_REQUIRED":
             wanted[case_id_for(rid, INTERIOR_ANGLE)] = {
                 "kind": "cleaning", "view_angle": INTERIOR_ANGLE, "region": "interior", "label": "車內",
@@ -575,6 +598,14 @@ def _write_results(conn, rental: dict, result: dict, pickup: dict, ret: dict) ->
             (cid, rid, rental["plate"], inc["kind"], inc["view_angle"], inc["region"], inc["label"], inc["damage_type"],
              inc["severity"], inc["confidence"], inc["ai_level"], json.dumps(inc["findings"], ensure_ascii=False),
              json.dumps(inc["boxes"], ensure_ascii=False), inc["summary"], inc["pickup_photo_id"], inc["return_photo_id"], now))
+
+
+def _integrity_incident(angle: str, cmp: dict, p: dict | None, r: dict | None) -> dict:
+    """照片重複使用 → 證據完整性案件（P2、待人工複核；confirm 不會自動開維修／清潔單的依據：assessment 無 damages）。"""
+    return {"kind": "integrity", "view_angle": angle, "region": "interior" if angle == INTERIOR_ANGLE else None,
+            "label": f"{angle}照片與取車相同", "damage_type": None, "severity": None, "confidence": 1.0,
+            "ai_level": "P2", "findings": [], "boxes": [], "summary": cmp.get("summary") or DUPLICATE_SUMMARY,
+            "pickup_photo_id": p["photo_id"] if p else None, "return_photo_id": r["photo_id"] if r else None}
 
 
 def _table_exists(conn, name: str) -> bool:
@@ -752,6 +783,10 @@ def case_car(case_id: str) -> str | None:
 
 
 def _assessment_for(inc: dict) -> dict:
+    if inc["kind"] == "integrity":
+        # 沒有 damages / issues：confirm 後不會據此生成維修或清潔內容，案件本身要求的是補拍／人工複核
+        return {"angle_match": True, "new_damage_found": False, "damages": [], "no_damage_confidence": None,
+                "pre_existing_notes": "", "integrity": "DUPLICATE_PHOTO", "reasoning": inc["summary"]}
     if inc["kind"] == "cleaning":
         return {"level": "髒汙", "confidence": inc["confidence"], "score": None,
                 "issues": [f.get("label") for f in inc["findings"]], "reasoning": inc["summary"]}
@@ -794,7 +829,13 @@ def ops_cases(case_id: str | None = None) -> list[dict]:
                        "return_at": rental.get("return_at"), "vehicle_model": rental.get("vehicle_model"),
                        "analysis_source": rental.get("analysis_source")},
         }
-        if i["kind"] == "cleaning":
+        if i["kind"] == "integrity":
+            out.append({**common, "mode": "interior" if i["view_angle"] == INTERIOR_ANGLE else "pair",
+                        "kind": "照片重複", "damages": [], "issues": [i["summary"]], "cleanliness": None, "score": None,
+                        "photos": {"pickup": photo_url((i["pickup_photo"] or {}).get("storage_path")),
+                                   "return": photo_url((i["return_photo"] or {}).get("storage_path")),
+                                   "photo": photo_url((i["return_photo"] or {}).get("storage_path"))}})
+        elif i["kind"] == "cleaning":
             out.append({**common, "mode": "interior", "kind": "車內髒污",
                         "damages": [], "issues": [f.get("label") for f in i["findings"]],
                         "cleanliness": "髒汙", "score": None,

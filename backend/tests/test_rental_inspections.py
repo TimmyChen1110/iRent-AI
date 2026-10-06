@@ -242,6 +242,33 @@ class TestProductionPath:
         assert not [c for c in ops_api.list_cases(car="RDL-8265")["cases"] if c["source"] == "mobile_inspection"]
         assert [i["rental_id"] for i in ri.list_inspections()] == [real_rental]
 
+    def test_還車照與取車照相同_標記DUPLICATE_PHOTO並開證據案件_不送AI(self, client, ri, real_rental, monkeypatch):
+        import judge_photos
+        import ops_api
+        called = []
+
+        def judge(pickup, ret, angle=None, **kw):
+            called.append(angle)
+            return self._judge_clean(pickup, ret, angle)
+        monkeypatch.setattr(judge_photos, "judge_pair", judge)
+        monkeypatch.setattr(judge_photos, "judge_interior", self._interior_clean)
+        kw = dict(rental=real_rental, plate="RDL-8265", car="VH-RDL", mode="coreml")
+        run_pickup(client, **kw)                                   # 右後 seed=13、車內 seed=20
+        for i, v in enumerate(ANGLES):
+            seed = 13 if v == "右後" else 30 + i                  # 右後還車拿取車同一張（sha 相同）
+            assert upload(client, "return", v, seed, **kw).status_code == 201
+        upload(client, "return", "車內", 20, **kw)                 # 車內也重複
+        detail = ri.inspection_detail(real_rental)
+        assert detail["status"] == "ANALYSIS_COMPLETE"
+        by_angle = {c["angle"]: c["result"] for c in detail["comparisons"]}
+        assert by_angle["右後"] == "DUPLICATE_PHOTO" and by_angle["車內"] == "DUPLICATE_PHOTO"
+        assert by_angle["左前"] == "NO_NEW_DAMAGE"
+        assert "右後" not in called and set(called) == {"左前", "右前", "左後"}   # 重複的角度不打 Gemini
+        cases = [c for c in ops_api.list_cases(car="RDL-8265")["cases"] if c["source"] == "mobile_inspection"]
+        assert {c["angle"] for c in cases} == {"右後", "車內"}
+        assert all(c["kind"] == "照片重複" and c["ai_level"] == "P2" and c["damages"] == [] for c in cases)
+        assert cases[0]["photos"]["pickup"] and cases[0]["photos"]["return"]
+
     def test_真實pipeline結果對應_新損與既有損傷區分(self, client, ri, real_rental, monkeypatch):
         import judge_photos
 
