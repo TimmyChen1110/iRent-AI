@@ -52,8 +52,10 @@ out/
 **/playwright-report/
 **/test-results/
 
-# 這台 Mac 的 Finder 會在 build 後自動產生「xxx 2.js」重複檔，一律不進版控
-**/* 2.*
+# 這台 Mac 的 ~/Desktop 在 iCloud Drive 同步範圍內，build 期間會自動產生「xxx 2.js」「xxx 3.js」衝突副本，一律不進版控
+# （已確認 repo 內沒有任何正式檔案符合「空白+數字.副檔名」）
+**/* [0-9].*
+**/* [0-9][0-9].*
 
 # Xcode
 **/xcuserdata/
