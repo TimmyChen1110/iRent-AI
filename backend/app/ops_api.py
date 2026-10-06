@@ -814,6 +814,76 @@ def _dataset_cars() -> dict[str, dict]:
     return cars
 
 
+# ---------- 車輛站點（指揮中心 3D 地圖）----------
+# 派單系統尚未串接：車輛位置 = car_locations 指定站點，否則依車牌雜湊固定指派（確定性，Demo 每次一致）。
+
+STATIONS_PATH = Path(__file__).resolve().parent / "stations.json"
+
+
+def _stations_doc() -> dict:
+    try:
+        return json.loads(STATIONS_PATH.read_text())
+    except Exception:
+        return {"cities": [], "stations": []}
+
+
+def _stations() -> list[dict]:
+    return _stations_doc().get("stations") or []
+
+
+def _default_station_id(car: str) -> str | None:
+    """依車牌雜湊（穩定、與 Python hash seed 無關）按權重指派站點。"""
+    sts = _stations()
+    if not sts:
+        return None
+    weighted = [st for st in sts for _ in range(max(1, int(st.get("weight") or 1)))]
+    h = 0
+    for ch in car.upper():
+        h = (h * 131 + ord(ch)) % 1_000_003
+    return weighted[h % len(weighted)]["id"]
+
+
+def _location_of(car: str, overrides: dict[str, dict]) -> dict | None:
+    sts = {st["id"]: st for st in _stations()}
+    cities = {c["id"]: c for c in (_stations_doc().get("cities") or [])}
+    sid = (overrides.get(car) or {}).get("station_id") or _default_station_id(car)
+    st = sts.get(sid)
+    if not st:
+        return None
+    city = cities.get(st.get("city"), {})
+    return {"station_id": st["id"], "station": st["name"], "district": st.get("district"),
+            "city_id": st.get("city"), "city": city.get("name"), "lng": st["lng"], "lat": st["lat"],
+            "manual": car in overrides}
+
+
+@router.get("/stations")
+def stations():
+    doc = _stations_doc()
+    return {"cities": doc.get("cities") or [], "stations": doc.get("stations") or [], "server_time": _iso(_now())}
+
+
+class LocationIn(BaseModel):
+    station_id: str | None = None   # None = 清除手動指派，回到預設
+
+
+@router.patch("/fleet/{car}/location")
+def patch_location(car: str, body: LocationIn, x_ops_reader: str | None = Header(default=None)):
+    who = _reader(x_ops_reader)
+    car = car.strip().upper()
+    if not car:
+        raise HTTPException(400, "car 不可為空")
+    with ops_db.db() as conn:
+        if body.station_id:
+            if body.station_id not in {st["id"] for st in _stations()}:
+                raise HTTPException(400, f"未知站點 {body.station_id}")
+            ops_db.set_car_location(conn, car, body.station_id, who)
+        else:
+            conn.execute(ops_db.sql("DELETE FROM car_locations WHERE car=?"), (car,))
+        ops_db.add_audit(conn, "relocate", "fleet", car, body.station_id)
+        loc = _location_of(car, ops_db.get_car_locations(conn))
+    return {"car": car, "location": loc, "server_time": _iso(_now())}
+
+
 @router.get("/fleet")
 def fleet(q: str | None = None, status: str | None = None):
     now = _now()
@@ -821,6 +891,7 @@ def fleet(q: str | None = None, status: str | None = None):
         sla = ops_db.sla_minutes(conn)
         tasks = [_with_sla(dict(r), sla, now) for r in conn.execute("SELECT * FROM tasks ORDER BY created_at DESC")]
         locks = ops_db.get_locks(conn)
+        loc_overrides = ops_db.get_car_locations(conn)
         baseline_counts = {r[0]: r[1] for r in conn.execute(
             "SELECT UPPER(p.car), COUNT(*) FROM task_photos p JOIN tasks t ON t.id=p.task_id"
             " WHERE t.status='completed' GROUP BY UPPER(p.car)")}
@@ -853,6 +924,7 @@ def fleet(q: str | None = None, status: str | None = None):
             "baseline_count": baseline_counts.get(car.upper(), 0),
             "dataset_cases": info.get("cases", 0), "claims": info.get("claims", 0),
             "unreviewed_flags": info.get("unreviewed", 0),
+            "location": _location_of(car, loc_overrides),
         })
     if q:
         rows = [r for r in rows if q.upper() in r["car"].upper()]
@@ -883,6 +955,129 @@ def patch_fleet(car: str, body: LockIn, x_ops_reader: str | None = Header(defaul
                          f"{who}：{'鎖定' if body.locked else '解除鎖定'} {car}" + (f"（{lock['reason']}）" if lock.get("reason") else ""))
         ops_db.add_audit(conn, "lock" if body.locked else "unlock", "fleet", car, lock.get("reason"))
     return {"lock": lock, **fleet(q=car)}
+
+
+# ---------- 案件（AI 判定 → 人工裁決）：指揮中心用的異常清單 ----------
+# 資料來源與監理台相同（build_dashboard.build_cases / build_f2cases），只加上裁決與任務狀態。
+
+def _dataset_case_list() -> list[dict]:
+    from build_dashboard import build_cases, build_f2cases  # noqa: PLC0415
+    out = []
+    try:
+        for c in build_cases(embed=False):
+            a = c.get("assessment") or {}
+            out.append({
+                "case_id": c["id"], "car": c["car"], "angle": c["angle"], "mode": "pair",
+                "kind": c.get("kind"), "ai_level": c["level"],
+                "ai_conf": max((d.get("confidence") or 0 for d in a.get("damages") or []), default=None) if a.get("damages") else None,
+                "ai_found": bool(a.get("new_damage_found")),
+                "damages": [{"location": d.get("location"), "type": d.get("type"), "severity": d.get("severity"),
+                             "confidence": d.get("confidence"), "reasoning": d.get("reasoning")} for d in (a.get("damages") or [])],
+                "issues": [], "cleanliness": None, "score": None,
+                "pricing": c.get("pricing"),
+                "photos": {"pickup": c.get("pickup"), "return": c.get("ret")},
+                "truth": c.get("truth"),
+            })
+    except Exception:
+        pass
+    try:
+        for c in build_f2cases(embed=False):
+            a = c.get("assessment") or {}
+            out.append({
+                "case_id": c["id"], "car": c["car"], "angle": c["angle"], "mode": "interior",
+                "kind": c.get("kind"), "ai_level": c["level"], "ai_conf": a.get("confidence"),
+                "ai_found": a.get("level") == "髒汙",
+                "damages": [], "issues": a.get("issues") or [], "cleanliness": a.get("level"), "score": a.get("score"),
+                "pricing": None,
+                "photos": {"photo": c.get("photo")},
+                "truth": c.get("truth"),
+            })
+    except Exception:
+        pass
+    return out
+
+
+def _attach_case_state(cases: list[dict]) -> list[dict]:
+    """加上人工裁決、對應任務、標註框、站點；並推導 review_status。"""
+    ann = _srv._annotations()
+    with _srv.db() as conn:
+        decisions = {r[0]: {"decision": r[1], "decided_at": r[2]} for r in conn.execute("SELECT case_id, decision, decided_at FROM decisions")}
+        cols = ("id", "case_id", "task_type", "status", "priority", "assignee", "created_at", "resolved_at")
+        task_rows = [dict(zip(cols, r)) for r in conn.execute(
+            "SELECT id, case_id, task_type, status, priority, assignee, created_at, resolved_at FROM tasks ORDER BY id")]
+    with ops_db.db() as oconn:
+        overrides = ops_db.get_car_locations(oconn)
+    tasks_by_case: dict[str, list[dict]] = {}
+    for t in task_rows:
+        tasks_by_case.setdefault(t["case_id"], []).append(t)
+    for c in cases:
+        c["boxes"] = (ann.get(c["case_id"]) or {}).get("findings") or []
+        c["decision"] = decisions.get(c["case_id"])
+        c["tasks"] = tasks_by_case.get(c["case_id"], [])
+        c["location"] = _location_of(c["car"], overrides)
+        d = (c["decision"] or {}).get("decision")
+        open_task = any(t["status"] in ("pending", "in_progress") for t in c["tasks"])
+        if d == "confirm":
+            c["review_status"] = "confirmed_open" if open_task else "confirmed_done"
+        elif d == "reject":
+            c["review_status"] = "rejected"
+        elif d == "retake":
+            c["review_status"] = "retake"
+        elif c["ai_level"] in ("P1", "P2"):
+            c["review_status"] = "unreviewed"
+        else:
+            c["review_status"] = "normal"
+    return cases
+
+
+@router.get("/cases")
+def list_cases(car: str | None = None, status: str | None = None, levels: str | None = None):
+    """AI 判定案件清單（資料集）。status = unreviewed | confirmed_open | confirmed_done | rejected | retake | normal。"""
+    cases = _attach_case_state(_dataset_case_list())
+    if car:
+        cases = [c for c in cases if c["car"].upper() == car.strip().upper()]
+    if status:
+        wanted = set(status.split(","))
+        cases = [c for c in cases if c["review_status"] in wanted]
+    if levels:
+        wanted = set(levels.split(","))
+        cases = [c for c in cases if c["ai_level"] in wanted]
+    order = {"P1": 0, "P2": 1, "P3": 2}
+    cases.sort(key=lambda c: (order.get(c["ai_level"], 3), c["car"], c["case_id"]))
+    return {"cases": cases, "server_time": _iso(_now()), "demo_cases": list(_srv.DEMO_CASE_IDS) if _srv._demo_mode() else []}
+
+
+@router.get("/cases/{case_id}")
+def get_case(case_id: str):
+    cases = [c for c in _attach_case_state(_dataset_case_list()) if c["case_id"] == case_id]
+    view = _case_view(case_id)
+    if not cases and view.get("mode") is None:
+        raise HTTPException(404, f"找不到案件 {case_id}")
+    return {"case": cases[0] if cases else None, "view": view, "server_time": _iso(_now())}
+
+
+class CaseDecisionIn(BaseModel):
+    decision: str   # confirm | reject | retake
+    note: str | None = None
+
+
+@router.post("/cases/{case_id}/decision")
+def decide_case(case_id: str, body: CaseDecisionIn):
+    """人工裁決（與監理台 POST /api/decision 同一條路：confirm 會自動建單並通知）。"""
+    actor = ops_auth.current_actor()
+    if actor and actor.role != "admin":
+        raise HTTPException(403, "此功能僅限管理者")
+    r = _srv.post_decision(_srv.Decision(case_id=case_id, decision=body.decision, note=body.note))
+    return {**r, "case": get_case(case_id)["case"], "server_time": _iso(_now())}
+
+
+@router.delete("/cases/{case_id}/decision")
+def undo_case_decision(case_id: str):
+    actor = ops_auth.current_actor()
+    if actor and actor.role != "admin":
+        raise HTTPException(403, "此功能僅限管理者")
+    _srv.delete_decision(case_id)
+    return {"ok": True, "case": get_case(case_id)["case"], "server_time": _iso(_now())}
 
 
 # ---------- 營運洞察：離線 log 彙整（ops_insights.json）+ 即時整備數據 ----------

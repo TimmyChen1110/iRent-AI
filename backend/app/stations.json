@@ -1,0 +1,23 @@
+{
+  "note": "站點對照表：車輛位置資料。派單系統尚未串接時，車輛依車牌雜湊固定指派到站點；可用 PATCH /api/ops/fleet/{car}/location 改派。",
+  "cities": [
+    {"id": "taipei", "name": "台北", "lng": 121.5654, "lat": 25.033},
+    {"id": "taichung", "name": "台中", "lng": 120.6736, "lat": 24.1477},
+    {"id": "tainan", "name": "台南", "lng": 120.2133, "lat": 22.9908},
+    {"id": "kaohsiung", "name": "高雄", "lng": 120.3014, "lat": 22.6273}
+  ],
+  "stations": [
+    {"id": "xinyi-a3", "name": "信義站 A3", "city": "taipei", "district": "信義區", "lng": 121.5648, "lat": 25.0345, "weight": 4},
+    {"id": "xinyi-a5", "name": "信義站 A5", "city": "taipei", "district": "信義區", "lng": 121.5712, "lat": 25.0318, "weight": 3},
+    {"id": "daan-b1", "name": "大安站 B1", "city": "taipei", "district": "大安區", "lng": 121.5452, "lat": 25.0268, "weight": 3},
+    {"id": "daan-b4", "name": "大安站 B4", "city": "taipei", "district": "大安區", "lng": 121.5389, "lat": 25.0231, "weight": 2},
+    {"id": "zhongshan-p2", "name": "中山站 P2", "city": "taipei", "district": "中山區", "lng": 121.5341, "lat": 25.0566, "weight": 3},
+    {"id": "zhongshan-p5", "name": "中山站 P5", "city": "taipei", "district": "中山區", "lng": 121.5275, "lat": 25.0612, "weight": 2},
+    {"id": "songshan-a1", "name": "松山站 A1", "city": "taipei", "district": "松山區", "lng": 121.5568, "lat": 25.0498, "weight": 2},
+    {"id": "songshan-a7", "name": "松山站 A7", "city": "taipei", "district": "松山區", "lng": 121.5618, "lat": 25.0531, "weight": 2},
+    {"id": "taichung-c2", "name": "台中站 C2", "city": "taichung", "district": "中區", "lng": 120.6861, "lat": 24.1369, "weight": 2},
+    {"id": "fengjia-c5", "name": "逢甲站 C5", "city": "taichung", "district": "西屯區", "lng": 120.6468, "lat": 24.1794, "weight": 1},
+    {"id": "tainan-e1", "name": "台南站 E1", "city": "tainan", "district": "東區", "lng": 120.2126, "lat": 22.9971, "weight": 1},
+    {"id": "zuoying-p1", "name": "高鐵左營站 P1", "city": "kaohsiung", "district": "左營區", "lng": 120.3076, "lat": 22.6873, "weight": 2}
+  ]
+}

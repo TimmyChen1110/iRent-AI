@@ -46,7 +46,8 @@
 ├── docker-compose.yml           # backend + (PR#2) postgres
 ├── .env.example                 # GEMINI_API_KEY 等
 ├── frontend-user/               # 使用者前端（待開工，見 IDEAS 提案②車況收據）
-├── frontend-admin/              # 環節三 整備中心（React SPA；Docker 多階段自動 build，本機 npm run build → backend/app/static/ops → /ops，/ops/m 為站點手機版）
+├── fleet-ops-center/            # 環節三 整備中心正式前端（Next.js + 3D Digital Twin；npm run build:ops → backend/app/static/ops → /ops，/ops/m 為站點手機版；Docker 多階段自動 build）
+├── frontend-admin/              # 舊版整備中心（Vite SPA，2026-10 起停止維護，保留參考）
 ├── 環節一/二/三_*/              # 比賽文件（README / SETUP / 隊友須知 / 簡報）
 └── iRent - 運用 AI 打造 iRent 智能車況管家…/   # 共用原始資料集
     ├── 沒有進行索賠/            # 負樣本：30 台車 × 4 方位借/還配對（240 張）
@@ -111,7 +112,7 @@ cd app && uvicorn server:app --host 0.0.0.0 --port 8000
 
    `backend` 應顯示 `healthy`，health API 應回 `status: ok`。若 `.env` 的 `IRENT_PORT` 有修改，網址也要改成相同 port。
 
-3. 開啟車況監理台 <http://localhost:8000/> 或登入頁 <http://localhost:8000/ops/login>。`DEMO_MODE=true` 且仍使用標準帳密時，登入頁會提供一鍵填入：
+3. 開啟車況監理台 <http://localhost:8000/> 或整備中心 <http://localhost:8000/ops>。`DEMO_MODE=true` 且仍使用標準帳密時，登入頁會提供一鍵填入：
 
    - Admin：`admin / admin-demo`
    - Station Staff：`station / station-demo`
@@ -125,7 +126,7 @@ cd app && uvicorn server:app --host 0.0.0.0 --port 8000
 6. SQLite、session metadata 與 uploads 共用 `backend_data` named volume；普通 restart 或 `docker compose down` 不會遺失，只有 `docker compose down -v` 會刪除。Browser E2E 使用自己的暫存 SQLite／uploads，不會污染 Demo volume：
 
    ```bash
-   cd frontend-admin
+   cd frontend-admin        # 舊版 UI 的 Playwright e2e（針對舊介面）；新介面以手動／腳本實測
    npm run test:e2e
    # 沒有 Google Chrome 時：
    npx playwright install chromium

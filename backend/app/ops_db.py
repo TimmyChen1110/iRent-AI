@@ -17,6 +17,7 @@
   ops_settings      key/value 設定（SLA 門檻等）
   ops_users/sessions 最小 Demo 登入與 HttpOnly session
   ops_audit_log     People / Settings / Fleet 的管理操作稽核
+  car_locations     車輛目前站點（指揮中心 3D 地圖用；派單系統未串接前以站點對照表固定指派）
 """
 import json
 import logging
@@ -130,6 +131,11 @@ DDL = [
          actor_name TEXT,
          actor_role TEXT,
          at       TEXT NOT NULL)""",
+    """CREATE TABLE IF NOT EXISTS car_locations(
+         car        TEXT PRIMARY KEY,
+         station_id TEXT NOT NULL,
+         by         TEXT,
+         updated_at TEXT NOT NULL)""",
     """CREATE TABLE IF NOT EXISTS ops_users(
          id            INTEGER PRIMARY KEY AUTOINCREMENT,
          username      TEXT NOT NULL UNIQUE,
@@ -572,3 +578,20 @@ def add_audit(conn, action: str, resource: str, resource_id=None, detail: str | 
         (now_iso(), aid, aname, arole, action, resource,
          None if resource_id is None else str(resource_id), detail))
     return dict(conn.execute("SELECT * FROM ops_audit_log WHERE id=?", (cur.lastrowid,)).fetchone())
+
+
+# ---------- 車輛站點 ----------
+
+def get_car_locations(conn) -> dict[str, dict]:
+    """{car: {station_id, by, updated_at}}。"""
+    return {r["car"]: dict(r) for r in rows(conn.execute(sql("SELECT * FROM car_locations")))}
+
+
+def set_car_location(conn, car: str, station_id: str, by: str | None) -> dict:
+    ts = now_iso()
+    conn.execute(sql("INSERT OR REPLACE INTO car_locations(car, station_id, by, updated_at) VALUES (?,?,?,?)")
+                 if dialect() == "sqlite" else
+                 "INSERT INTO car_locations(car, station_id, by, updated_at) VALUES (%s,%s,%s,%s)"
+                 " ON CONFLICT(car) DO UPDATE SET station_id=EXCLUDED.station_id, by=EXCLUDED.by, updated_at=EXCLUDED.updated_at",
+                 (car, station_id, by, ts))
+    return {"car": car, "station_id": station_id, "by": by, "updated_at": ts}
