@@ -47,28 +47,11 @@ def export_detector(output: Path) -> None:
 
 
 def export_ocr(output: Path) -> None:
-    """Convert the supplied ONNX OCR model through a traced PyTorch graph.
+    """Use the shared OCR exporter for NHWC conversion and single normalization."""
+    sys.path.insert(0, str(APP_MODELS))
+    from transfer_model import export_ocr as export_plate_ocr
 
-    coremltools does not guarantee direct ONNX conversion for every graph.
-    onnx2torch keeps this step explicit and fails loudly on unsupported ops,
-    rather than producing a silently altered OCR model.
-    """
-    import coremltools as ct
-    import torch
-    from onnx2torch import convert
-
-    onnx_path = APP_MODELS / "ocr" / "cct_s_v2_global.onnx"
-    model = convert(str(onnx_path)).eval()
-    sample = torch.rand(1, 3, 64, 128)
-    traced = torch.jit.trace(model, sample)
-    converted = ct.convert(
-        traced,
-        inputs=[ct.ImageType(name="image", shape=sample.shape, scale=1 / 255.0)],
-        convert_to="mlprogram",
-        minimum_deployment_target=ct.target.iOS18,
-        compute_precision=ct.precision.FLOAT16,
-    )
-    converted.save(output / "PlateOCR.mlpackage")
+    export_plate_ocr(output)
 
 
 def export_view_classifier(output: Path) -> None:

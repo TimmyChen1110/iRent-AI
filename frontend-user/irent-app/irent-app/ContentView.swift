@@ -3,7 +3,6 @@ import SwiftUI
 
 struct ContentView: View {
     @Environment(RentalStore.self) private var store
-    @State private var showSettings = false
 
     var body: some View {
         NavigationStack {
@@ -19,18 +18,7 @@ struct ContentView: View {
                     CompletionView()
                 }
             }
-            .navigationTitle(store.phase.title)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("設定", systemImage: "gear") { showSettings = true }
-                }
-            }
-            .sheet(isPresented: $showSettings) {
-                SettingsView()
-            }
-            .task {
-                await PendingUploadSync().run(for: store)
-            }
+            .toolbar(.hidden, for: .navigationBar)
         }
     }
 }
@@ -40,39 +28,108 @@ private struct InspectionChecklistView: View {
     let stage: InspectionStage
 
     var body: some View {
-        List {
-            Section {
-                Text("\(store.rental.carName) · \(store.rental.plateNumber)")
-                    .font(.headline)
-                Text("請依序完成四個角度。每張照片均會在本機離線核對車牌、拍攝角度與品質。")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
+        ScrollView {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.lg) {
+                header
+                rentalCard
+                captureChecklist
 
-            Section(stage.title) {
-                ForEach(VehicleView.allCases) { view in
+                if store.completedViews(for: stage) == VehicleView.allCases.count {
                     NavigationLink {
-                        CaptureView(stage: stage, view: view)
+                        InspectionSummaryView(stage: stage)
                     } label: {
-                        HStack {
-                            Label(view.rawValue, systemImage: store.photo(for: stage, view: view) == nil ? "camera" : "checkmark.circle.fill")
-                            Spacer()
-                            if store.photo(for: stage, view: view) != nil {
-                                Text("已通過").foregroundStyle(.green)
-                            } else {
-                                Text("待拍攝").foregroundStyle(.secondary)
-                            }
-                        }
+                        Label(stage == .pickup ? "檢視並確認取車" : "檢視並確認還車", systemImage: "checkmark.circle.fill")
+                            .font(.body.weight(.bold))
+                            .frame(maxWidth: .infinity, minHeight: AppTheme.touchTarget)
                     }
+                    .foregroundStyle(.white)
+                    .background(AppTheme.Colors.primary, in: RoundedRectangle(cornerRadius: AppTheme.Radius.sm, style: .continuous))
                 }
             }
+            .padding(AppTheme.Spacing.lg)
+        }
+        .background(AppTheme.Colors.background.ignoresSafeArea())
+    }
 
-            if store.completedViews(for: stage) == VehicleView.allCases.count {
-                Section {
-                    NavigationLink("檢視並確認 (stage.title)") {
-                        InspectionSummaryView(stage: stage)
+    private var header: some View {
+        HStack(spacing: AppTheme.Spacing.md) {
+            ZStack {
+                RoundedRectangle(cornerRadius: AppTheme.Radius.sm, style: .continuous)
+                    .fill(AppTheme.Colors.primary)
+                Image(systemName: "car.fill").foregroundStyle(.white)
+            }
+            .frame(width: 44, height: 44)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(stage == .pickup ? "開始取車" : "開始還車")
+                    .font(.title2.weight(.heavy))
+                    .foregroundStyle(AppTheme.Colors.text)
+                Text("依序完成四個指定角度的車況拍攝")
+                    .font(.footnote)
+                    .foregroundStyle(AppTheme.Colors.textSecondary)
+            }
+        }
+    }
+
+    private var rentalCard: some View {
+        HStack(spacing: AppTheme.Spacing.md) {
+            Image(systemName: "car.side.fill")
+                .font(.title2)
+                .foregroundStyle(AppTheme.Colors.primary)
+                .frame(width: 42, height: 42)
+                .background(AppTheme.Colors.primarySoft, in: RoundedRectangle(cornerRadius: AppTheme.Radius.sm, style: .continuous))
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
+                Text(store.rental.carName)
+                    .font(.headline)
+                    .foregroundStyle(AppTheme.Colors.text)
+                Text(store.rental.plateNumber)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(AppTheme.Colors.textSecondary)
+            }
+            Spacer()
+        }
+        .qualityCard()
+    }
+
+    private var captureChecklist: some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.sm) {
+            HStack {
+                Text("拍攝角度")
+                    .font(.footnote.weight(.bold))
+                    .foregroundStyle(AppTheme.Colors.textSecondary)
+                Spacer()
+                Text("\(store.completedViews(for: stage))/\(VehicleView.allCases.count) 已完成")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(AppTheme.Colors.primary)
+            }
+            ForEach(VehicleView.allCases) { view in
+                let isComplete = store.photo(for: stage, view: view) != nil
+                NavigationLink {
+                    CaptureView(stage: stage, view: view)
+                } label: {
+                    HStack(spacing: AppTheme.Spacing.md) {
+                        Image(systemName: isComplete ? "checkmark.circle.fill" : "camera.fill")
+                            .font(.title3)
+                            .foregroundStyle(isComplete ? AppTheme.Colors.success : AppTheme.Colors.primary)
+                            .frame(width: 34)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(view.rawValue)
+                                .font(.body.weight(.bold))
+                            Text(isComplete ? "離線辨識已通過" : view.instruction)
+                                .font(.caption)
+                                .foregroundStyle(AppTheme.Colors.textSecondary)
+                                .lineLimit(1)
+                        }
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.footnote.weight(.bold))
+                            .foregroundStyle(AppTheme.Colors.textTertiary)
                     }
-                    .fontWeight(.semibold)
+                    .padding(AppTheme.Spacing.md)
+                    .background(AppTheme.Colors.surface, in: RoundedRectangle(cornerRadius: AppTheme.Radius.md, style: .continuous))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: AppTheme.Radius.md, style: .continuous)
+                            .stroke(isComplete ? AppTheme.Colors.success.opacity(0.35) : AppTheme.Colors.border, lineWidth: 1)
+                    }
                 }
             }
         }
@@ -148,28 +205,9 @@ private struct InspectionSummaryView: View {
                 .buttonStyle(.borderedProminent)
             }
         }
-        .navigationTitle("確認(stage.title)")
+        .navigationTitle("確認\(stage.title)")
     }
 }
-
-private struct SettingsView: View {
-    @Environment(RentalStore.self) private var store
-
-    var body: some View {
-        @Bindable var store = store
-        NavigationStack {
-            Form {
-                Section("同步服務") {
-                    TextField("API Base URL", text: $store.apiBaseURL)
-                        .textInputAutocapitalization(.never)
-                        .keyboardType(.URL)
-                }
-            }
-            .navigationTitle("設定")
-        }
-    }
-}
-
 
 #Preview("取車檢查") {
     ContentView()
