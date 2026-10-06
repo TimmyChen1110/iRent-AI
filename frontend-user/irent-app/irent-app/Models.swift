@@ -148,7 +148,7 @@ final class RentalStore {
 
     init() {
         apiBaseURL = UserDefaults.standard.string(forKey: "apiBaseURL") ?? "http://127.0.0.1:8000"
-        demoMode = UserDefaults.standard.object(forKey: "demoMode") as? Bool ?? true
+        demoMode = UserDefaults.standard.object(forKey: "demoMode") as? Bool ?? false
         let rentalID = UserDefaults.standard.string(forKey: "rentalID") ?? Rental.demo.id
         rental = Rental.available.first { $0.id == rentalID } ?? .demo
         load()
