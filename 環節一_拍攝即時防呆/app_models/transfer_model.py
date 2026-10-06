@@ -86,10 +86,12 @@ def export_ocr(output: Path) -> None:
     converted_model = ct.convert(
         traced_model,
         inputs=[
+            # cct_s_v2_global.onnx 的圖內已含 rescaling(×1/255)，輸入是 0–255 的 uint8；
+            # 這裡絕不能再給 scale=1/255，否則模型看到的是全黑影像、每個字槽都輸出 pad。
             ct.ImageType(
                 name="image",
                 shape=sample.shape,
-                scale=1.0 / 255.0,
+                scale=1.0,
                 color_layout=ct.colorlayout.RGB,
             )
         ],

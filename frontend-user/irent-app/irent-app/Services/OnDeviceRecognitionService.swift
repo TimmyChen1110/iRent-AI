@@ -117,15 +117,9 @@ struct OnDeviceRecognitionService {
         expectedView: VehicleView
     ) async -> LocalInspectionResult {
         do {
-#if canImport(UIKit)
-            guard let cgImage = image.cgImage else {
+            guard let cgImage = uprightCGImage(image) else {
                 throw RecognitionError.lowResolution
             }
-#elseif canImport(AppKit)
-            guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
-                throw RecognitionError.lowResolution
-            }
-#endif
             guard cgImage.width >= 640, cgImage.height >= 480 else {
                 throw RecognitionError.lowResolution
             }
@@ -181,11 +175,7 @@ struct OnDeviceRecognitionService {
 
     /// 車內照：不跑車牌／視角模型，只做解析度與亮度的品質防呆（沿用既有門檻，不另造一套引擎）。
     func evaluateInterior(image: RecognitionImage) -> LocalInspectionResult {
-#if canImport(UIKit)
-        let cgImage = image.cgImage
-#else
-        let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil)
-#endif
+        let cgImage = uprightCGImage(image)
         let versions = modelVersions.merging(["interior_guard": "resolution+brightness/1.0"]) { $1 }
         guard let cgImage, cgImage.width >= 640, cgImage.height >= 480 else {
             return .failure(
@@ -210,6 +200,22 @@ struct OnDeviceRecognitionService {
             checks: [ValidationCheck(label: "畫面清晰", passed: true), ValidationCheck(label: "光線充足", passed: true),
                      ValidationCheck(label: "座艙完整可辨識", passed: true)]
         )
+    }
+
+    /// 相機與相簿的照片常帶 EXIF 方向旗標（直拍其實是橫向像素 + 旋轉 90°）。`UIImage.cgImage` 是未旋轉的原始像素，
+    /// 直接餵 Vision／Core ML 會讓車子躺著，車牌與視角都辨識不到。這裡先把像素轉成正立，後續偵測、裁切、分類全部用同一張。
+    private func uprightCGImage(_ image: RecognitionImage) -> CGImage? {
+#if canImport(UIKit)
+        guard image.imageOrientation != .up else { return image.cgImage }
+        let format = UIGraphicsImageRendererFormat.default()
+        format.scale = 1
+        let upright = UIGraphicsImageRenderer(size: image.size, format: format).image { _ in
+            image.draw(in: CGRect(origin: .zero, size: image.size))
+        }
+        return upright.cgImage
+#else
+        return image.cgImage(forProposedRect: nil, context: nil, hints: nil)
+#endif
     }
 
     private func meanLuminance(of image: CGImage) -> Double {
@@ -308,9 +314,18 @@ struct OnDeviceRecognitionService {
         for slot in 0..<slots {
             let values = (0..<classes).map { output[slot * classes + $0].doubleValue }
             let best = values.enumerated().max(by: { $0.element < $1.element })!
-            let maxValue = values.max()!
-            let sum = values.reduce(0) { $0 + exp($1 - maxValue) }
-            let confidence = exp(best.element - maxValue) / sum
+            // cct_s_v2_global 的字槽輸出已經是 softmax 機率（每槽加總 ≈ 1）；再做一次 softmax 會把 1.0 壓成 ≈ 0.07。
+            // 只有在輸出不像機率分布（logits）時才自行 softmax。
+            let total = values.reduce(0, +)
+            let isProbability = values.allSatisfy { $0 >= 0 && $0 <= 1.0001 } && abs(total - 1) < 0.05
+            let confidence: Double
+            if isProbability {
+                confidence = best.element
+            } else {
+                let maxValue = values.max()!
+                let sum = values.reduce(0) { $0 + exp($1 - maxValue) }
+                confidence = exp(best.element - maxValue) / sum
+            }
             let character = alphabet[best.offset]
             if character != "_" {
                 result.append(character)

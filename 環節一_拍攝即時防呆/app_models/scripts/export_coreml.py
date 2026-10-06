@@ -63,7 +63,8 @@ def export_ocr(output: Path) -> None:
     traced = torch.jit.trace(model, sample)
     converted = ct.convert(
         traced,
-        inputs=[ct.ImageType(name="image", shape=sample.shape, scale=1 / 255.0)],
+        # ONNX 圖內已含 ×1/255，Core ML 端 scale 必須是 1.0（見 transfer_model.py）
+        inputs=[ct.ImageType(name="image", shape=sample.shape, scale=1.0)],
         convert_to="mlprogram",
         minimum_deployment_target=ct.target.iOS18,
         compute_precision=ct.precision.FLOAT16,
