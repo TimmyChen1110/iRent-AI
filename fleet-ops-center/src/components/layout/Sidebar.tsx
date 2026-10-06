@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
-import { LayoutDashboard, Car, AlertTriangle, SprayCan, Wrench, Sparkles, PanelLeftClose, PanelLeftOpen, Hexagon, Radar, Bell, Users, Settings, Smartphone, ExternalLink, ClipboardCheck } from "lucide-react";
+import { LayoutDashboard, Car, AlertTriangle, SprayCan, Wrench, Sparkles, PanelLeftClose, PanelLeftOpen, Hexagon, Radar, Bell, Users, Settings, Smartphone, ClipboardCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useOps } from "@/store/OpsStore";
 
@@ -51,7 +51,6 @@ export function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle:
         {!collapsed && (
           <div className="mb-2 space-y-1 px-1">
             {health?.demo_mode && <div className="text-[10.5px] text-amber-300/80">DEMO 模式（只影響排序與示範入口）</div>}
-            <a href="/" target="_blank" rel="noreferrer" className="flex items-center gap-2 text-white/50 hover:text-white"><ExternalLink className="h-3.5 w-3.5" />開啟車況監理台</a>
             <Link href="/m" className="flex items-center gap-2 text-white/50 hover:text-white"><Smartphone className="h-3.5 w-3.5" />站點人員手機版</Link>
           </div>
         )}
