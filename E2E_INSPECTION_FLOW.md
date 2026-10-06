@@ -7,6 +7,7 @@
 
 ```mermaid
 flowchart TD
+    A0[Find a Car<br/>3D 台北地圖（MapKit）→ 選 ABC-1234 → 前往取車 → Find My Car → 我已抵達車輛<br/>Demo Location，不要求定位權限] --> A
     A[iOS App<br/>frontend-user/irent-app<br/>Pickup / Return guided capture] --> B[Photo Guardrail<br/>Core ML：PlateDetector / PlateOCR / ViewClassifier<br/>車內：解析度 + 亮度]
     B -->|只接受通過的照片<br/>PendingUploadSync 離線重送| C[Mobile Inspection API<br/>POST /v1/mobile-inspections/photos<br/>冪等：photo_id / sha256]
     C --> D[Rental → Pickup / Return Inspection → InspectionPhoto<br/>backend/app/rental_inspections.py]
@@ -50,6 +51,21 @@ decisions / tasks / task_events           ← 既有（裁決與整備任務，�
 
 角度沿用 ViewClassifier 命名（左前／右前／左後／右後）＋ 車內；API 同時接受規格代號（FRONT_LEFT…INTERIOR）。
 
+## 使用者端與管理者端：同一個 Fleet Digital Twin
+
+```text
+USER DIGITAL TWIN VIEW（iOS Find a Car）     OPERATIONS DIGITAL TWIN VIEW（Fleet Command Center）
+My Location                                  Taiwan
+    ↓                                            ↓
+Nearby Fleet（信義區 6 台）                   Taipei
+    ↓                                            ↓
+ABC-1234  「Where is my car?」                ABC-1234  「What happened to this car?」
+                                                 ↓
+                                             Damage Region（右後車門 hotspot）
+```
+
+Find → Inspect → Drive → Return → Detect → Act。Find a Car 是純 iOS 本機資料（`DemoFleet.swift`：6 台示範車、Demo 使用者位置、示意步行路線），零後端變更；選車後 `RentalStore.selectRental` 仍然是同一筆 `RNT-20261005-1842`，取車／還車／上傳流程完全不變。
+
 ## 端對端 Demo 操作
 
 ```bash
@@ -59,10 +75,11 @@ cd backend/app && DEMO_MODE=true uvicorn server:app --host 0.0.0.0 --port 8000
 ```
 
 1. iOS App：設定 → API Base URL 填 `http://<電腦區網IP>:8000`，Demo 模式開（預設），租約 ABC-1234。
-2. 取車檢查：進入清單時 App 會先呼叫 `POST /v1/mobile-inspections/rentals/RNT-20261005-1842/restart` 清掉上一輪紀錄（也可在設定按「重新開始 Demo」）。
-3. 拍左前 → 第一次「照片需要重拍／畫面過於模糊」→ 重拍通過 ✓ → 右前 → 左後 → 右後 → 車內 → 「檢視並完成取車檢查」→ **取車檢查完成**（外觀 4/4、車內 1/1、車況基準 已建立）→ 開始租借。
-4. 開始還車 → 四角 → 右後第一次「拍攝角度不正確」→ 重拍通過 → 車內 → 完成還車 → **還車完成**（車況檢查：分析中 → 已完成）。App 不顯示任何車損判定。
-5. 管理者端 總覽／事件中心：LIVE INCIDENT ABC-1234（還車 20:42 ‧ 2 件待裁決）；檢查紀錄 `/ops/inspections` → `RNT-20261005-1842` 看 Before/After、EXISTING_DAMAGE 不開案、車內 findings。
-6. 指揮中心 → 台灣 → 台北 → ABC-1234 → 數位分身右後車門 hotspot → 查看證據（取車右後 vs 還車右後）→ 執行 AI 建議方案 → 維修＋清潔任務 → 完工 → 車輛恢復上線 → 重置 Demo。
+2. 尋找附近車輛：開 App 即為 3D 信義區地圖 → 點 ABC-1234（鏡頭飛到車旁，底部卡片：Toyota Yaris · 信義站 A3 · 約 320 m · 步行約 4 分鐘 · 油量 72% · 可租借）→ **前往取車** → Find My Car（你 → 車的示意路線）→ **我已抵達車輛** → 進入既有取車檢查。
+3. 取車檢查：進入清單時 App 會先呼叫 `POST /v1/mobile-inspections/rentals/RNT-20261005-1842/restart` 清掉上一輪紀錄（也可在設定按「重新開始 Demo」）。
+4. 拍左前 → 第一次「照片需要重拍／畫面過於模糊」→ 重拍通過 ✓ → 右前 → 左後 → 右後 → 車內 → 「檢視並完成取車檢查」→ **取車檢查完成**（外觀 4/4、車內 1/1、車況基準 已建立）→ 開始租借。
+5. 開始還車 → 四角 → 右後第一次「拍攝角度不正確」→ 重拍通過 → 車內 → 完成還車 → **還車完成**（車況檢查：分析中 → 已完成）。App 不顯示任何車損判定。
+6. 管理者端 總覽／事件中心：LIVE INCIDENT ABC-1234（還車 20:42 ‧ 2 件待裁決）；檢查紀錄 `/ops/inspections` → `RNT-20261005-1842` 看 Before/After、EXISTING_DAMAGE 不開案、車內 findings。
+7. 指揮中心 → 台灣 → 台北 → ABC-1234 → 數位分身右後車門 hotspot → 查看證據（取車右後 vs 還車右後）→ 執行 AI 建議方案 → 維修＋清潔任務 → 完工 → 車輛恢復上線 → 重置 Demo。App 還車完成頁按「完成」→ 回到尋找附近車輛，可重演。
 
 離線：沒網路時照片仍在手機完成拍攝與存檔，清單顯示「待上傳 n 張」，開 App 或按「重試」自動重送；後端對重送的同一張照片回 `deduplicated: true`。

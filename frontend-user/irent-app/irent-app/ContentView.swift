@@ -9,6 +9,8 @@ struct ContentView: View {
         NavigationStack {
             Group {
                 switch store.phase {
+                case .findCar:
+                    FindCarView().id(store.resetGeneration)
                 case .readyForPickup:
                     InspectionChecklistView(stage: .pickup)
                 case .pickupComplete:
@@ -22,6 +24,7 @@ struct ContentView: View {
                 }
             }
             .navigationTitle(store.phase.title)
+            .navigationBarTitleDisplayMode(store.phase == .findCar ? .inline : .automatic)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("設定", systemImage: "gear") { showSettings = true }
@@ -332,6 +335,13 @@ private struct ReturnCompleteView: View {
                 Text("車況資料已提交。系統將比對您取車與還車時的車況紀錄。")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
+                // 這次租借結束 → 回到 Find a Car。還有照片沒上傳時不開放，避免清掉尚未送出的證據。
+                Button("完成") {
+                    PhotoStore().removeAll()
+                    store.finishRental()
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(store.pendingUploads(for: .return) > 0)
             }
         }
         .task {

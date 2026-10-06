@@ -58,7 +58,7 @@ ipconfig getifaddr en0        # Wi-Fi；接 iPhone 熱點時通常是 172.20.10.
 [ ] Admin 右上已按「重置 Demo」一次
 [ ] Mac 與 iPhone 同一網路（熱點），VPN 關
 [ ] App 設定 API URL = http://<Mac IP>:8000，「測試連線」✓
-[ ] App 設定「重新開始 Demo」已按（清單全部「待拍攝」、沒有「待上傳」）
+[ ] App 設定「重新開始 Demo」已按（回到「尋找附近車輛」地圖；進取車後清單全部「待拍攝」、沒有「待上傳」）
 [ ] iPhone 相機與區域網路權限皆已允許
 [ ] iPhone 電量 / 螢幕不自動鎖定
 [ ] Admin 右上角徽章「即時連線」或「輪詢中」（不是「離線」）
@@ -68,6 +68,7 @@ ipconfig getifaddr en0        # Wi-Fi；接 iPhone 熱點時通常是 172.20.10.
 
 | # | 操作 | 預期 |
 |---|---|---|
+| 0 | 開 App：3D 信義區地圖 → 點 ABC-1234 → 卡片「前往取車」→ Find My Car →「我已抵達車輛」 | 卡片：Toyota Yaris · 信義站 A3 · 約 320 m · 步行約 4 分鐘 · 油量 72%；抵達後進入取車檢查清單（位置是 Demo 固定值，不會跳定位權限） |
 | 1 | App 取車檢查 → 左前 → 拍照 | 第一次：「照片需要重拍／畫面過於模糊」；重拍 → ✓ 畫面清晰／角度正確／車牌 ABC-1234／車輛完整 |
 | 2 | 右前 → 左後 → 右後 → 車內 | 每張 ✓，列表顯示「已拍攝 · 已同步」 |
 | 3 | 檢視並完成取車檢查 → 完成 | 「取車檢查完成」外觀 4/4、車內 1/1、車況基準 已建立 → 開始租借 |
@@ -112,5 +113,6 @@ ipconfig getifaddr en0        # Wi-Fi；接 iPhone 熱點時通常是 172.20.10.
 - ATS 用 `NSAllowsLocalNetworking`（區網 HTTP），未開 `NSAllowsArbitraryLoads`；是否覆蓋你場地的 IP 段 **未在真機驗證**。若真機連不上且錯誤是 ATS，臨時方案：Xcode → Info.plist 改為 `NSAllowsArbitraryLoads=YES`（Demo 限定，Production 用 HTTPS 並刪除整段 NSAppTransportSecurity）。
 - 示範租約的固定劇本只對 `RNT-20261005-1842`；真實租約需要 GEMINI_API_KEY 與網路，失敗時變 ANALYSIS_FAILED（紀錄保留）。
 - 模擬器沒有相機，只能「從相簿選擇」。
+- Find a Car 的使用者位置、車輛、距離、路線都是本機固定示範資料（`DemoFleet.swift`），不是 GPS 也不是車隊 API；地圖圖資沒網路時只是地圖空白，仍可選車進入取車。
 - Admin 登入 session 為 cookie；重整瀏覽器會回登入頁（一鍵登入即可）。
 - 後端單 process、SQLite；不要同時開兩個 uvicorn 指向同一 DB。

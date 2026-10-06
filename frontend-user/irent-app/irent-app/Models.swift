@@ -2,6 +2,8 @@ import Foundation
 import Observation
 
 enum RentalPhase: String, Codable, CaseIterable {
+    /// 尚未租借：Find a Car（3D 地圖找車 → 前往取車 → 抵達後進入既有取車檢查）。
+    case findCar
     case readyForPickup
     case pickupComplete
     case activeRental
@@ -10,6 +12,7 @@ enum RentalPhase: String, Codable, CaseIterable {
 
     var title: String {
         switch self {
+        case .findCar: "尋找附近車輛"
         case .readyForPickup: "取車檢查"
         case .pickupComplete: "取車檢查完成"
         case .activeRental: "租用中"
@@ -128,7 +131,7 @@ struct RentalRemoteStatus: Codable {
 @Observable
 final class RentalStore {
     private(set) var rental: Rental
-    var phase: RentalPhase = .readyForPickup
+    var phase: RentalPhase = .findCar
     var photos: [CapturedPhoto] = []
     var remoteStatus: RentalRemoteStatus?
     var isSyncing = false
@@ -223,6 +226,19 @@ final class RentalStore {
         save()
     }
 
+    /// Find My Car →「我已抵達車輛」：進入既有取車檢查（取車流程本身不變）。
+    func arriveAtVehicle() {
+        guard phase == .findCar else { return }
+        phase = .readyForPickup
+        save()
+    }
+
+    /// 還車完成畫面「完成」：這次租借結束，回到 Find a Car（照片檔由呼叫端用 PhotoStore 清）。
+    func finishRental() {
+        guard phase == .completed else { return }
+        resetLocal()
+    }
+
     func beginReturn() {
         phase = .readyForReturn
         save()
@@ -235,10 +251,14 @@ final class RentalStore {
         resetLocal()
     }
 
+    /// 每次 resetLocal 遞增：讓 Find a Car 畫面重建（清掉已選車輛／Find My Car 的畫面狀態），下一輪 Demo 從頭開始。
+    private(set) var resetGeneration = 0
+
     /// 清掉本機照片與狀態（照片檔由 PhotoStore 另外清）。
     func resetLocal() {
+        resetGeneration += 1
         photos = []
-        phase = .readyForPickup
+        phase = .findCar
         attempts = [:]
         remoteStatus = nil
         save()
@@ -260,6 +280,10 @@ final class RentalStore {
         else { return }
         phase = state.phase
         photos = state.photos
+        // 舊版沒有 Find a Car：取車還沒拍任何照片就視為尚未租借；取車進行中／租用中／還車則維持原狀（不回 Find a Car）。
+        if phase == .readyForPickup, !photos.contains(where: { $0.stage == .pickup }) {
+            phase = .findCar
+        }
     }
 }
 
