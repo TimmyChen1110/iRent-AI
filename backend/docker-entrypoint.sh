@@ -16,7 +16,7 @@ rm -f /data/.irent-write-check
 
 base_url="${PUBLIC_BASE_URL:-http://localhost:8000}"
 echo "iRent Demo 啟動中"
-echo "  車況監理台: ${base_url}/"
+echo "  管理者介面: ${base_url}/ops（/ 自動導向）"
 echo "  Admin 後台:  ${base_url}/ops"
 echo "  站點手機版:  ${base_url}/ops/m"
 echo "  Health:       ${base_url}/api/health"

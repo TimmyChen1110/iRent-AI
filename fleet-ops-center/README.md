@@ -22,12 +22,12 @@ Docker：`docker compose build` 會在第一階段用 node 匯出前端並複製
 
 ## 資料流（沒有另一套前端狀態）
 
-- `src/lib/ops/api.ts`、`types.ts`：後端 API client（沿用舊 frontend-admin 介面，另加 cases / stations / location）。
+- `src/lib/ops/api.ts`、`types.ts`：後端 API client（/api/ops、/api/auth、/api/demo）。
 - `src/store/OpsStore.tsx`：5 秒輪詢 + SSE，拉 summary / people / fleet / cases / tasks / events。
 - `src/lib/ops/adapters.ts`：後端事實 → view model。車輛狀態只由「未完成任務／手動鎖定／未裁決 AI 案件」推導；
   AI 損傷位置文字由 `damageLocator.ts` 以關鍵字對應到 3D 車身 14 個區域（近似，標註卡保留 AI 原文）。
 - 「執行 AI 建議方案」= 對該車所有未裁決 P1/P2 案件送 `POST /api/ops/cases/{id}/decision` confirm，
-  由後端自動建單、依類型指派、發 webhook（與監理台 `/api/decision` 同一條路）。
+  由後端自動建單、依類型指派、發 webhook（與 `/api/ops/cases/{id}/decision` 同一條裁決路徑）。
 - 車輛座標：後端 `stations.json` 站點表 + `car_locations`（可在車輛面板改派站點）；派單系統未串接前以車牌雜湊固定指派。
 
 ## 主題

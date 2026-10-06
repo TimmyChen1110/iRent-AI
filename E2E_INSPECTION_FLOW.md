@@ -36,7 +36,7 @@ flowchart TD
 | Admin | `/api/ops/cases` 合併 `rental_inspections.ops_cases()`；新增 `/api/ops/inspections`（列表／詳情）與 `/ops/inspections` 頁面；`demoVehicleId` 優先顯示 App 產生的主角車 | 後端 `DEMO_MODE=true` 啟動時若示範租約沒有任何照片，用資料集既有照片當佔位照直接落地 ANALYSIS_COMPLETE（管理者端不依賴 iOS）；「重置 Demo」同樣重新落地 |
 | Digital Twin | 後端 `body_regions.py` 產生 twin region id（與前端 `HotspotLocation` 同一組 id）；前端 `resolveRegion()` 優先吃後端 id，拿不到才用關鍵字推斷。Before/After 證據讀該租約右後取車照 vs 還車照 | — |
 
-## 資料模型（SQLite，與監理台同一個檔）
+## 資料模型（SQLite，與管理者介面同一個檔）
 
 ```
 rentals(rental_id PK, vehicle_id, plate, vehicle_model, status, pickup_at, return_at, analysis_*, source, demo)

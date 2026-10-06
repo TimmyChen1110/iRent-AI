@@ -23,8 +23,8 @@
 
 ```
 ├── backend/                     # ★ 可部署後端（FastAPI + 判定 pipeline，單容器）
-│   ├── app/                     # 監理台 server 與 API（原 dashboard/）
-│   │   ├── server.py            # FastAPI app：監理台頁面 + 複核/判讀 API + 現場實測
+│   ├── app/                     # FastAPI 入口與 API
+│   │   ├── server.py            # FastAPI app：掛載各 router、/ops 靜態匯出、/photos 供圖、Demo 重置；/ 導向 /ops
 │   │   ├── ops_api.py / ops_db.py # 環節三 整備中心 API（/api/ops）與資料層
 │   │   ├── inspections_api.py   # 非同步判讀 API（/v1/inspections）
 │   │   ├── user_capture_api.py  # iOS App 照片上傳（/v1/mobile-inspections）＋ 租約狀態／重新開始
@@ -33,7 +33,7 @@
 │   │   ├── demo_inspection_fixture.py # 比賽示範租約固定劇本（唯一允許寫死結果的地方）
 │   │   ├── body_regions.py      # AI 位置文字 → Digital Twin 區域 id（與前端 HotspotLocation 同一組）
 │   │   ├── review_api.py        # 複核介面 API（/v1/review）
-│   │   ├── build_dashboard.py   # 單檔版監理台組裝
+│   │   ├── build_dashboard.py   # 資料集示範案件的資料組裝（ops_api 用；舊單頁 UI 已退役）
 │   │   └── paths.py             # 執行期可設定路徑與金鑰檢查（env 覆寫）
 │   ├── pipeline/                # 辨識與評測程式（判定核心）
 │   │   ├── build_pairs.py       # 檔名解析 → 借/還配對（120 負 + 21 正）
@@ -50,10 +50,9 @@
 │   ├── Dockerfile / requirements.txt / requirements-dev.txt
 ├── docker-compose.yml           # backend + (PR#2) postgres
 ├── .env.example                 # GEMINI_API_KEY 等
-├── frontend-user/irent-app/     # 使用者 iOS App（SwiftUI + Core ML 拍攝防呆；取車基準／還車檢查／離線重送）
+├── frontend-user/irent-app/     # ★ 正式使用者 App（SwiftUI：Find a Car 3D 地圖 → 取車／還車拍攝 + 裝置端 Core ML 防呆 → 離線重送）
 ├── E2E_INSPECTION_FLOW.md       # ★ iOS → Backend → AI 比對 → Incident → 指揮中心 的端對端說明（Mermaid）
-├── fleet-ops-center/            # 環節三 整備中心正式前端（Next.js + 3D Digital Twin；npm run build:ops → backend/app/static/ops → /ops，/ops/m 為站點手機版；Docker 多階段自動 build）
-├── frontend-admin/              # 舊版整備中心（Vite SPA，2026-10 起停止維護，保留參考）
+├── fleet-ops-center/            # ★ 正式管理者介面 Fleet Command Center（Next.js + 3D Digital Twin；npm run build:ops → backend/app/static/ops → /ops，/ops/m 為站點手機版；Docker 多階段自動 build）
 ├── 環節一/二/三_*/              # 比賽文件（README / SETUP / 隊友須知 / 簡報）
 └── iRent - 運用 AI 打造 iRent 智能車況管家…/   # 共用原始資料集
     ├── 沒有進行索賠/            # 負樣本：30 台車 × 4 方位借/還配對（240 張）
@@ -91,8 +90,8 @@ python pipeline/run_cascade.py pipeline/eval_results_gemini_37_flash_v3.json
 python pipeline/classify_interior.py             # F2 車內整潔分類
 python pipeline/judge_photos.py 借.jpg 還.jpg     # 現場實測（--interior 車內照）
 
-# 監理台
-cd app && uvicorn server:app --host 0.0.0.0 --port 8000
+# 後端（管理者介面 http://localhost:8000/ops；iPhone 連 http://<Mac 區網 IP>:8000）
+cd app && DEMO_MODE=true uvicorn server:app --host 0.0.0.0 --port 8000
 ```
 
 ## Demo Quick Start
@@ -122,26 +121,18 @@ cd app && uvicorn server:app --host 0.0.0.0 --port 8000
 
    `backend` 應顯示 `healthy`，health API 應回 `status: ok`。若 `.env` 的 `IRENT_PORT` 有修改，網址也要改成相同 port。
 
-3. 開啟車況監理台 <http://localhost:8000/> 或整備中心 <http://localhost:8000/ops>。`DEMO_MODE=true` 且仍使用標準帳密時，登入頁會提供一鍵填入：
+3. 開啟管理者介面 <http://localhost:8000/ops>（根路徑 `/` 會自動導向這裡）。`DEMO_MODE=true` 且仍使用標準帳密時，登入頁會提供一鍵填入：
 
    - Admin：`admin / admin-demo`
    - Station Staff：`station / station-demo`
 
    這些弱帳密在 `DEMO_MODE=false` 時不會啟用或顯示。
 
-4. 建議展示固定車內髒汙案例 `F2-RDE-0160-front`：在監理台人工 Confirm，接著走完 `Cleaning Task → Admin Inbox → Station Claim → Start → Completion Photo → Complete → Admin Timeline → Baseline Available`。Demo 前或每輪結束後，可在監理台頂端按「重置 Demo」；它只重置兩個固定示範案件的裁決、任務、衍生事件與完工照，不影響 AI 固定結果及其他案件。
+4. 完整端對端示範見 [DEMO.md](DEMO.md)（Demo C：iOS App → 後端 AI 比對 → 指揮中心）。只想看管理者端：事件中心 → 固定示範案件 `RCR-7661-左後`（車損）或 `F2-RDE-0160-front`（車內髒汙）→ 查看證據 → 確認異常並建立任務 → 維修／清潔頁開始處理、上傳完工照、完工 → 車輛恢復上線。Demo 前或每輪結束後，在 /ops 右上角頭像按「重置 Demo 案例」；它只重置示範案件的裁決、任務、衍生事件與完工照，不影響 AI 固定結果及其他案件。
 
 5. `GEMINI_API_KEY` 可留空。AI 重新判讀與通知文案生成會停用，但固定案例、Admin、Station、Task、SQLite、完工照與 baseline 流程仍可完整操作。`NOTIFICATION_WEBHOOK_URL` 也是選填；未設定會清楚顯示 Not configured，不會影響任務。LINE／SMS 尚未接入。
 
-6. SQLite、session metadata 與 uploads 共用 `backend_data` named volume；普通 restart 或 `docker compose down` 不會遺失，只有 `docker compose down -v` 會刪除。Browser E2E 使用自己的暫存 SQLite／uploads，不會污染 Demo volume：
-
-   ```bash
-   cd frontend-admin        # 舊版 UI 的 Playwright e2e（針對舊介面）；新介面以手動／腳本實測
-   npm run test:e2e
-   # 沒有 Google Chrome 時：
-   npx playwright install chromium
-   PLAYWRIGHT_CHANNEL=chromium npm run test:e2e
-   ```
+6. SQLite、session metadata 與 uploads 共用 `backend_data` named volume；普通 restart 或 `docker compose down` 不會遺失，只有 `docker compose down -v` 會刪除。管理者介面的瀏覽器 E2E 以 Playwright 針對 `/ops` 手動／腳本實測（舊版 frontend-admin 與其 e2e 已於 2026-10-06 移除）。
 
 7. Demo 結束後停止容器（保留資料）：
 

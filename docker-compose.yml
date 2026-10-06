@@ -15,7 +15,7 @@ services:
     env_file:
       - .env
     environment:
-      # 原始照片資料集不進 image（太大、非公開）。掛進容器供監理台 /photos/* 讀。
+      # 原始照片資料集不進 image（太大、非公開）。掛進容器供 /photos/*（證據照片）讀。
       IRENT_DATASET_ROOT: /dataset
       PUBLIC_BASE_URL: "${PUBLIC_BASE_URL:-http://localhost:8000}"
     volumes:

@@ -39,3 +39,24 @@ __pycache__/
 *.xcuserstate
 project.xcworkspace/xcuserdata/
 *.xcuserdatad/
+
+# ---- 2026-10-06 cleanup hardening ----
+# Node / Next.js（fleet-ops-center；build:ops 的產物進 backend/app/static/ops，out/ 與 .next/ 本身不進版控）
+node_modules/
+**/node_modules/
+.next/
+**/.next/
+out/
+**/out/
+*.tsbuildinfo
+**/playwright-report/
+**/test-results/
+
+# 這台 Mac 的 Finder 會在 build 後自動產生「xxx 2.js」重複檔，一律不進版控
+**/* 2.*
+
+# Xcode
+**/xcuserdata/
+**/*.xcuserstate
+**/DerivedData/
+**/build/

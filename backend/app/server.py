@@ -1,17 +1,20 @@
 #!/usr/bin/env python3
-"""iRent 車況監理台 — Server 版。
+"""iRent 後端 — FastAPI 入口。
 
-與單檔版（irent-review-dashboard.html）同一套 UI，多了：
-  - 複核決策存 SQLite，全隊共享（前端每 5 秒自動同步）
-  - 照片由 server 供圖（頁面輕、可看原圖）
-  - 資料直接讀 pipeline/ 的實測結果（POST /api/reload 可熱更新）
-  - 「AI 重判」按鈕：現場呼叫 Gemini 重新判定該案（需 環節二/.env 的 GEMINI_API_KEY）
+掛載：
+  - /v1/mobile-inspections/*   iOS App 的租約檢查上傳與狀態（user_capture_api）
+  - /api/ops/*, /api/auth/*     管理者介面 fleet-ops-center 的 API（ops_api / ops_auth / rental_inspections_api）
+  - /ops                        fleet-ops-center 靜態匯出（npm run build:ops → app/static/ops）
+  - /photos/*                   證據照片供圖
+  - /api/demo/*                 Demo 重置與狀態
+  - /                           導向 /ops（舊版 vanilla 3D 監理台已於 2026-10-06 退役）
+其餘 /api/judge、/api/gate、/api/live_case、/v1/inspections、/v1/review 為舊世代端點，暫保留。
 
 啟動：
   pip3 install -r backend/requirements.txt
   cd backend/app
-  uvicorn server:app --host 0.0.0.0 --port 8000
-  → 本機開 http://localhost:8000 ；隊友連 http://<你的區網IP>:8000
+  DEMO_MODE=true uvicorn server:app --host 0.0.0.0 --port 8000
+  → 管理者介面 http://localhost:8000/ops ；iPhone 連 http://<Mac 區網 IP>:8000
 
 注意：資料含真實車牌照片，僅限 localhost / 隊內區網，勿部署公網。
 """
@@ -34,7 +37,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.concurrency import run_in_threadpool
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from PIL import Image, ImageOps
 from pydantic import BaseModel
 
@@ -46,7 +49,7 @@ from pairs_io import load_pairs  # noqa: E402
 
 import paths  # noqa: E402  執行期可設定的路徑與金鑰檢查
 import task_service  # noqa: E402  整備任務狀態與 action 的 single source of truth
-from build_dashboard import build_cases, build_f2cases, car_model_block  # noqa: E402
+from build_dashboard import build_cases, build_f2cases  # noqa: E402
 from results_config import FINAL_RESULTS, INTERIOR_RESULTS  # noqa: E402
 
 DB_PATH = paths.DB_PATH
@@ -851,44 +854,16 @@ def interior_photo(name: str):
 
 
 # ---------- 頁面（server 端組裝，資料快取、可熱更新） ----------
-_page_cache = {"html": None}
-_page_lock = threading.Lock()
+# 舊版 vanilla 3D 監理台（dashboard_shell.html + three.js）已於 2026-10-06 退役；正式管理者介面是 /ops（fleet-ops-center）。
+# build_dashboard.py 仍保留：ops_api 用它的 build_cases()/build_f2cases() 產生資料集示範案件。
 
-
-def render_page(force=False):
-    with _page_lock:
-        if _page_cache["html"] and not force:
-            return _page_cache["html"]
-        shell = (HERE / "dashboard_shell.html").read_text()
-        three = (HERE / "three.min.js").read_text()
-        import importlib
-        import build_dashboard
-        importlib.reload(build_dashboard)
-        blocks = [
-            "const SERVER_MODE=true;",
-            f"const DEMO_MODE={'true' if _demo_mode() else 'false'};",
-            "const DEMO_CASES=" + json.dumps({"damage": DEMO_CASE_DAMAGE,
-                                              "cleaning": DEMO_CASE_CLEANING}) + ";",
-            "const CASES=" + json.dumps(build_dashboard.build_cases(embed=False), ensure_ascii=False) + ";",
-            "const F2CASES=" + json.dumps(build_dashboard.build_f2cases(embed=False), ensure_ascii=False) + ";",
-            "const CHAINCASES=" + json.dumps(build_dashboard.build_chain_cases_data(), ensure_ascii=False) + ";",
-            "const ANNOTATIONS=" + json.dumps(build_dashboard.load_annotations(), ensure_ascii=False) + ";",
-            "const PASSPORT_DATA=" + (PIPE / "passports.json").read_text() + ";",
-        ]
-        html = (shell
-                .replace("<!--DATA-->", "<script>\n" + "\n".join(blocks) + "\n</script>")
-                .replace("<!--THREE-->", "<script>" + three + "</script>")
-                .replace("<!--CARMODEL-->", build_dashboard.car_model_block()))
-        _page_cache["html"] = html
-        return html
-
-
-@app.get("/", response_class=HTMLResponse)
+@app.get("/", include_in_schema=False)
 def index():
-    return render_page()
+    """根路徑不再提供舊監理台頁面，導向正式管理者介面。"""
+    return RedirectResponse(url="/ops", status_code=307)
 
 
-# ---------- 環節三 整備中心前端（frontend-admin build 產物，SPA） ----------
+# ---------- 管理者介面（fleet-ops-center 靜態匯出；npm run build:ops） ----------
 OPS_STATIC = HERE / "static" / "ops"
 
 
@@ -898,7 +873,7 @@ def ops_frontend(path: str = ""):
     """/ops/* 靜態檔；找不到就回 index.html 讓前端 router 接手。未 build 時回 404 說明。"""
     index_file = OPS_STATIC / "index.html"
     if not index_file.exists():
-        raise HTTPException(404, "整備中心前端尚未 build：cd frontend-admin && npm run build")
+        raise HTTPException(404, "管理者介面尚未 build：cd fleet-ops-center && npm run build:ops")
     if path:
         root = str(OPS_STATIC.resolve())
         # 靜態匯出（Next.js output: export）：/ops/fleet → fleet.html 或 fleet/index.html
@@ -911,8 +886,7 @@ def ops_frontend(path: str = ""):
 
 @app.post("/api/reload")
 def reload_data():
-    """pipeline 資料更新後呼叫，重新組頁。"""
-    render_page(force=True)
+    """pipeline 資料更新後呼叫。舊監理台頁面快取已不存在；端點保留以維持相容，現為 no-op。"""
     return {"ok": True}
 
 

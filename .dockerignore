@@ -36,11 +36,9 @@ iRent - */
 環節一_*/
 環節二_*/
 環節三_*/
-frontend-admin/node_modules/
-frontend-admin/dist/
-frontend-admin/test-results/
-frontend-admin/playwright-report/
-frontend-admin/blob-report/
+fleet-ops-center/node_modules/
+fleet-ops-center/.next/
+fleet-ops-center/out/
 frontend-user/
 backend/.venv/
 *.md

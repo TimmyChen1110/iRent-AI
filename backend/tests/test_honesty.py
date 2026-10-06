@@ -17,7 +17,6 @@ APP = Path(__file__).resolve().parents[1] / "app"
 
 CHAIN = json.loads((PIPE / "chain_cases.json").read_text())
 CASES = CHAIN["cases"]
-SHELL = (APP / "dashboard_shell.html").read_text()
 SERVER_SRC = (APP / "server.py").read_text()
 
 
@@ -114,37 +113,5 @@ class TestChainSnapshot:
 
 # ---------- 前端誠實性（原始碼指紋） ----------
 
-class TestFrontend:
-    def test_無假信心fallback(self):
-        assert "|| 0.85" not in SHELL and "|| 0.88" not in SHELL
-
-    def test_confBar缺值顯示破折號(self):
-        assert "模型未提供" in SHELL
-
-    def test_離線評測與即時營運分區標示(self):
-        assert "模型離線評測" in SHELL
-        assert "即時營運狀態" in SHELL
-        assert "OFFLINE_EVAL" in SHELL
-        assert "realtimeKpis" in SHELL
-
-    def test_雙口徑召回並列(self):
-        assert "原始索賠標籤" in SHELL and "人工逐圖重標" in SHELL
-
-    def test_未評測案件UI標示存在(self):
-        assert "尚未執行 AI 評測" in SHELL and "chainEvaluated" in SHELL
-
-    def test_無已推播等不實文案(self):
-        for bad in ("已推播", "已派工", "進入索賠／清潔調度"):
-            assert bad not in SHELL, f"不實文案殘留：{bad}"
-
-    def test_無過期成本宣稱(self):
-        assert "NT$1,220" not in SHELL and "原型驗證 $0" not in SHELL
-
-    def test_單檔版產物已同步(self):
-        # 單檔版由 build_dashboard.py 重組——若存在，不得殘留舊假資料/舊文案
-        f = APP / "irent-review-dashboard.html"
-        if not f.exists():
-            pytest.skip("單檔版未生成")
-        raw = f.read_text()
-        assert "比對中 / 待分析" not in raw
-        assert "已推播" not in raw
+# TestFrontend（舊 vanilla 3D 監理台 dashboard_shell.html 的文案檢查）已隨該 UI 於 2026-10-06 退役移除；
+# 正式管理者介面為 fleet-ops-center，其文案由前端自身的 tsc/eslint/build 把關。
