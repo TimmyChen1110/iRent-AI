@@ -51,7 +51,7 @@ struct LocalInspectionResult: Codable, Equatable {
 enum RecognitionError: LocalizedError {
     case modelMissing(String)
     case noPlate
-    case unreadablePlate
+    case unreadablePlate(read: String)
     case wrongPlate(expected: String, actual: String)
     case wrongView(expected: VehicleView, actual: String)
     case lowResolution
@@ -61,7 +61,7 @@ enum RecognitionError: LocalizedError {
         switch self {
         case .modelMissing(let name): "離線模型 \(name) 尚未安裝。"
         case .noPlate: "沒有偵測到車牌，請讓車牌完整清楚入鏡。"
-        case .unreadablePlate: "車牌文字無法辨識，請靠近並重新拍攝。"
+        case .unreadablePlate(let read): read.isEmpty ? "車牌文字無法辨識，請靠近並重新拍攝。" : "車牌只讀到「\(read)」，無法完整辨識，請靠近並重新拍攝。"
         case .wrongPlate(let expected, let actual): "辨識到 \(actual)，與租約車牌 \(expected) 不符。"
         case .wrongView(let expected, let actual): "目前照片判定為 \(actual)，請改拍 \(expected.rawValue)角。"
         case .lowResolution: "照片解析度不足，請重新拍攝。"
@@ -126,8 +126,7 @@ struct OnDeviceRecognitionService {
 
             let detector = try plateDetector.load()
             let detection = try await detectPlate(in: cgImage, model: detector)
-            let crop = try crop(cgImage, rect: detection.boundingBox)
-            let plate = try recognizePlate(in: crop)
+            let plate = try recognizePlateWithRetry(in: cgImage, rect: detection.boundingBox)
             let normalizedExpected = normalize(expectedPlate)
 
             guard normalize(plate.text) == normalizedExpected else {
@@ -229,7 +228,7 @@ struct OnDeviceRecognitionService {
         for y in 0..<size {
             let row = base.advanced(by: y * bytesPerRow).assumingMemoryBound(to: UInt8.self)
             for x in 0..<size {
-                let r = Double(row[x * 4 + 1]), g = Double(row[x * 4 + 2]), b = Double(row[x * 4 + 3])
+                let b = Double(row[x * 4]), g = Double(row[x * 4 + 1]), r = Double(row[x * 4 + 2])   // BGRA
                 total += (0.299 * r + 0.587 * g + 0.114 * b) / 255
             }
         }
@@ -271,11 +270,26 @@ struct OnDeviceRecognitionService {
         }
     }
 
-    private func crop(_ image: CGImage, rect: CGRect) throws -> CGImage {
+    /// 偵測框邊界在不同裝置（Neural Engine fp16）可能差幾個像素，字元被切到時 OCR 會少一碼。
+    /// 依序用三種留白重試，拿第一個能讀出完整 7 碼的結果；全部失敗就回報讀到最多字的那次。
+    private func recognizePlateWithRetry(in image: CGImage, rect: CGRect) throws -> (text: String, confidence: Double) {
+        var bestRead = ""
+        for padding in [0.08, 0.2, 0.0] {
+            do {
+                let crop = try crop(image, rect: rect, padding: padding)
+                return try recognizePlate(in: crop)
+            } catch RecognitionError.unreadablePlate(let read) {
+                if read.count > bestRead.count { bestRead = read }
+            }
+        }
+        throw RecognitionError.unreadablePlate(read: bestRead)
+    }
+
+    private func crop(_ image: CGImage, rect: CGRect, padding: CGFloat = 0.08) throws -> CGImage {
         let width = CGFloat(image.width)
         let height = CGFloat(image.height)
-        let paddingX = rect.width * 0.08
-        let paddingY = rect.height * 0.08
+        let paddingX = rect.width * padding
+        let paddingY = rect.height * padding
         let crop = CGRect(
             x: max(0, rect.minX - paddingX) * width,
             y: max(0, 1 - rect.maxY - paddingY) * height,
@@ -332,7 +346,7 @@ struct OnDeviceRecognitionService {
                 confidences.append(confidence)
             }
         }
-        guard result.count == 7, !confidences.isEmpty else { throw RecognitionError.unreadablePlate }
+        guard result.count == 7, !confidences.isEmpty else { throw RecognitionError.unreadablePlate(read: result) }
         return (formatPlate(result), confidences.reduce(0, +) / Double(confidences.count))
     }
 
@@ -361,9 +375,10 @@ struct OnDeviceRecognitionService {
 
     private func pixelBuffer(from image: CGImage, size: CGSize) throws -> CVPixelBuffer {
         var buffer: CVPixelBuffer?
+        // 32BGRA 是 Core ML 影像輸入宣告的格式（imageConstraint.pixelFormatType），直接給同格式免得 runtime 轉換。
         CVPixelBufferCreate(
             kCFAllocatorDefault, Int(size.width), Int(size.height),
-            kCVPixelFormatType_32ARGB, nil, &buffer
+            kCVPixelFormatType_32BGRA, nil, &buffer
         )
         guard let buffer else { throw RecognitionError.unsupportedOutput }
         CVPixelBufferLockBaseAddress(buffer, [])
@@ -373,7 +388,7 @@ struct OnDeviceRecognitionService {
             width: Int(size.width), height: Int(size.height),
             bitsPerComponent: 8, bytesPerRow: CVPixelBufferGetBytesPerRow(buffer),
             space: CGColorSpaceCreateDeviceRGB(),
-            bitmapInfo: CGImageAlphaInfo.noneSkipFirst.rawValue
+            bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue
         ) else { throw RecognitionError.unsupportedOutput }
         context.interpolationQuality = .medium
         context.draw(image, in: CGRect(origin: .zero, size: size))
@@ -382,14 +397,15 @@ struct OnDeviceRecognitionService {
 
     private func letterboxedPixelBuffer(from image: CGImage, size: Int) throws -> CVPixelBuffer {
         var buffer: CVPixelBuffer?
-        CVPixelBufferCreate(kCFAllocatorDefault, size, size, kCVPixelFormatType_32ARGB, nil, &buffer)
+        CVPixelBufferCreate(kCFAllocatorDefault, size, size, kCVPixelFormatType_32BGRA, nil, &buffer)
         guard let buffer else { throw RecognitionError.unsupportedOutput }
         CVPixelBufferLockBaseAddress(buffer, [])
         defer { CVPixelBufferUnlockBaseAddress(buffer, []) }
         guard let context = CGContext(
             data: CVPixelBufferGetBaseAddress(buffer), width: size, height: size,
             bitsPerComponent: 8, bytesPerRow: CVPixelBufferGetBytesPerRow(buffer),
-            space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.noneSkipFirst.rawValue
+            space: CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue
         ) else { throw RecognitionError.unsupportedOutput }
         context.setFillColor(red: 114.0 / 255.0, green: 114.0 / 255.0, blue: 114.0 / 255.0, alpha: 1)
         context.fill(CGRect(x: 0, y: 0, width: size, height: size))
