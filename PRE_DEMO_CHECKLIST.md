@@ -36,7 +36,8 @@ ipconfig getifaddr en0        # Wi-Fi；接 iPhone 熱點時通常是 172.20.10.
 | 2 | 自帶小型路由器 / 第二支手機熱點 | Mac 與 iPhone 都連同一個 |
 | 3 | 場地 Wi-Fi | 常有 client isolation（裝置互連被擋），**不要當主方案**；賽前先用「測試連線」驗證 |
 
-不要用 Docker（容器內網 IP 手機連不到）、關 VPN、Mac 防火牆若開著要允許 Python 接受連線（首次會跳提示）。
+不要用 Docker（容器內網 IP 手機連不到）、關 VPN、Mac 防火牆若開著要允許 Python 接受連線（首次會跳提示；用 nohup／背景啟動時不會跳，會直接被擋，症狀是後端 log 完全沒有手機的請求）。
+賽前一定做：手機 App 設定頁按「測試連線」看到 ✓，再看後端 log 有該筆 GET /api/health。
 
 ## 3. iPhone Configuration
 

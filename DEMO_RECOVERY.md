@@ -3,8 +3,12 @@
 所有指令在 repo 根目錄執行。後端一律本機 uvicorn，不用 Docker。
 
 ```text
-iPhone 上傳一直「待上傳」
-→ iPhone 與 Mac 同一網路（建議 iPhone 個人熱點，Mac 連上去）
+iPhone 上傳一直「待上傳」／「等待照片上傳」
+→ 先看後端 log 有沒有任何來自手機 IP 的請求；一筆都沒有 = 被 Mac 防火牆擋（2026-10-06 實際踩到）
+   系統設定 › 網路 › 防火牆 › 選項 → 把啟動 uvicorn 的那個 python 加進「允許連入」；或先關防火牆
+   或改用已在允許清單的 miniconda python 啟動：
+   cd backend/app && DEMO_MODE=true /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -m uvicorn server:app --host 0.0.0.0 --port 8000
+→ iPhone 與 Mac 同一網路（建議 iPhone 個人熱點，Mac 連上去）；Mac 的 VPN（Tailscale 等）先關
 → Mac 區網 IP：ipconfig getifaddr en0   （熱點時通常是 172.20.10.x；用 en1 時換介面）
 → App 設定 → API Base URL = http://<那個IP>:8000 → 按「測試連線」看到 ✓
 → 回清單按「重試」，或關掉再開 App（PendingUploadSync 會自動重送）
