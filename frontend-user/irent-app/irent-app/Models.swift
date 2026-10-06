@@ -147,7 +147,8 @@ final class RentalStore {
     }
 
     init() {
-        apiBaseURL = UserDefaults.standard.string(forKey: "apiBaseURL") ?? "http://127.0.0.1:8000"
+        // 預設留空：127.0.0.1 在真機上是 iPhone 自己，重裝後會靜默連錯；空值讓設定頁直接顯示紅字提示要填 Mac 的區網 IP
+        apiBaseURL = UserDefaults.standard.string(forKey: "apiBaseURL") ?? ""
         demoMode = UserDefaults.standard.object(forKey: "demoMode") as? Bool ?? false
         let rentalID = UserDefaults.standard.string(forKey: "rentalID") ?? Rental.demo.id
         rental = Rental.available.first { $0.id == rentalID } ?? .demo
