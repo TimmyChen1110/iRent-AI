@@ -8,7 +8,7 @@
 services:
   backend:
     build:
-      context: .                    # 根目錄：Dockerfile 第一階段要讀 frontend-admin/
+      context: .                    # 根目錄：Dockerfile 第一階段要讀 fleet-ops-center/
       dockerfile: backend/Dockerfile
     ports:
       - "${IRENT_PORT:-8000}:8000"

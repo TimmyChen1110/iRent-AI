@@ -4,14 +4,14 @@
 # 紅線：此服務目前為單 replica（背景判讀是行內 thread + 全域鎖，
 #       免費層 Gemini RPM 8）。水平擴展前必須先接真正的佇列。
 
-# ---- 階段 1：整備中心前端（frontend-admin → backend/app/static/ops） ----
+# ---- 階段 1：整備中心前端（fleet-ops-center → 靜態匯出 → backend/app/static/ops） ----
 FROM node:22-alpine AS frontend
 WORKDIR /fe
-COPY frontend-admin/package.json frontend-admin/package-lock.json ./
+COPY fleet-ops-center/package.json fleet-ops-center/package-lock.json ./
 RUN npm ci --no-audit --no-fund
-COPY frontend-admin/ ./
-# vite.config 的 outDir 是 ../backend/app/static/ops；在容器內改用 --outDir 輸出到固定位置
-RUN npx tsc -b && npx vite build --outDir /fe-dist --emptyOutDir
+COPY fleet-ops-center/ ./
+# Next.js output: export（basePath /ops）；產物在 out/
+RUN NEXT_OUTPUT=export NEXT_TELEMETRY_DISABLED=1 npm run build
 
 # ---- 階段 2：backend ----
 FROM python:3.13-slim
@@ -28,7 +28,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY backend/ .
 # 前端 build 產物（覆蓋 repo 內過渡期進版控的那份，確保與程式碼一致）
-COPY --from=frontend /fe-dist ./app/static/ops
+COPY --from=frontend /fe/out ./app/static/ops
 RUN chmod +x /app/docker-entrypoint.sh
 
 # python:3.13-slim 已含 /usr/share/zoneinfo；不在 source COPY 後重複 apt upgrade。

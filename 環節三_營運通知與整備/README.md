@@ -13,7 +13,8 @@
   - 一鍵裁決「確認車損／確認髒汙」→ 自動建立維修／清潔任務（SQLite `tasks` 表，冪等防重複開單）
   - 監理台「整備看板」分頁：待處理 → 處理中 → 已完成 Kanban、指派人員、完成時間、`task_events` 處理歷程
   - 復原裁決自動取消待處理任務；`GET/PATCH /api/tasks` 完整 API；19 項零 API 成本回歸測試
-- **整備中心管理者介面 第一期（2026-09-14 實作）**：`frontend-admin/`（React + Vite + motion）→ build 至 `backend/app/static/ops/`，由監理台 server 於 **http://localhost:8000/ops** 提供；API 為 `backend/app/ops_api.py`（`/api/ops/*`）+ `ops_db.py`，規劃見 `UI_規劃.md`
+- **整備中心正式介面改版（2026-10-06）**：`fleet-ops-center/`（Next.js + React Three Fiber + MapLibre）取代 `frontend-admin/`，功能全部沿用 `/api/ops/*`，另加 3D 多尺度數位分身（台灣 → 台北 → 車輛 → 損傷位置）、`/api/ops/cases`（AI 案件清單與裁決）、`/api/ops/stations` 與 `car_locations`（車輛站點）。`npm run build:ops` 匯出到 `backend/app/static/ops`，Docker 多階段 build 已改用此目錄。
+- **整備中心管理者介面 第一期（2026-09-14 實作）**：`frontend-admin/`（舊版，已停止維護）（React + Vite + motion）→ build 至 `backend/app/static/ops/`，由監理台 server 於 **http://localhost:8000/ops** 提供；API 為 `backend/app/ops_api.py`（`/api/ops/*`）+ `ops_db.py`，規劃見 `UI_規劃.md`
   - 通知中心：事件流（由 `task_events` 增量派生）、未讀／已讀（依登入帳號）、KPI、篩選
   - 整備看板：三欄拖曳／按鈕推進（同一套狀態機）、SLA 倒數、負責人／類型／逾時篩選
   - 任務詳情（側板）：借還照 + AI 標註框、工作內容、通知狀態與重發、處理歷程與備註

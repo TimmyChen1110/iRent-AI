@@ -839,17 +839,20 @@ def index():
 OPS_STATIC = HERE / "static" / "ops"
 
 
-@app.get("/ops")
-@app.get("/ops/{path:path}")
+@app.api_route("/ops", methods=["GET", "HEAD"])
+@app.api_route("/ops/{path:path}", methods=["GET", "HEAD"])
 def ops_frontend(path: str = ""):
     """/ops/* 靜態檔；找不到就回 index.html 讓前端 router 接手。未 build 時回 404 說明。"""
     index_file = OPS_STATIC / "index.html"
     if not index_file.exists():
         raise HTTPException(404, "整備中心前端尚未 build：cd frontend-admin && npm run build")
     if path:
-        f = (OPS_STATIC / path).resolve()
-        if f.is_file() and str(f).startswith(str(OPS_STATIC.resolve())):
-            return FileResponse(f)
+        root = str(OPS_STATIC.resolve())
+        # 靜態匯出（Next.js output: export）：/ops/fleet → fleet.html 或 fleet/index.html
+        for cand in (OPS_STATIC / path, OPS_STATIC / f"{path}.html", OPS_STATIC / path / "index.html"):
+            f = cand.resolve()
+            if f.is_file() and str(f).startswith(root):
+                return FileResponse(f)
     return FileResponse(index_file)
 
 

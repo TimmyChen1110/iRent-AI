@@ -1,0 +1,280 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --color-base: #07090d;
+  --color-surface: #0d1017;
+  --color-line: rgba(255, 255, 255, 0.07);
+  --color-accent: #6ea8ff;
+}
+
+:root {
+  color-scheme: dark;
+  --bg: #07090d;
+  --fg: #e6e8ee;
+}
+
+html,
+body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  letter-spacing: -0.005em;
+}
+
+body {
+  background:
+    radial-gradient(1200px 600px at 20% -10%, rgba(110, 168, 255, 0.08), transparent 60%),
+    radial-gradient(900px 500px at 90% 10%, rgba(244, 114, 182, 0.05), transparent 60%),
+    var(--bg);
+}
+
+* {
+  border-color: var(--color-line);
+}
+
+::selection {
+  background: rgba(110, 168, 255, 0.35);
+}
+
+/* Subtle scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+/* Glass panel primitive */
+.glass {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.02));
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 20px 60px -30px rgba(0, 0, 0, 0.7);
+}
+
+.glass-strong {
+  background: linear-gradient(180deg, rgba(20, 24, 33, 0.92), rgba(12, 14, 20, 0.92));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 30px 80px -30px rgba(0, 0, 0, 0.8);
+}
+
+.hairline {
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.text-muted {
+  color: rgba(230, 232, 238, 0.55);
+}
+.text-dim {
+  color: rgba(230, 232, 238, 0.38);
+}
+
+.label-xs {
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(230, 232, 238, 0.42);
+  font-weight: 500;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes warning-ring {
+  0% {
+    box-shadow: 0 0 0 0 rgba(251, 113, 133, 0.35);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(251, 113, 133, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(251, 113, 133, 0);
+  }
+}
+.warning-ring {
+  animation: warning-ring 2.4s ease-out infinite;
+}
+
+@keyframes soft-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+.soft-pulse {
+  animation: soft-pulse 1.8s ease-in-out infinite;
+}
+
+.no-select {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ---------- Fleet map markers (MapLibre DOM markers) ---------- */
+.fleet-marker {
+  --c: #34d399;
+  position: relative;
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: var(--c);
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.65), 0 0 12px color-mix(in srgb, var(--c) 60%, transparent);
+  cursor: pointer;
+  transition: opacity 250ms, transform 250ms;
+}
+.fleet-marker[data-visible="0"] { opacity: 0; pointer-events: none; }
+.fleet-marker[data-quiet="1"] { opacity: 0.75; }
+.fleet-marker[data-dim="1"] { opacity: 0.28; }
+.fleet-marker[data-selected="1"] {
+  transform: scale(1.15);
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.65), 0 0 0 6px color-mix(in srgb, var(--c) 28%, transparent), 0 0 18px color-mix(in srgb, var(--c) 70%, transparent);
+}
+.fleet-marker[data-focus="1"] {
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.65), 0 0 0 10px color-mix(in srgb, var(--c) 35%, transparent), 0 0 34px color-mix(in srgb, var(--c) 90%, transparent);
+  transition: box-shadow 350ms ease-out;
+}
+.fleet-marker[data-alert="1"]::before {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 999px;
+  border: 2px solid var(--c);
+  opacity: 0.7;
+  animation: marker-pulse 2.2s ease-out infinite;
+}
+.fleet-marker[data-hero="1"] { width: 18px; height: 18px; z-index: 5; }
+.fleet-marker[data-hero="1"]::before { inset: -9px; animation-duration: 1.6s; }
+.fleet-marker-label {
+  position: absolute;
+  left: 50%;
+  top: -34px;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  padding: 3px 8px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  backdrop-filter: blur(6px);
+}
+@keyframes marker-pulse {
+  0% { transform: scale(0.6); opacity: 0.8; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+.fleet-cluster {
+  padding: 6px 10px;
+  border-radius: 12px;
+  background: rgba(10, 13, 20, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #fff;
+  backdrop-filter: blur(10px);
+  cursor: pointer;
+  transition: opacity 250ms, transform 250ms;
+  box-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.8);
+}
+.fleet-cluster[data-visible="0"] { opacity: 0; pointer-events: none; transform: scale(0.9); }
+.fleet-cluster[data-hot="1"] { border-color: rgba(251, 113, 133, 0.45); box-shadow: 0 0 0 4px rgba(251, 113, 133, 0.1), 0 10px 30px -12px rgba(0, 0, 0, 0.8); }
+.fleet-cluster-name { font-size: 12px; font-weight: 600; letter-spacing: 0.02em; }
+.fleet-cluster-meta { font-size: 10.5px; color: rgba(255, 255, 255, 0.6); margin-top: 1px; }
+.fleet-cluster-meta b { color: #fff; font-weight: 600; }
+.fleet-cluster[data-hot="1"] .fleet-cluster-meta span { color: #fda4af; }
+.maplibregl-canvas { outline: none; }
+
+/* ======================================================================
+   淺色主題（data-theme="light"）
+   作法：Tailwind v4 的 text-white/xx、bg-white/[..]、bg-black/.. 都引用 --color-white / --color-black，
+   所以淺色模式把 white → 墨色、black → 紙白，整套透明度層次自動反轉；3D 視窗與地圖維持深色（.always-dark）。
+   ====================================================================== */
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f3f5f9;
+  --fg: #141a26;
+  --color-white: #141a26;
+  --color-black: #ffffff;
+  /* 強調色改用較深階，確保淺底可讀 */
+  --color-rose-100: #9f1239; --color-rose-200: #be123c; --color-rose-300: #e11d48;
+  --color-amber-100: #92400e; --color-amber-200: #b45309; --color-amber-300: #d97706;
+  --color-emerald-100: #065f46; --color-emerald-200: #047857; --color-emerald-300: #059669;
+  --color-sky-100: #075985; --color-sky-200: #0369a1; --color-sky-300: #0284c7;
+  --color-violet-300: #7c3aed; --color-teal-100: #115e59; --color-teal-200: #0f766e; --color-teal-300: #0d9488;
+  --color-zinc-100: #27272a; --color-zinc-200: #3f3f46; --color-zinc-300: #52525b;
+}
+:root[data-theme="light"] body {
+  background:
+    radial-gradient(1200px 600px at 20% -10%, rgba(37, 99, 235, 0.08), transparent 60%),
+    radial-gradient(900px 500px at 90% 10%, rgba(219, 39, 119, 0.05), transparent 60%),
+    var(--bg);
+}
+:root[data-theme="light"] .glass {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0.66));
+  border: 1px solid rgba(20, 26, 38, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 20px 50px -30px rgba(20, 26, 38, 0.25);
+}
+:root[data-theme="light"] .glass-strong {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(247, 249, 252, 0.96));
+  border: 1px solid rgba(20, 26, 38, 0.1);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 30px 70px -30px rgba(20, 26, 38, 0.35);
+}
+:root[data-theme="light"] .hairline { border-color: rgba(20, 26, 38, 0.08); }
+:root[data-theme="light"] .text-muted { color: rgba(20, 26, 38, 0.6); }
+:root[data-theme="light"] .text-dim { color: rgba(20, 26, 38, 0.42); }
+:root[data-theme="light"] .label-xs { color: rgba(20, 26, 38, 0.5); }
+:root[data-theme="light"] * { border-color: rgba(20, 26, 38, 0.08); }
+:root[data-theme="light"] ::-webkit-scrollbar-thumb { background: rgba(20, 26, 38, 0.15); }
+:root[data-theme="light"] ::selection { background: rgba(37, 99, 235, 0.25); }
+:root[data-theme="light"] .surface-shell { background: rgba(255, 255, 255, 0.75); }
+:root[data-theme="light"] select option { color: #141a26; background: #fff; }
+
+/* 深色主題的殼層底色（側欄／頂欄／轉場幕） */
+.surface-shell { background: rgba(10, 12, 17, 0.8); }
+.veil-bg { background: var(--bg); }
+
+/* 3D 視窗與地圖永遠深色：把顏色 token 鎖回深色值 */
+.always-dark {
+  --color-white: #ffffff;
+  --color-black: #000000;
+  --color-rose-100: #ffe4e6; --color-rose-200: #fecdd3; --color-rose-300: #fda4af;
+  --color-amber-100: #fef3c7; --color-amber-200: #fde68a; --color-amber-300: #fcd34d;
+  --color-emerald-100: #d1fae5; --color-emerald-200: #a7f3d0; --color-emerald-300: #6ee7b7;
+  --color-sky-100: #e0f2fe; --color-sky-200: #bae6fd; --color-sky-300: #7dd3fc;
+  --color-violet-300: #c4b5fd; --color-teal-100: #ccfbf1; --color-teal-200: #99f6e4; --color-teal-300: #5eead4;
+  --color-zinc-100: #f4f4f5; --color-zinc-200: #e4e4e7; --color-zinc-300: #d4d4d8;
+  color: #e6e8ee;
+}
+:root .always-dark .text-muted { color: rgba(230, 232, 238, 0.55); }
+:root .always-dark .text-dim { color: rgba(230, 232, 238, 0.38); }
+:root .always-dark .label-xs { color: rgba(230, 232, 238, 0.42); }
+:root .always-dark .glass {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.02));
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 20px 60px -30px rgba(0, 0, 0, 0.7);
+}
+:root .always-dark .glass-strong {
+  background: linear-gradient(180deg, rgba(20, 24, 33, 0.92), rgba(12, 14, 20, 0.92));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 30px 80px -30px rgba(0, 0, 0, 0.8);
+}
+:root[data-theme="light"] .always-dark.glass { background: #0d1017; }
