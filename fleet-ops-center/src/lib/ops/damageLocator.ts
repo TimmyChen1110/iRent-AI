@@ -1,4 +1,16 @@
 import type { HotspotLocation } from "@/types";
+import { LOCATION_LABELS } from "@/data/vehicleGeometry";
+
+const KNOWN = new Set(Object.keys(LOCATION_LABELS));
+
+/**
+ * 後端（body_regions.py）已算好的 Digital Twin 區域 id 優先；拿不到才用下面的關鍵字推斷。
+ * 兩邊共用同一組 id（HotspotLocation），不另外硬編第二套位置。
+ */
+export function resolveRegion(region: string | null | undefined, text: string | null | undefined, angle?: string | null): HotspotLocation {
+  if (region && KNOWN.has(region)) return region as HotspotLocation;
+  return locateDamage(text, angle);
+}
 
 /**
  * 把 AI 回傳的自由文字位置（例「右後保險桿下緣（右後輪後方）」、「左後車門下緣」）

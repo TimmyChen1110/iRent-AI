@@ -29,6 +29,7 @@ from pydantic import BaseModel
 
 import ops_auth
 import ops_db
+import rental_inspections
 import paths
 import task_service
 
@@ -236,6 +237,8 @@ def _photo_url(kind: str, p: str | None) -> str | None:
         return None
     if p.startswith("http") or p.startswith("/photos/") or p.startswith("data:"):
         return p
+    if rental_inspections.upload_root() in Path(p).parents:   # iOS App 上傳的照片
+        return rental_inspections.photo_url(p)
     return f"/photos/{kind}/{quote(Path(p).name)}"
 
 
@@ -281,6 +284,7 @@ def ops_health():
         "demo_mode": _srv._demo_mode(),
         "gemini_configured": _srv._gemini_configured(),
         "demo_cases": {"damage": _srv.DEMO_CASE_DAMAGE, "cleaning": _srv.DEMO_CASE_CLEANING},
+        "demo_rental": _srv._demo_rental_info() if _srv._demo_mode() else None,
         "demo_credentials": ops_auth.demo_login_hints(),
         "channels": _channels(),
     }
@@ -896,7 +900,14 @@ def fleet(q: str | None = None, status: str | None = None):
             "SELECT UPPER(p.car), COUNT(*) FROM task_photos p JOIN tasks t ON t.id=p.task_id"
             " WHERE t.status='completed' GROUP BY UPPER(p.car)")}
     ds = _dataset_cars()
-    cars = set(ds) | {t["car"] for t in tasks if t.get("car")} | set(locks)
+    try:
+        rentals = rental_inspections.vehicles()      # iOS App 租約的車（車型、最近還車）
+        mobile_cases: dict[str, int] = {}
+        for c in rental_inspections.ops_cases():
+            mobile_cases[c["car"]] = mobile_cases.get(c["car"], 0) + 1
+    except Exception:
+        rentals, mobile_cases = {}, {}
+    cars = set(ds) | {t["car"] for t in tasks if t.get("car")} | set(locks) | set(rentals)
     rows = []
     for car in cars:
         mine = [t for t in tasks if t.get("car") == car]
@@ -906,7 +917,7 @@ def fleet(q: str | None = None, status: str | None = None):
         info = ds.get(car, {})
         if open_tasks or manual:
             st = "locked"
-        elif info.get("unreviewed"):
+        elif info.get("unreviewed") or _unreviewed_mobile(car, mobile_cases):
             st = "review"
         else:
             st = "available"
@@ -925,6 +936,9 @@ def fleet(q: str | None = None, status: str | None = None):
             "dataset_cases": info.get("cases", 0), "claims": info.get("claims", 0),
             "unreviewed_flags": info.get("unreviewed", 0),
             "location": _location_of(car, loc_overrides),
+            "model": (rentals.get(car) or {}).get("model"),
+            "last_rental": rentals.get(car),
+            "mobile_cases": mobile_cases.get(car, 0),
         })
     if q:
         rows = [r for r in rows if q.upper() in r["car"].upper()]
@@ -955,6 +969,14 @@ def patch_fleet(car: str, body: LockIn, x_ops_reader: str | None = Header(defaul
                          f"{who}：{'鎖定' if body.locked else '解除鎖定'} {car}" + (f"（{lock['reason']}）" if lock.get("reason") else ""))
         ops_db.add_audit(conn, "lock" if body.locked else "unlock", "fleet", car, lock.get("reason"))
     return {"lock": lock, **fleet(q=car)}
+
+
+def _unreviewed_mobile(car: str, mobile_cases: dict[str, int]) -> bool:
+    if not mobile_cases.get(car):
+        return False
+    with _srv.db() as conn:
+        decided = {r[0] for r in conn.execute("SELECT case_id FROM decisions")}
+    return any(c["car"] == car and c["case_id"] not in decided for c in rental_inspections.ops_cases())
 
 
 # ---------- 案件（AI 判定 → 人工裁決）：指揮中心用的異常清單 ----------
@@ -997,6 +1019,14 @@ def _dataset_case_list() -> list[dict]:
     return out
 
 
+def _mobile_case_list(case_id: str | None = None) -> list[dict]:
+    """iOS App 租約檢查產生的案件（rental_inspections）；失敗回空，不擋資料集案件。"""
+    try:
+        return rental_inspections.ops_cases(case_id)
+    except Exception:
+        return []
+
+
 def _attach_case_state(cases: list[dict]) -> list[dict]:
     """加上人工裁決、對應任務、標註框、站點；並推導 review_status。"""
     ann = _srv._annotations()
@@ -1011,7 +1041,8 @@ def _attach_case_state(cases: list[dict]) -> list[dict]:
     for t in task_rows:
         tasks_by_case.setdefault(t["case_id"], []).append(t)
     for c in cases:
-        c["boxes"] = (ann.get(c["case_id"]) or {}).get("findings") or []
+        c["boxes"] = (ann.get(c["case_id"]) or {}).get("findings") or c.get("boxes") or []
+        c.setdefault("source", "dataset")
         c["decision"] = decisions.get(c["case_id"])
         c["tasks"] = tasks_by_case.get(c["case_id"], [])
         c["location"] = _location_of(c["car"], overrides)
@@ -1033,7 +1064,7 @@ def _attach_case_state(cases: list[dict]) -> list[dict]:
 @router.get("/cases")
 def list_cases(car: str | None = None, status: str | None = None, levels: str | None = None):
     """AI 判定案件清單（資料集）。status = unreviewed | confirmed_open | confirmed_done | rejected | retake | normal。"""
-    cases = _attach_case_state(_dataset_case_list())
+    cases = _attach_case_state(_dataset_case_list() + _mobile_case_list())
     if car:
         cases = [c for c in cases if c["car"].upper() == car.strip().upper()]
     if status:
@@ -1049,7 +1080,7 @@ def list_cases(car: str | None = None, status: str | None = None, levels: str | 
 
 @router.get("/cases/{case_id}")
 def get_case(case_id: str):
-    cases = [c for c in _attach_case_state(_dataset_case_list()) if c["case_id"] == case_id]
+    cases = [c for c in _attach_case_state(_dataset_case_list() + _mobile_case_list(case_id)) if c["case_id"] == case_id]
     view = _case_view(case_id)
     if not cases and view.get("mode") is None:
         raise HTTPException(404, f"找不到案件 {case_id}")

@@ -185,6 +185,10 @@ export function OpsProvider({ children }: { children: ReactNode }) {
   }, [vehicles, rawTasks, cases, summary]);
 
   const demoVehicleId = useMemo(() => {
+    // 主角車輛：iOS App 租約檢查產生的最新案件（ABC-1234）優先；沒有就退回資料集示範案例（RCR-7661）。
+    const mobile = cases.find((c) => c.source === "mobile_inspection" && c.car === health?.demo_rental?.car)
+      ?? cases.find((c) => c.source === "mobile_inspection");
+    if (mobile) return mobile.car;
     const demo = health?.demo_cases?.damage;
     const car = demo ? cases.find((c) => c.case_id === demo)?.car : undefined;
     return car ?? vehicles.find((v) => v.status === "damage")?.id ?? vehicles[0]?.id ?? null;

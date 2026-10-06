@@ -5,6 +5,7 @@
 import type {
   Audience, AuthUser, CaseDetailResp, CaseListResp, Drafts, FleetResp, Health, Insights, MyTask, TaskAction,
   TaskPhoto, NotificationLogEntry, OpsEvent, Person, StationsResp, Summary, Task, TaskDetail, LocationResp,
+  InspectionDetail, InspectionRow,
 } from "./types";
 
 export class ApiError extends Error {
@@ -95,6 +96,8 @@ export const api = {
     if (!r.ok) throw new ApiError(r.status, (j as { detail?: string } | null)?.detail || `HTTP ${r.status}`);
     return j as { ok: boolean; photo: TaskPhoto; photos: TaskPhoto[]; task: Task };
   },
+  inspections: () => call<{ inspections: InspectionRow[]; server_time: string }>("/api/ops/inspections"),
+  inspection: (rentalId: string) => call<{ inspection: InspectionDetail; server_time: string }>(`/api/ops/inspections/${encodeURIComponent(rentalId)}`),
   demoHealth: () => call<Record<string, unknown>>("/api/demo/health"),
   demoReset: () => call<Record<string, unknown>>("/api/demo/reset", { method: "POST" }),
 };

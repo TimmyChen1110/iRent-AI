@@ -93,7 +93,42 @@ export interface Summary {
 export interface Person { id: number; group_name: string; name: string; active: 0 | 1; created_at: string }
 export interface Channel { id: string; label: string; configured: boolean; available: boolean; note: string }
 export interface DemoCredential { username: string; password: string; label: string }
-export interface Health { server_time: string; demo_mode: boolean; gemini_configured: boolean; demo_cases: { damage: string; cleaning: string }; demo_credentials: DemoCredential[]; channels: Channel[] }
+export interface DemoRental { rental_id: string; car: string; vehicle_model: string; status: string | null; analysis: string | null; case_ids: string[] }
+export interface Health { server_time: string; demo_mode: boolean; gemini_configured: boolean; demo_cases: { damage: string; cleaning: string }; demo_rental?: DemoRental | null; demo_credentials: DemoCredential[]; channels: Channel[] }
+
+/* ---------- Inspection History（/api/ops/inspections）：iOS App 租約檢查紀錄 ---------- */
+
+export type RentalStatus = 'CREATED' | 'PICKUP_IN_PROGRESS' | 'PICKUP_COMPLETE' | 'RETURN_IN_PROGRESS' | 'RETURN_COMPLETE' | 'ANALYZING' | 'ANALYSIS_COMPLETE' | 'ANALYSIS_FAILED'
+export type InspectionResult = 'ISSUES' | 'PASSED' | 'PENDING' | 'ANALYZING' | 'FAILED'
+export type ComparisonResult = 'NEW_DAMAGE' | 'EXISTING_DAMAGE' | 'NO_NEW_DAMAGE' | 'UNCOMPARABLE' | 'NO_BASELINE' | 'CLEANING_REQUIRED' | 'CLEAN' | 'UNREADABLE'
+export interface InspectionCompleteness { required: string[]; received: string[]; missing: string[]; complete: boolean; exterior: { received: number; required: number }; interior: { received: number; required: number }; status: string | null; completed_at: string | null }
+export interface InspectionIncidentRef { case_id: string; kind: 'damage' | 'cleaning'; view_angle: string; region: string | null; label: string | null; confidence: number | null; ai_level: Priority | null; review_status?: ReviewStatus; decision?: { decision: string; decided_at: string } | null; tasks?: CaseTaskRef[] }
+export interface InspectionRow {
+  rental_id: string; vehicle_id: string; plate: string; vehicle_model: string | null; status: RentalStatus
+  pickup_at: string | null; return_at: string | null
+  pickup: InspectionCompleteness; return: InspectionCompleteness
+  result: InspectionResult; issue_count: number; incidents: InspectionIncidentRef[]
+  analysis: { source: string | null; error: string | null; started_at: string | null; completed_at: string | null }
+  source: 'mobile' | 'demo_seed'; demo: boolean; updated_at: string
+}
+export interface InspectionPhoto {
+  photo_id: string; angle: string; angle_code: string; category: 'exterior' | 'interior'; captured_at: string; uploaded_at: string
+  url: string | null; validation_mode: 'coreml' | 'demo' | 'seed'; source: string
+  validation: { passed: boolean | null; plate_text: string | null; plate_confidence: number | null; view: string | null; view_confidence: number | null; model_versions: Record<string, string> }
+}
+export interface InspectionFinding { region?: string | null; label?: string | null; type?: string | null; severity?: string | null; confidence?: number | null; status?: string; reasoning?: string | null; description?: string | null }
+export interface InspectionComparison {
+  angle: string; angle_code: string; category: 'exterior' | 'interior'
+  pickup_photo: InspectionPhoto | null; return_photo: InspectionPhoto | null
+  result: ComparisonResult | null; findings: InspectionFinding[]; boxes: Box[]; summary: string | null; case_id: string | null
+}
+export interface InspectionDetail extends InspectionRow {
+  baseline: { source: string; existing_damage: InspectionFinding[]; note?: string; photo_ids?: Record<string, string> } | null
+  comparisons: InspectionComparison[]
+  interior: { result: ComparisonResult; cleanliness: string | null; confidence: number | null; score: number | null; findings: InspectionFinding[]; summary: string | null } | null
+  versions: Record<string, unknown>
+  incidents: Array<InspectionIncidentRef & { rental_id: string; car: string; damage_type: string | null; severity: string | null; summary: string | null; findings: InspectionFinding[]; boxes: Box[]; pickup_photo_id: string | null; return_photo_id: string | null; created_at: string }>
+}
 
 export interface FleetRow {
   car: string; status: 'locked' | 'review' | 'available'; manual_lock: boolean
@@ -102,6 +137,10 @@ export interface FleetRow {
   completed_tasks: number; last_completed_at: string | null; baseline_count: number
   dataset_cases: number; claims: number; unreviewed_flags: number
   location: CarLocation | null
+  /** iOS App 租約帶來的車型與最近租約（沒有租約的資料集車輛為 null） */
+  model?: string | null
+  last_rental?: { model: string | null; rental_id: string; status: string; pickup_at: string | null; return_at: string | null } | null
+  mobile_cases?: number
 }
 export interface FleetResp { fleet: FleetRow[]; server_time: string; counts: Record<'locked' | 'review' | 'available', number>; note: string }
 export interface Insights {
@@ -125,7 +164,7 @@ export interface CarLocation {
 export interface LocationResp { car: string; location: CarLocation | null; server_time: string }
 
 export type ReviewStatus = 'unreviewed' | 'confirmed_open' | 'confirmed_done' | 'rejected' | 'retake' | 'normal'
-export interface CaseDamage { location: string | null; type: string | null; severity: string | null; confidence: number | null; reasoning: string | null }
+export interface CaseDamage { location: string | null; type: string | null; severity: string | null; confidence: number | null; reasoning: string | null; region?: string | null }
 export interface CaseTaskRef { id: number; case_id: string; task_type: TaskType; status: TaskStatus; priority: Priority | null; assignee: string | null; created_at: string; resolved_at: string | null }
 export interface OpsCase {
   case_id: string; car: string; angle: string; mode: 'pair' | 'interior'; kind: string | null
@@ -139,6 +178,10 @@ export interface OpsCase {
   tasks: CaseTaskRef[]
   location: CarLocation | null
   review_status: ReviewStatus
+  /** dataset（評測資料集）或 mobile_inspection（iOS App 租約檢查產生） */
+  source?: 'dataset' | 'mobile_inspection'
+  rental?: RentalRef | null
 }
+export interface RentalRef { rental_id: string; pickup_at: string | null; return_at: string | null; vehicle_model: string | null; analysis_source: string | null }
 export interface CaseListResp { cases: OpsCase[]; server_time: string; demo_cases: string[] }
 export interface CaseDetailResp { case: OpsCase | null; view: CaseView; server_time: string }

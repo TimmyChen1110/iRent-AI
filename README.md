@@ -27,6 +27,11 @@
 │   │   ├── server.py            # FastAPI app：監理台頁面 + 複核/判讀 API + 現場實測
 │   │   ├── ops_api.py / ops_db.py # 環節三 整備中心 API（/api/ops）與資料層
 │   │   ├── inspections_api.py   # 非同步判讀 API（/v1/inspections）
+│   │   ├── user_capture_api.py  # iOS App 照片上傳（/v1/mobile-inspections）＋ 租約狀態／重新開始
+│   │   ├── rental_inspections.py # ★ Rental → Pickup/Return Inspection → Photo → AI Comparison → Incident
+│   │   ├── rental_inspections_api.py # 管理者 Inspection History（/api/ops/inspections）
+│   │   ├── demo_inspection_fixture.py # 比賽示範租約固定劇本（唯一允許寫死結果的地方）
+│   │   ├── body_regions.py      # AI 位置文字 → Digital Twin 區域 id（與前端 HotspotLocation 同一組）
 │   │   ├── review_api.py        # 複核介面 API（/v1/review）
 │   │   ├── build_dashboard.py   # 單檔版監理台組裝
 │   │   └── paths.py             # 執行期可設定路徑與金鑰檢查（env 覆寫）
@@ -45,7 +50,8 @@
 │   ├── Dockerfile / requirements.txt / requirements-dev.txt
 ├── docker-compose.yml           # backend + (PR#2) postgres
 ├── .env.example                 # GEMINI_API_KEY 等
-├── frontend-user/               # 使用者前端（待開工，見 IDEAS 提案②車況收據）
+├── frontend-user/irent-app/     # 使用者 iOS App（SwiftUI + Core ML 拍攝防呆；取車基準／還車檢查／離線重送）
+├── E2E_INSPECTION_FLOW.md       # ★ iOS → Backend → AI 比對 → Incident → 指揮中心 的端對端說明（Mermaid）
 ├── fleet-ops-center/            # 環節三 整備中心正式前端（Next.js + 3D Digital Twin；npm run build:ops → backend/app/static/ops → /ops，/ops/m 為站點手機版；Docker 多階段自動 build）
 ├── frontend-admin/              # 舊版整備中心（Vite SPA，2026-10 起停止維護，保留參考）
 ├── 環節一/二/三_*/              # 比賽文件（README / SETUP / 隊友須知 / 簡報）
@@ -55,6 +61,10 @@
     ├── 車外車內照片上傳清單.xlsx  # 真實上傳 log：27,367 筆 / 4,820 單
     └── 取車/還車流程圖.png
 ```
+
+## 端對端流程（iOS App → Backend → Admin）
+
+一筆租約 `RNT-20261005-1842`（ABC-1234）從既有 iOS App 的導引拍攝、Core ML 防呆、上傳，到後端建立 Pickup Baseline、還車後背景 AI 比對、自動建立車損／清潔案件，再到指揮中心的 Digital Twin、證據、AI 建議與整備任務——完整說明與 Demo 步驟見 **[E2E_INSPECTION_FLOW.md](E2E_INSPECTION_FLOW.md)**（含哪些是真實 pipeline、哪些是 deterministic demo fixture）。
 
 ## 快速開始
 

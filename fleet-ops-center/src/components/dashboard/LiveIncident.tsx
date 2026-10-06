@@ -29,8 +29,8 @@ export function LiveIncident({ vehicle, incidents, activeHotspotId, onSelect }: 
               <span className="relative grid h-9 w-9 place-items-center rounded-xl bg-rose-400/12 text-rose-300"><Radio className="h-4 w-4" /><span className="absolute inset-0 rounded-xl bg-rose-400/20 warning-ring" /></span>
               <div className="leading-tight">
                 <div className="flex items-center gap-2 text-[10.5px] font-semibold uppercase tracking-[0.1em] text-rose-300"><span className="h-1.5 w-1.5 rounded-full bg-rose-400 soft-pulse" />即時事件</div>
-                <div className="mt-0.5 text-[13.5px] font-semibold text-white/95">{vehicle.plate} <span className="font-normal text-white/60">· {vehicle.station}</span></div>
-                <div className="text-[11px] text-muted">AI 標記 {alerts.length} 件待裁決</div>
+                <div className="mt-0.5 text-[13.5px] font-semibold text-white/95">{vehicle.plate} <span className="font-normal text-white/60">· {vehicle.model !== "共享車輛" ? `${vehicle.model} · ` : ""}{vehicle.station}</span></div>
+                <div className="text-[11px] text-muted">{vehicle.rentalId && vehicle.lastReturned.time ? `還車 ${vehicle.lastReturned.time} · ` : ""}AI 標記 {alerts.length} 件待裁決</div>
               </div>
             </div>
             <span className="h-9 w-px bg-white/[0.08]" />

@@ -51,10 +51,24 @@ from results_config import FINAL_RESULTS, INTERIOR_RESULTS  # noqa: E402
 
 DB_PATH = paths.DB_PATH
 
+
+def _startup_rentals() -> None:
+    """登記示範租約；DEMO_MODE 下若示範租約還沒有任何照片，直接以固定劇本落地（管理者端不依賴 iOS）。"""
+    try:
+        rental_inspections.ensure_registered_rentals()
+        if _demo_mode():
+            r = rental_inspections.get_rental(rental_inspections.fixture.DEMO_RENTAL_ID)
+            if r and r["status"] == "CREATED":
+                rental_inspections.seed_demo_rental()
+    except Exception as e:  # 租約登記失敗不能擋住監理台啟動
+        print(f"rental seed skipped: {type(e).__name__}: {e}", file=sys.stderr)
+
+
 @contextlib.asynccontextmanager
 async def _lifespan(_app):
     # Demo 帳號 seed（或 DEMO_MODE 關閉後停用弱密碼帳號）只在啟動時跑一次，不在每個 request。
     ops_auth.startup_seed()
+    _startup_rentals()
     yield
 
 
@@ -74,9 +88,12 @@ assert_frozen()   # Prompt 凍結檢查：hash 不符即拒絕啟動（服務化
 from inspections_api import router as inspections_router  # noqa: E402
 from review_api import router as review_router  # noqa: E402
 from user_capture_api import router as user_capture_router  # noqa: E402
+import rental_inspections  # noqa: E402  Rental → Inspection → Photo → Comparison → Incident 領域層
+import rental_inspections_api  # noqa: E402  管理者端 Inspection History（/api/ops/inspections）
 app.include_router(review_router)
 app.include_router(inspections_router)
 app.include_router(user_capture_router)
+rental_inspections.bind(sys.modules[__name__])
 
 # 完成前守門（環節三 ops_api 於 bind() 註冊；例如清潔任務須先有完工照）。回傳錯誤訊息字串即拒絕。
 TASK_COMPLETE_GUARD = None
@@ -85,7 +102,9 @@ TASK_COMPLETE_GUARD = None
 import ops_api  # noqa: E402
 import ops_auth  # noqa: E402
 ops_api.bind(sys.modules[__name__])
+rental_inspections_api.bind(ops_api)
 app.include_router(ops_api.router)
+app.include_router(rental_inspections_api.router)
 app.include_router(ops_auth.router)
 app.middleware("http")(ops_auth.auth_middleware)
 
@@ -179,6 +198,11 @@ def _case_snapshot(case_id: str) -> dict:
     照片存【絕對路徑】而非 base64：資料集照片本來就在 repo 裡，存路徑省空間；
     現場實測(LIVE)案件的照片只在記憶體，故另存縮圖 base64 於 live_cases。
     """
+    # 0) iOS App 租約檢查產生的案件（RI-<rental_id>-<角度>）：照片為 App 上傳檔的絕對路徑
+    if rental_inspections.is_case_id(case_id):
+        snap = rental_inspections.case_snapshot(case_id)
+        if snap:
+            return snap
     # 1) 資料集配對案件
     pair = next((p for p in _pairs if f'{p["car"]}-{p["angle"]}' == case_id), None)
     if pair:
@@ -281,6 +305,8 @@ def _case_car(case_id: str) -> str:
     """從 case_id 推車輛代號（顯示用，推不出來就原樣返回）。"""
     if case_id.startswith("LIVE-"):
         return "LIVE"
+    if rental_inspections.is_case_id(case_id):
+        return rental_inspections.case_car(case_id) or case_id
     # 車牌本身可含連字號（RDE-0160），一律去前綴後只切掉最後一段（方位/車內前後）
     for prefix in ("F2-", "CHAIN-"):
         if case_id.startswith(prefix):
@@ -408,26 +434,32 @@ def demo_health():
         "demo_damage_case": case_ok(DEMO_CASE_DAMAGE),
         "demo_cleaning_case": case_ok(DEMO_CASE_CLEANING),
         "demo_cases": {"damage": DEMO_CASE_DAMAGE, "cleaning": DEMO_CASE_CLEANING},
+        "demo_rental": _demo_rental_info(),
     }
 
 
-@app.post("/api/demo/reset")
-def demo_reset():
-    """把兩個示範案例重置回「AI 已判定、尚未人工 confirm」。
+def _demo_rental_info() -> dict:
+    """示範租約（iOS → Backend → Admin 主線）狀態；給 health 與前端挑選主角車輛用。"""
+    spec = rental_inspections.fixture.DEMO_RENTAL
+    try:
+        st = rental_inspections.app_status(spec["rental_id"])
+    except Exception:
+        st = None
+    return {"rental_id": spec["rental_id"], "car": spec["plate"], "vehicle_model": spec["vehicle_model"],
+            "status": (st or {}).get("status"), "analysis": (st or {}).get("analysis"),
+            "case_ids": rental_inspections.incident_case_ids(spec["rental_id"]) if st else []}
 
-    只動這兩個 case 的 decisions、任務、衍生事件／通知與完工照（任務刪除後，
-    下次 confirm 會建立全新任務、notification_status 從頭開始 → webhook 重新發送）。
-    不動：AI 評測結果、來源照片、chain 資料、離線指標、其他案件、
-    decision_events（訓練標籤 append-only，僅補記 undo 事件）。
-    """
-    _require_demo()
+
+def reset_case_state(case_ids) -> dict:
+    """把案件重置回「AI 已判定、尚未人工確認」：刪 decisions、任務、衍生事件／通知、完工照。
+    decision_events 只補記 undo（訓練標籤 append-only）。Demo 重置與示範租約重新開始共用。"""
     now = datetime.now().isoformat(timespec="seconds")
     reset = []
     removed_task_ids = []
     with db() as conn:
         tables = {r[0] for r in conn.execute(
             "SELECT name FROM sqlite_master WHERE type='table'").fetchall()}
-        for cid in DEMO_CASE_IDS:
+        for cid in case_ids:
             had = conn.execute("SELECT 1 FROM decisions WHERE case_id=?", (cid,)).fetchone()
             if had:
                 conn.execute("DELETE FROM decisions WHERE case_id=?", (cid,))
@@ -456,7 +488,27 @@ def demo_reset():
     # 照片檔不在 SQLite transaction 內；Task metadata 成功刪除後移除專屬目錄。
     for tid in removed_task_ids:
         shutil.rmtree(ops_api.PHOTO_ROOT / str(tid), ignore_errors=True)
-    return {"ok": True, "reset_cases": reset,
+    return {"reset_cases": reset, "removed_task_ids": removed_task_ids}
+
+
+@app.post("/api/demo/reset")
+def demo_reset():
+    """把兩個示範案例重置回「AI 已判定、尚未人工 confirm」。
+
+    只動這兩個 case 的 decisions、任務、衍生事件／通知與完工照（任務刪除後，
+    下次 confirm 會建立全新任務、notification_status 從頭開始 → webhook 重新發送）。
+    不動：AI 評測結果、來源照片、chain 資料、離線指標、其他案件、
+    decision_events（訓練標籤 append-only，僅補記 undo 事件）。
+    """
+    _require_demo()
+    demo_rental_id = rental_inspections.fixture.DEMO_RENTAL_ID
+    rental_case_ids = rental_inspections.incident_case_ids(demo_rental_id)
+    out = reset_case_state(list(DEMO_CASE_IDS) + rental_case_ids)
+    # 示範租約（iOS → Backend → Admin 主線）回到固定劇本落地後的狀態：
+    # 若 App 已上傳真照片，會被佔位照取代；要重演 iOS 流程請由 App 端「重新開始 Demo」。
+    rental_inspections.seed_demo_rental()
+    return {"ok": True, "reset_cases": out["reset_cases"],
+            "demo_rental": _demo_rental_info(),
             "note": "示範案例已回到「AI 已判定、尚未人工確認」狀態"}
 
 

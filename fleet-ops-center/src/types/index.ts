@@ -139,6 +139,8 @@ export interface Vehicle {
   estimatedReady?: string;
   baselineCount: number;
   completedTasks: number;
+  /** 最近一筆 iOS App 租約（檢查紀錄入口） */
+  rentalId?: string | null;
 }
 
 export type IncidentKind = "damage" | "cleaning";
@@ -165,6 +167,9 @@ export interface Incident {
   status: IncidentStatus;
   hotspotId?: string;
   summary: string;
+  /** dataset（評測資料集）或 mobile_inspection（iOS App 租約檢查） */
+  source?: "dataset" | "mobile_inspection";
+  rentalId?: string | null;
 }
 
 export type TaskType = "inspection" | "cleaning" | "maintenance";

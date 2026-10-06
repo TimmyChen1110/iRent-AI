@@ -17,12 +17,12 @@ struct PhotoStore {
         try? fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
     }
 
-    func save(_ image: UIImage, stage: InspectionStage, view: VehicleView) throws -> (fileName: String, data: Data, hash: String) {
+    func save(_ image: UIImage, stage: InspectionStage, shot: InspectionShot) throws -> (fileName: String, data: Data, hash: String) {
         guard let data = image.jpegData(compressionQuality: 0.9) else {
             throw PhotoStoreError.imageEncodingFailed
         }
         let hash = SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
-        let fileName = "(stage.rawValue)-(view.rawValue)-(UUID().uuidString).jpg"
+        let fileName = "\(stage.rawValue)-\(shot.rawValue)-\(UUID().uuidString).jpg"
         try data.write(to: directory.appendingPathComponent(fileName), options: .atomic)
         return (fileName, data, hash)
     }
@@ -33,5 +33,11 @@ struct PhotoStore {
 
     func data(named fileName: String) throws -> Data {
         try Data(contentsOf: directory.appendingPathComponent(fileName))
+    }
+
+    /// 重新開始 Demo 時清掉本機照片檔。
+    func removeAll() {
+        guard let files = try? FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil) else { return }
+        for file in files { try? FileManager.default.removeItem(at: file) }
     }
 }

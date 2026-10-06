@@ -6,7 +6,7 @@
 import type { DamageHotspot, Evidence, Incident, Task as ViewTask, TimelineEvent, Vehicle, VehicleStatus } from "@/types";
 import type { FleetRow, OpsCase, Task } from "./types";
 import { HOTSPOT_POSITIONS, LOCATION_LABELS } from "@/data/vehicleGeometry";
-import { damageSeverity, damageType, locateDamage, locateInteriorIssue } from "./damageLocator";
+import { damageSeverity, damageType, locateInteriorIssue, resolveRegion } from "./damageLocator";
 import { fmt } from "./time";
 
 export const PRIORITY_MAP = { P1: "high", P2: "medium", P3: "low" } as const;
@@ -50,8 +50,10 @@ export function toIncident(c: OpsCase): Incident | null {
     location: caseLocationText(c),
     confidence: c.ai_conf ?? 0,
     priority: PRIORITY_MAP[c.ai_level] ?? "medium",
-    detectedAt: c.decision ? fmt(c.decision.decided_at).slice(11) : "AI 已判定",
-    detectedDate: c.decision ? fmt(c.decision.decided_at).slice(0, 10) : "待裁決",
+    detectedAt: c.decision ? fmt(c.decision.decided_at).slice(11) : c.rental?.return_at ? `還車 ${fmt(c.rental.return_at).slice(11)}` : "AI 已判定",
+    detectedDate: c.decision ? fmt(c.decision.decided_at).slice(0, 10) : c.rental?.return_at ? fmt(c.rental.return_at).slice(0, 10) : "待裁決",
+    source: c.source ?? "dataset",
+    rentalId: c.rental?.rental_id ?? null,
     status,
     hotspotId: hotspotIdFor(c, 0),
     summary: c.mode === "interior"
@@ -82,7 +84,7 @@ export function caseHotspots(c: OpsCase): DamageHotspot[] {
   if (!c.ai_found && c.ai_level === "P3") return [];
   const list = c.damages.length ? c.damages : [{ location: null, type: null, severity: null, confidence: c.ai_conf, reasoning: null }];
   return list.map((d, i) => {
-    const loc = locateDamage(d.location, c.angle);
+    const loc = resolveRegion(d.region, d.location, c.angle);
     return {
       id: hotspotIdFor(c, i), kind: "damage", mode: "exterior", location: loc, label: LOCATION_LABELS[loc],
       type: damageType(d.type), severity: damageSeverity(d.severity), confidence: d.confidence ?? c.ai_conf ?? 0,
@@ -136,9 +138,18 @@ function deriveStatus(row: FleetRow | undefined, cases: OpsCase[], tasks: Task[]
 
 function timelineFor(cases: OpsCase[], tasks: Task[]): TimelineEvent[] {
   const ev: Array<TimelineEvent & { sort: string }> = [];
+  // iOS App 租約：取車基準 → 使用者還車 → AI 比對（同一筆租約只放一次）
+  const seenRental = new Set<string>();
+  for (const c of cases) {
+    const r = c.rental;
+    if (!r || seenRental.has(r.rental_id)) continue;
+    seenRental.add(r.rental_id);
+    if (r.pickup_at) ev.push({ id: `pickup-${r.rental_id}`, sort: r.pickup_at, time: fmt(r.pickup_at).slice(11), title: "使用者取車 · 建立車況基準", detail: `${r.rental_id} · 4 外觀 + 1 車內（裝置端 Core ML 防呆）`, kind: "inspection" });
+    if (r.return_at) ev.push({ id: `return-${r.rental_id}`, sort: r.return_at, time: fmt(r.return_at).slice(11), title: "使用者還車 · 完成還車拍攝", detail: `${r.rental_id} · 照片上傳後由後端非同步比對`, kind: "return" });
+  }
   for (const c of cases) {
     if (c.review_status === "normal") continue;
-    ev.push({ id: `ai-${c.case_id}`, sort: "0000", time: "AI", title: c.mode === "interior" ? "AI 偵測到車內髒污" : "AI 偵測到疑似車損", detail: `${c.case_id}`, meta: c.ai_conf != null ? `${Math.round(c.ai_conf * 100)}%` : c.ai_level, kind: c.mode === "interior" ? "cleaning" : "damage" });
+    ev.push({ id: `ai-${c.case_id}`, sort: c.rental?.return_at ? `${c.rental.return_at}~` : "0000", time: c.rental?.return_at ? fmt(c.rental.return_at).slice(11) : "AI", title: c.mode === "interior" ? "AI 偵測到車內髒污" : "AI 偵測到疑似車損", detail: c.rental ? `${c.case_id} · 取車 vs 還車比對` : `${c.case_id}`, meta: c.ai_conf != null ? `${Math.round(c.ai_conf * 100)}%` : c.ai_level, kind: c.mode === "interior" ? "cleaning" : "damage" });
     if (c.decision) ev.push({ id: `dec-${c.case_id}`, sort: c.decision.decided_at, time: fmt(c.decision.decided_at).slice(11), title: c.decision.decision === "confirm" ? "營運人員確認異常" : c.decision.decision === "reject" ? "營運人員駁回 AI 判定" : "要求補件", detail: c.case_id, kind: c.decision.decision === "confirm" ? "resolved" : "waiting" });
   }
   for (const t of tasks) {
@@ -177,16 +188,22 @@ export function toVehicle(car: string, row: FleetRow | undefined, cases: OpsCase
     confidence: topPair?.ai_conf ?? topInterior?.ai_conf ?? 0,
   };
   const latestTask = [...tasks].sort((a, b) => b.created_at.localeCompare(a.created_at))[0];
+  const caseRental = cases.find((c) => c.rental)?.rental ?? null;
+  const rental = row?.last_rental ?? caseRental;
+  const returnedAt = rental?.return_at ?? null;
   return {
     id: car,
-    model: "共享車輛",
+    model: row?.model || caseRental?.vehicle_model || "共享車輛",
     plate: car,
     location: loc?.city || "—",
     station: loc?.station || "未指派站點",
     status,
     aiStatus: topPair && topPair.review_status === "unreviewed" ? "車損待裁決" : topInterior && topInterior.review_status === "unreviewed" ? "清潔待裁決" : open.length ? "整備中" : "正常",
     lastInspection: cases.length ? `${cases.length} 個 AI 案件` : "無案件",
-    lastReturned: { date: latestTask ? fmt(latestTask.created_at).slice(0, 10) : "—", time: latestTask ? fmt(latestTask.created_at).slice(11) : "" },
+    lastReturned: returnedAt
+      ? { date: fmt(returnedAt).slice(0, 10), time: fmt(returnedAt).slice(11) }
+      : { date: latestTask ? fmt(latestTask.created_at).slice(0, 10) : "—", time: latestTask ? fmt(latestTask.created_at).slice(11) : "" },
+    rentalId: rental?.rental_id ?? null,
     manualLock: Boolean(row?.manual_lock),
     lockReason: row?.lock_reason ?? null,
     lngLat: loc ? [loc.lng, loc.lat] : null,

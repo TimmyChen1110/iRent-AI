@@ -18,7 +18,13 @@ enum VehicleView: String, Codable, CaseIterable, Identifiable {
     case rightRear = "右後"
 
     var id: String { rawValue }
-    var instruction: String { "請拍攝車輛(rawValue)角，並讓車牌清楚入鏡。" }
+    var instruction: String { "請拍攝車輛\(rawValue)角，並讓車牌清楚入鏡。" }
+}
+
+struct ValidationCheck: Codable, Equatable, Identifiable {
+    let label: String
+    let passed: Bool
+    var id: String { label }
 }
 
 struct LocalInspectionResult: Codable, Equatable {
@@ -29,6 +35,17 @@ struct LocalInspectionResult: Codable, Equatable {
     let viewConfidence: Double?
     let errors: [String]
     let modelVersions: [String: String]
+    /// 拍攝端逐項檢核（畫面清晰／角度／車牌／完整性），UI 用 ✓ ✗ 呈現。舊版存檔沒有這些欄位。
+    var checks: [ValidationCheck]? = nil
+    var failureTitle: String? = nil
+    var failureHint: String? = nil
+
+    static func failure(title: String, reason: String, hint: String?, checks: [ValidationCheck], modelVersions: [String: String]) -> LocalInspectionResult {
+        LocalInspectionResult(
+            passed: false, plateText: nil, plateConfidence: nil, detectedView: nil, viewConfidence: nil,
+            errors: [reason], modelVersions: modelVersions, checks: checks, failureTitle: title, failureHint: hint
+        )
+    }
 }
 
 enum RecognitionError: LocalizedError {
@@ -42,14 +59,50 @@ enum RecognitionError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .modelMissing(_): "離線模型 (name) 尚未安裝。"
+        case .modelMissing(let name): "離線模型 \(name) 尚未安裝。"
         case .noPlate: "沒有偵測到車牌，請讓車牌完整清楚入鏡。"
         case .unreadablePlate: "車牌文字無法辨識，請靠近並重新拍攝。"
-        case .wrongPlate(_, _): "辨識到 (actual)，與租約車牌 (expected) 不符。"
-        case .wrongView(_, _): "目前照片判定為 (actual)，請改拍 (expected.rawValue)角。"
+        case .wrongPlate(let expected, let actual): "辨識到 \(actual)，與租約車牌 \(expected) 不符。"
+        case .wrongView(let expected, let actual): "目前照片判定為 \(actual)，請改拍 \(expected.rawValue)角。"
         case .lowResolution: "照片解析度不足，請重新拍攝。"
         case .unsupportedOutput: "離線模型輸出格式不符合預期，請重新匯出模型。"
         }
+    }
+
+    /// 給 UI 的標題／提示（為什麼要重拍、怎麼拍）。
+    var failureTitle: String {
+        switch self {
+        case .noPlate, .unreadablePlate, .wrongPlate: "車牌需要重新拍攝"
+        case .wrongView: "拍攝角度不正確"
+        case .lowResolution: "照片需要重拍"
+        case .modelMissing, .unsupportedOutput: "離線模型無法使用"
+        }
+    }
+
+    var failureHint: String? {
+        switch self {
+        case .noPlate, .unreadablePlate: "請靠近一點，讓車牌清楚入鏡後重新拍攝。"
+        case .wrongPlate: "請確認拍攝的是本次租約的車輛。"
+        case .wrongView(let expected, _): "請移動至車輛\(expected.rawValue)方重新拍攝。"
+        case .lowResolution: "請保持手機穩定並重新拍攝。"
+        case .modelMissing, .unsupportedOutput: nil
+        }
+    }
+
+    /// 逐項檢核：哪一項沒過。
+    func checks(expectedPlate: String) -> [ValidationCheck] {
+        let plateOK: Bool
+        switch self { case .noPlate, .unreadablePlate, .wrongPlate: plateOK = false; default: plateOK = true }
+        let viewOK: Bool
+        switch self { case .wrongView: viewOK = false; default: viewOK = true }
+        let clearOK: Bool
+        switch self { case .lowResolution: clearOK = false; default: clearOK = true }
+        return [
+            ValidationCheck(label: "畫面清晰", passed: clearOK),
+            ValidationCheck(label: "拍攝角度正確", passed: viewOK),
+            ValidationCheck(label: "車牌 \(expectedPlate)", passed: plateOK),
+            ValidationCheck(label: "車輛完整可辨識", passed: plateOK && viewOK),
+        ]
     }
 }
 
@@ -99,19 +152,82 @@ struct OnDeviceRecognitionService {
                 detectedView: expectedView,
                 viewConfidence: view.confidence,
                 errors: [],
+                modelVersions: modelVersions,
+                checks: [
+                    ValidationCheck(label: "畫面清晰", passed: true),
+                    ValidationCheck(label: "拍攝角度正確", passed: true),
+                    ValidationCheck(label: "車牌 \(plate.text)", passed: true),
+                    ValidationCheck(label: "車輛完整可辨識", passed: true),
+                ]
+            )
+        } catch let error as RecognitionError {
+            return LocalInspectionResult.failure(
+                title: error.failureTitle,
+                reason: error.localizedDescription,
+                hint: error.failureHint,
+                checks: error.checks(expectedPlate: expectedPlate),
                 modelVersions: modelVersions
             )
         } catch {
-            return LocalInspectionResult(
-                passed: false,
-                plateText: nil,
-                plateConfidence: nil,
-                detectedView: nil,
-                viewConfidence: nil,
-                errors: [error.localizedDescription],
+            return LocalInspectionResult.failure(
+                title: "照片檢查失敗",
+                reason: error.localizedDescription,
+                hint: "請重新拍攝。",
+                checks: [],
                 modelVersions: modelVersions
             )
         }
+    }
+
+    /// 車內照：不跑車牌／視角模型，只做解析度與亮度的品質防呆（沿用既有門檻，不另造一套引擎）。
+    func evaluateInterior(image: RecognitionImage) -> LocalInspectionResult {
+#if canImport(UIKit)
+        let cgImage = image.cgImage
+#else
+        let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil)
+#endif
+        let versions = modelVersions.merging(["interior_guard": "resolution+brightness/1.0"]) { $1 }
+        guard let cgImage, cgImage.width >= 640, cgImage.height >= 480 else {
+            return .failure(
+                title: "照片需要重拍", reason: RecognitionError.lowResolution.localizedDescription,
+                hint: "請保持手機穩定並重新拍攝。",
+                checks: [ValidationCheck(label: "畫面清晰", passed: false), ValidationCheck(label: "光線充足", passed: true)],
+                modelVersions: versions
+            )
+        }
+        let brightness = meanLuminance(of: cgImage)
+        guard brightness > 0.08 else {
+            return .failure(
+                title: "照片太暗", reason: "車內光線不足，無法辨識座艙狀況",
+                hint: "請開啟車內燈或車門後重新拍攝。",
+                checks: [ValidationCheck(label: "畫面清晰", passed: true), ValidationCheck(label: "光線充足", passed: false)],
+                modelVersions: versions
+            )
+        }
+        return LocalInspectionResult(
+            passed: true, plateText: nil, plateConfidence: nil, detectedView: nil, viewConfidence: nil,
+            errors: [], modelVersions: versions,
+            checks: [ValidationCheck(label: "畫面清晰", passed: true), ValidationCheck(label: "光線充足", passed: true),
+                     ValidationCheck(label: "座艙完整可辨識", passed: true)]
+        )
+    }
+
+    private func meanLuminance(of image: CGImage) -> Double {
+        let size = 32
+        guard let buffer = try? pixelBuffer(from: image, size: CGSize(width: size, height: size)) else { return 1 }
+        CVPixelBufferLockBaseAddress(buffer, .readOnly)
+        defer { CVPixelBufferUnlockBaseAddress(buffer, .readOnly) }
+        guard let base = CVPixelBufferGetBaseAddress(buffer) else { return 1 }
+        let bytesPerRow = CVPixelBufferGetBytesPerRow(buffer)
+        var total = 0.0
+        for y in 0..<size {
+            let row = base.advanced(by: y * bytesPerRow).assumingMemoryBound(to: UInt8.self)
+            for x in 0..<size {
+                let r = Double(row[x * 4 + 1]), g = Double(row[x * 4 + 2]), b = Double(row[x * 4 + 3])
+                total += (0.299 * r + 0.587 * g + 0.114 * b) / 255
+            }
+        }
+        return total / Double(size * size)
     }
 
     private var modelVersions: [String: String] {
