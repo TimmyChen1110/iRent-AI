@@ -205,6 +205,7 @@ private struct SyncStatusRow: View {
 
 private struct InspectionSummaryView: View {
     @Environment(RentalStore.self) private var store
+    @Environment(\.dismiss) private var dismiss
     let stage: InspectionStage
 
     var body: some View {
@@ -234,6 +235,9 @@ private struct InspectionSummaryView: View {
             Section {
                 Button(stage == .pickup ? "完成取車檢查" : "完成還車") {
                     store.confirm(stage: stage)
+                    // 這頁是從清單 push 進來的；phase 改變只會換掉 NavigationStack 的根畫面，
+                    // 不會自動 pop，若不 dismiss 使用者會停在這頁看起來「沒反應」（真機實測）。
+                    dismiss()
                 }
                 .buttonStyle(.borderedProminent)
                 Text(stage == .pickup
