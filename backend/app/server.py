@@ -56,6 +56,7 @@ def _startup_rentals() -> None:
     """登記示範租約；DEMO_MODE 下若示範租約還沒有任何照片，直接以固定劇本落地（管理者端不依賴 iOS）。"""
     try:
         rental_inspections.ensure_registered_rentals()
+        rental_inspections.recover_stale_analyses()   # 上次 process 被 kill 時卡住的分析重新排入
         if _demo_mode():
             r = rental_inspections.get_rental(rental_inspections.fixture.DEMO_RENTAL_ID)
             if r and r["status"] == "CREATED":

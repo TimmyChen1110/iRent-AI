@@ -332,6 +332,45 @@ class TestDemoIsolation:
         assert fx.analysis()["interior"]["confidence"] == 0.88
 
 
+class TestRestartRecovery:
+    def test_backend重啟時卡在ANALYZING的租約重新分析(self, client, ri, srv):
+        run_pickup(client)
+        run_return(client)
+        with ri.db() as conn:   # 模擬 process 在分析中被 kill：狀態留在 ANALYZING、案件尚未寫入
+            conn.execute("UPDATE rentals SET status='ANALYZING' WHERE rental_id=?", (DEMO,))
+            conn.execute("DELETE FROM inspection_incidents WHERE rental_id=?", (DEMO,))
+        assert ri.recover_stale_analyses() == [DEMO]
+        assert ri.app_status(DEMO)["status"] == "ANALYSIS_COMPLETE"
+        assert len(ri.incident_case_ids(DEMO)) == 2
+
+    def test_還車未齊卻標ANALYZING_退回RETURN_IN_PROGRESS(self, client, ri):
+        run_pickup(client)
+        upload(client, "return", "左前", 30)
+        with ri.db() as conn:
+            conn.execute("UPDATE rentals SET status='ANALYZING' WHERE rental_id=?", (DEMO,))
+        assert ri.recover_stale_analyses() == []
+        assert ri.app_status(DEMO)["status"] == "RETURN_IN_PROGRESS"
+
+    def test_連跑兩輪Demo不留鬼資料(self, client, ri, srv):
+        import ops_api
+        for _ in range(2):
+            client.post(f"/v1/mobile-inspections/rentals/{DEMO}/restart")
+            run_pickup(client)
+            run_return(client)
+            for cid in ri.incident_case_ids(DEMO):
+                srv.post_decision(srv.Decision(case_id=cid, decision="confirm"))
+            srv.demo_reset()
+        cases = [c for c in ops_api.list_cases(car=PLATE)["cases"]]
+        assert len(cases) == 2 and all(c["review_status"] == "unreviewed" for c in cases)
+        with srv.db() as conn:
+            assert conn.execute("SELECT COUNT(*) FROM tasks WHERE car=?", (PLATE,)).fetchone()[0] == 0
+        with ri.db() as conn:
+            assert conn.execute("SELECT COUNT(*) FROM inspection_photos WHERE rental_id=?", (DEMO,)).fetchone()[0] == 10
+            assert conn.execute("SELECT COUNT(*) FROM inspection_comparisons WHERE rental_id=?", (DEMO,)).fetchone()[0] == 5
+        fleet = next(f for f in ops_api.fleet()["fleet"] if f["car"] == PLATE)
+        assert fleet["status"] == "review" and fleet["open_tasks"] == []
+
+
 class TestAdminInspectionApi:
     def test_列表與詳情(self, client, ri, srv):
         import rental_inspections_api as api

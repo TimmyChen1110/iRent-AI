@@ -382,6 +382,8 @@ private struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var restarting = false
     @State private var restartMessage: String?
+    @State private var connectionMessage: String?
+    @State private var testingConnection = false
 
     var body: some View {
         @Bindable var store = store
@@ -390,7 +392,29 @@ private struct SettingsView: View {
                 Section("同步服務") {
                     TextField("API Base URL", text: $store.apiBaseURL)
                         .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
                         .keyboardType(.URL)
+                    if let url = InspectionSyncService.normalizedBaseURL(store.apiBaseURL) {
+                        Text("實際連線位址：\(url.absoluteString)")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                    } else {
+                        Text("位址無法解析。請輸入 Mac 的區網 IP，例如 http://192.168.1.10:8000（localhost 代表 iPhone 自己）。")
+                            .font(.footnote)
+                            .foregroundStyle(.red)
+                    }
+                    Button {
+                        Task { await testConnection() }
+                    } label: {
+                        HStack {
+                            Text("測試連線")
+                            if testingConnection { Spacer(); ProgressView() }
+                        }
+                    }
+                    .disabled(testingConnection)
+                    if let connectionMessage {
+                        Text(connectionMessage).font(.footnote).foregroundStyle(.secondary)
+                    }
                 }
                 Section {
                     Toggle("Demo 模式（固定驗證劇本）", isOn: $store.demoMode)
@@ -431,6 +455,17 @@ private struct SettingsView: View {
                 }
             }
             .navigationTitle("設定")
+        }
+    }
+
+    private func testConnection() async {
+        testingConnection = true
+        defer { testingConnection = false }
+        do {
+            let status = try await InspectionSyncService().checkConnection(baseURL: store.apiBaseURL)
+            connectionMessage = "✓ 已連上伺服器（status: \(status)）"
+        } catch {
+            connectionMessage = "✗ 連不到伺服器：\(error.localizedDescription)"
         }
     }
 

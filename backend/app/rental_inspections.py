@@ -380,6 +380,24 @@ def _spawn_analysis(rental_id: str) -> None:
 ANALYSIS_RUNNER = _spawn_analysis   # 測試可換成同步呼叫
 
 
+def recover_stale_analyses() -> list[str]:
+    """啟動時復原：分析是行內 thread，process 被 kill 會讓租約永遠卡在 RETURN_COMPLETE / ANALYZING。
+    還車已齊 → 重新排入分析；還車未齊（不該發生，防呆）→ 退回 RETURN_IN_PROGRESS。"""
+    requeued = []
+    with db() as conn:
+        for r in rows(conn.execute("SELECT rental_id FROM rentals WHERE status IN ('RETURN_COMPLETE','ANALYZING')")):
+            rid = r["rental_id"]
+            if _completeness(conn, rid, "RETURN")["complete"]:
+                _set_status(conn, rid, "RETURN_COMPLETE", analysis_error=None)
+                requeued.append(rid)
+            else:
+                _set_status(conn, rid, "RETURN_IN_PROGRESS")
+    for rid in requeued:
+        print(f"rental analysis requeued after restart: {rid}", file=sys.stderr)
+        ANALYSIS_RUNNER(rid)
+    return requeued
+
+
 def run_analysis(rental_id: str) -> dict | None:
     """RETURN_COMPLETE → ANALYZING → ANALYSIS_COMPLETE | ANALYSIS_FAILED。失敗保留紀錄、不擋還車。"""
     with _analysis_lock:

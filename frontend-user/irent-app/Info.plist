@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- 相機：取車／還車車況照片。沒有這個 key，真機開相機會直接被系統終止。 -->
+	<key>NSCameraUsageDescription</key>
+	<string>需要使用相機拍攝取車與還車的車況照片。</string>
+	<!-- 區網：Demo 時 iPhone 直接連 Mac 上的後端（http://<Mac 區網 IP>:8000）。iOS 14+ 會跳「區域網路」權限。 -->
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Demo 時需要連線到同一網路內的車況檢查伺服器以上傳照片。</string>
+	<!--
+	  App Transport Security：只開「區域網路可用 HTTP」（NSAllowsLocalNetworking），不開 NSAllowsArbitraryLoads。
+	  原因：比賽 Demo 後端跑在 Mac 區網、沒有 TLS。範圍：僅限未限定主機名／.local／區網位址；公網 HTTP 仍被 ATS 擋。
+	  Production：後端應走 HTTPS，屆時整段 NSAppTransportSecurity 可直接刪除（預設即為 production-safe）。
+	-->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
+</dict>
+</plist>

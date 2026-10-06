@@ -8,7 +8,7 @@ enum SyncError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .invalidBaseURL: "API 位址無效。"
+        case .invalidBaseURL: "API 位址無效，請輸入例如 http://192.168.1.10:8000（Mac 的區網 IP，不是 localhost）。"
         case .server(let message), .rejected(let message): message
         }
     }
@@ -16,13 +16,41 @@ enum SyncError: LocalizedError {
 
 /// 與後端 `/v1/mobile-inspections` 溝通：上傳照片（既有端點，擴充 metadata）、查租約狀態、重新開始 Demo。
 struct InspectionSyncService {
+    /// 設定頁輸入的位址常見錯誤（少 http://、尾端斜線、空白）在這裡統一修正；`192.168.1.10:8000` 這種沒有 scheme 的輸入
+    /// 會被 `URL(string:)` 當成 scheme 而失敗。回 nil 表示無法解析。
+    static func normalizedBaseURL(_ raw: String) -> URL? {
+        var text = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty else { return nil }
+        if !text.lowercased().hasPrefix("http://") && !text.lowercased().hasPrefix("https://") {
+            text = "http://" + text
+        }
+        while text.hasSuffix("/") { text.removeLast() }
+        guard let url = URL(string: text), let host = url.host(), !host.isEmpty else { return nil }
+        return url
+    }
+
+    /// 連線檢查：打既有 `GET /api/health`（不需登入）。回伺服器狀態字串，失敗丟錯。
+    func checkConnection(baseURL: String) async throws -> String {
+        guard let url = Self.normalizedBaseURL(baseURL)?.appending(path: "api/health") else {
+            throw SyncError.invalidBaseURL
+        }
+        var request = URLRequest(url: url)
+        request.timeoutInterval = 6
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse, 200..<300 ~= http.statusCode else {
+            throw SyncError.server("伺服器回應異常（HTTP \((response as? HTTPURLResponse)?.statusCode ?? 0)）")
+        }
+        let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+        return (object?["status"] as? String) ?? "ok"
+    }
+
     func upload(
         photo: CapturedPhoto,
         rental: Rental,
         imageData: Data,
         baseURL: String
     ) async throws {
-        guard let url = URL(string: baseURL)?.appending(path: "v1/mobile-inspections/photos") else {
+        guard let url = Self.normalizedBaseURL(baseURL)?.appending(path: "v1/mobile-inspections/photos") else {
             throw SyncError.invalidBaseURL
         }
 
@@ -65,7 +93,7 @@ struct InspectionSyncService {
     }
 
     func status(rental: Rental, baseURL: String) async throws -> RentalRemoteStatus {
-        guard let url = URL(string: baseURL)?.appending(path: "v1/mobile-inspections/rentals/\(rental.id)") else {
+        guard let url = Self.normalizedBaseURL(baseURL)?.appending(path: "v1/mobile-inspections/rentals/\(rental.id)") else {
             throw SyncError.invalidBaseURL
         }
         var request = URLRequest(url: url)
@@ -79,7 +107,7 @@ struct InspectionSyncService {
 
     /// 示範租約重新開始：清掉後端這筆租約的檢查紀錄與衍生案件，讓流程可以重演。
     func restart(rental: Rental, baseURL: String) async throws {
-        guard let url = URL(string: baseURL)?.appending(path: "v1/mobile-inspections/rentals/\(rental.id)/restart") else {
+        guard let url = Self.normalizedBaseURL(baseURL)?.appending(path: "v1/mobile-inspections/rentals/\(rental.id)/restart") else {
             throw SyncError.invalidBaseURL
         }
         var request = URLRequest(url: url)

@@ -1,3 +1,4 @@
+import AVFoundation
 import PhotosUI
 import SwiftUI
 
@@ -77,7 +78,7 @@ struct CaptureView: View {
                     .buttonStyle(.borderedProminent)
                 } else {
                     HStack {
-                        Button(result == nil ? "拍照" : "重新拍攝", systemImage: "camera") { showCamera = true }
+                        Button(result == nil ? "拍照" : "重新拍攝", systemImage: "camera") { openCamera() }
                         PhotosPicker(selection: $selectedItem, matching: .images) {
                             Label("從相簿選擇", systemImage: "photo.on.rectangle")
                         }
@@ -100,6 +101,26 @@ struct CaptureView: View {
                 selectedItem = nil
                 process(image)
             }
+        }
+    }
+
+    /// 相機不可用（模擬器）或權限被拒時不開 picker：UIImagePickerController 在這兩種情況會直接閃退／黑畫面。
+    private func openCamera() {
+        guard UIImagePickerController.isSourceTypeAvailable(.camera) else {
+            syncMessage = "此裝置沒有可用相機（模擬器請用「從相簿選擇」）。"
+            return
+        }
+        switch AVCaptureDevice.authorizationStatus(for: .video) {
+        case .denied, .restricted:
+            syncMessage = "相機權限已關閉。請至「設定 › iRent App › 相機」允許後再進行車況拍攝。"
+        case .notDetermined:
+            AVCaptureDevice.requestAccess(for: .video) { granted in
+                Task { @MainActor in
+                    if granted { showCamera = true } else { syncMessage = "未授權相機，無法拍攝車況照片。" }
+                }
+            }
+        default:
+            showCamera = true
         }
     }
 
@@ -148,7 +169,10 @@ struct CaptureView: View {
                     syncMessage = "目前無法連線，照片已保存，稍後會自動重送（待上傳）。"
                 }
             } catch {
-                syncMessage = error.localizedDescription
+                // 本機存檔失敗：不能假裝拍攝成功，狀態不前進
+                result = .failure(title: "照片無法保存", reason: error.localizedDescription, hint: "請確認手機儲存空間後重新拍攝。",
+                                  checks: [], modelVersions: outcome.modelVersions)
+                syncMessage = nil
             }
         }
     }
