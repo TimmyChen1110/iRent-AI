@@ -97,6 +97,9 @@ def export_ocr(output: Path) -> None:
         ],
         convert_to="mlprogram",
         minimum_deployment_target=ct.target.iOS16,
+        # CCT transformer 在 iPhone Neural Engine 以 fp16 執行會輸出壞值（Mac 不會），固定 float32；
+        # iOS 端同時把這個模型限制在 cpuAndGPU（見 OnDeviceRecognitionService）。
+        compute_precision=ct.precision.FLOAT32,
     )
     replace_package(destination)
     converted_model.save(str(destination))

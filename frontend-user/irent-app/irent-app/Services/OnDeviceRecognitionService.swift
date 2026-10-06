@@ -108,7 +108,8 @@ enum RecognitionError: LocalizedError {
 
 struct OnDeviceRecognitionService {
     private let plateDetector = CoreMLModel(name: "PlateDetector")
-    private let plateOCR = CoreMLModel(name: "PlateOCR")
+    /// OCR（CCT transformer）在 iPhone Neural Engine 的 fp16 路徑會輸出壞值，固定走 CPU/GPU；輸入只有 128×64，速度無感。
+    private let plateOCR = CoreMLModel(name: "PlateOCR", computeUnits: .cpuAndGPU)
     private let viewClassifier = CoreMLModel(name: "ViewClassifier")
 
     func evaluate(
@@ -429,6 +430,7 @@ struct OnDeviceRecognitionService {
 
 private struct CoreMLModel {
     let name: String
+    var computeUnits: MLComputeUnits = .all
     let version = "1.0"
 
     func load() throws -> MLModel {
@@ -436,7 +438,7 @@ private struct CoreMLModel {
             throw RecognitionError.modelMissing(name)
         }
         let configuration = MLModelConfiguration()
-        configuration.computeUnits = .all
+        configuration.computeUnits = computeUnits
         return try MLModel(contentsOf: url, configuration: configuration)
     }
 }
