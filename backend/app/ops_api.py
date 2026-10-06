@@ -888,6 +888,17 @@ def patch_location(car: str, body: LocationIn, x_ops_reader: str | None = Header
     return {"car": car, "location": loc, "server_time": _iso(_now())}
 
 
+def _plate_key(car: str) -> str:
+    """車牌比對鍵：資料集的車號來自檔名，有的帶連字號（RCR-7661）、有的沒有（RCG2235），
+    iOS 租約一律 ABC-1234 格式。同一台車在車隊清單只能出現一列，所以用去連字號大寫比對。"""
+    return (car or "").upper().replace("-", "").strip()
+
+
+def _display_car(candidates: set[str]) -> str:
+    """同一台車的多種寫法選一個顯示：優先帶連字號的（租約／App 的格式），再按字母序。"""
+    return sorted(candidates, key=lambda c: ("-" not in c, c))[0]
+
+
 @router.get("/fleet")
 def fleet(q: str | None = None, status: str | None = None):
     now = _now()
@@ -907,14 +918,20 @@ def fleet(q: str | None = None, status: str | None = None):
             mobile_cases[c["car"]] = mobile_cases.get(c["car"], 0) + 1
     except Exception:
         rentals, mobile_cases = {}, {}
-    cars = set(ds) | {t["car"] for t in tasks if t.get("car")} | set(locks) | set(rentals)
+    # 同一台車的不同寫法（RCG2235 / RCG-2235）合併成一列
+    groups: dict[str, set[str]] = {}
+    for name in set(ds) | {t["car"] for t in tasks if t.get("car")} | set(locks) | set(rentals):
+        groups.setdefault(_plate_key(name), set()).add(name)
     rows = []
-    for car in cars:
-        mine = [t for t in tasks if t.get("car") == car]
+    for key, names in groups.items():
+        car = _display_car(names)
+        mine = [t for t in tasks if _plate_key(t.get("car")) == key]
         open_tasks = [t for t in mine if t["status"] in ("pending", "in_progress")]
-        lock = locks.get(car)
+        lock = next((locks[n] for n in names if n in locks), None)
         manual = bool(lock and lock["locked"])
-        info = ds.get(car, {})
+        info = next((ds[n] for n in names if n in ds), {})
+        rental = next((rentals[n] for n in names if n in rentals), None)
+        mobile_count = sum(v for k, v in mobile_cases.items() if _plate_key(k) == key)
         if open_tasks or manual:
             st = "locked"
         elif info.get("unreviewed") or _unreviewed_mobile(car, mobile_cases):
@@ -936,9 +953,9 @@ def fleet(q: str | None = None, status: str | None = None):
             "dataset_cases": info.get("cases", 0), "claims": info.get("claims", 0),
             "unreviewed_flags": info.get("unreviewed", 0),
             "location": _location_of(car, loc_overrides),
-            "model": (rentals.get(car) or {}).get("model"),
-            "last_rental": rentals.get(car),
-            "mobile_cases": mobile_cases.get(car, 0),
+            "model": (rental or {}).get("model"),
+            "last_rental": rental,
+            "mobile_cases": mobile_count,
         })
     if q:
         rows = [r for r in rows if q.upper() in r["car"].upper()]
@@ -972,11 +989,12 @@ def patch_fleet(car: str, body: LockIn, x_ops_reader: str | None = Header(defaul
 
 
 def _unreviewed_mobile(car: str, mobile_cases: dict[str, int]) -> bool:
-    if not mobile_cases.get(car):
+    key = _plate_key(car)
+    if not any(v for k, v in mobile_cases.items() if _plate_key(k) == key):
         return False
     with _srv.db() as conn:
         decided = {r[0] for r in conn.execute("SELECT case_id FROM decisions")}
-    return any(c["car"] == car and c["case_id"] not in decided for c in rental_inspections.ops_cases())
+    return any(_plate_key(c["car"]) == key and c["case_id"] not in decided for c in rental_inspections.ops_cases())
 
 
 # ---------- 案件（AI 判定 → 人工裁決）：指揮中心用的異常清單 ----------
@@ -1066,7 +1084,7 @@ def list_cases(car: str | None = None, status: str | None = None, levels: str | 
     """AI 判定案件清單（資料集）。status = unreviewed | confirmed_open | confirmed_done | rejected | retake | normal。"""
     cases = _attach_case_state(_dataset_case_list() + _mobile_case_list())
     if car:
-        cases = [c for c in cases if c["car"].upper() == car.strip().upper()]
+        cases = [c for c in cases if _plate_key(c["car"]) == _plate_key(car)]
     if status:
         wanted = set(status.split(","))
         cases = [c for c in cases if c["review_status"] in wanted]

@@ -407,3 +407,28 @@ class TestBodyRegions:
         assert br.normalize_region("RIGHT_REAR_DOOR") == "right-rear-door"
         assert br.normalize_region("nope") is None
         assert set(br.REGION_LABELS) == set(br.ALL_REGIONS)
+
+
+class Test車牌寫法合併:
+    """資料集車號 RCG2235（檔名無連字號）與 App 租約 RCG-2235 是同一台車：車隊清單只能有一列，案件篩選兩種寫法都要命中。"""
+
+    def test_fleet同一台車只出現一列且帶租約資訊(self, client, ri):
+        import ops_api
+        from unittest.mock import patch
+        with ri.db() as conn:
+            ri.register_rental(conn, "r-plate", "RCG-2235", "VH-RCG-2235", "Toyota Yaris")
+            conn.execute("UPDATE rentals SET pickup_at=?, status='PICKUP_COMPLETE' WHERE rental_id='r-plate'",
+                         ("2026-10-06T09:00:00",))
+        with patch.object(ops_api, "_dataset_cars", return_value={"RCG2235": {"cases": 4, "ai_flagged": 0, "unreviewed": 0, "claims": 0}}):
+            rows = [r for r in ops_api.fleet()["fleet"] if ops_api._plate_key(r["car"]) == "RCG2235"]
+        assert len(rows) == 1
+        assert rows[0]["car"] == "RCG-2235"            # 顯示帶連字號的寫法
+        assert rows[0]["dataset_cases"] == 4           # 資料集的案件數接上
+        assert rows[0]["model"] == "Toyota Yaris"      # 租約資訊接上
+
+    def test_cases篩選不分連字號(self, client):
+        import ops_api
+        assert ops_api._plate_key("rcg-2235") == ops_api._plate_key("RCG2235") == "RCG2235"
+        a = ops_api.list_cases(car="RCR-7661")["cases"]
+        b = ops_api.list_cases(car="rcr7661")["cases"]
+        assert a and [c["case_id"] for c in a] == [c["case_id"] for c in b]
