@@ -15,6 +15,8 @@ struct CaptureView: View {
     @State private var isChecking = false
     @State private var result: LocalInspectionResult?
     @State private var syncMessage: String?
+    @State private var manualPlate = ""
+    @State private var showManualEntry = false
 
     private let photoStore = PhotoStore()
     private let syncService = InspectionSyncService()
@@ -59,6 +61,9 @@ struct CaptureView: View {
 
                 if let result {
                     ValidationCard(result: result, expectedPlate: store.rental.plateNumber)
+                    if !result.passed, !store.demoMode, !shot.isInterior {
+                        plateFallback(for: result)
+                    }
                 }
 
                 if let syncMessage {
@@ -124,16 +129,58 @@ struct CaptureView: View {
         }
     }
 
-    private func process(_ image: UIImage) {
+    /// 車牌關卡的補救：OCR 讀不到 → 手動輸入車牌（須與租約一致）；OCR 讀到別台 → 使用者確認同一台車（標記待人工複核）。
+    @ViewBuilder
+    private func plateFallback(for result: LocalInspectionResult) -> some View {
+        if result.failureKind == "plate" {
+            VStack(alignment: .leading, spacing: 8) {
+                if showManualEntry {
+                    Text("車牌無法自動辨識。請輸入車牌（須與租借車輛 \(store.rental.plateNumber) 一致）；手動輸入會標記為需人工確認。")
+                        .font(.footnote).foregroundStyle(.secondary)
+                    HStack {
+                        TextField("例如 \(store.rental.plateNumber)", text: $manualPlate)
+                            .textInputAutocapitalization(.characters)
+                            .autocorrectionDisabled()
+                            .textFieldStyle(.roundedBorder)
+                        Button("重新檢查") {
+                            guard let image = previewImage else { return }
+                            process(image, options: CaptureOptions(manualPlate: manualPlate))
+                        }
+                        .buttonStyle(.bordered)
+                        .disabled(manualPlate.trimmingCharacters(in: .whitespaces).count < 6 || isChecking)
+                    }
+                } else {
+                    Button("車牌辨識失敗？手動輸入車牌", systemImage: "keyboard") { showManualEntry = true }
+                        .font(.footnote)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        } else if result.failureKind == "plateMismatch", let detected = result.detectedPlateText {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("辨識到 \(detected)，與租借車輛 \(store.rental.plateNumber) 不符。若你確定拍的是同一台車（例如 OCR 讀錯一個字），可以送出並交由人工確認；系統不會直接判定通過。")
+                    .font(.footnote).foregroundStyle(.secondary)
+                Button("我確認是同一台車，送人工確認", systemImage: "person.fill.questionmark") {
+                    guard let image = previewImage else { return }
+                    process(image, options: CaptureOptions(acceptPlateMismatch: true))
+                }
+                .font(.footnote)
+                .disabled(isChecking)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    private func process(_ image: UIImage, options: CaptureOptions = CaptureOptions()) {
         previewImage = image
         isChecking = true
         result = nil
         syncMessage = nil
+        if options.manualPlate == nil { showManualEntry = false }
 
         Task {
             let attempt = store.recordAttempt(stage: stage, shot: shot)
             let validator = CaptureValidator(demoMode: store.demoMode)
-            let outcome = await validator.validate(image: image, rental: store.rental, stage: stage, shot: shot, attempt: attempt)
+            let outcome = await validator.validate(image: image, rental: store.rental, stage: stage, shot: shot, attempt: attempt, options: options)
             isChecking = false
             result = outcome
             guard outcome.passed else { return }
@@ -207,10 +254,10 @@ private struct ValidationCard: View {
                 }
                 .padding(.top, 2)
             }
-            if result.passed, let plate = result.plateText, let confidence = result.plateConfidence {
-                Text("車牌 \(plate) · 信心 \(Int(confidence * 100))%")
+            if result.passed, let plate = result.plateText {
+                Text(result.plateConfidence.map { "車牌 \(plate) · 信心 \(Int($0 * 100))%" } ?? "車牌 \(plate) · \(result.plateSource == "manual" ? "手動輸入" : "待人工確認")")
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(result.plateSource == nil ? Color.secondary : Color.orange)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)

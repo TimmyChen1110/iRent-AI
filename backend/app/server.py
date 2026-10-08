@@ -3,6 +3,7 @@
 
 掛載：
   - /v1/mobile-inspections/*   iOS App 的租約檢查上傳與狀態（user_capture_api）
+  - /v1/rental-sessions/*      iOS App 的模擬租還車 Session：模擬車輛、租車、還車資訊、檢測結果、還車確認（rental_sessions_api）
   - /api/ops/*, /api/auth/*     管理者介面 fleet-ops-center 的 API（ops_api / ops_auth / rental_inspections_api）
   - /ops                        fleet-ops-center 靜態匯出（npm run build:ops → app/static/ops）
   - /photos/*                   證據照片供圖
@@ -59,6 +60,7 @@ def _startup_rentals() -> None:
     """登記示範租約；DEMO_MODE 下若示範租約還沒有任何照片，直接以固定劇本落地（管理者端不依賴 iOS）。"""
     try:
         rental_inspections.ensure_registered_rentals()
+        rental_sessions.ensure_vehicles()             # 模擬車輛（App 租還車 Demo；非真實車隊）
         rental_inspections.recover_stale_analyses()   # 上次 process 被 kill 時卡住的分析重新排入
         if _demo_mode():
             r = rental_inspections.get_rental(rental_inspections.fixture.DEMO_RENTAL_ID)
@@ -94,10 +96,14 @@ from review_api import router as review_router  # noqa: E402
 from user_capture_api import router as user_capture_router  # noqa: E402
 import rental_inspections  # noqa: E402  Rental → Inspection → Photo → Comparison → Incident 領域層
 import rental_inspections_api  # noqa: E402  管理者端 Inspection History（/api/ops/inspections）
+import rental_sessions  # noqa: E402  模擬租還車 Session（車輛 → 租車 → 還車資訊 → 拍照 AI 檢測 → 還車確認）
+from rental_sessions_api import router as rental_sessions_router  # noqa: E402
 app.include_router(review_router)
 app.include_router(inspections_router)
 app.include_router(user_capture_router)
+app.include_router(rental_sessions_router)
 rental_inspections.bind(sys.modules[__name__])
+rental_sessions.bind(sys.modules[__name__])
 
 # 完成前守門（環節三 ops_api 於 bind() 註冊；例如清潔任務須先有完工照）。回傳錯誤訊息字串即拒絕。
 TASK_COMPLETE_GUARD = None
@@ -439,6 +445,7 @@ def demo_health():
         "demo_cleaning_case": case_ok(DEMO_CASE_CLEANING),
         "demo_cases": {"damage": DEMO_CASE_DAMAGE, "cleaning": DEMO_CASE_CLEANING},
         "demo_rental": _demo_rental_info(),
+        "rental_sessions": rental_sessions.health(),
     }
 
 
@@ -844,6 +851,15 @@ def pair_photo(name: str):
     if not p or not Path(p).exists():
         raise HTTPException(404)
     return FileResponse(p)
+
+
+@app.get("/photos/demo/{name}", include_in_schema=False)
+def demo_photo(name: str):
+    """Demo 測試車輛示意圖（backend/app/demo_assets/）。"""
+    target = (rental_sessions.DEMO_ASSETS_DIR / name).resolve()
+    if rental_sessions.DEMO_ASSETS_DIR.resolve() not in target.parents or not target.is_file():
+        raise HTTPException(404)
+    return FileResponse(target)
 
 
 @app.get("/photos/interior/{name}")

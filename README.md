@@ -52,6 +52,7 @@
 ├── .env.example                 # GEMINI_API_KEY 等
 ├── frontend-user/irent-app/     # ★ 正式使用者 App（SwiftUI：Find a Car 3D 地圖 → 取車／還車拍攝 + 裝置端 Core ML 防呆 → 離線重送）
 ├── E2E_INSPECTION_FLOW.md       # ★ iOS → Backend → AI 比對 → Incident → 指揮中心 的端對端說明（Mermaid）
+├── RENTAL_SIM_FLOW.md           # ★ 模擬租還車 Demo：定位找車 → 租車 → 還車資訊 → 拍照 AI 檢測 → 還車完成（/v1/rental-sessions）
 ├── fleet-ops-center/            # ★ 正式管理者介面 Fleet Command Center（Next.js + 3D Digital Twin；npm run build:ops → backend/app/static/ops → /ops，/ops/m 為站點手機版；Docker 多階段自動 build）
 ├── 環節一/二/三_*/              # 比賽文件（README / SETUP / 隊友須知 / 簡報）
 └── iRent - 運用 AI 打造 iRent 智能車況管家…/   # 共用原始資料集

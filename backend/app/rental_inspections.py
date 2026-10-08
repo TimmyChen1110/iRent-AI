@@ -880,6 +880,20 @@ def clear_rental(conn, rental_id: str) -> None:
                  " updated_at=? WHERE rental_id=?", (now_iso(), rental_id))
 
 
+def clear_return_stage(conn, rental_id: str) -> list[str]:
+    """重新拍攝還車照：刪掉該租約的 RETURN 照片、比對結果與衍生案件，租約退回 PICKUP_COMPLETE（取車基準保留）。
+    回傳被清掉的 case_id（呼叫端用 server.reset_case_state 清裁決／任務）。"""
+    case_ids = [r[0] for r in conn.execute("SELECT case_id FROM inspection_incidents WHERE rental_id=?", (rental_id,))]
+    conn.execute("DELETE FROM inspection_photos WHERE rental_id=? AND inspection_type='RETURN'", (rental_id,))
+    conn.execute("DELETE FROM rental_inspections WHERE rental_id=? AND inspection_type='RETURN'", (rental_id,))
+    conn.execute("DELETE FROM inspection_comparisons WHERE rental_id=?", (rental_id,))
+    conn.execute("DELETE FROM inspection_incidents WHERE rental_id=?", (rental_id,))
+    conn.execute("UPDATE rentals SET status='PICKUP_COMPLETE', return_at=NULL, analysis_started_at=NULL,"
+                 " analysis_completed_at=NULL, analysis_error=NULL, analysis_source=NULL, versions_json=NULL,"
+                 " updated_at=? WHERE rental_id=?", (now_iso(), rental_id))
+    return case_ids
+
+
 def restart_rental(rental_id: str) -> dict:
     """App「重新開始 Demo」：只允許 demo 租約。案件的裁決／任務由 server.demo_reset 同路徑清理。"""
     with db() as conn:

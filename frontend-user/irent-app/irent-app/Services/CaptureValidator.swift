@@ -8,12 +8,13 @@ struct CaptureValidator {
     let demoMode: Bool
     private let recognizer = OnDeviceRecognitionService()
 
-    func validate(image: UIImage, rental: Rental, stage: InspectionStage, shot: InspectionShot, attempt: Int) async -> LocalInspectionResult {
+    func validate(image: UIImage, rental: Rental, stage: InspectionStage, shot: InspectionShot, attempt: Int,
+                  options: CaptureOptions = CaptureOptions()) async -> LocalInspectionResult {
         if demoMode {
             return DemoCaptureScenario.result(rental: rental, stage: stage, shot: shot, attempt: attempt)
         }
         if let view = shot.exteriorView {
-            return await recognizer.evaluate(image: image, expectedPlate: rental.plateNumber, expectedView: view)
+            return await recognizer.evaluate(image: image, expectedPlate: rental.plateNumber, expectedView: view, options: options)
         }
         return recognizer.evaluateInterior(image: image)
     }

@@ -39,6 +39,12 @@ struct LocalInspectionResult: Codable, Equatable {
     var checks: [ValidationCheck]? = nil
     var failureTitle: String? = nil
     var failureHint: String? = nil
+    /// 車牌來源：nil/"ocr"（裝置端 OCR）| "manual"（OCR 失敗、使用者手動輸入）| "user_confirmed_mismatch"（OCR 與租約不符、使用者確認同一台車）
+    var plateSource: String? = nil
+    /// 失敗時 OCR 實際讀到的車牌（例如與租約不符），讓 UI 可提供「確認是同一台車」。
+    var detectedPlateText: String? = nil
+    /// 失敗類別：plate（車牌未入鏡／無法辨識）| plateMismatch（車牌不符）| view | quality | other
+    var failureKind: String? = nil
 
     static func failure(title: String, reason: String, hint: String?, checks: [ValidationCheck], modelVersions: [String: String]) -> LocalInspectionResult {
         LocalInspectionResult(
@@ -66,6 +72,24 @@ enum RecognitionError: LocalizedError {
         case .wrongView(let expected, let actual): "目前照片判定為 \(actual)，請改拍 \(expected.rawValue)角。"
         case .lowResolution: "照片解析度不足，請重新拍攝。"
         case .unsupportedOutput: "離線模型輸出格式不符合預期，請重新匯出模型。"
+        }
+    }
+
+    /// 車牌「讀不到」（可改用手動輸入）；車牌「讀錯台」不算。
+    var isPlateReadFailure: Bool {
+        switch self {
+        case .noPlate, .unreadablePlate: true
+        default: false
+        }
+    }
+
+    var failureKind: String {
+        switch self {
+        case .noPlate, .unreadablePlate: "plate"
+        case .wrongPlate: "plateMismatch"
+        case .wrongView: "view"
+        case .lowResolution: "quality"
+        case .modelMissing, .unsupportedOutput: "other"
         }
     }
 
@@ -115,8 +139,10 @@ struct OnDeviceRecognitionService {
     func evaluate(
         image: RecognitionImage,
         expectedPlate: String,
-        expectedView: VehicleView
+        expectedView: VehicleView,
+        options: CaptureOptions = CaptureOptions()
     ) async -> LocalInspectionResult {
+        var detectedText: String?
         do {
             guard let cgImage = uprightCGImage(image) else {
                 throw RecognitionError.lowResolution
@@ -126,12 +152,29 @@ struct OnDeviceRecognitionService {
             }
 
             let detector = try plateDetector.load()
-            let detection = try await detectPlate(in: cgImage, model: detector)
-            let plate = try recognizePlateWithRetry(in: cgImage, rect: detection.boundingBox)
             let normalizedExpected = normalize(expectedPlate)
+            var plateText: String
+            var plateConfidence: Double?
+            var plateSource = "ocr"
+            do {
+                let detection = try await detectPlate(in: cgImage, model: detector)
+                let plate = try recognizePlateWithRetry(in: cgImage, rect: detection.boundingBox)
+                detectedText = plate.text
+                plateText = plate.text
+                plateConfidence = plate.confidence
+            } catch let error as RecognitionError {
+                // OCR 讀不到車牌：使用者手動輸入（仍須與租約一致）；讀錯台不能靠手動輸入蓋過
+                guard let manual = options.manualPlate, error.isPlateReadFailure else { throw error }
+                plateText = formatPlate(normalize(manual))
+                plateConfidence = nil
+                plateSource = "manual"
+            }
 
-            guard normalize(plate.text) == normalizedExpected else {
-                throw RecognitionError.wrongPlate(expected: expectedPlate, actual: plate.text)
+            if normalize(plateText) != normalizedExpected {
+                guard plateSource == "ocr", options.acceptPlateMismatch else {
+                    throw RecognitionError.wrongPlate(expected: expectedPlate, actual: plateText)
+                }
+                plateSource = "user_confirmed_mismatch"   // 使用者確認同一台車 → 後端標記待人工複核
             }
 
             let view = try recognizeView(in: cgImage)
@@ -139,10 +182,17 @@ struct OnDeviceRecognitionService {
                 throw RecognitionError.wrongView(expected: expectedView, actual: view.label)
             }
 
-            return LocalInspectionResult(
+            let plateLabel: String = {
+                switch plateSource {
+                case "manual": "車牌 \(plateText)（手動輸入）"
+                case "user_confirmed_mismatch": "車牌 \(plateText)（與租約不符，待人工複核）"
+                default: "車牌 \(plateText)"
+                }
+            }()
+            var result = LocalInspectionResult(
                 passed: true,
-                plateText: plate.text,
-                plateConfidence: plate.confidence,
+                plateText: plateText,
+                plateConfidence: plateConfidence,
                 detectedView: expectedView,
                 viewConfidence: view.confidence,
                 errors: [],
@@ -150,18 +200,23 @@ struct OnDeviceRecognitionService {
                 checks: [
                     ValidationCheck(label: "畫面清晰", passed: true),
                     ValidationCheck(label: "拍攝角度正確", passed: true),
-                    ValidationCheck(label: "車牌 \(plate.text)", passed: true),
+                    ValidationCheck(label: plateLabel, passed: plateSource != "user_confirmed_mismatch"),
                     ValidationCheck(label: "車輛完整可辨識", passed: true),
                 ]
             )
+            result.plateSource = plateSource == "ocr" ? nil : plateSource
+            return result
         } catch let error as RecognitionError {
-            return LocalInspectionResult.failure(
+            var failure = LocalInspectionResult.failure(
                 title: error.failureTitle,
                 reason: error.localizedDescription,
                 hint: error.failureHint,
                 checks: error.checks(expectedPlate: expectedPlate),
                 modelVersions: modelVersions
             )
+            failure.detectedPlateText = detectedText
+            failure.failureKind = error.failureKind
+            return failure
         } catch {
             return LocalInspectionResult.failure(
                 title: "照片檢查失敗",
@@ -441,4 +496,13 @@ private struct CoreMLModel {
         configuration.computeUnits = computeUnits
         return try MLModel(contentsOf: url, configuration: configuration)
     }
+}
+
+
+/// 拍攝驗證的使用者補救選項（只影響車牌關卡；角度／品質關卡不可跳過）。
+struct CaptureOptions {
+    /// OCR 讀不到車牌時，使用者手動輸入的車牌（必須與租約一致才通過）。
+    var manualPlate: String? = nil
+    /// OCR 讀到的車牌與租約不符，使用者確認「是同一台車」：照片通過但標記為待人工複核。
+    var acceptPlateMismatch = false
 }
