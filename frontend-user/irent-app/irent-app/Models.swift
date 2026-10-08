@@ -469,8 +469,19 @@ final class RentalStore {
     /// 最近一次與後端同步 Session 失敗的訊息（離線時顯示，不擋本機操作）。
     var sessionSyncError: String?
 
+    /// App 內建的後端位址（Info.plist `IRentAPIBaseURL` ← build setting `IRENT_API_BASE_URL`）。
+    static let bundledAPIBaseURL: String = (Bundle.main.object(forInfoDictionaryKey: "IRentAPIBaseURL") as? String)?
+        .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+
+    /// 開發者覆寫的後端位址（只在開發者選項可設定；空字串＝使用內建位址）。
+    var apiBaseURLOverride: String {
+        didSet { UserDefaults.standard.set(apiBaseURLOverride, forKey: "apiBaseURLOverride") }
+    }
+
+    /// 實際連線的後端位址：開發模式且有覆寫 → 覆寫；否則一律用內建位址（一般使用者不需設定）。
     var apiBaseURL: String {
-        didSet { UserDefaults.standard.set(apiBaseURL, forKey: "apiBaseURL") }
+        let override = apiBaseURLOverride.trimmingCharacters(in: .whitespacesAndNewlines)
+        return developerMode && !override.isEmpty ? override : Self.bundledAPIBaseURL
     }
     /// 開發者選項（拍攝驗證固定劇本等）只在以 `-developerMode YES` 啟動參數或 UserDefaults `developerMode` 開啟時顯示；
     /// 伺服器端的開發功能（重設、登錄照片、pipeline 細節）不在 App 內，改由 /api/ops/devtools（需管理者登入）。
@@ -482,7 +493,8 @@ final class RentalStore {
 
     init() {
         // 預設留空：127.0.0.1 在真機上是 iPhone 自己，重裝後會靜默連錯；空值讓設定頁直接顯示紅字提示要填 Mac 的區網 IP
-        apiBaseURL = UserDefaults.standard.string(forKey: "apiBaseURL") ?? ""
+        // 舊版的 "apiBaseURL"（手動填的區網 IP）不再使用：一般使用者一律連內建位址
+        apiBaseURLOverride = UserDefaults.standard.string(forKey: "apiBaseURLOverride") ?? ""
         demoMode = UserDefaults.standard.object(forKey: "demoMode") as? Bool ?? false
         rental = .demo
         load()
@@ -736,7 +748,7 @@ final class RentalStore {
             if savedID != nil { resetLocal() }
             if let active = try? await service.active(baseURL: apiBaseURL) { apply(active) }
         } catch {
-            sessionSyncError = "無法連線到伺服器，顯示本機最後狀態（\(error.localizedDescription)）"
+            sessionSyncError = "目前無法連線，顯示上次的租借狀態。"
         }
     }
 

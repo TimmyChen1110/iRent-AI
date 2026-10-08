@@ -2,11 +2,17 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<!-- 後端位址：由 build setting IRENT_API_BASE_URL 注入（Xcode › Target › Build Settings 可依 Debug／Release 修改） -->
+	<key>IRentAPIBaseURL</key>
+	<string>$(IRENT_API_BASE_URL)</string>
+	<!--
+	  App Transport Security：後端目前是 http://<公網 IP>:8000（無 HTTPS）。
+	  不可同時設 NSAllowsLocalNetworking：iOS 遇到它會忽略 NSAllowsArbitraryLoads，只放行區網位址，公網 IP 會被擋。
+	  ATS 例外網域不支援 IP，所以暫時用 NSAllowsArbitraryLoads（也涵蓋區網）。改用 HTTPS 網域後整段刪除。
+	-->
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>
-		<true/>
-		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
 </dict>

@@ -345,8 +345,8 @@ private struct NearbyHintCard: View {
                         .foregroundStyle(error == nil ? Color.accentColor : .orange)
                     VStack(alignment: .leading, spacing: 2) {
                         if let error {
-                            Text("無法取得車輛資料").font(.headline)
-                            Text(error).font(.caption).foregroundStyle(.secondary).lineLimit(2)
+                            Text("目前無法載入車輛").font(.headline)
+                            Text("請確認網路連線後重試").font(.caption).foregroundStyle(.secondary).lineLimit(2)
                         } else if loading {
                             Text("正在載入附近車輛…").font(.headline)
                         } else {

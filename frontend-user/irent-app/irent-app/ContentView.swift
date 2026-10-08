@@ -714,38 +714,30 @@ private struct SettingsView: View {
     @Environment(LocationService.self) private var location
     @Environment(\.dismiss) private var dismiss
     @State private var connectionMessage: String?
+    @State private var connectionOK: Bool?
     @State private var testingConnection = false
 
     var body: some View {
         @Bindable var store = store
         NavigationStack {
             Form {
-                Section("同步服務") {
-                    TextField("API Base URL", text: $store.apiBaseURL)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-                        .keyboardType(.URL)
-                    if let url = InspectionSyncService.normalizedBaseURL(store.apiBaseURL) {
-                        Text("實際連線位址：\(url.absoluteString)")
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
-                    } else {
-                        Text("位址無法解析。請輸入 Mac 的區網 IP，例如 http://192.168.1.10:8000（localhost 代表 iPhone 自己）。")
-                            .font(.footnote)
-                            .foregroundStyle(.red)
-                    }
+                Section("服務狀態") {
                     Button {
                         Task { await testConnection() }
                     } label: {
                         HStack {
-                            Text("測試連線")
-                            if testingConnection { Spacer(); ProgressView() }
+                            Text("連線狀態")
+                                .foregroundStyle(.primary)
+                            Spacer()
+                            if testingConnection {
+                                ProgressView()
+                            } else {
+                                Text(connectionMessage ?? "點此檢查")
+                                    .foregroundStyle(connectionOK == true ? .green : connectionOK == false ? .red : .secondary)
+                            }
                         }
                     }
                     .disabled(testingConnection)
-                    if let connectionMessage {
-                        Text(connectionMessage).font(.footnote).foregroundStyle(.secondary)
-                    }
                 }
                 Section("定位") {
                     if let coordinate = location.coordinate {
@@ -776,6 +768,12 @@ private struct SettingsView: View {
                 }
                 if store.developerMode {
                     Section("開發者選項（僅開發模式顯示）") {
+                        TextField("覆寫後端位址（留空＝內建）", text: $store.apiBaseURLOverride)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled()
+                            .keyboardType(.URL)
+                        Text("目前連線：\(InspectionSyncService.normalizedBaseURL(store.apiBaseURL)?.absoluteString ?? "無效位址")\n內建：\(RentalStore.bundledAPIBaseURL)")
+                            .font(.footnote).foregroundStyle(.secondary)
                         Toggle("拍攝驗證固定劇本（不執行 Core ML）", isOn: $store.demoMode)
                         Text("取車左前第一次失敗、還車右後第一次失敗，其餘通過。伺服器端的重設／登錄照片／pipeline 細節請用管理者網站 /api/ops/devtools。")
                             .font(.footnote).foregroundStyle(.secondary)
@@ -789,6 +787,7 @@ private struct SettingsView: View {
             }
             .navigationTitle("設定")
             .navigationBarTitleDisplayMode(.inline)
+            .task { if connectionOK == nil { await testConnection() } }
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("完成") { dismiss() } } }
         }
     }
@@ -797,10 +796,12 @@ private struct SettingsView: View {
         testingConnection = true
         defer { testingConnection = false }
         do {
-            let status = try await InspectionSyncService().checkConnection(baseURL: store.apiBaseURL)
-            connectionMessage = "✓ 已連上伺服器（status: \(status)）"
+            _ = try await InspectionSyncService().checkConnection(baseURL: store.apiBaseURL)
+            connectionOK = true
+            connectionMessage = "服務正常"
         } catch {
-            connectionMessage = "✗ 連不到伺服器：\(error.localizedDescription)"
+            connectionOK = false
+            connectionMessage = "目前無法連線，請稍後再試"
         }
     }
 }
