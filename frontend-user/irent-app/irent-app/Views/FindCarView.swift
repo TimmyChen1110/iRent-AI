@@ -67,10 +67,10 @@ struct FindCarView: View {
                 VehicleDetailView(vehicle: selected, userLocation: userLocation, imageURL: imageURL(selected))
             }
         }
-        // 固定入口：Demo 測試車輛（不受定位距離限制），在地圖上方永遠可見
+        // 置頂推薦車輛（不受定位距離限制），在地圖上方永遠可見
         .safeAreaInset(edge: .top) {
             if mode == .findCar {
-                DemoVehicleEntry(compact: true)
+                FeaturedVehiclesView(compact: true)
                     .padding(.horizontal, 16)
                     .padding(.top, 6)
             }
@@ -105,10 +105,10 @@ struct FindCarView: View {
         guard let session = store.session, session.state == "PICKUP_INSPECTION", mode == .findCar else { return }
         let vehicle = store.vehicles.first { $0.vehicleId == session.vehicle.vehicleId }
             ?? SimVehicle(vehicleId: session.vehicle.vehicleId, plate: session.vehicle.plate, model: session.vehicle.model ?? "車輛",
-                          imageUrl: session.vehicle.imageUrl, imageNote: session.vehicle.imageNote,
+                          color: nil, seats: nil, vehicleType: nil, parkingSpot: nil, imageUrl: session.vehicle.imageUrl,
                           location: session.vehicle.location ?? GeoPoint(lat: nil, lng: nil), status: "RENTED",
-                          odometerKm: session.startOdometerKm, fuelPercent: nil, aiSource: session.aiSource ?? "pipeline",
-                          aiSourceLabel: session.aiSourceLabel, simulated: true, dataNote: nil, activeSessionId: session.sessionId)
+                          odometerKm: session.startOdometerKm, fuelPercent: nil, pricing: session.vehicle.pricing,
+                          featured: session.vehicle.featured ?? false, serviceNotice: session.serviceNotice, activeSessionId: session.sessionId)
         selected = vehicle
         mode = .findMyCar
         didPlaceCamera = true
@@ -140,9 +140,9 @@ struct FindCarView: View {
         Task {
             defer { isWorking = false }
             do {
-                if vehicle.isDemo {
-                    // Demo 測試車輛：不需要走到車旁，直接進取車檢查
-                    try await store.startDemoVehicle(vehicle, location: location.body)
+                if vehicle.featured {
+                    // 推薦車輛：不需要走到車旁，直接進取車檢查
+                    try await store.startFeaturedVehicle(vehicle, location: location.body)
                     return
                 }
                 let session = try await RentalSessionService().create(vehicleID: vehicle.vehicleId, location: location.body, baseURL: store.apiBaseURL)
@@ -274,19 +274,18 @@ private struct VehicleMarker: View {
     let isSelected: Bool
     let onTap: () -> Void
 
-    private var tint: Color { vehicle.isAvailable ? (vehicle.isDemo ? Color.orange : Color.accentColor) : Color.gray }
+    private var tint: Color { vehicle.isAvailable ? Color.accentColor : Color.gray }
 
     var body: some View {
         Button(action: onTap) {
             VStack(spacing: 2) {
-                if isSelected || vehicle.isDemo {
-                    Text(vehicle.isDemo ? "DEMO \(vehicle.plate)" : vehicle.plate)
+                if isSelected || vehicle.featured {
+                    Text(vehicle.plate)
                         .font(.caption.weight(.bold))
                         .monospaced()
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
-                        .background(vehicle.isDemo ? AnyShapeStyle(Color.orange.opacity(0.9)) : AnyShapeStyle(.regularMaterial), in: Capsule())
-                        .foregroundStyle(vehicle.isDemo ? .white : .primary)
+                        .background(.regularMaterial, in: Capsule())
                 }
                 ZStack {
                     if isSelected {
@@ -364,9 +363,6 @@ private struct NearbyHintCard: View {
                     Image(systemName: "location").font(.caption2)
                     Text(locationLabel).font(.caption)
                     Spacer()
-                    Text("模擬車輛").font(.caption2.weight(.semibold))
-                        .padding(.horizontal, 6).padding(.vertical, 2)
-                        .background(Color.orange.opacity(0.15), in: Capsule())
                 }
                 .foregroundStyle(.secondary)
             }
@@ -394,7 +390,7 @@ private struct VehicleBottomSheet: View {
                     VStack(alignment: .leading, spacing: 3) {
                         Text(vehicle.model).font(.title3.weight(.semibold))
                         Text(vehicle.plate).font(.subheadline.monospaced()).foregroundStyle(.secondary)
-                        Text(vehicle.location.name ?? "模擬位置").font(.footnote).foregroundStyle(.secondary).lineLimit(2)
+                        Text(vehicle.location.name ?? "停放位置").font(.footnote).foregroundStyle(.secondary).lineLimit(2)
                     }
                     Spacer()
                     Button(action: onClose) {
@@ -417,7 +413,7 @@ private struct VehicleBottomSheet: View {
                         InfoChip(icon: vehicle.isAvailable ? "checkmark.circle.fill" : "minus.circle.fill",
                                  text: vehicle.statusLabel,
                                  tint: vehicle.isAvailable ? .green : .secondary)
-                        InfoChip(icon: "info.circle", text: "模擬車輛", tint: .orange)
+                        if let price = vehicle.pricing?.hourlyTwd { InfoChip(icon: "dollarsign.circle", text: "NT$\(VehicleDetailView.money(price))/時") }
                     }
                 }
 
@@ -449,14 +445,14 @@ private struct VehicleBottomSheet: View {
                 }
 
                 if !vehicle.isAvailable {
-                    Text("此車輛目前\(vehicle.statusLabel)，無法租借。\(vehicle.isDemo ? "Demo 車輛可在「詳細資訊」頁重設。" : "")")
+                    Text("此車輛目前\(vehicle.statusLabel)，暫時無法租借。")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }
-                if vehicle.isDemo {
-                    Text("Demo 測試車輛：地圖位置為固定示範位置，不代表車輛真的在你附近；可直接「開始租車」。")
+                if vehicle.featured {
+                    Text("推薦車輛可直接開始使用；地圖上的位置為停放位置。")
                         .font(.footnote)
-                        .foregroundStyle(.orange)
+                        .foregroundStyle(.secondary)
                 }
             }
         }
@@ -531,10 +527,10 @@ private struct FindMyCarPanel: View {
                         .background(Color.accentColor.opacity(0.12), in: Circle())
                     VStack(alignment: .leading, spacing: 2) {
                         Text("前往 \(vehicle.plate)").font(.headline)
-                        Text("\(vehicle.model) · \(vehicle.location.name ?? "模擬位置")").font(.footnote).foregroundStyle(.secondary).lineLimit(2)
+                        Text("\(vehicle.model) · \(vehicle.location.name ?? "停放位置")").font(.footnote).foregroundStyle(.secondary).lineLimit(2)
                     }
                     Spacer()
-                    Text("租車已建立").font(.caption2.weight(.semibold))
+                    Text("已預約").font(.caption2.weight(.semibold))
                         .padding(.horizontal, 6).padding(.vertical, 3)
                         .background(Color.green.opacity(0.15), in: Capsule())
                         .foregroundStyle(.green)

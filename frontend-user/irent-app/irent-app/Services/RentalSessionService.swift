@@ -15,7 +15,6 @@ struct RentalSessionService {
     private struct EmptyBody: Encodable {}
     private struct VehiclesResponse: Decodable { let vehicles: [SimVehicle] }
     private struct ActiveResponse: Decodable { let session: RentalSession? }
-    private struct ResetResponse: Decodable { let ok: Bool }
 
     func vehicles(baseURL: String) async throws -> [SimVehicle] {
         try await get("v1/rental-sessions/vehicles", baseURL: baseURL, as: VehiclesResponse.self).vehicles
@@ -62,24 +61,9 @@ struct RentalSessionService {
         try await post("v1/rental-sessions/\(id)/cancel", body: EmptyBody(), baseURL: baseURL, as: RentalSession.self)
     }
 
-    /// Demo Vehicle Registry：登記車輛的借車前／還車後照片集（沒登記 → 404）。
-    func vehiclePhotos(id: String, baseURL: String) async throws -> DemoPhotoSet {
-        try await get("v1/rental-sessions/vehicles/\(id)/photos", baseURL: baseURL, as: DemoPhotoSet.self)
-    }
-
-    /// 模式 B：預載 pickup / return 照片。
-    func preload(id: String, stage: String, baseURL: String) async throws -> RentalSession {
-        try await post("v1/rental-sessions/\(id)/preload/\(stage)", body: EmptyBody(), baseURL: baseURL, as: RentalSession.self)
-    }
-
-    /// Demo 測試車輛重設（category=demo 專用；不需 DEMO_MODE）。
-    func resetVehicle(id: String, baseURL: String) async throws {
-        _ = try await post("v1/rental-sessions/vehicles/\(id)/reset", body: EmptyBody(), baseURL: baseURL, as: ResetResponse.self)
-    }
-
-    /// Demo 重置（後端 DEMO_MODE 才開放）。
-    func reset(baseURL: String) async throws {
-        _ = try await post("v1/rental-sessions/reset", body: EmptyBody(), baseURL: baseURL, as: ResetResponse.self)
+    /// 車況紀錄（已確認屬於本車的借車前／還車後照片）。
+    func vehicleRecords(id: String, baseURL: String) async throws -> VehicleRecords {
+        try await get("v1/rental-sessions/vehicles/\(id)/records", baseURL: baseURL, as: VehicleRecords.self)
     }
 
     // MARK: - HTTP

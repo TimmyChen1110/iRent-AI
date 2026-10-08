@@ -56,40 +56,15 @@ struct ContentView: View {
 private struct InspectionChecklistView: View {
     @Environment(RentalStore.self) private var store
     let stage: InspectionStage
-    @State private var isPreloading = false
-    @State private var preloadError: String?
-    @State private var photoSet: DemoPhotoSet?
-
-    private var canPreload: Bool { photoSet != nil && !(store.session?.isPreloaded(stage) ?? false) && store.completedShots(for: stage) == 0 }
-
     var body: some View {
         List {
-            if let label = store.session?.captureModeLabel(stage) {
+            if store.isRemoteComplete(stage), store.completedShots(for: stage) == 0 {
                 Section {
-                    Label(label, systemImage: (store.session?.isPreloaded(stage) ?? false) ? "photo.on.rectangle.angled" : "camera.viewfinder")
-                        .font(.footnote.weight(.semibold))
-                        .foregroundStyle((store.session?.isPreloaded(stage) ?? false) ? .orange : .secondary)
-                }
-            } else if photoSet != nil {
-                Section("選擇操作方式") {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Label("模式 A：即時拍攝 — 用手機相機依序拍攝（下方清單）", systemImage: "camera.viewfinder")
-                        Label("模式 B：預載 Demo 照片 — 使用專案內已驗證的\(stage == .pickup ? "借車前" : "還車後")照片，不需要實體車輛", systemImage: "photo.on.rectangle.angled")
+                    Label("本次\(stage == .pickup ? "取車" : "還車")的車況照片已登錄，可直接進行下一步。", systemImage: "checkmark.seal.fill")
+                        .font(.footnote.weight(.semibold)).foregroundStyle(.green)
+                    if let label = store.session?.captureModeLabel(stage) {
+                        Text(label).font(.footnote).foregroundStyle(.secondary)
                     }
-                    .font(.footnote)
-                    Button {
-                        preload()
-                    } label: {
-                        HStack {
-                            Label(stage == .pickup ? "使用預載借車前照片（模式 B）" : "使用預載還車後照片（模式 B）", systemImage: "square.and.arrow.down.on.square")
-                                .fontWeight(.semibold)
-                            if isPreloading { Spacer(); ProgressView() }
-                        }
-                    }
-                    .disabled(!canPreload || isPreloading)
-                    if let preloadError { Text(preloadError).font(.footnote).foregroundStyle(.red) }
-                    Text("預載照片會明確標示為「資料集照片」，不會呈現為當下拍攝；AI 檢測與即時拍攝走同一條 pipeline。")
-                        .font(.footnote).foregroundStyle(.secondary)
                 }
             }
             Section {
@@ -104,11 +79,6 @@ private struct InspectionChecklistView: View {
                     Text("每張照片都會在手機上即時檢查車牌、角度與品質；不合格會請你重拍。")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
-                    if let session = store.session {
-                        Text("Session \(session.sessionId) · \(session.state)")
-                            .font(.caption2.monospaced())
-                            .foregroundStyle(.tertiary)
-                    }
                 }
                 .padding(.vertical, 4)
                 SyncStatusRow(stage: stage)
@@ -158,21 +128,6 @@ private struct InspectionChecklistView: View {
                 }
             }
         }
-        .task { await loadPhotoSet() }
-    }
-
-    private func loadPhotoSet() async {
-        guard let session = store.session, session.vehicle.category == "demo", photoSet == nil else { return }
-        photoSet = try? await RentalSessionService().vehiclePhotos(id: session.vehicle.vehicleId, baseURL: store.apiBaseURL)
-    }
-
-    private func preload() {
-        isPreloading = true
-        preloadError = nil
-        Task {
-            defer { isPreloading = false }
-            do { try await store.preloadDemoPhotos(stage: stage) } catch { preloadError = error.localizedDescription }
-        }
     }
 }
 
@@ -212,9 +167,9 @@ private struct ShotRow: View {
                             .font(.caption)
                             .foregroundStyle(photo.uploadError == nil ? Color.secondary : Color.red)
                     } else if let remote, remote.preloaded == true {
-                        Text(remote.interiorStandin == true ? "預載 · 車內佔位照（其他車輛，非本車）" : "預載 Demo 照片（資料集，非當下拍攝）")
+                        Text(remote.interiorStandin == true ? "車況紀錄 · 車內參考照" : "車況紀錄照片（系統登錄）")
                             .font(.caption)
-                            .foregroundStyle(.orange)
+                            .foregroundStyle(.secondary)
                     }
                 }
                 Spacer()
@@ -254,8 +209,8 @@ private struct SyncStatusRow: View {
                 ProgressView().controlSize(.small)
                 Text("同步中…")
             } else if total == 0, store.isRemoteComplete(stage) {
-                Image(systemName: "photo.on.rectangle.angled").foregroundStyle(.orange)
-                Text("後端已收到 5 張預載 Demo 照片")
+                Image(systemName: "checkmark.icloud.fill").foregroundStyle(.green)
+                Text("車況照片已登錄 5 / 5")
             } else if total == 0 {
                 Image(systemName: "icloud").foregroundStyle(.secondary)
                 Text("尚未拍攝")
@@ -288,13 +243,13 @@ private struct InspectionSummaryView: View {
         List {
             Section(stage == .pickup ? "取車照片" : "還車照片") {
                 if let session = store.session, session.isPreloaded(stage) {
-                    Label("預載 Demo 照片（資料集，非當下拍攝）", systemImage: "photo.on.rectangle.angled").font(.footnote).foregroundStyle(.orange)
+                    Label("照片來源：車況紀錄（系統登錄，非本次拍攝）", systemImage: "photo.on.rectangle.angled").font(.footnote).foregroundStyle(.secondary)
                     ForEach(session.remotePhotos(stage)) { remote in
                         HStack {
                             RemoteThumb(path: remote.url, width: 96, height: 72)
                             VStack(alignment: .leading) {
                                 Text(remote.angle)
-                                Text(remote.interiorStandin == true ? "車內佔位照（非本車）" : "資料集照片").font(.caption).foregroundStyle(.orange)
+                                Text(remote.interiorStandin == true ? "車內參考照" : "車況紀錄").font(.caption).foregroundStyle(.secondary)
                             }
                         }
                     }
@@ -321,7 +276,7 @@ private struct InspectionSummaryView: View {
             }
 
             Section {
-                Button(stage == .pickup ? "完成取車檢查" : "完成還車拍攝，開始 AI 檢測") {
+                Button(stage == .pickup ? "完成取車檢查" : "完成還車拍攝，開始車況檢測") {
                     store.confirm(stage: stage)
                     // 這頁是從清單 push 進來的；phase 改變只會換掉 NavigationStack 的根畫面，
                     // 不會自動 pop，若不 dismiss 使用者會停在這頁看起來「沒反應」（真機實測）。
@@ -361,9 +316,6 @@ private struct PickupCompleteView: View {
                 LabeledContent("外觀照片", value: "\(store.exteriorCount(.pickup)) / 4")
                 LabeledContent("車內照片", value: "\(store.interiorCount(.pickup)) / 1")
                 LabeledContent("車況基準", value: baselineLabel)
-                if let label = store.session?.captureModeLabel(.pickup) {
-                    LabeledContent("照片來源", value: label)
-                }
                 SyncStatusRow(stage: .pickup)
             }
             Section {
@@ -459,20 +411,19 @@ private struct ActiveRentalView: View {
                         Text("未記錄").foregroundStyle(.secondary)
                     }
                 }
-                LabeledContent("Session", value: store.session?.sessionId ?? "—")
                 LabeledContent("車況基準", value: "已建立（取車照 5 張）")
             }
             if let session = store.session, !session.remotePhotos(.pickup).isEmpty {
                 Section("借車前車況（取車照）") {
                     if let label = session.captureModeLabel(.pickup) {
-                        Text(label).font(.footnote).foregroundStyle(session.isPreloaded(.pickup) ? .orange : .secondary)
+                        Text(label).font(.footnote).foregroundStyle(.secondary)
                     }
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 10) {
                             ForEach(session.remotePhotos(.pickup)) { remote in
                                 VStack(spacing: 4) {
                                     RemoteThumb(path: remote.url, width: 140, height: 105)
-                                    Text(remote.interiorStandin == true ? "車內（佔位，非本車）" : remote.angle).font(.caption2).foregroundStyle(.secondary)
+                                    Text(remote.interiorStandin == true ? "車內參考照" : remote.angle).font(.caption2).foregroundStyle(.secondary)
                                 }
                             }
                         }
@@ -481,8 +432,9 @@ private struct ActiveRentalView: View {
                 }
             }
             Section {
-                Text("模擬租車：此為 Demo 流程，不涉及真實車門、計費或合約。")
-                    .font(.footnote).foregroundStyle(.secondary)
+                if let notice = store.session?.serviceNotice {
+                    Label(notice, systemImage: "info.circle").font(.footnote).foregroundStyle(.secondary)
+                }
                 if let error { Text(error).font(.footnote).foregroundStyle(.red) }
                 AppButton(title: isInitiating ? "處理中…" : "我要還車", systemImage: "arrow.uturn.backward.circle.fill") { beginReturn() }
                     .disabled(isInitiating)
@@ -538,14 +490,17 @@ private struct ReturnCompleteView: View {
                     LabeledContent("里程", value: "\(session.startOdometerKm) → \(session.endOdometerKm.map(String.init) ?? "—") km")
                     LabeledContent("總行駛里程", value: session.distanceKm.map { "\($0) km" } ?? "—")
                 }
-                Section("AI 影像檢測") {
+                if let fee = session.feeEstimate {
+                    Section("費用明細") {
+                        LabeledContent("時間費", value: "NT$\(VehicleDetailView.money(fee.timeFeeTwd ?? 0))（\(fee.billableHours ?? 0) 小時）")
+                        LabeledContent("里程費", value: "NT$\(VehicleDetailView.money(fee.kmFeeTwd ?? 0))（\(fee.distanceKm ?? 0) km）")
+                        LabeledContent("合計") { Text("NT$\(VehicleDetailView.money(fee.totalTwd ?? 0))").font(.headline) }
+                        if let note = fee.billingNote { Text(note).font(.footnote).foregroundStyle(.secondary) }
+                    }
+                }
+                Section("車況檢測") {
                     LabeledContent("結果", value: result?.overallLabel ?? "已完成")
                     LabeledContent("車牌比對", value: result?.plateCheck.label ?? "—")
-                    LabeledContent("判定來源") {
-                        Text(result?.aiSourceLabel ?? session.aiSourceLabel ?? "—")
-                            .multilineTextAlignment(.trailing)
-                            .foregroundStyle((result?.isFixture ?? session.isFixture) ? .orange : .primary)
-                    }
                     if session.reviewRequired == true {
                         Label("此次還車已轉營運人員人工複核（有 AI 檢出的異常或車牌需確認）。", systemImage: "person.badge.clock")
                             .font(.footnote).foregroundStyle(.orange)
@@ -556,7 +511,7 @@ private struct ReturnCompleteView: View {
                 }
             }
             Section {
-                Text("車輛狀態已更新為「可租借」。感謝使用 iRent 模擬租車 Demo。")
+                Text("車輛已完成還車。感謝使用 iRent。")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
                 Button("完成") {
@@ -623,8 +578,6 @@ private struct SettingsView: View {
     @Environment(RentalStore.self) private var store
     @Environment(LocationService.self) private var location
     @Environment(\.dismiss) private var dismiss
-    @State private var restarting = false
-    @State private var restartMessage: String?
     @State private var connectionMessage: String?
     @State private var testingConnection = false
 
@@ -659,19 +612,9 @@ private struct SettingsView: View {
                         Text(connectionMessage).font(.footnote).foregroundStyle(.secondary)
                     }
                 }
-                Section {
-                    Toggle("Demo 模式（固定驗證劇本）", isOn: $store.demoMode)
-                    Text(store.demoMode
-                         ? "拍攝驗證走固定劇本：取車左前第一次失敗、還車右後第一次失敗，其餘通過；不執行 Core ML。"
-                         : "拍攝驗證使用裝置端 Core ML（PlateDetector / PlateOCR / ViewClassifier）。")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                } header: {
-                    Text("拍攝驗證")
-                }
                 Section("定位") {
                     if let coordinate = location.coordinate {
-                        LabeledContent("來源", value: location.source == .manual ? "手動選擇" : "GPS")
+                        LabeledContent("來源", value: location.source == .manual ? "手動選擇" : "目前位置")
                         LabeledContent("位置", value: location.locationName ?? "—")
                         LabeledContent("座標", value: String(format: "%.5f, %.5f", coordinate.latitude, coordinate.longitude))
                         Button("重新選擇位置") { location.clear(); dismiss() }
@@ -680,43 +623,33 @@ private struct SettingsView: View {
                     }
                     Text("定位資訊只保存在這次操作，不會永久儲存。").font(.footnote).foregroundStyle(.secondary)
                 }
-                Section("目前租車 Session") {
+                Section("目前租借") {
                     if let session = store.session {
-                        LabeledContent("Session", value: session.sessionId)
-                        LabeledContent("狀態", value: session.state)
-                        LabeledContent("租約", value: session.rentalId)
                         LabeledContent("車輛", value: "\(session.vehicle.plate) · \(session.vehicle.model ?? "")")
-                        LabeledContent("AI 來源", value: session.aiSourceLabel ?? session.aiSource ?? "—")
+                        LabeledContent("狀態", value: store.phase.title)
                     } else {
-                        Text("尚未租車。地圖上的 RCG-2235（真實 pipeline）與 ABC-1234（示範固定劇本）皆為模擬車輛。")
-                            .font(.footnote).foregroundStyle(.secondary)
+                        Text("目前沒有進行中的租借。").font(.footnote).foregroundStyle(.secondary)
                     }
                     if let message = store.sessionSyncError {
                         Text(message).font(.footnote).foregroundStyle(.orange)
                     }
                 }
-                Section("Demo 測試車輛") {
-                    DemoVehicleEntry(compact: true)
-                        .listRowInsets(EdgeInsets())
-                        .listRowBackground(Color.clear)
-                    Text("點進去可「開始使用」或「重設 Demo」（重設前會再確認）。")
-                        .font(.footnote).foregroundStyle(.secondary)
+                if let notice = store.session?.serviceNotice ?? store.vehicles.first?.serviceNotice {
+                    Section("服務說明") {
+                        Text(notice).font(.footnote).foregroundStyle(.secondary)
+                    }
                 }
-                Section("Demo") {
-                    Button {
-                        Task { await restart() }
-                    } label: {
-                        HStack {
-                            Text("重新開始 Demo（清除本機與後端 Session）")
-                            if restarting { Spacer(); ProgressView() }
+                if store.developerMode {
+                    Section("開發者選項（僅開發模式顯示）") {
+                        Toggle("拍攝驗證固定劇本（不執行 Core ML）", isOn: $store.demoMode)
+                        Text("取車左前第一次失敗、還車右後第一次失敗，其餘通過。伺服器端的重設／登錄照片／pipeline 細節請用管理者網站 /api/ops/devtools。")
+                            .font(.footnote).foregroundStyle(.secondary)
+                        Button("清除本機租借狀態") {
+                            PhotoStore().removeAll()
+                            store.resetLocal()
+                            dismiss()
                         }
                     }
-                    .disabled(restarting)
-                    if let restartMessage {
-                        Text(restartMessage).font(.footnote).foregroundStyle(.secondary)
-                    }
-                    Text("後端需以 DEMO_MODE=true 啟動；會結束所有模擬租車 Session、車輛回到可租借。")
-                        .font(.footnote).foregroundStyle(.secondary)
                 }
             }
             .navigationTitle("設定")
@@ -732,20 +665,6 @@ private struct SettingsView: View {
         } catch {
             connectionMessage = "✗ 連不到伺服器：\(error.localizedDescription)"
         }
-    }
-
-    private func restart() async {
-        restarting = true
-        defer { restarting = false }
-        do {
-            try await RentalSessionService().reset(baseURL: store.apiBaseURL)
-            restartMessage = "後端 Session 已重置。"
-        } catch {
-            restartMessage = "後端無法重置（\(error.localizedDescription)），只清除本機紀錄。"
-        }
-        PhotoStore().removeAll()
-        store.resetLocal()
-        dismiss()
     }
 }
 

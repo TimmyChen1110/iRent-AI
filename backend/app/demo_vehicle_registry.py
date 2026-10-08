@@ -163,3 +163,22 @@ def preload(session: dict, stage: str) -> dict:
         ingested.append({"angle": ri.INTERIOR_ANGLE, "photo_id": res["photo_id"], "url": ri.photo_url(str(sp)), "interior_standin": True})
     return {"stage": stage, "ingested": ingested, "rental_status": res["rental_status"], "completeness": res["completeness"],
             "triggered": res["triggered"], "mode": "preloaded", "note": "預載 Demo 照片（資料集），非當下拍攝；AI 檢測走與即時拍攝相同的 pipeline。"}
+
+
+def public_records(plate: str | None) -> dict:
+    """一般使用者看的車況紀錄：只保留 pair_verification=VERIFIED 的角度（兩張 OCR 皆確認同一車牌），
+    只回 url／角度／階段，不含 OCR、品質分數、檔案來源。沒登記或沒有已驗證配對 → 空紀錄。"""
+    empty = {"has_records": False, "before": [], "after": [], "angles": []}
+    if not plate:
+        return empty
+    photos = vehicle_photos(plate)
+    if not photos:
+        return empty
+    verified = {p["angle"] for p in photos["pairs"] if p["pair_verification"] == "VERIFIED"}
+    def pick(items):
+        return [{"angle": it["angle"], "angle_code": it["angle_code"], "url": it["url"], "stage": it["stage"]}
+                for it in items if it["angle"] in verified]
+    before, after = pick(photos["before"]), pick(photos["after"])
+    return {"has_records": bool(before), "before": before, "after": after, "angles": sorted(verified),
+            "complete": len(verified) == 4,
+            "record_note": "借車前／還車後照片為本車既有車況紀錄；還車後將以借車前照片為基準逐角度比對。"}

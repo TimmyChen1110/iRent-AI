@@ -61,14 +61,32 @@ struct ReturnInfoView: View {
                     Button {
                         endOdometerText = "\(session.startOdometerKm + 12)"
                     } label: {
-                        Label("填入模擬里程（起始 + 12 km）", systemImage: "wand.and.stars")
+                        Label("使用系統估算值（起始 + 12 km）", systemImage: "wand.and.stars")
                     }
-                    Text("Demo：里程可手動輸入或使用模擬值；正式環境由車機回報。")
+                    Text("請依儀表板里程輸入；若無法確認可使用系統估算值。")
                         .font(.footnote).foregroundStyle(.secondary)
+                }
+                if let pricing = session.vehicle.pricing, pricing.hourlyTwd != nil || pricing.perKmTwd != nil {
+                    Section("費用明細") {
+                        TimelineView(.periodic(from: .now, by: 1)) { context in
+                            let seconds = Int(context.date.timeIntervalSince(session.startedDate ?? context.date))
+                            let hours = max(1, Int((Double(max(seconds, 0)) / 3600).rounded(.up)))
+                            let km = (endOdometer != nil && localValidation == nil) ? (endOdometer! - session.startOdometerKm) : nil
+                            let timeFee = (pricing.hourlyTwd ?? 0) * Double(hours)
+                            let kmFee = km.map { (pricing.perKmTwd ?? 0) * Double($0) }
+                            LabeledContent("時間費", value: "NT$\(VehicleDetailView.money(timeFee))（\(hours) 小時 × NT$\(VehicleDetailView.money(pricing.hourlyTwd ?? 0))）")
+                            LabeledContent("里程費") {
+                                if let kmFee, let km { Text("NT$\(VehicleDetailView.money(kmFee))（\(km) km × NT$\(VehicleDetailView.money(pricing.perKmTwd ?? 0))）") }
+                                else { Text("輸入結束里程後計算").foregroundStyle(.secondary) }
+                            }
+                            LabeledContent("合計") { Text("NT$\(VehicleDetailView.money(timeFee + (kmFee ?? 0)))").font(.headline) }
+                        }
+                        Text(pricing.billingNote ?? "費用為試算，不會扣款").font(.footnote).foregroundStyle(.secondary)
+                    }
                 }
                 Section("還車位置") {
                     if let coordinate = location.coordinate {
-                        LabeledContent("來源", value: location.source == .manual ? "手動選擇" : "GPS")
+                        LabeledContent("來源", value: location.source == .manual ? "手動選擇" : "目前位置")
                         LabeledContent("位置", value: location.locationName ?? "—")
                         LabeledContent("座標", value: String(format: "%.5f, %.5f", coordinate.latitude, coordinate.longitude))
                     } else if let start = session.returnLocation?.coordinate ?? session.startLocation?.coordinate {

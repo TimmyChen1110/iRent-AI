@@ -4,6 +4,7 @@
 掛載：
   - /v1/mobile-inspections/*   iOS App 的租約檢查上傳與狀態（user_capture_api）
   - /v1/rental-sessions/*      iOS App 的模擬租還車 Session：模擬車輛、租車、還車資訊、檢測結果、還車確認（rental_sessions_api）
+  - /api/ops/devtools/*        內部開發工具：重設測試車輛、預載照片、OCR／pipeline 細節（devtools_api；僅限 admin）
   - /api/ops/*, /api/auth/*     管理者介面 fleet-ops-center 的 API（ops_api / ops_auth / rental_inspections_api）
   - /ops                        fleet-ops-center 靜態匯出（npm run build:ops → app/static/ops）
   - /photos/*                   證據照片供圖
@@ -98,10 +99,12 @@ import rental_inspections  # noqa: E402  Rental → Inspection → Photo → Com
 import rental_inspections_api  # noqa: E402  管理者端 Inspection History（/api/ops/inspections）
 import rental_sessions  # noqa: E402  模擬租還車 Session（車輛 → 租車 → 還車資訊 → 拍照 AI 檢測 → 還車確認）
 from rental_sessions_api import router as rental_sessions_router  # noqa: E402
+from devtools_api import router as devtools_router  # noqa: E402  內部開發工具（/api/ops/devtools，admin）
 app.include_router(review_router)
 app.include_router(inspections_router)
 app.include_router(user_capture_router)
 app.include_router(rental_sessions_router)
+app.include_router(devtools_router)
 rental_inspections.bind(sys.modules[__name__])
 rental_sessions.bind(sys.modules[__name__])
 

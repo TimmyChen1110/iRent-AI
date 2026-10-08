@@ -278,6 +278,7 @@ def _station_path_allowed(request: Request) -> bool:
 #   /api/health、/api/ops/health（登入頁要拿 demo_credentials）、/api/qr、
 #   /api/labels/stats、/photos/*（資料集照片；整體服務本來就限內網）、/ops/* 靜態檔。
 _ADMIN_API_PREFIXES = (
+    "/api/ops/devtools",   # 內部開發工具（重設測試車輛、預載照片、pipeline 細節）：僅 admin，station 也不行
     "/api/decision", "/api/decisions", "/api/tasks", "/api/demo/",
     "/api/reload", "/api/rejudge", "/api/notify",
     "/api/judge", "/api/gate", "/api/live_case",   # live_case 同時涵蓋 /api/live_cases

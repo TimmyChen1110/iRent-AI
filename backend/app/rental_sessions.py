@@ -45,7 +45,7 @@ SIM_VEHICLES = [
         # 資料集內真車：車牌可被裝置端 Core ML OCR 辨識；還車比對走真實 Gemini pipeline（需 GEMINI_API_KEY）。
         "vehicle_id": "SIM-RCG-2235", "plate": "RCG-2235", "model": "Toyota Yaris",
         "image_url": "/photos/pair/RCG2235%E5%B7%A6%E5%89%8D%20%E5%80%9F.jpg",
-        "image_note": "資料集取車照（真實照片，僅供內部 Demo）",
+        "image_note": "資料集取車照（真實照片，僅供內部 Demo）", "visibility": "public",
         "lat": NTU_SAC2["lat"], "lng": NTU_SAC2["lng"], "location_name": NTU_SAC2["name"],
         "odometer_km": 23418, "fuel_percent": 72, "ai_source": "pipeline", "fixture_rental_id": None,
     },
@@ -53,7 +53,7 @@ SIM_VEHICLES = [
         # 比賽示範固定劇本：後端固定產生「右後車門刮痕 92% + 車內髒汙 88%」，**不是真實 AI 判定**，UI 必須標示。
         "vehicle_id": "SIM-ABC-1234", "plate": "ABC-1234", "model": "Toyota Yaris",
         "image_url": "/photos/pair/RCG2235%E5%8F%B3%E5%89%8D%20%E5%80%9F.jpg",
-        "image_note": "示意圖（資料集佔位照，非 ABC-1234 本車）",
+        "image_note": "示意圖（資料集佔位照，非 ABC-1234 本車）", "visibility": "internal",   # 固定劇本結果非真實 AI 判定：不給一般使用者
         "lat": 25.01702, "lng": 121.53560, "location_name": "臺灣大學 · 新生南路側門（模擬停車位）",
         "odometer_km": 18760, "fuel_percent": 58, "ai_source": "demo_fixture",
         "fixture_rental_id": fixture.DEMO_RENTAL_ID,
@@ -63,8 +63,8 @@ SIM_VEHICLES = [
         # 車牌、車款、計費數字皆為示範值（依使用者提供的 iRent 截圖），不串接真實計費；圖片為程式生成的示意圖。
         "vehicle_id": DEMO_VEHICLE_ID, "plate": "RFY-1753", "model": "TOYOTA ALTIS HYBRID",
         "image_url": "/photos/demo/rfy-1753.png",
-        "image_note": "Demo 示意圖（程式生成的白色轎車 placeholder，非本車實拍）",
-        "lat": 25.01760, "lng": 121.53290, "location_name": "Demo 固定示範位置（臺大二活 67 號停車格，非真實車輛位置）",
+        "image_note": "示意圖（程式生成的白色轎車 placeholder，非本車實拍）", "visibility": "public",
+        "lat": 25.01760, "lng": 121.53290, "location_name": "臺大二活 67 號停車格",
         "odometer_km": 31250, "fuel_percent": 80, "ai_source": "pipeline", "fixture_rental_id": None,
         "category": "demo",
         "details": {
@@ -77,13 +77,13 @@ SIM_VEHICLES = [
     },
     {
         # 主要影像辨識 Demo 車：資料集真車，4 角借／還配對皆 OCR 雙向驗證（DEMO_VEHICLE_CANDIDATES.md 第 1 名）。
-        "vehicle_id": "demo-rdg-9853", "plate": "RDG-9853", "model": "Toyota Prius c（照片目視，資料集未記錄車型）",
+        "vehicle_id": "demo-rdg-9853", "plate": "RDG-9853", "model": "Toyota Prius c",
         "image_url": "/photos/pair/RDG9853%E5%B7%A6%E5%89%8D%20%E5%80%9F.jpg",
-        "image_note": "資料集借車前實拍（左前）。",
-        "lat": 25.01830, "lng": 121.53300, "location_name": "Demo 固定示範位置（臺大二活周邊；非真實車輛位置）",
+        "image_note": "資料集借車前實拍（左前）。車型由照片目視判讀，資料集未記錄。", "visibility": "public",
+        "lat": 25.01830, "lng": 121.53300, "location_name": "臺大二活 B 區停車格",
         "odometer_km": 42180, "fuel_percent": 65, "ai_source": "pipeline", "fixture_rental_id": None,
         "category": "demo",
-        "details": {"vehicle_type": "個人用車", "seats": 5, "parking_spot": "二活 B 區", "color": "銀色（照片目視）",
+        "details": {"vehicle_type": "個人用車", "seats": 5, "parking_spot": "二活 B 區", "color": "銀色",
                     "pricing": {"hourly_twd": 130, "per_km_twd": 3.5, "estimated_km_fee_twd": 70, "estimated_total_twd": 200,
                                 "note": "示範數值，不串接真實 iRent 計費，不會產生任何費用"},
                     "demo_pinned": True, "registry_plate": "RDG-9853", "registry_role": "primary_inspection",
@@ -91,13 +91,14 @@ SIM_VEHICLES = [
     },
     {
         # 車損展示 Demo 車：右後角人工重標為真實新損（保桿右下近輪拱擦痕），借／還 OCR 雙向驗證。
-        "vehicle_id": "demo-rfh-8122", "plate": "RFH-8122", "model": "Honda Fit（照片目視，資料集未記錄車型）",
+        "vehicle_id": "demo-rfh-8122", "plate": "RFH-8122", "model": "Honda Fit",
         "image_url": "/photos/pair/RFH8122%E5%8F%B3%E5%BE%8C%20%E5%80%9F.jpg",
-        "image_note": "資料集借車前實拍（右後）。",
-        "lat": 25.01720, "lng": 121.53200, "location_name": "Demo 固定示範位置（臺大二活周邊；非真實車輛位置）",
+        "image_note": "資料集借車前實拍（右後）。車型由照片目視判讀。左前角 OCR 與檔名不符 → 配對未全部驗證，不列入一般車輛清單。",
+        "visibility": "internal",
+        "lat": 25.01720, "lng": 121.53200, "location_name": "臺大二活 C 區停車格",
         "odometer_km": 27930, "fuel_percent": 54, "ai_source": "pipeline", "fixture_rental_id": None,
         "category": "demo",
-        "details": {"vehicle_type": "個人用車", "seats": 5, "parking_spot": "二活 C 區", "color": "白色（照片目視）",
+        "details": {"vehicle_type": "個人用車", "seats": 5, "parking_spot": "二活 C 區", "color": "白色",
                     "pricing": {"hourly_twd": 130, "per_km_twd": 3.5, "estimated_km_fee_twd": 70, "estimated_total_twd": 200,
                                 "note": "示範數值，不串接真實 iRent 計費，不會產生任何費用"},
                     "demo_pinned": True, "registry_plate": "RFH-8122", "registry_role": "damage_showcase",
@@ -121,8 +122,9 @@ DDL = [
          ai_source      TEXT NOT NULL,          -- pipeline | demo_fixture
          fixture_rental_id TEXT,
          simulated      INTEGER NOT NULL DEFAULT 1,
-         category       TEXT NOT NULL DEFAULT 'simulated',   -- simulated | demo（固定 Demo 測試車輛）
+         category       TEXT NOT NULL DEFAULT 'simulated',   -- simulated | demo（固定測試車輛：置頂推薦、不受定位限制、可重設）
          details_json   TEXT,                                 -- 座位／停車格／顏色／示範計費
+         visibility     TEXT NOT NULL DEFAULT 'public',       -- public（一般使用者可見）| internal（只有內部工具）
          last_returned_at TEXT,
          updated_at     TEXT NOT NULL)""",
     """CREATE TABLE IF NOT EXISTS rental_sessions(
@@ -177,6 +179,8 @@ def _ensure_schema(conn) -> None:
         conn.execute("ALTER TABLE demo_vehicles ADD COLUMN category TEXT NOT NULL DEFAULT 'simulated'")
     if "details_json" not in cols:
         conn.execute("ALTER TABLE demo_vehicles ADD COLUMN details_json TEXT")
+    if "visibility" not in cols:
+        conn.execute("ALTER TABLE demo_vehicles ADD COLUMN visibility TEXT NOT NULL DEFAULT 'public'")
     conn.commit()
     _schema_ready.add(key)
 
@@ -210,26 +214,52 @@ def ensure_vehicles() -> None:
                  v["location_name"], "AVAILABLE", v["odometer_km"], v["fuel_percent"], v["ai_source"],
                  v["fixture_rental_id"], v.get("category", "simulated"), details, now_iso()))
             # 靜態描述欄位以程式碼為單一資料來源（狀態／里程保留）
-            conn.execute("UPDATE demo_vehicles SET category=?, details_json=?, image_url=?, image_note=?, location_name=?"
-                         " WHERE vehicle_id=?", (v.get("category", "simulated"), details, v["image_url"], v["image_note"],
-                                                 v["location_name"], v["vehicle_id"]))
+            conn.execute("UPDATE demo_vehicles SET category=?, details_json=?, image_url=?, image_note=?, location_name=?,"
+                         " visibility=?, model=? WHERE vehicle_id=?",
+                         (v.get("category", "simulated"), details, v["image_url"], v["image_note"],
+                          v["location_name"], v.get("visibility", "public"), v["model"], v["vehicle_id"]))
 
 
-def _vehicle_view(v: dict, active: dict | None) -> dict:
-    return {
+SERVICE_NOTICE = "模擬體驗：本服務不會產生實際租車交易、付款或正式車況檢測結果；費用為試算，不會扣款。"
+
+
+def _pricing(details: dict) -> dict | None:
+    pr = (details or {}).get("pricing")
+    if not pr:
+        return None
+    return {"hourly_twd": pr.get("hourly_twd"), "per_km_twd": pr.get("per_km_twd"),
+            "estimated_km_fee_twd": pr.get("estimated_km_fee_twd"), "estimated_total_twd": pr.get("estimated_total_twd"),
+            "billing_note": "費用為試算，不會扣款"}
+
+
+def _vehicle_view(v: dict, active: dict | None, internal: bool = False) -> dict:
+    """一般使用者視圖：只有產品資訊（車牌、車型、照片、位置、狀態、里程、油量、費用、置頂推薦）與服務說明。
+    internal=True（內部工具）再附上資料來源、AI 來源、示範固定劇本、Registry 等開發資訊。"""
+    details = json.loads(v["details_json"]) if v.get("details_json") else {}
+    category = v.get("category") or "simulated"
+    public = {
         "vehicle_id": v["vehicle_id"], "plate": v["plate"], "model": v["model"],
-        "image_url": v["image_url"], "image_note": v["image_note"],
-        "location": {"lat": v["lat"], "lng": v["lng"], "name": v["location_name"], "simulated": True},
+        "color": details.get("color"), "seats": details.get("seats"), "vehicle_type": details.get("vehicle_type"),
+        "parking_spot": details.get("parking_spot"),
+        "image_url": v["image_url"],
+        "location": {"lat": v["lat"], "lng": v["lng"], "name": v["location_name"]},
         "status": v["status"], "odometer_km": v["odometer_km"], "fuel_percent": v["fuel_percent"],
-        "ai_source": v["ai_source"],
-        "ai_source_label": "示範固定劇本（非真實 AI 判定）" if v["ai_source"] == "demo_fixture" else "Gemini 模型級聯（真實 pipeline）",
-        "simulated": True, "data_note": "模擬車輛資料，非真實 iRent 車隊；位置為固定座標，非 GPS 追蹤。",
-        "category": v.get("category") or "simulated",
-        "is_demo_vehicle": (v.get("category") or "simulated") == "demo",
-        "details": json.loads(v["details_json"]) if v.get("details_json") else {},
+        "pricing": _pricing(details),
+        "featured": category == "demo",          # 置頂推薦：不受定位／搜尋半徑限制
+        "service_notice": SERVICE_NOTICE,
         "active_session_id": active["session_id"] if active else None,
-        "last_returned_at": v["last_returned_at"], "updated_at": v["updated_at"],
+        "updated_at": v["updated_at"],
     }
+    if not internal:
+        return public
+    return {**public,
+            "image_note": v["image_note"], "category": category, "is_demo_vehicle": category == "demo",
+            "visibility": v.get("visibility") or "public", "simulated": True,
+            "ai_source": v["ai_source"],
+            "ai_source_label": "示範固定劇本（非真實 AI 判定）" if v["ai_source"] == "demo_fixture" else "Gemini 模型級聯（真實 pipeline）",
+            "fixture_rental_id": v.get("fixture_rental_id"), "details": details,
+            "data_note": "模擬車輛資料，非真實 iRent 車隊；位置為固定座標，非 GPS 追蹤。",
+            "last_returned_at": v["last_returned_at"]}
 
 
 def _active_for_vehicle(conn, vehicle_id: str) -> dict | None:
@@ -239,16 +269,28 @@ def _active_for_vehicle(conn, vehicle_id: str) -> dict | None:
     return dict(r) if r else None
 
 
-def list_vehicles() -> list[dict]:
+def list_vehicles(internal: bool = False) -> list[dict]:
+    """一般清單：只列 visibility=public，置頂推薦（featured）排前面。內部工具：全部。"""
     with _conn() as conn:
         vs = rows(conn.execute("SELECT * FROM demo_vehicles ORDER BY vehicle_id"))
-        return [_vehicle_view(v, _active_for_vehicle(conn, v["vehicle_id"])) for v in vs]
+        out = [_vehicle_view(v, _active_for_vehicle(conn, v["vehicle_id"]), internal)
+               for v in vs if internal or (v.get("visibility") or "public") == "public"]
+    out.sort(key=lambda x: (not x["featured"], x["plate"]))
+    return out
 
 
-def get_vehicle(vehicle_id: str) -> dict | None:
+def get_vehicle(vehicle_id: str, internal: bool = False) -> dict | None:
     with _conn() as conn:
         v = conn.execute("SELECT * FROM demo_vehicles WHERE vehicle_id=?", (vehicle_id,)).fetchone()
-        return _vehicle_view(dict(v), _active_for_vehicle(conn, vehicle_id)) if v else None
+        if not v or (not internal and (dict(v).get("visibility") or "public") != "public"):
+            return None
+        return _vehicle_view(dict(v), _active_for_vehicle(conn, vehicle_id), internal)
+
+
+def list_sessions() -> list[dict]:
+    """內部工具：全部 Session（含已結束／封存）。"""
+    with _conn() as conn:
+        return [_view(conn, s) for s in rows(conn.execute("SELECT * FROM rental_sessions ORDER BY created_at DESC"))]
 
 
 # ---------- Session ----------
@@ -563,6 +605,7 @@ def _view(conn, s: dict) -> dict:
     ret = ri._completeness(conn, s["rental_id"], "RETURN")
     v = conn.execute("SELECT * FROM demo_vehicles WHERE vehicle_id=?", (s["vehicle_id"],)).fetchone()
     v = dict(v) if v else {}
+    details = json.loads(v["details_json"]) if v.get("details_json") else {}
     end_at = s["returned_at"] or s["return_info_confirmed_at"] or s["return_initiated_at"]
     used = _seconds_between(s["started_at"], end_at) if end_at else _seconds_between(s["started_at"], now_iso())
     distance = (s["end_odometer_km"] - s["start_odometer_km"]) if s["end_odometer_km"] is not None else None
@@ -577,15 +620,20 @@ def _view(conn, s: dict) -> dict:
              "preloaded": p["validation_mode"] == "preloaded",
              "interior_standin": bool((json.loads(p["validation_json"] or "{}")).get("interior_standin"))}
             for a, p in ri._latest_photos(conn, s["rental_id"], itype).items()]
+    fee = _fee_estimate(details, used or 0, distance)
     return {
         "session_id": s["session_id"], "state": s["state"], "simulated": True,
+        "service_notice": SERVICE_NOTICE,
+        "fee_estimate": fee,
         "photos": stage_photos,
         "capture_mode": {"PICKUP": _capture_mode(stage_photos["PICKUP"]), "RETURN": _capture_mode(stage_photos["RETURN"])},
         "vehicle": {"vehicle_id": s["vehicle_id"], "plate": s["plate"], "model": s["vehicle_model"],
                     "image_url": v.get("image_url"), "image_note": v.get("image_note"),
-                    "location": {"lat": v.get("lat"), "lng": v.get("lng"), "name": v.get("location_name"), "simulated": True},
+                    "location": {"lat": v.get("lat"), "lng": v.get("lng"), "name": v.get("location_name")},
                     "status": v.get("status"), "ai_source": v.get("ai_source"),
-                    "category": v.get("category") or "simulated"},
+                    "category": v.get("category") or "simulated",
+                    "featured": (v.get("category") or "simulated") == "demo",
+                    "pricing": _pricing(details)},
         "rental_id": s["rental_id"], "rental_status": rental.get("status"),
         "ai_source": v.get("ai_source"),
         "ai_source_label": "示範固定劇本（非真實 AI 判定）" if v.get("ai_source") == "demo_fixture" else "Gemini 模型級聯（真實 pipeline）",
@@ -600,6 +648,20 @@ def _view(conn, s: dict) -> dict:
         "inspection_attempts": s["inspection_attempts"], "last_error": s["last_error"],
         "review_required": bool(s["review_required"]), "updated_at": s["updated_at"],
     }
+
+
+def _fee_estimate(details: dict, used_seconds: int, distance_km: int | None) -> dict | None:
+    """費用試算（示範費率；不扣款）：時間費以小時無條件進位計、里程費 = 單價 × 行駛里程。"""
+    pr = (details or {}).get("pricing") or {}
+    hourly, per_km = pr.get("hourly_twd"), pr.get("per_km_twd")
+    if hourly is None and per_km is None:
+        return None
+    hours = max(1, -(-max(used_seconds, 0) // 3600))
+    time_fee = round((hourly or 0) * hours)
+    km_fee = round((per_km or 0) * (distance_km or 0)) if distance_km is not None else None
+    return {"hourly_twd": hourly, "per_km_twd": per_km, "billable_hours": hours, "time_fee_twd": time_fee,
+            "distance_km": distance_km, "km_fee_twd": km_fee,
+            "total_twd": time_fee + (km_fee or 0), "billing_note": "費用為試算，不會扣款"}
 
 
 def _capture_mode(photos: list[dict]) -> str | None:

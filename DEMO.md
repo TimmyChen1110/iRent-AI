@@ -71,13 +71,13 @@ uvicorn server:app --host 0.0.0.0 --port 8000
 | 3 | 按「✓ 確認髒汙，建立清潔任務」 | 「確認後自動開清潔單、通知真的送出（可再切接收器看一眼）。」 |
 | 4 | 整備看板：指派「清潔組 A」→ 開始處理 → 標記完成 | 「清潔閉環完成。」 |
 
-## Demo D：模擬租還車（定位找車 → 租車 → 還車資訊 → 拍照 AI 檢測 → 還車完成）
+## Demo D：租還車 App（正式介面）
 
-**沒有實體車也能完整展示 AI 檢測：Demo 車 RDG-9853（正常）／RFH-8122（右後新損）**——取車與還車拍攝頁選「使用預載照片（模式 B）」，用專案內已驗證的借／還資料集照跑真實 Gemini 比對；畫面會標示「預載 Demo 照片，非當下拍攝」。盤點與候選分析見 [DEMO_VEHICLE_CANDIDATES.md](DEMO_VEHICLE_CANDIDATES.md)。
+完整流程與架構見 [RENTAL_SIM_FLOW.md](RENTAL_SIM_FLOW.md)。App 首頁置頂推薦車輛 **RDG-9853**（有已驗證的借車前／還車後車況紀錄）與 **RFY-1753**，不受定位限制；一般介面沒有任何測試字樣，以「服務說明」標示為模擬體驗、費用為試算。
 
-**現場最省事：固定 Demo 測試車輛 RFY-1753**——不管定位在哪裡、有沒有開 GPS，App 首頁都有「Demo 測試車輛 — RFY-1753」入口 → 開始使用 → 直接取車檢查。用完在車輛詳細頁按「重設 Demo」讓下一位重演。
-
-完整流程與操作見 [RENTAL_SIM_FLOW.md](RENTAL_SIM_FLOW.md)。地圖上兩台**模擬車輛**：RCG-2235（真實 Gemini pipeline，需 key）與 ABC-1234（示範固定劇本，App 會標示非真實 AI 判定）。重演：App 設定 →「重新開始 Demo」。
+- 現場沒有實體車：在 `/ops` 以 admin 登入後開 **http://localhost:8000/api/ops/devtools**，對該 Session 按「預載取車照」「預載還車照」，App 端會顯示「車況照片已登錄」並以真實 Gemini 比對；用完按「重設」讓下一位重演。
+- 有實體車：App 直接用相機拍（Core ML 防呆）。
+- 開發者選項（拍攝驗證固定劇本）只在 App 以 `-developerMode` 啟動參數執行時顯示。
 
 ## Demo C：iOS App 端對端（取車 → 還車 → 指揮中心，約 3 分鐘）
 

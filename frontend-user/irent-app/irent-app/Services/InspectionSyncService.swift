@@ -117,7 +117,7 @@ struct InspectionSyncService {
         request.timeoutInterval = 10
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let http = response as? HTTPURLResponse, 200..<300 ~= http.statusCode else {
-            throw SyncError.server(Self.detail(from: data) ?? "無法重新開始 Demo。")
+            throw SyncError.server(Self.detail(from: data) ?? "無法重新開始。")
         }
     }
 

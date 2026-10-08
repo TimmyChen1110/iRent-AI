@@ -38,8 +38,8 @@ struct LocationPermissionView: View {
             }
             Spacer()
 
-            // 不論定位成功／失敗，都能從這裡進入 Demo 測試車輛
-            DemoVehicleEntry()
+            // 不論定位成功／失敗，都能直接選擇推薦車輛
+            FeaturedVehiclesView()
                 .padding(.horizontal, AppTheme.Spacing.lg)
 
             VStack(spacing: AppTheme.Spacing.md) {

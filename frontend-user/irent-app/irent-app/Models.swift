@@ -186,50 +186,34 @@ struct GeoPoint: Codable, Equatable {
     }
 }
 
-/// 模擬車輛（後端 `demo_vehicles`）。**不是**真實 iRent 車隊；位置為固定座標。
+/// 車輛（後端 `/v1/rental-sessions/vehicles` 的一般視圖：只有產品資訊與服務說明）。
 struct SimVehicle: Codable, Identifiable, Equatable {
-    let vehicleId: String
-    let plate: String
-    let model: String
-    let imageUrl: String?
-    let imageNote: String?
-    let location: GeoPoint
-    let status: String              // AVAILABLE | RENTED | RETURNED
-    let odometerKm: Int
-    let fuelPercent: Int?
-    let aiSource: String            // pipeline | demo_fixture
-    let aiSourceLabel: String?
-    let simulated: Bool
-    let dataNote: String?
-    /// simulated | demo（固定 Demo 測試車輛：不受定位限制、首頁固定入口、可重設）
-    var category: String? = nil
-    var isDemoVehicle: Bool? = nil
-    var details: Details? = nil
-    let activeSessionId: String?
-
     struct Pricing: Codable, Equatable {
         let hourlyTwd: Double?
         let perKmTwd: Double?
         let estimatedKmFeeTwd: Double?
         let estimatedTotalTwd: Double?
-        let note: String?
+        let billingNote: String?
     }
-    struct Details: Codable, Equatable {
-        var vehicleType: String? = nil
-        var seats: Int? = nil
-        var parkingSpot: String? = nil
-        var color: String? = nil
-        var pricing: Pricing? = nil
-        var demoPinned: Bool? = nil
-        var pinnedNote: String? = nil
-        /// Demo Vehicle Registry 的車牌（有登記＝有已驗證的借車前／還車後照片，可用模式 B 預載）
-        var registryPlate: String? = nil
-        var registryRole: String? = nil
-    }
-    var hasRegistryPhotos: Bool { details?.registryPlate != nil }
+    let vehicleId: String
+    let plate: String
+    let model: String
+    let color: String?
+    let seats: Int?
+    let vehicleType: String?
+    let parkingSpot: String?
+    let imageUrl: String?
+    let location: GeoPoint
+    let status: String              // AVAILABLE | RENTED | RETURNED
+    let odometerKm: Int
+    let fuelPercent: Int?
+    let pricing: Pricing?
+    /// 置頂推薦：不受定位距離與搜尋半徑限制
+    let featured: Bool
+    let serviceNotice: String?
+    let activeSessionId: String?
 
     var id: String { vehicleId }
-    var isDemo: Bool { isDemoVehicle ?? (category == "demo") }
     var coordinate: CLLocationCoordinate2D { location.coordinate ?? CLLocationCoordinate2D(latitude: 0, longitude: 0) }
     var isAvailable: Bool { status == "AVAILABLE" }
     var statusLabel: String {
@@ -240,7 +224,6 @@ struct SimVehicle: Codable, Identifiable, Equatable {
         default: status
         }
     }
-    var isFixture: Bool { aiSource == "demo_fixture" }
 
     func distance(from origin: CLLocationCoordinate2D) -> CLLocationDistance {
         CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
@@ -268,6 +251,18 @@ struct RentalSession: Codable, Equatable, Identifiable {
         let status: String?
         let aiSource: String?
         var category: String? = nil
+        var featured: Bool? = nil
+        var pricing: SimVehicle.Pricing? = nil
+    }
+    struct FeeEstimate: Codable, Equatable {
+        let hourlyTwd: Double?
+        let perKmTwd: Double?
+        let billableHours: Int?
+        let timeFeeTwd: Double?
+        let distanceKm: Int?
+        let kmFeeTwd: Double?
+        let totalTwd: Double?
+        let billingNote: String?
     }
     struct Completeness: Codable, Equatable {
         let received: [String]
@@ -277,6 +272,8 @@ struct RentalSession: Codable, Equatable, Identifiable {
 
     let sessionId: String
     let state: String
+    var serviceNotice: String? = nil
+    var feeEstimate: FeeEstimate? = nil
     let vehicle: Vehicle
     let rentalId: String
     let rentalStatus: String?
@@ -317,11 +314,12 @@ struct RentalSession: Codable, Equatable, Identifiable {
     func remotePhotos(_ stage: InspectionStage) -> [RemotePhoto] { photos?[stage.inspectionType] ?? [] }
     func remotePhoto(_ stage: InspectionStage, _ shot: InspectionShot) -> RemotePhoto? { remotePhotos(stage).first { $0.angle == shot.rawValue } }
     func isPreloaded(_ stage: InspectionStage) -> Bool { (captureMode?[stage.inspectionType] ?? nil) == "preloaded" }
+    /// 照片來源說明（給使用者看的中性文案；系統登錄 ≠ 當下拍攝）
     func captureModeLabel(_ stage: InspectionStage) -> String? {
         switch captureMode?[stage.inspectionType] ?? nil {
-        case "preloaded": "模式 B：預載 Demo 照片（資料集，非當下拍攝）"
-        case "live": "模式 A：即時拍攝"
-        case "mixed": "混合：部分即時拍攝、部分預載"
+        case "preloaded": "照片來源：車況紀錄（系統登錄，非本次拍攝）"
+        case "live": "照片來源：本次拍攝"
+        case "mixed": "照片來源：本次拍攝與車況紀錄"
         default: nil
         }
     }
@@ -445,6 +443,9 @@ final class RentalStore {
     var apiBaseURL: String {
         didSet { UserDefaults.standard.set(apiBaseURL, forKey: "apiBaseURL") }
     }
+    /// 開發者選項（拍攝驗證固定劇本等）只在以 `-developerMode YES` 啟動參數或 UserDefaults `developerMode` 開啟時顯示；
+    /// 伺服器端的開發功能（重設、登錄照片、pipeline 細節）不在 App 內，改由 /api/ops/devtools（需管理者登入）。
+    let developerMode: Bool = UserDefaults.standard.bool(forKey: "developerMode") || CommandLine.arguments.contains("-developerMode")
     /// Demo 模式：拍攝驗證改走固定劇本（不跑 Core ML）；關閉時一律真實 Core ML。
     var demoMode: Bool {
         didSet { UserDefaults.standard.set(demoMode, forKey: "demoMode") }
@@ -490,11 +491,9 @@ final class RentalStore {
         return (stage == .pickup ? session.pickup?.complete : session.return?.complete) ?? false
     }
 
-    /// 模式 B：請後端把 Registry 的借車前／還車後照片灌進這次租約，之後與即時拍攝走同一條 pipeline。
-    func preloadDemoPhotos(stage: InspectionStage) async throws {
-        guard let session else { throw SyncError.rejected("沒有進行中的租車 Session") }
-        let updated = try await RentalSessionService().preload(id: session.sessionId, stage: stage.rawValue, baseURL: apiBaseURL)
-        apply(updated)
+    /// 後端已收齊照片（例如由內部工具登錄）時，本機可直接進入下一步。
+    func acceptRemotePhotos(stage: InspectionStage) {
+        guard isRemoteComplete(stage) else { return }
         phase = stage == .pickup ? .pickupComplete : .inspectionResult
         save()
     }
@@ -611,8 +610,8 @@ final class RentalStore {
         switch s.state {
         case "PICKUP_INSPECTION":
             if current == .findCar {
-                // Demo 測試車輛不需要走到車旁：直接取車檢查；其他車輛停在 Find My Car
-                return s.vehicle.category == "demo" ? .readyForPickup : .findCar
+                // 推薦車輛不需要走到車旁：直接取車檢查；其他車輛停在 Find My Car
+                return (s.vehicle.featured ?? (s.vehicle.category == "demo")) ? .readyForPickup : .findCar
             }
             return current == .pickupComplete ? .pickupComplete : .readyForPickup
         case "RENTED":
@@ -657,25 +656,15 @@ final class RentalStore {
         }
     }
 
-    /// 固定 Demo 測試車輛（後端 category=demo）：不受定位限制，首頁固定入口。
-    var demoVehicles: [SimVehicle] { vehicles.filter(\.isDemo) }
+    /// 置頂推薦車輛：不受定位限制，定位頁與地圖頁固定顯示。
+    var featuredVehicles: [SimVehicle] { vehicles.filter(\.featured) }
 
-    /// Demo 車輛「開始使用」：建立 Session 後直接進入取車檢查（不需要走到車旁）。
-    func startDemoVehicle(_ vehicle: SimVehicle, location: RentalSessionService.LocationBody?) async throws {
+    /// 推薦車輛「開始使用」：建立 Session 後直接進入取車檢查（不需要走到車旁）。
+    func startFeaturedVehicle(_ vehicle: SimVehicle, location: RentalSessionService.LocationBody?) async throws {
         let session = try await RentalSessionService().create(vehicleID: vehicle.vehicleId, location: location, baseURL: apiBaseURL)
         apply(session)
         phase = .readyForPickup
         save()
-        await loadVehicles()
-    }
-
-    /// 重設 Demo 車輛（後端封存 Session、車輛回 AVAILABLE）；若目前 Session 就是這台車，本機一併清掉。
-    func resetDemoVehicle(_ vehicle: SimVehicle) async throws {
-        try await RentalSessionService().resetVehicle(id: vehicle.vehicleId, baseURL: apiBaseURL)
-        if session?.vehicle.vehicleId == vehicle.vehicleId {
-            PhotoStore().removeAll()
-            resetLocal()
-        }
         await loadVehicles()
     }
 
@@ -722,46 +711,19 @@ private struct PersistedRentalState: Codable {
 }
 
 
-/// `GET /v1/rental-sessions/vehicles/{id}/photos`：Demo Vehicle Registry 的借車前／還車後照片集。
-struct DemoPhotoSet: Codable, Equatable {
+/// `GET /v1/rental-sessions/vehicles/{id}/records`：車況紀錄（已確認屬於本車的借車前／還車後照片）。
+struct VehicleRecords: Codable, Equatable {
     struct Photo: Codable, Equatable, Identifiable {
-        struct Quality: Codable, Equatable { let pass: Bool?; let sharpness: Double?; let brightness: Double? }
-        struct Plate: Codable, Equatable { let ocrText: String?; let confidence: Double?; let verification: String?; let engine: String? }
-        let image: String
-        let file: String
+        let angle: String?
+        let angleCode: String?
         let url: String?
         let stage: String
-        let angle: String?
-        let quality: Quality?
-        let plateRecognition: Plate?
-        let source: String?
-        let sourceNote: String?
-        var id: String { image }
+        var id: String { "\(stage)-\(angle ?? "")" }
     }
-    struct Pair: Codable, Equatable, Identifiable {
-        let angle: String
-        let pairVerification: String
-        let aiAngleMatch: Bool?
-        let humanRelabel: String?
-        let humanNote: String?
-        var id: String { angle }
-    }
-    struct InteriorStandin: Codable, Equatable {
-        let available: Bool
-        let note: String
-        let pickup: String?
-        let `return`: String?
-    }
-    let plate: String
-    let vehicleModel: String?
-    let role: String?
-    let coverImage: String?
+    let hasRecords: Bool
     let before: [Photo]
     let after: [Photo]
-    let pairs: [Pair]
-    let completePair: Bool?
-    let verifiedPairAngles: [String]?
-    let qualityScore: Double?
-    let damageAngles: [String]?
-    let interiorStandin: InteriorStandin?
+    let angles: [String]?
+    let complete: Bool?
+    let recordNote: String?
 }

@@ -27,13 +27,6 @@ struct InspectionResultView: View {
             }
 
             if let result {
-                if result.isFixture {
-                    Section {
-                        Label("此車輛為示範固定劇本：以下結果是預先寫定的示範資料，不是模型即時判定。", systemImage: "exclamationmark.triangle.fill")
-                            .font(.footnote).foregroundStyle(.orange)
-                    }
-                }
-
                 Section("車牌比對") {
                     Label(result.plateCheck.label, systemImage: plateIcon(result.plateCheck.status))
                         .foregroundStyle(plateTint(result.plateCheck.status))
@@ -52,7 +45,7 @@ struct InspectionResultView: View {
                         Text(result.analysis == "analyzing" ? "分析中…" : "尚無比對結果").foregroundStyle(.secondary)
                     }
                     if let label = store.session?.captureModeLabel(.return) {
-                        Text(label).font(.footnote).foregroundStyle((store.session?.isPreloaded(.return) ?? false) ? .orange : .secondary)
+                        Text(label).font(.footnote).foregroundStyle(.secondary)
                     }
                     ForEach(result.comparisons) { comparison in
                         ComparisonRow(comparison: comparison, thumbnail: thumbnail(for: comparison.angle), remotePath: comparison.returnPhotoUrl)
@@ -111,7 +104,7 @@ struct InspectionResultView: View {
 
                 if result.analysis == "failed" {
                     Section("檢測失敗") {
-                        Text(result.analysisError ?? "AI 檢測未完成。").font(.footnote).foregroundStyle(.red)
+                        Text("車況檢測暫時無法完成，請重新檢測或重新拍攝；若持續發生，客服會協助人工檢視。").font(.footnote).foregroundStyle(.red)
                         Button { retry(mode: "reanalyze") } label: { Label("重新檢測（同一批照片）", systemImage: "arrow.clockwise") }
                             .disabled(isActing)
                         Button { retry(mode: "retake") } label: { Label("重新拍攝還車照片", systemImage: "camera.fill") }
@@ -168,14 +161,8 @@ struct InspectionResultView: View {
             Text(result?.overallLabel ?? (pendingUploads > 0 ? "等待照片上傳" : "AI 分析中"))
                 .font(.title3.bold()).multilineTextAlignment(.center)
             Text("\(store.rental.carName) · \(store.rental.plateNumber)").foregroundStyle(.secondary)
-            if let label = result?.aiSourceLabel ?? store.session?.aiSourceLabel {
-                Text("判定來源：\(label)")
-                    .font(.caption)
-                    .foregroundStyle((result?.isFixture ?? store.session?.isFixture ?? false) ? .orange : .secondary)
-                    .multilineTextAlignment(.center)
-            }
             if analysis == "analyzing" || analysis == "pending" {
-                Text("後端比對取車 vs 還車照（Gemini Flash 快篩 → Pro 複核），約 1–2 分鐘；免費額度限流時會更久。")
+                Text("系統正在比對取車與還車照片，約需 1–2 分鐘。")
                     .font(.caption).foregroundStyle(.secondary).multilineTextAlignment(.center)
             }
         }
@@ -208,8 +195,8 @@ struct InspectionResultView: View {
         switch source {
         case "manual": "手動輸入"
         case "user_confirmed_mismatch": "與租約不符，使用者確認"
-        case "preloaded": "預載資料集照片 · Core ML OCR"
-        default: "裝置端 OCR"
+        case "preloaded": "車況紀錄照片"
+        default: "本次拍攝"
         }
     }
 
