@@ -48,6 +48,7 @@ SIM_VEHICLES = [
         "image_note": "資料集取車照（真實照片，僅供內部 Demo）", "visibility": "public",
         "lat": NTU_SAC2["lat"], "lng": NTU_SAC2["lng"], "location_name": NTU_SAC2["name"],
         "odometer_km": 23418, "fuel_percent": 72, "ai_source": "pipeline", "fixture_rental_id": None,
+        "details": {"body_style": "hatchback"},
     },
     {
         # 比賽示範固定劇本：後端固定產生「右後車門刮痕 92% + 車內髒汙 88%」，**不是真實 AI 判定**，UI 必須標示。
@@ -57,6 +58,7 @@ SIM_VEHICLES = [
         "lat": 25.01702, "lng": 121.53560, "location_name": "臺灣大學 · 新生南路側門（模擬停車位）",
         "odometer_km": 18760, "fuel_percent": 58, "ai_source": "demo_fixture",
         "fixture_rental_id": fixture.DEMO_RENTAL_ID,
+        "details": {"body_style": "hatchback"},
     },
     {
         # 固定 Demo 測試車輛（category=demo）：不受使用者定位／距離限制，App 首頁固定入口；可重複重設。
@@ -69,6 +71,8 @@ SIM_VEHICLES = [
         "category": "demo",
         "details": {
             "vehicle_type": "個人用車", "seats": 5, "parking_spot": "67", "color": "白色",
+            "body_style": "sedan", "paint_hex": "#f3f4f6",
+            "model_3d_note": "App 3D 模型為自製四門轎車（tools/vehicle3d/build_models.mjs），比例參考 Altis，非原廠外型。",
             "pricing": {"hourly_twd": 130, "per_km_twd": 3.5, "estimated_km_fee_twd": 70, "estimated_total_twd": 200,
                         "note": "示範數值，不串接真實 iRent 計費，不會產生任何費用"},
             "demo_pinned": True,
@@ -84,6 +88,8 @@ SIM_VEHICLES = [
         "odometer_km": 42180, "fuel_percent": 65, "ai_source": "pipeline", "fixture_rental_id": None,
         "category": "demo",
         "details": {"vehicle_type": "個人用車", "seats": 5, "parking_spot": "二活 B 區", "color": "銀色",
+                    "body_style": "hatchback", "paint_hex": "#c9ced6",
+                    "model_3d_note": "App 3D 模型為自製掀背車，非 Prius c 原廠外型。",
                     "pricing": {"hourly_twd": 130, "per_km_twd": 3.5, "estimated_km_fee_twd": 70, "estimated_total_twd": 200,
                                 "note": "示範數值，不串接真實 iRent 計費，不會產生任何費用"},
                     "demo_pinned": True, "registry_plate": "RDG-9853", "registry_role": "primary_inspection",
@@ -99,6 +105,7 @@ SIM_VEHICLES = [
         "odometer_km": 27930, "fuel_percent": 54, "ai_source": "pipeline", "fixture_rental_id": None,
         "category": "demo",
         "details": {"vehicle_type": "個人用車", "seats": 5, "parking_spot": "二活 C 區", "color": "白色",
+                    "body_style": "hatchback", "paint_hex": "#f3f4f6",
                     "pricing": {"hourly_twd": 130, "per_km_twd": 3.5, "estimated_km_fee_twd": 70, "estimated_total_twd": 200,
                                 "note": "示範數值，不串接真實 iRent 計費，不會產生任何費用"},
                     "demo_pinned": True, "registry_plate": "RFH-8122", "registry_role": "damage_showcase",
@@ -245,6 +252,8 @@ def _vehicle_view(v: dict, active: dict | None, internal: bool = False) -> dict:
         "location": {"lat": v["lat"], "lng": v["lng"], "name": v["location_name"]},
         "status": v["status"], "odometer_km": v["odometer_km"], "fuel_percent": v["fuel_percent"],
         "pricing": _pricing(details),
+        "body_style": details.get("body_style") or "sedan",   # App 3D 模型樣式：sedan | hatchback
+        "paint_hex": details.get("paint_hex"),
         "featured": category == "demo",          # 置頂推薦：不受定位／搜尋半徑限制
         "service_notice": SERVICE_NOTICE,
         "active_session_id": active["session_id"] if active else None,
@@ -285,6 +294,33 @@ def get_vehicle(vehicle_id: str, internal: bool = False) -> dict | None:
         if not v or (not internal and (dict(v).get("visibility") or "public") != "public"):
             return None
         return _vehicle_view(dict(v), _active_for_vehicle(conn, vehicle_id), internal)
+
+
+def vehicle_damage_records(vehicle_id: str) -> list[dict]:
+    """這台車過去檢測確認的車損（inspection_incidents kind=damage，來自 AI 比對；未經人工駁回）。
+    只回有車身區域（region）的紀錄——沒有可確認位置的不回，App 不會畫假標記。"""
+    with _conn() as conn:
+        rids = [r[0] for r in conn.execute("SELECT DISTINCT rental_id FROM rental_sessions WHERE vehicle_id=? AND state='RETURNED'", (vehicle_id,))]
+        if not rids:
+            return []
+        incs = rows(conn.execute(
+            f"SELECT * FROM inspection_incidents WHERE kind='damage' AND rental_id IN ({','.join('?' * len(rids))}) ORDER BY created_at DESC", rids))
+        dismissed = set()
+        if ri._table_exists(conn, "decisions"):
+            dismissed = {r[0] for r in conn.execute("SELECT case_id FROM decisions WHERE decision IN ('dismiss','reject','false_positive')")}
+        photos = {p["photo_id"]: p for p in rows(conn.execute(
+            f"SELECT * FROM inspection_photos WHERE rental_id IN ({','.join('?' * len(rids))})", rids))}
+    out = []
+    for i in incs:
+        if i["case_id"] in dismissed or not i["region"]:
+            continue
+        for f in json.loads(i["findings_json"] or "[]"):
+            region = f.get("region") or i["region"]
+            out.append({"id": f"{i['case_id']}#{len(out)}", "region": region, "label": f.get("label") or i["label"],
+                        "type": f.get("type") or i["damage_type"], "severity": f.get("severity") or i["severity"],
+                        "angle": i["view_angle"], "recorded_at": i["created_at"],
+                        "photo_url": ri.photo_url((photos.get(i["return_photo_id"]) or {}).get("storage_path"))})
+    return out
 
 
 def list_sessions() -> list[dict]:
@@ -633,7 +669,8 @@ def _view(conn, s: dict) -> dict:
                     "status": v.get("status"), "ai_source": v.get("ai_source"),
                     "category": v.get("category") or "simulated",
                     "featured": (v.get("category") or "simulated") == "demo",
-                    "pricing": _pricing(details)},
+                    "pricing": _pricing(details),
+                    "body_style": details.get("body_style") or "sedan", "paint_hex": details.get("paint_hex")},
         "rental_id": s["rental_id"], "rental_status": rental.get("status"),
         "ai_source": v.get("ai_source"),
         "ai_source_label": "示範固定劇本（非真實 AI 判定）" if v.get("ai_source") == "demo_fixture" else "Gemini 模型級聯（真實 pipeline）",

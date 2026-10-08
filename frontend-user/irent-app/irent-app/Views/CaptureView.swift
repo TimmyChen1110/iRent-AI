@@ -49,10 +49,7 @@ struct CaptureView: View {
                         .scaledToFit()
                         .clipShape(.rect(cornerRadius: 16))
                 } else {
-                    ContentUnavailableView(shot.isInterior ? "拍攝車內" : "拍攝\(shot.rawValue)角",
-                                           systemImage: shot.systemImage,
-                                           description: Text("車牌與車身需完整入鏡"))
-                        .frame(height: 220)
+                    CaptureGuide3D(stage: stage, current: shot, height: 220)
                 }
 
                 if isChecking {

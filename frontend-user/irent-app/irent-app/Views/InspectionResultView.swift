@@ -9,6 +9,41 @@ struct InspectionResultView: View {
     @State private var fetchError: String?
     @State private var isActing = false
     @State private var actionError: String?
+    @State private var selectedPart: CarPart?
+    @State private var selectedMarker: MarkerRef?
+
+    struct MarkerRef: Identifiable {
+        let id: String
+        let comparison: InspectionResult.Comparison
+        let finding: InspectionResult.Comparison.Finding
+    }
+
+    /// 只把「有車身區域」的外觀發現放上 3D；沒有可確認位置的不畫。
+    private func markerLookup(_ result: InspectionResult) -> [String: MarkerRef] {
+        var out: [String: MarkerRef] = [:]
+        for c in result.comparisons {
+            for (i, f) in c.findings.enumerated() where f.region.map({ BodyRegion.labels[$0] != nil }) ?? false {
+                guard f.status == "NEW_DAMAGE" || f.status == "EXISTING_DAMAGE" else { continue }
+                let id = "\(c.angle)#\(i)"
+                out[id] = MarkerRef(id: id, comparison: c, finding: f)
+            }
+        }
+        return out
+    }
+
+    private func resultConfig(_ result: InspectionResult) -> Vehicle3DConfig {
+        let vehicle = store.session?.vehicle
+        let markers = markerLookup(result).values.sorted { $0.id < $1.id }.map { ref in
+            Vehicle3DConfig.Marker(id: ref.id, region: ref.finding.region ?? "",
+                                   severity: ref.finding.status == "EXISTING_DAMAGE" ? "existing" : (ref.finding.severity ?? "medium"),
+                                   kind: ref.finding.status == "EXISTING_DAMAGE" ? "existing" : "new")
+        }
+        // 有新增車損時，鏡頭先轉到第一處新損所在部位
+        let firstNew = markers.first { $0.kind == "new" }.flatMap { CarPart.of(region: $0.region)?.rawValue }
+        return Vehicle3DConfig(style: vehicle?.bodyStyle ?? "sedan", plate: store.rental.plateNumber, paint: vehicle?.paintHex,
+                               autoRotate: selectedPart == nil && markers.isEmpty, focus: firstNew, focusToken: firstNew.map { "damage-\($0)" },
+                               markers: markers)
+    }
 
     private var pendingUploads: Int { store.pendingUploads(for: .return) }
 
@@ -27,6 +62,35 @@ struct InspectionResultView: View {
             }
 
             if let result {
+                Section("車況總覽") {
+                    Vehicle3DCard(config: resultConfig(result), fallbackURL: nil, height: 230, selectedPart: selectedPart) { event in
+                        switch event {
+                        case .pick(let part, _): selectedPart = part
+                        case .marker(let id): selectedMarker = markerLookup(result)[id]
+                        }
+                    }
+                    .listRowInsets(EdgeInsets(top: 12, leading: 16, bottom: 12, trailing: 16))
+                    let markers = markerLookup(result)
+                    if result.analysis != "complete" {
+                        Text("檢測完成後，偵測到的車損會標示在車身上。").font(.footnote).foregroundStyle(.secondary)
+                    } else if markers.isEmpty {
+                        Label("車身上沒有需要標示的車損。", systemImage: "checkmark.shield").font(.footnote).foregroundStyle(.green)
+                    } else {
+                        Text("紅色為本次新增車損、灰色為取車時已存在；點標記查看前後照片。").font(.footnote).foregroundStyle(.secondary)
+                    }
+                }
+                if let selectedPart {
+                    Section("部位 · \(selectedPart.title)") {
+                        let rows = result.comparisons.filter { selectedPart.angles.contains($0.angle) }
+                        if rows.isEmpty {
+                            Text("車頂不在四角拍攝範圍內。").font(.footnote).foregroundStyle(.secondary)
+                        }
+                        ForEach(rows) { comparison in
+                            ComparisonRow(comparison: comparison, thumbnail: thumbnail(for: comparison.angle), remotePath: comparison.returnPhotoUrl)
+                        }
+                    }
+                }
+
                 Section("車牌比對") {
                     Label(result.plateCheck.label, systemImage: plateIcon(result.plateCheck.status))
                         .foregroundStyle(plateTint(result.plateCheck.status))
@@ -138,6 +202,16 @@ struct InspectionResultView: View {
             await poll()
         }
         .refreshable { await refresh() }
+        #if DEBUG
+        // 開發驗證用（僅 Debug build）：-openFirstMarker 啟動後自動開第一個車損標記的詳情
+        .onChange(of: result) { _, r in
+            guard CommandLine.arguments.contains("-openFirstMarker"), selectedMarker == nil, let r else { return }
+            selectedMarker = markerLookup(r).values.sorted { $0.id > $1.id }.first { $0.finding.status == "NEW_DAMAGE" }
+        }
+        #endif
+        .sheet(item: $selectedMarker) { ref in
+            DamageDetailSheet(comparison: ref.comparison, finding: ref.finding)
+        }
     }
 
     // MARK: - 區塊
@@ -291,7 +365,11 @@ private struct ComparisonRow: View {
             } else if remotePath != nil {
                 RemoteThumb(path: remotePath, width: 64, height: 48)
             } else {
-                Image(systemName: "car.side").frame(width: 64, height: 48).foregroundStyle(.secondary)
+                if let shot = InspectionShot(rawValue: comparison.angle) {
+                    InspectionAngleIcon(shot: shot).padding(2).frame(width: 64, height: 48)
+                } else {
+                    Image(systemName: "car.side").frame(width: 64, height: 48).foregroundStyle(.secondary)
+                }
             }
             VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 6) {

@@ -68,6 +68,10 @@ private struct InspectionChecklistView: View {
                 }
             }
             Section {
+                CaptureGuide3D(stage: stage, current: store.nextShot(for: stage))
+                    .listRowInsets(EdgeInsets(top: 12, leading: 16, bottom: 12, trailing: 16))
+            }
+            Section {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("\(store.rental.carName) · \(store.rental.plateNumber)")
                         .font(.headline)
@@ -151,14 +155,14 @@ private struct ShotRow: View {
                         .clipShape(.rect(cornerRadius: 6))
                 } else if photo == nil, let remote, let url = remoteURL(remote.url) {
                     AsyncImage(url: url) { phase in
-                        if let image = phase.image { image.resizable().scaledToFill() } else { Color.secondary.opacity(0.15) }
+                        if let image = phase.image { image.resizable().scaledToFill() } else { InspectionAngleIcon(shot: shot, isDone: true).padding(2) }
                     }
                     .frame(width: 56, height: 42)
                     .clipShape(.rect(cornerRadius: 6))
                 } else {
-                    Image(systemName: shot.systemImage)
+                    InspectionAngleIcon(shot: shot, isDone: photo != nil || remote != nil)
+                        .padding(2)
                         .frame(width: 56, height: 42)
-                        .foregroundStyle(.secondary)
                 }
                 VStack(alignment: .leading, spacing: 2) {
                     Text(shot.title)
@@ -367,6 +371,7 @@ private struct PickupCompleteView: View {
 private struct ActiveRentalView: View {
     @Environment(RentalStore.self) private var store
     @Environment(LocationService.self) private var location
+    @State private var selectedPart: CarPart?
     @State private var isInitiating = false
     @State private var error: String?
 
@@ -413,8 +418,25 @@ private struct ActiveRentalView: View {
                 }
                 LabeledContent("車況基準", value: "已建立（取車照 5 張）")
             }
+            if let session = store.session {
+                Section("借車前車況") {
+                    Vehicle3DCard(config: Vehicle3DConfig(style: session.vehicle.bodyStyle ?? "sedan", plate: session.vehicle.plate,
+                                                          paint: session.vehicle.paintHex, autoRotate: selectedPart == nil),
+                                  fallbackURL: nil, height: 220, selectedPart: selectedPart) { event in
+                        if case .pick(let part, _) = event { selectedPart = part }
+                    }
+                    .listRowInsets(EdgeInsets(top: 12, leading: 16, bottom: 12, trailing: 16))
+                    if selectedPart == nil {
+                        Text("點選車身部位，查看取車時拍下的車況照片。").font(.footnote).foregroundStyle(.secondary)
+                    }
+                }
+                if let selectedPart {
+                    PartConditionSection(part: selectedPart, beforePhotos: session.remotePhotos(.pickup).map { ($0.angle, $0.url) },
+                                         title: "取車照片", emptyText: "此部位的取車照片尚未同步。")
+                }
+            }
             if let session = store.session, !session.remotePhotos(.pickup).isEmpty {
-                Section("借車前車況（取車照）") {
+                Section("全部取車照片") {
                     if let label = session.captureModeLabel(.pickup) {
                         Text(label).font(.footnote).foregroundStyle(.secondary)
                     }
@@ -524,6 +546,44 @@ private struct ReturnCompleteView: View {
         .task {
             if let id = store.session?.sessionId {
                 result = try? await RentalSessionService().inspection(id: id, baseURL: store.apiBaseURL)
+            }
+        }
+    }
+}
+
+/// 拍攝角度 3D 指引：鏡頭轉到下一個要拍的角度，地面藍圈標示站位，已完成角度打勾。
+struct CaptureGuide3D: View {
+    @Environment(RentalStore.self) private var store
+    let stage: InspectionStage
+    let current: InspectionShot?
+    var height: CGFloat = 200
+
+    private var done: [String] {
+        InspectionShot.allCases.filter { store.photo(for: stage, shot: $0) != nil || store.session?.remotePhoto(stage, $0) != nil }.map(\.angleCode)
+    }
+
+    var body: some View {
+        let vehicle = store.session?.vehicle
+        VStack(alignment: .leading, spacing: 8) {
+            Vehicle3DCard(config: Vehicle3DConfig(style: vehicle?.bodyStyle ?? "sedan", plate: store.rental.plateNumber, paint: vehicle?.paintHex,
+                                                  selectable: false, focusOnPick: false,
+                                                  focus: current?.angleCode ?? "overview", focusToken: current?.angleCode ?? "overview",
+                                                  guide: .init(current: current?.angleCode, done: done)),
+                          fallbackURL: nil, height: height, showPartBar: false, hint: nil)
+            HStack(spacing: 8) {
+                Image(systemName: current == nil ? "checkmark.circle.fill" : "camera.viewfinder")
+                    .foregroundStyle(current == nil ? .green : AppTheme.Colors.primary)
+                VStack(alignment: .leading, spacing: 2) {
+                    if let current {
+                        Text("下一張：\(current.title)").font(.subheadline.weight(.semibold))
+                        Text(current.isInterior ? "打開車門，從門邊拍攝整個座艙。" : "請站在藍色圓圈的位置，讓車牌與車身角落完整入鏡。")
+                            .font(.caption).foregroundStyle(.secondary)
+                    } else {
+                        Text("五個角度都已完成").font(.subheadline.weight(.semibold))
+                    }
+                }
+                Spacer()
+                Text("\(done.count) / \(InspectionShot.allCases.count)").font(.subheadline.monospacedDigit()).foregroundStyle(.secondary)
             }
         }
     }

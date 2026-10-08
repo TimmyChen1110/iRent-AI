@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<style>
+  html,body{margin:0;height:100%;overflow:hidden;background:transparent;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+  canvas{display:block;width:100%;height:100%;touch-action:none;outline:none}
+</style>
+<script type="importmap">{"imports":{"three":"./three.module.js"}}</script>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script type="module" src="./vehicle3d.js"></script>
+<script>
+  // WebGL 不可用時立即通知 App 改用 2D 照片（模組載入失敗也會走到 onerror）
+  (function () {
+    function post(m) { try { window.webkit.messageHandlers.irent3d.postMessage(m); } catch (e) { console.log(JSON.stringify(m)); } }
+    var ok = false;
+    try { var c = document.createElement('canvas'); ok = !!(c.getContext('webgl2') || c.getContext('webgl')); } catch (e) {}
+    if (!ok) post({ type: 'error', reason: 'webgl-unavailable' });
+    window.addEventListener('error', function (e) { post({ type: 'error', reason: 'script', detail: String(e.message || '') }); });
+  })();
+</script>
+</body>
+</html>

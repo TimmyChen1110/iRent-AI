@@ -48,7 +48,16 @@ struct FeaturedVehiclesView: View {
                 .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
             }
         }
-        .task { if store.vehicles.isEmpty { await store.loadVehicles() } }
+        .task {
+            if store.vehicles.isEmpty { await store.loadVehicles() }
+            #if DEBUG
+            // 開發驗證用（僅 Debug build）：-openVehicle <vehicle_id> 啟動後直接開車輛資訊頁，模擬器截圖不需手動點按
+            if let i = CommandLine.arguments.firstIndex(of: "-openVehicle"), i + 1 < CommandLine.arguments.count,
+               let v = store.vehicles.first(where: { $0.vehicleId == CommandLine.arguments[i + 1] }) {
+                selected = v
+            }
+            #endif
+        }
         .sheet(item: $selected) { vehicle in
             VehicleDetailView(vehicle: vehicle, userLocation: location.coordinate, imageURL: Self.imageURL(vehicle, baseURL: store.apiBaseURL))
         }

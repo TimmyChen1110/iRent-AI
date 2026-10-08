@@ -463,3 +463,38 @@ class TestDemoRegistryPreload:
             assert admin.get(f"{DEV}/vehicles/demo-rdg-9853/photos").status_code == 404
         finally:
             registry.reload()
+
+
+class Test3DSupport:
+    """App 3D 車輛：車型樣式、車損紀錄（只回有車身區域的）、資料集車頭照角度校正。"""
+
+    def test_車輛帶3D樣式(self, client):
+        vs = {v["vehicle_id"]: v for v in client.get("/v1/rental-sessions/vehicles").json()["vehicles"]}
+        assert vs["demo-rfy-1753"]["body_style"] == "sedan" and vs["demo-rdg-9853"]["body_style"] == "hatchback"
+        s = start(client, "demo-rfy-1753")
+        assert s["vehicle"]["body_style"] == "sedan"
+
+    def test_車頭照角度以畫面實際角度呈現(self, client):
+        j = client.get("/v1/rental-sessions/vehicles/demo-rdg-9853/records").json()
+        by_angle = {p["angle"]: p["url"] for p in j["before"]}
+        assert "%E5%8F%B3%E5%89%8D" in by_angle["左前"]       # 畫面左前角 = 檔名「右前」
+        assert "%E5%B7%A6%E5%BE%8C" in by_angle["左後"]       # 車尾照不變
+
+    def test_車損紀錄只含有區域的新損_還車後才出現(self, client, admin, monkeypatch):
+        import judge_photos, run_eval_gemini
+        monkeypatch.setattr(run_eval_gemini, "find_key", lambda: "k")
+        def judge(p, r, angle=None, **kw):
+            dmg = [{"location": "右後保險桿", "type": "刮痕", "severity": "medium", "confidence": 0.9, "reasoning": "x", "box_2d": [1, 2, 3, 4]}] if angle == "右後" else []
+            return ({"final": {"angle_match": True, "new_damage_found": bool(dmg), "damages": dmg, "no_damage_confidence": 0.9, "pre_existing_notes": ""}}, None)
+        monkeypatch.setattr(judge_photos, "judge_pair", judge)
+        monkeypatch.setattr(judge_photos, "judge_interior", lambda p, **kw: (
+            {"final": {"photo_ok": True, "level": "乾淨", "confidence": 0.9, "findings": [], "reasoning": "ok"}, "score": 90}, None))
+        s = drive_to_photo_inspection(client, DEMO_VEHICLE)
+        shoot(client, s, "return", 30)
+        res = client.get(f"/v1/rental-sessions/{s['session_id']}/inspection").json()
+        rr = next(c for c in res["comparisons"] if c["angle"] == "右後")
+        assert rr["findings"][0]["region"] == "rear-bumper" and rr["boxes"][0]["box_2d"] == [1, 2, 3, 4]
+        assert client.get(f"/v1/rental-sessions/vehicles/{DEMO_VEHICLE}/records").json()["damage_records"] == []   # 尚未還車
+        client.post(f"/v1/rental-sessions/{s['session_id']}/confirm-return")
+        recs = client.get(f"/v1/rental-sessions/vehicles/{DEMO_VEHICLE}/records").json()["damage_records"]
+        assert len(recs) == 1 and recs[0]["region"] == "rear-bumper" and recs[0]["type"] == "刮痕" and recs[0]["photo_url"].startswith("/photos/")

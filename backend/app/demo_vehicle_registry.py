@@ -66,13 +66,23 @@ def _interior_standins() -> list[dict]:
     return out
 
 
+# 資料集檔名的「車頭照」左右與畫面實際角度相反（環節一 quality_guard README：幾何證明 + 183/186 張與人工分類一致）；
+# 車尾照正確。Registry 對外（App 顯示、預載入租約）一律用畫面實際角度，manifest 保留檔名角度（filename_angle）。
+FRONT_SWAP = {"左前": "右前", "右前": "左前"}
+
+
+def actual_angle(filename_angle: str | None) -> str | None:
+    return FRONT_SWAP.get(filename_angle, filename_angle) if filename_angle else filename_angle
+
+
 def _entry(rel: str, stage: str, idx: dict) -> dict:
     p = idx.get(rel) or {}
     q = p.get("quality") or {}
     pl = p.get("plate") or {}
+    angle = actual_angle(p.get("angle"))
     return {
         "image": rel, "file": Path(rel).name, "url": ri.photo_url(str(_abs(rel))), "stage": stage,
-        "angle": p.get("angle"), "angle_code": ri.ANGLE_CODES.get(p.get("angle") or "", None),
+        "angle": angle, "filename_angle": p.get("angle"), "angle_code": ri.ANGLE_CODES.get(angle or "", None),
         "quality": {"pass": q.get("pass"), "sharpness": q.get("sharpness"), "brightness": q.get("brightness")},
         "plate_recognition": {"ocr_text": pl.get("ocr_text"), "confidence": pl.get("ocr_confidence"),
                               "verification": pl.get("verification"), "engine": pl.get("engine")},
@@ -91,7 +101,7 @@ def vehicle_photos(plate: str) -> dict | None:
     for pr in v.get("pairs", []):
         before.append(_entry(pr["pickup"], "pickup", idx))
         after.append(_entry(pr["return"], "return", idx))
-        pairs.append({"angle": pr["angle"], "pair_verification": pr["pair_verification"], "ai_angle_match": pr.get("ai_angle_match"),
+        pairs.append({"angle": actual_angle(pr["angle"]), "filename_angle": pr["angle"], "pair_verification": pr["pair_verification"], "ai_angle_match": pr.get("ai_angle_match"),
                       "human_relabel": pr.get("human_relabel"), "human_note": pr.get("human_note"), "pair_source": pr.get("pair_source")})
     standins = _interior_standins()
     return {

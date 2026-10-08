@@ -14,6 +14,13 @@ struct VehicleDetailView: View {
     @State private var error: String?
     @State private var records: VehicleRecords?
     @State private var recordsChecked = false
+    @State private var selectedPart: CarPart?
+
+    private var viewerConfig: Vehicle3DConfig {
+        Vehicle3DConfig(style: vehicle.bodyStyle ?? "sedan", plate: vehicle.plate, paint: vehicle.paintHex,
+                        autoRotate: selectedPart == nil,
+                        markers: (records?.damageRecords ?? []).map { .init(id: $0.id, region: $0.region, severity: "existing", kind: "existing") })
+    }
 
     private var hasActiveSessionHere: Bool { store.session?.vehicle.vehicleId == vehicle.vehicleId && store.phase != .findCar }
 
@@ -22,24 +29,12 @@ struct VehicleDetailView: View {
             List {
                 Section {
                     VStack(alignment: .leading, spacing: 10) {
-                        Group {
-                            if let imageURL {
-                                AsyncImage(url: imageURL) { phase in
-                                    if let image = phase.image {
-                                        image.resizable().scaledToFill()
-                                    } else if phase.error != nil {
-                                        placeholder("無法載入圖片")
-                                    } else {
-                                        ProgressView().frame(maxWidth: .infinity)
-                                    }
-                                }
-                            } else {
-                                placeholder("尚未連線，無法載入圖片")
+                        Vehicle3DCard(config: viewerConfig, fallbackURL: imageURL, height: 250, selectedPart: selectedPart) { event in
+                            switch event {
+                            case .pick(let part, _): selectedPart = part
+                            case .marker(let id): selectedPart = records?.damageRecords?.first { $0.id == id }.flatMap { CarPart.of(region: $0.region) }
                             }
                         }
-                        .frame(height: 200)
-                        .frame(maxWidth: .infinity)
-                        .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.md, style: .continuous))
                         HStack(spacing: 8) {
                             Text(vehicle.plate).font(.title2.weight(.bold)).monospaced()
                             Spacer()
@@ -49,6 +44,11 @@ struct VehicleDetailView: View {
                         Text(vehicle.model).font(.headline)
                     }
                     .listRowInsets(EdgeInsets(top: 12, leading: 16, bottom: 12, trailing: 16))
+                }
+                if let selectedPart {
+                    PartConditionSection(part: selectedPart, beforePhotos: (records?.before ?? []).map { ($0.angle ?? "", $0.url) },
+                                         damage: (records?.damageRecords ?? []).filter { selectedPart.regions.contains($0.region) },
+                                         emptyText: (records?.hasRecords ?? false) ? nil : "這台車尚無借車前照片紀錄。")
                 }
                 Section("車輛") {
                     LabeledContent("車款", value: vehicle.model)
@@ -81,6 +81,10 @@ struct VehicleDetailView: View {
                     }
                 }
                 Section("車況紀錄") {
+                    if let damage = records?.damageRecords, !damage.isEmpty {
+                        Label("已登錄 \(damage.count) 處既有車損，3D 模型上以灰色標記顯示。", systemImage: "exclamationmark.circle")
+                            .font(.footnote).foregroundStyle(.secondary)
+                    }
                     if let records, records.hasRecords {
                         VStack(alignment: .leading, spacing: 6) {
                             Text("借車前").font(.subheadline.weight(.semibold))

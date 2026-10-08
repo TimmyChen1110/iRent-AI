@@ -72,7 +72,7 @@ def vehicle_records(vehicle_id: str):
     if v is None or v["visibility"] != "public":
         raise HTTPException(404, "unknown vehicle_id")
     plate = (v.get("details") or {}).get("registry_plate")
-    return {"vehicle_id": vehicle_id, **registry.public_records(plate)}
+    return {"vehicle_id": vehicle_id, **registry.public_records(plate), "damage_records": rs.vehicle_damage_records(vehicle_id)}
 
 
 @router.get("/vehicles/{vehicle_id}")

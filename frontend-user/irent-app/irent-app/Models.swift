@@ -76,6 +76,16 @@ enum InspectionShot: String, Codable, CaseIterable, Identifiable {
             : "請站在車輛\(rawValue)方約 2–3 公尺處，讓車牌與整個車身角落清楚入鏡。"
     }
     var systemImage: String { isInterior ? "car.rear.and.collision.road.lane" : "car.side" }
+    /// 外觀四角的視角圖示（Assets.xcassets/inspection-angle-*）；車內沒有，沿用 `systemImage`
+    var iconAsset: String? {
+        switch self {
+        case .leftFront: "inspection-angle-left-front"
+        case .rightFront: "inspection-angle-right-front"
+        case .leftRear: "inspection-angle-left-rear"
+        case .rightRear: "inspection-angle-right-rear"
+        case .interior: nil
+        }
+    }
 }
 
 struct Rental: Codable, Identifiable, Equatable {
@@ -208,6 +218,9 @@ struct SimVehicle: Codable, Identifiable, Equatable {
     let odometerKm: Int
     let fuelPercent: Int?
     let pricing: Pricing?
+    /// App 3D 模型樣式：sedan | hatchback
+    var bodyStyle: String? = nil
+    var paintHex: String? = nil
     /// 置頂推薦：不受定位距離與搜尋半徑限制
     let featured: Bool
     let serviceNotice: String?
@@ -253,6 +266,8 @@ struct RentalSession: Codable, Equatable, Identifiable {
         var category: String? = nil
         var featured: Bool? = nil
         var pricing: SimVehicle.Pricing? = nil
+        var bodyStyle: String? = nil
+        var paintHex: String? = nil
     }
     struct FeeEstimate: Codable, Equatable {
         let hourlyTwd: Double?
@@ -349,6 +364,17 @@ struct InspectionResult: Codable, Equatable {
             let confidence: Double?
             let status: String?
             let reasoning: String?
+            /// 車身區域 id（後端 body_regions 由 AI 位置文字推得）；nil = 無法確認位置，不畫 3D 標記
+            var region: String? = nil
+        }
+        /// AI 在還車照上的框（box_2d：[ymin, xmin, ymax, xmax]，0–1000 正規化）——只畫在 2D 照片上，不當 3D 座標
+        struct Box: Codable, Equatable {
+            /// JSON `box_2d`；convertFromSnakeCase 會轉成 `box2D`（數字後的字母大寫）
+            let box2D: [Double]?
+            let label: String?
+            let severity: String?
+            let confidence: Double?
+            var box2d: [Double]? { box2D }
         }
         let angle: String
         let angleCode: String
@@ -356,6 +382,8 @@ struct InspectionResult: Codable, Equatable {
         let resultLabel: String
         let summary: String?
         let findings: [Finding]
+        var boxes: [Box]? = nil
+        var pickupPhotoUrl: String? = nil
         let returnPhotoUrl: String?
         let caseId: String?
         var id: String { angle }
@@ -508,7 +536,8 @@ final class RentalStore {
 
     func nextShot(for stage: InspectionStage) -> InspectionShot? {
         if isRemoteComplete(stage) { return nil }
-        return InspectionShot.allCases.first { photo(for: stage, shot: $0) == nil }
+        // 本機拍過或後端已收到（例如換手機、重新安裝後）都算完成
+        return InspectionShot.allCases.first { photo(for: stage, shot: $0) == nil && session?.remotePhoto(stage, $0) == nil }
     }
 
     func attemptCount(stage: InspectionStage, shot: InspectionShot) -> Int {
@@ -641,16 +670,18 @@ final class RentalStore {
                 let s = try await service.get(id: savedID, baseURL: apiBaseURL)
                 if s.state == "CANCELLED" || s.state == "ARCHIVED" || (s.state == "RETURNED" && phase != .completed) {
                     resetLocal()
+                    // 上一筆已結束：若後端有其他進行中的租借（例如換裝置繼續），接著恢復
+                    if let active = try? await service.active(baseURL: apiBaseURL) { apply(active) }
                 } else {
                     apply(s)
                 }
             } else if let s = try await service.active(baseURL: apiBaseURL) {
                 apply(s)
             }
-        } catch SyncError.rejected(let reason) {
-            // 404：後端已沒有這筆 Session（例如 Demo 重置）→ 本機回到找車
-            sessionSyncError = reason
+        } catch SyncError.rejected {
+            // 404：後端已沒有這筆租借（例如被重設）→ 本機回到找車，再看是否有進行中的租借
             if savedID != nil { resetLocal() }
+            if let active = try? await service.active(baseURL: apiBaseURL) { apply(active) }
         } catch {
             sessionSyncError = "無法連線到伺服器，顯示本機最後狀態（\(error.localizedDescription)）"
         }
@@ -726,4 +757,15 @@ struct VehicleRecords: Codable, Equatable {
     let angles: [String]?
     let complete: Bool?
     let recordNote: String?
+    struct DamageRecord: Codable, Equatable, Identifiable {
+        let id: String
+        let region: String
+        let label: String?
+        let type: String?
+        let severity: String?
+        let angle: String?
+        let recordedAt: String?
+        let photoUrl: String?
+    }
+    var damageRecords: [DamageRecord]? = nil
 }
