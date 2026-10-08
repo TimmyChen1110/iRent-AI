@@ -56,7 +56,7 @@ struct InspectionResultView: View {
             if pendingUploads > 0 {
                 Section {
                     SyncStatusRowCompat()
-                    Text("還有照片尚未上傳，後端收齊 5 張才會開始分析。")
+                    Text("還有照片尚未上傳，收齊四個外觀角度後才會開始分析。")
                         .font(.footnote).foregroundStyle(.secondary)
                 }
             }
@@ -140,7 +140,11 @@ struct InspectionResultView: View {
                             }
                         }
                     } else {
-                        Text(result.analysis == "analyzing" ? "分析中…" : "尚無結果").foregroundStyle(.secondary)
+                        if result.analysis == "complete" || result.analysis == "failed" {
+                            Text("未拍攝車內照（選填），本次未判定車內整潔度。").font(.footnote).foregroundStyle(.secondary)
+                        } else {
+                            Text(result.analysis == "analyzing" ? "分析中…" : "尚無結果").foregroundStyle(.secondary)
+                        }
                     }
                 }
 
@@ -199,6 +203,8 @@ struct InspectionResultView: View {
         }
         .task {
             await PendingUploadSync().run(for: store)
+            // 完成拍攝時若離線沒送到，這裡補送（冪等；已開始分析不會重跑）
+            if store.session?.state == "PHOTO_INSPECTION" { await store.finishCapture(stage: .return) }
             await poll()
         }
         .refreshable { await refresh() }

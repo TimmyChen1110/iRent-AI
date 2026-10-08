@@ -115,6 +115,7 @@ DDL = [
          status          TEXT NOT NULL,  -- IN_PROGRESS | COMPLETE
          completed_at    TEXT,
          baseline_json   TEXT,           -- PICKUP：既有車損基準
+         interior_skipped INTEGER NOT NULL DEFAULT 0,  -- 車內照選填：使用者完成拍攝時略過
          created_at      TEXT NOT NULL,
          UNIQUE(rental_id, inspection_type))""",
     """CREATE TABLE IF NOT EXISTS inspection_photos(
@@ -182,6 +183,9 @@ class db:
         if self.path not in _schema_ready:
             for stmt in DDL:
                 self.conn.execute(stmt)
+            cols = {r[1] for r in self.conn.execute("PRAGMA table_info(rental_inspections)")}
+            if "interior_skipped" not in cols:   # 車內照選填：使用者完成拍攝時選擇略過
+                self.conn.execute("ALTER TABLE rental_inspections ADD COLUMN interior_skipped INTEGER NOT NULL DEFAULT 0")
             self.conn.commit()
             _schema_ready.add(self.path)
         return self.conn
@@ -328,11 +332,43 @@ def _completeness(conn, rental_id: str, itype: str) -> dict:
     got = {r[0] for r in conn.execute(
         "SELECT DISTINCT view_angle FROM inspection_photos WHERE rental_id=? AND inspection_type=?",
         (rental_id, itype))}
-    missing = [a for a in ALL_ANGLES if a not in got]
-    return {"required": list(ALL_ANGLES), "received": [a for a in ALL_ANGLES if a in got],
+    # 車內照為選填：四個外觀角度齊即完成；車內照有拍就一起分析（整潔度），沒拍就不判定
+    missing = [a for a in EXTERIOR_ANGLES if a not in got]
+    skipped = conn.execute("SELECT interior_skipped FROM rental_inspections WHERE rental_id=? AND inspection_type=?",
+                           (rental_id, itype)).fetchone()
+    interior_done = INTERIOR_ANGLE in got
+    return {"required": list(EXTERIOR_ANGLES), "optional": [INTERIOR_ANGLE],
+            "received": [a for a in ALL_ANGLES if a in got],
             "missing": missing, "complete": not missing,
+            "interior_skipped": bool(skipped and skipped[0]) and not interior_done,
+            # 還車分析的觸發條件：外觀齊，且車內照已上傳或使用者已略過（避免補拍車內照時重跑一次 AI）
+            "ready": not missing and (interior_done or bool(skipped and skipped[0])),
             "exterior": {"received": sum(a in got for a in EXTERIOR_ANGLES), "required": len(EXTERIOR_ANGLES)},
-            "interior": {"received": int(INTERIOR_ANGLE in got), "required": 1}}
+            "interior": {"received": int(interior_done), "required": 0}}
+
+
+def finish_capture(rental_id: str, stage: str) -> dict:
+    """使用者按「完成」：車內照沒拍 → 記為略過；外觀已齊就建立基準（取車）或開始 AI 分析（還車）。
+    外觀還沒齊（照片還在上傳）時只記旗標，最後一張外觀照上傳後自動觸發。"""
+    itype = STAGE_TO_TYPE[stage]
+    with db() as conn:
+        rental = get_rental(rental_id, conn)
+        if not rental:
+            raise IngestError(404, "unknown rental_id")
+        now = now_iso()
+        conn.execute("INSERT OR IGNORE INTO rental_inspections(rental_id, inspection_type, status, created_at) VALUES (?,?,?,?)",
+                     (rental_id, itype, "IN_PROGRESS", now))
+        got = {r[0] for r in conn.execute("SELECT DISTINCT view_angle FROM inspection_photos WHERE rental_id=? AND inspection_type=?",
+                                          (rental_id, itype))}
+        if INTERIOR_ANGLE not in got:
+            conn.execute("UPDATE rental_inspections SET interior_skipped=1 WHERE rental_id=? AND inspection_type=?", (rental_id, itype))
+        triggered = None
+        if itype == "RETURN" and rental["status"] not in ("RETURN_COMPLETE", "ANALYZING", "ANALYSIS_COMPLETE", "ANALYSIS_FAILED"):
+            triggered = _check_return(conn, rental)
+        completeness = _completeness(conn, rental_id, itype)
+    if triggered == "analysis":
+        ANALYSIS_RUNNER(rental_id)
+    return {"triggered": triggered, "completeness": completeness}
 
 
 def _latest_photos(conn, rental_id: str, itype: str) -> dict[str, dict]:
@@ -372,7 +408,7 @@ def _build_baseline(rental: dict, photos: dict[str, dict]) -> dict:
 
 
 def _check_return(conn, rental: dict) -> str | None:
-    if not _completeness(conn, rental["rental_id"], "RETURN")["complete"]:
+    if not _completeness(conn, rental["rental_id"], "RETURN")["ready"]:
         return None
     photos = _latest_photos(conn, rental["rental_id"], "RETURN")
     return_at = max((p["captured_at"] for p in photos.values()), default=now_iso())
@@ -400,7 +436,7 @@ def recover_stale_analyses() -> list[str]:
     with db() as conn:
         for r in rows(conn.execute("SELECT rental_id FROM rentals WHERE status IN ('RETURN_COMPLETE','ANALYZING')")):
             rid = r["rental_id"]
-            if _completeness(conn, rid, "RETURN")["complete"]:
+            if _completeness(conn, rid, "RETURN")["ready"]:
                 _set_status(conn, rid, "RETURN_COMPLETE", analysis_error=None)
                 requeued.append(rid)
             else:

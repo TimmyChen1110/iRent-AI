@@ -283,6 +283,7 @@ struct RentalSession: Codable, Equatable, Identifiable {
         let received: [String]
         let missing: [String]
         let complete: Bool
+        var interiorSkipped: Bool? = nil
     }
 
     let sessionId: String
@@ -502,8 +503,9 @@ final class RentalStore {
     }
 
     /// 本機拍齊 5 張，或後端已用預載照片收齊（模式 B）。
+    /// 四個外觀角度齊即完成（車內照選填），本機拍或後端已收到都算。
     func isComplete(_ stage: InspectionStage) -> Bool {
-        completedShots(for: stage) == InspectionShot.allCases.count || isRemoteComplete(stage)
+        exteriorCount(stage) == InspectionShot.exterior.count || isRemoteComplete(stage)
     }
 
     /// 外觀／車內張數：本機拍攝或後端已收到（預載）取大者。
@@ -534,10 +536,19 @@ final class RentalStore {
         photos.filter { $0.stage == stage && $0.uploadedAt == nil }.count
     }
 
+    /// 下一個「必拍」角度（四個外觀）；外觀都拍完回 nil。車內照選填，不列入。
     func nextShot(for stage: InspectionStage) -> InspectionShot? {
         if isRemoteComplete(stage) { return nil }
         // 本機拍過或後端已收到（例如換手機、重新安裝後）都算完成
-        return InspectionShot.allCases.first { photo(for: stage, shot: $0) == nil && session?.remotePhoto(stage, $0) == nil }
+        return InspectionShot.exterior.first { photo(for: stage, shot: $0) == nil && session?.remotePhoto(stage, $0) == nil }
+    }
+
+    /// 完成拍攝：告訴後端車內照是否略過（還車外觀齊即開始 AI 分析）。離線失敗時不擋畫面，結果頁會再補送。
+    func finishCapture(stage: InspectionStage) async {
+        guard let session else { return }
+        if let updated = try? await RentalSessionService().finishPhotos(id: session.sessionId, stage: stage.rawValue, baseURL: apiBaseURL) {
+            apply(updated)
+        }
     }
 
     func attemptCount(stage: InspectionStage, shot: InspectionShot) -> Int {
@@ -594,11 +605,26 @@ final class RentalStore {
         switch phase {
         case .readyForPickup: .findCar           // 回地圖；租借保留，可從「前往車輛」或車輛資訊頁繼續取車
         case .pickupComplete: .readyForPickup
-        case .returnInfo: .activeRental          // 需撤回「開始還車」（後端），見 cancelReturn()
-        case .readyForReturn: .returnInfo
+        // 回到還車資訊（及從那裡撤回還車）只在後端仍處於這兩個狀態時可行；AI 分析後後端一律 409，不給返回鍵
+        case .returnInfo: canEditReturnInfo ? .activeRental : nil   // 需撤回「開始還車」（後端），見 cancelReturn()
+        case .readyForReturn: canEditReturnInfo ? .returnInfo : nil
         case .inspectionResult: .readyForReturn
         case .findCar, .activeRental, .completed: nil
         }
+    }
+
+    /// 後端 `return/info`、`return/cancel` 接受的狀態；超過（INSPECTION_COMPLETED 等）就不能再改還車資訊。
+    static let returnInfoEditableStates: Set<String> = ["RETURN_INITIATED", "PHOTO_INSPECTION"]
+    var canEditReturnInfo: Bool { session.map { Self.returnInfoEditableStates.contains($0.state) } ?? false }
+
+    /// 還車資訊頁的後端呼叫被拒時：向後端取最新狀態，若已越過還車資訊階段就改到對應畫面（通常是檢測結果），
+    /// 避免本機停在這頁、返回與送出都 409 卡住。回傳是否已離開這頁。
+    func leaveReturnInfoIfPassed() async -> Bool {
+        guard let session,
+              let fresh = try? await RentalSessionService().get(id: session.sessionId, baseURL: apiBaseURL),
+              !Self.returnInfoEditableStates.contains(fresh.state) else { return false }
+        apply(fresh)
+        return true
     }
 
     /// 本機畫面返回：不呼叫後端、不清照片、不改租借狀態。

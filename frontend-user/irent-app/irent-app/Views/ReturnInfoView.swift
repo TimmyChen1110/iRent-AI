@@ -110,6 +110,10 @@ struct ReturnInfoView: View {
             .onAppear {
                 if endOdometerText.isEmpty, let end = session.endOdometerKm { endOdometerText = "\(end)" }
             }
+            .task {
+                // 舊版返回鍵可能讓本機停在這頁、後端卻已完成檢測：開頁時就同步，直接前往對應畫面
+                if !store.canEditReturnInfo { _ = await store.leaveReturnInfoIfPassed() }
+            }
         } else {
             ContentUnavailableView("沒有進行中的租車", systemImage: "car", description: Text("請回到地圖重新開始。"))
         }
@@ -126,6 +130,7 @@ struct ReturnInfoView: View {
                                                                         location: location.body, baseURL: store.apiBaseURL)
                 store.apply(updated)
             } catch {
+                if await store.leaveReturnInfoIfPassed() { return }
                 self.error = error.localizedDescription
             }
         }

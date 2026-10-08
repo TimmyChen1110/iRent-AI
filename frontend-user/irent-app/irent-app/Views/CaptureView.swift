@@ -27,7 +27,7 @@ struct CaptureView: View {
     private let syncService = InspectionSyncService()
 
     private var progressText: String {
-        if shot.isInterior { return "車內照 1 / 1" }
+        if shot.isInterior { return "車內照（選填）" }
         let index = (InspectionShot.exterior.firstIndex(of: shot) ?? 0) + 1
         return "外觀 \(index) / \(InspectionShot.exterior.count)"
     }

@@ -125,10 +125,14 @@ class TestIngestion:
 
 
 class TestPickupBaseline:
-    def test_四外觀加一車內才PICKUP_COMPLETE並建立基準(self, client, ri):
-        for i, v in enumerate(ANGLES):
+    def test_四外觀齊即PICKUP_COMPLETE並建立基準_車內照選填(self, client, ri):
+        for i, v in enumerate(ANGLES[:3]):
             j = upload(client, "pickup", v, 10 + i).json()
             assert j["rental_status"] == "PICKUP_IN_PROGRESS" and j["triggered"] is None
+        j = upload(client, "pickup", ANGLES[3], 13).json()
+        assert j["rental_status"] == "PICKUP_COMPLETE" and j["triggered"] == "baseline"
+        assert j["completeness"]["complete"] and j["completeness"]["optional"] == ["車內"]
+        # 之後補拍車內照：基準跟著更新，狀態不變
         j = upload(client, "pickup", "車內", 20).json()
         assert j["rental_status"] == "PICKUP_COMPLETE" and j["triggered"] == "baseline"
         assert j["completeness"]["complete"] and j["completeness"]["exterior"] == {"received": 4, "required": 4}

@@ -227,7 +227,7 @@ class TestGuards:
     def test_取車照未齊不能開始租用(self, client):
         s = start(client)
         r = client.post(f"/v1/rental-sessions/{s['session_id']}/pickup/complete")
-        assert r.status_code == 409 and "取車照片" in r.json()["detail"]
+        assert r.status_code == 409 and "取車外觀照片" in r.json()["detail"]
 
     def test_狀態順序_不能跳過(self, client):
         s = start(client)
@@ -523,3 +523,69 @@ class TestBackNavigation:
         # 不可從取車檢查撤回
         s3 = start(client, PIPELINE_VEHICLE)
         assert client.post(f"/v1/rental-sessions/{s3['session_id']}/return/cancel").status_code == 409
+
+
+
+class TestOptionalInterior:
+    """車內照選填：外觀四角齊即可；還車分析在「車內照已上傳或使用者按完成略過」時才開始（避免補拍時重跑 AI）。"""
+
+    def _ext(self, client, s, stage, base):
+        for i, v in enumerate(ANGLES):
+            assert upload(client, s, stage, v, base + i).status_code == 201
+
+    def test_不拍車內照完成整趟租還車(self, client, monkeypatch):
+        import judge_photos, run_eval_gemini
+        calls = {"pair": 0, "interior": 0}
+        monkeypatch.setattr(run_eval_gemini, "find_key", lambda: "k")
+        def pair(p, r, angle=None, **kw):
+            calls["pair"] += 1
+            return ({"final": {"angle_match": True, "new_damage_found": False, "damages": [], "no_damage_confidence": 0.9, "pre_existing_notes": ""}}, None)
+        def interior(p, **kw):
+            calls["interior"] += 1
+            return ({"final": {"photo_ok": True, "level": "乾淨", "confidence": 0.9, "findings": [], "reasoning": "ok"}, "score": 90}, None)
+        monkeypatch.setattr(judge_photos, "judge_pair", pair)
+        monkeypatch.setattr(judge_photos, "judge_interior", interior)
+        s = start(client, DEMO_VEHICLE)
+        sid = s["session_id"]
+        self._ext(client, s, "pickup", 10)
+        j = client.post(f"/v1/rental-sessions/{sid}/photos/pickup/finish").json()
+        assert j["pickup"]["complete"] and j["pickup"]["interior_skipped"] is True
+        assert client.post(f"/v1/rental-sessions/{sid}/pickup/complete").json()["state"] == "RENTED"
+        client.post(f"/v1/rental-sessions/{sid}/return/initiate")
+        client.post(f"/v1/rental-sessions/{sid}/return/info", json={"end_odometer_km": s["start_odometer_km"] + 3})
+        self._ext(client, s, "return", 30)
+        j = client.get(f"/v1/rental-sessions/{sid}").json()
+        assert j["state"] == "PHOTO_INSPECTION" and j["analysis"] == "pending" and calls["pair"] == 0   # 等使用者按完成
+        j = client.post(f"/v1/rental-sessions/{sid}/photos/return/finish").json()
+        assert j["state"] == "INSPECTION_COMPLETED" and calls == {"pair": 4, "interior": 0}
+        res = client.get(f"/v1/rental-sessions/{sid}/inspection").json()
+        assert res["overall"] == "PASSED" and res["interior"] is None
+        assert client.post(f"/v1/rental-sessions/{sid}/confirm-return").json()["state"] == "RETURNED"
+
+    def test_有拍車內照時上傳即開始分析_只跑一次(self, client, monkeypatch):
+        import judge_photos, run_eval_gemini
+        runs = []
+        monkeypatch.setattr(run_eval_gemini, "find_key", lambda: "k")
+        monkeypatch.setattr(judge_photos, "judge_pair", lambda p, r, angle=None, **kw: (runs.append(angle) or
+            {"final": {"angle_match": True, "new_damage_found": False, "damages": [], "no_damage_confidence": 0.9, "pre_existing_notes": ""}}, None))
+        monkeypatch.setattr(judge_photos, "judge_interior", lambda p, **kw: (
+            {"final": {"photo_ok": True, "level": "乾淨", "confidence": 0.9, "findings": [], "reasoning": "ok"}, "score": 90}, None))
+        s = drive_to_photo_inspection(client, DEMO_VEHICLE)
+        shoot(client, s, "return", 30)                       # 4 外觀 + 車內
+        j = client.get(f"/v1/rental-sessions/{s['session_id']}").json()
+        assert j["state"] == "INSPECTION_COMPLETED" and len(runs) == 4
+        client.post(f"/v1/rental-sessions/{s['session_id']}/photos/return/finish")   # 按完成不會重跑
+        assert len(runs) == 4
+
+    def test_外觀未齊先按完成_最後一張外觀上傳後自動開始(self, client, monkeypatch):
+        import run_eval_gemini
+        monkeypatch.setattr(run_eval_gemini, "find_key", lambda: None)   # 沒 key → 分析會 FAILED，用來確認有被觸發
+        s = drive_to_photo_inspection(client, PIPELINE_VEHICLE)
+        sid = s["session_id"]
+        for i, v in enumerate(ANGLES[:3]):
+            upload(client, s, "return", v, 30 + i)
+        j = client.post(f"/v1/rental-sessions/{sid}/photos/return/finish").json()
+        assert j["state"] == "PHOTO_INSPECTION" and not j["return"]["complete"]
+        upload(client, s, "return", ANGLES[3], 33)
+        assert client.get(f"/v1/rental-sessions/{sid}").json()["state"] == "INSPECTION_FAILED"
+        assert client.post(f"/v1/rental-sessions/{sid}/photos/nope/finish").status_code == 422

@@ -91,6 +91,7 @@ extension ContentView {
         do {
             try await store.cancelReturn()
         } catch {
+            if await store.leaveReturnInfoIfPassed() { return }
             backError = error.localizedDescription
         }
     }
@@ -121,8 +122,8 @@ private struct InspectionChecklistView: View {
                     Text("\(store.rental.carName) · \(store.rental.plateNumber)")
                         .font(.headline)
                     Text(stage == .pickup
-                         ? "取車檢查會建立這次租借的車況基準。請依序拍攝四個外觀角度與一張車內照。"
-                         : "還車檢查會與取車時的車況基準比對。請依序拍攝四個外觀角度與一張車內照。")
+                         ? "取車檢查會建立這次租借的車況基準。請依序拍攝四個外觀角度；車內照為選填。"
+                         : "還車檢查會與取車時的車況基準比對。請依序拍攝四個外觀角度；車內照為選填，有拍會一併檢查整潔度。")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                     Text("每張照片都會在手機上即時檢查車牌、角度與品質；不合格會請你重拍。")
@@ -150,10 +151,9 @@ private struct InspectionChecklistView: View {
                 ShotRow(stage: stage, shot: .interior)
             } header: {
                 HStack {
-                    Text("車內")
+                    Text("車內（選填）")
                     Spacer()
-                    Text("\(store.interiorCount(stage)) / 1")
-                        .monospacedDigit()
+                    Text(store.interiorCount(stage) == 1 ? "已拍" : "未拍")
                 }
             }
 
@@ -164,6 +164,13 @@ private struct InspectionChecklistView: View {
                     } label: {
                         Label(stage == .pickup ? "檢視並完成取車檢查" : "檢視並完成還車拍攝", systemImage: "checkmark.seal")
                             .fontWeight(.semibold)
+                    }
+                    if store.interiorCount(stage) == 0 {
+                        NavigationLink {
+                            CaptureView(stage: stage, shot: .interior)
+                        } label: {
+                            Label("拍攝車內照（選填）", systemImage: "camera")
+                        }
                     }
                 }
             } else if let next = store.nextShot(for: stage) {
@@ -227,7 +234,7 @@ private struct ShotRow: View {
                         .labelStyle(.iconOnly)
                         .foregroundStyle(.green)
                 } else {
-                    Text("待拍攝").foregroundStyle(.secondary)
+                    Text(shot.isInterior ? "選填" : "待拍攝").foregroundStyle(.secondary)
                 }
             }
         }
@@ -259,7 +266,7 @@ private struct SyncStatusRow: View {
                 Text("同步中…")
             } else if total == 0, store.isRemoteComplete(stage) {
                 Image(systemName: "checkmark.icloud.fill").foregroundStyle(.green)
-                Text("車況照片已登錄 5 / 5")
+                Text("車況照片已登錄：外觀 \(store.exteriorCount(stage)) / 4\(store.interiorCount(stage) == 1 ? "、車內 1 張" : "")")
             } else if total == 0 {
                 Image(systemName: "icloud").foregroundStyle(.secondary)
                 Text("尚未拍攝")
@@ -287,6 +294,20 @@ private struct InspectionSummaryView: View {
     @Environment(RentalStore.self) private var store
     @Environment(\.dismiss) private var dismiss
     let stage: InspectionStage
+    @State private var isFinishing = false
+
+    /// 通知後端完成拍攝（車內照沒拍＝略過，還車即開始分析），再切到下一個畫面。
+    private func finish() {
+        isFinishing = true
+        Task {
+            await store.finishCapture(stage: stage)
+            isFinishing = false
+            store.confirm(stage: stage)
+            // 這頁是從清單 push 進來的；phase 改變只會換掉 NavigationStack 的根畫面，
+            // 不會自動 pop，若不 dismiss 使用者會停在這頁看起來「沒反應」（真機實測）。
+            dismiss()
+        }
+    }
 
     var body: some View {
         List {
@@ -302,6 +323,10 @@ private struct InspectionSummaryView: View {
                             }
                         }
                     }
+                }
+                if store.interiorCount(stage) == 0 {
+                    Label("車內照未拍攝（選填）\(stage == .return ? "，本次不判定車內整潔度" : "")", systemImage: "info.circle")
+                        .font(.footnote).foregroundStyle(.secondary)
                 }
                 ForEach(InspectionShot.allCases) { shot in
                     if let photo = store.photo(for: stage, shot: shot) {
@@ -325,16 +350,19 @@ private struct InspectionSummaryView: View {
             }
 
             Section {
-                Button(stage == .pickup ? "完成取車檢查" : "完成還車拍攝，開始車況檢測") {
-                    store.confirm(stage: stage)
-                    // 這頁是從清單 push 進來的；phase 改變只會換掉 NavigationStack 的根畫面，
-                    // 不會自動 pop，若不 dismiss 使用者會停在這頁看起來「沒反應」（真機實測）。
-                    dismiss()
+                Button {
+                    finish()
+                } label: {
+                    HStack {
+                        Text(stage == .pickup ? "完成取車檢查" : "完成還車拍攝，開始車況檢測")
+                        if isFinishing { Spacer(); ProgressView() }
+                    }
                 }
                 .buttonStyle(.borderedProminent)
+                .disabled(isFinishing)
                 Text(stage == .pickup
                      ? "完成後這些照片會成為還車時的車況比對依據。"
-                     : "後端收齊 5 張照片後會與取車基準逐角度比對，結果會顯示在下一頁。")
+                     : "收齊四個外觀角度後會與取車基準逐角度比對，結果會顯示在下一頁。")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
@@ -363,7 +391,7 @@ private struct PickupCompleteView: View {
             }
             Section {
                 LabeledContent("外觀照片", value: "\(store.exteriorCount(.pickup)) / 4")
-                LabeledContent("車內照片", value: "\(store.interiorCount(.pickup)) / 1")
+                LabeledContent("車內照片", value: store.interiorCount(.pickup) == 1 ? "已拍" : "未拍（選填）")
                 LabeledContent("車況基準", value: baselineLabel)
                 SyncStatusRow(stage: .pickup)
             }
@@ -624,11 +652,13 @@ struct CaptureGuide3D: View {
                         Text(current.isInterior ? "打開車門，從門邊拍攝整個座艙。" : "請站在藍色圓圈的位置，讓車牌與車身角落完整入鏡。")
                             .font(.caption).foregroundStyle(.secondary)
                     } else {
-                        Text("五個角度都已完成").font(.subheadline.weight(.semibold))
+                        Text("四個外觀角度都已完成").font(.subheadline.weight(.semibold))
+                        Text(store.interiorCount(stage) == 1 ? "車內照也已拍攝。" : "車內照為選填，可補拍或直接完成。")
+                            .font(.caption).foregroundStyle(.secondary)
                     }
                 }
                 Spacer()
-                Text("\(done.count) / \(InspectionShot.allCases.count)").font(.subheadline.monospacedDigit()).foregroundStyle(.secondary)
+                Text("\(store.exteriorCount(stage)) / \(InspectionShot.exterior.count)").font(.subheadline.monospacedDigit()).foregroundStyle(.secondary)
             }
         }
     }

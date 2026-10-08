@@ -425,7 +425,7 @@ def complete_pickup(session_id: str) -> dict:
         rental = ri.get_rental(s["rental_id"], conn)
         if not rental or ri.STATUS_ORDER.index(rental["status"]) < ri.STATUS_ORDER.index("PICKUP_COMPLETE"):
             missing = ri._completeness(conn, s["rental_id"], "PICKUP")["missing"]
-            raise SessionError(409, f"取車照片尚未全部上傳（缺：{'、'.join(missing) or '未知'}），無法開始租用")
+            raise SessionError(409, f"取車外觀照片尚未全部上傳（缺：{'、'.join(missing) or '未知'}），無法開始租用")
         _update(conn, session_id, state="RENTED")
         return _view(conn, _get(conn, session_id))
 
@@ -440,6 +440,20 @@ def initiate_return(session_id: str, user_location: dict | None = None) -> dict:
         _update(conn, session_id, state="RETURN_INITIATED", return_initiated_at=now_iso(),
                 return_lat=loc.get("lat"), return_lng=loc.get("lng"), return_location_source=loc.get("source"))
         return _view(conn, _get(conn, session_id))
+
+
+def finish_photos(session_id: str, stage: str) -> dict:
+    """App 按「完成取車檢查／完成還車拍攝」：車內照選填，沒拍就記為略過；還車外觀齊即開始 AI 分析。"""
+    if stage not in ("pickup", "return"):
+        raise SessionError(422, "stage must be pickup or return")
+    with _conn() as conn:
+        s = _get(conn, session_id)
+    _require_state(s, "PICKUP_INSPECTION" if stage == "pickup" else "PHOTO_INSPECTION")
+    try:
+        ri.finish_capture(s["rental_id"], stage)
+    except ri.IngestError as e:
+        raise SessionError(e.status, e.detail) from e
+    return get_session(session_id)
 
 
 def cancel_return(session_id: str) -> dict:
@@ -494,7 +508,7 @@ def retry_inspection(session_id: str, mode: str = "reanalyze") -> dict:
             _reset_case_state(case_ids)
         else:
             if not ri._completeness(conn, rid, "RETURN")["complete"]:
-                raise SessionError(409, "還車照片尚未齊全，無法重新檢測；請改用重新拍攝")
+                raise SessionError(409, "還車外觀照片尚未齊全，無法重新檢測；請改用重新拍攝")
             ri._set_status(conn, rid, "RETURN_COMPLETE", analysis_error=None)
             requeue = True
         _update(conn, session_id, state="PHOTO_INSPECTION", inspection_attempts=s["inspection_attempts"] + 1, last_error=None)

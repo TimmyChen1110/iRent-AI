@@ -9,6 +9,7 @@
   POST /v1/rental-sessions/{session_id}/pickup/complete   取車照齊（後端驗證）→ RENTED
   POST /v1/rental-sessions/{session_id}/return/initiate   我要還車 → RETURN_INITIATED
   POST /v1/rental-sessions/{session_id}/return/cancel     撤回開始還車 → RENTED（尚無還車照片時）
+  POST /v1/rental-sessions/{session_id}/photos/{stage}/finish  完成拍攝：車內照選填，沒拍即略過；還車外觀齊即開始 AI 分析
   POST /v1/rental-sessions/{session_id}/return/info       確認還車資訊（結束里程 ≥ 起始里程）→ PHOTO_INSPECTION
   GET  /v1/rental-sessions/{session_id}/inspection        AI 檢測結果（逐角度、車內、車牌比對、AI 來源）
   POST /v1/rental-sessions/{session_id}/inspection/retry  檢測失敗 → 重新檢測（reanalyze）或重新拍攝（retake）
@@ -108,6 +109,12 @@ def pickup_complete(session_id: str):
 def return_initiate(session_id: str, body: ReturnInitiateIn | None = None):
     loc = body.user_location.model_dump() if body and body.user_location else None
     return _wrap(rs.initiate_return, session_id, loc)
+
+
+@router.post("/{session_id}/photos/{stage}/finish")
+def photos_finish(session_id: str, stage: str):
+    """完成拍攝（stage=pickup|return）：車內照選填，沒拍就略過；還車外觀齊即開始 AI 分析。"""
+    return _wrap(rs.finish_photos, session_id, stage)
 
 
 @router.post("/{session_id}/return/cancel")
