@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
-"""Convert the iRent plate detector and OCR models to Core ML."""
+"""Convert the iRent plate detector, OCR, and view classifier models to Core ML."""
 
 from __future__ import annotations
 
 import argparse
 import shutil
 from pathlib import Path
-
 
 APP_MODELS = Path(__file__).resolve().parent
 QUALITY_BACKEND = APP_MODELS.parent / "quality_guard" / "backend"
@@ -16,7 +15,7 @@ VIEW_CLASS_ORDER = ["左前", "右前", "左後", "右後"]
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Export best.pt and cct_s_v2_global.onnx as .mlpackage files.",
+        description="Export best.pt, cct_s_v2_global.onnx, and view_classifier.pt to Core ML.",
     )
     parser.add_argument(
         "--output",
@@ -24,21 +23,9 @@ def parse_args() -> argparse.Namespace:
         default=DEFAULT_OUTPUT,
         help="Output directory for the generated Core ML packages.",
     )
-    parser.add_argument(
-        "--skip-detector",
-        action="store_true",
-        help="Only convert the OCR model.",
-    )
-    parser.add_argument(
-        "--skip-ocr",
-        action="store_true",
-        help="Only convert the YOLO detector.",
-    )
-    parser.add_argument(
-        "--skip-view",
-        action="store_true",
-        help="Skip the view classifier.",
-    )
+    parser.add_argument("--skip-detector", action="store_true", help="Only convert OCR and view.")
+    parser.add_argument("--skip-ocr", action="store_true", help="Only convert YOLO detector.")
+    parser.add_argument("--skip-view", action="store_true", help="Skip the view classifier.")
     return parser.parse_args()
 
 
@@ -54,10 +41,15 @@ def export_detector(output: Path) -> None:
 
     source_model = APP_MODELS / "detect" / "best.pt"
     destination = output / "PlateDetector.mlpackage"
+
+    print("--> 匯出 PlateDetector (YOLO)...")
     model = YOLO(str(source_model))
+    
+    # 使用 ultralytics 匯出 (先嘗試更新後的標準導出)
     exported_path = Path(model.export(format="coreml", imgsz=640, nms=True))
     replace_package(destination)
     exported_path.replace(destination)
+    print(f"PlateDetector 匯出完成: {destination}")
 
 
 def export_ocr(output: Path) -> None:
@@ -69,6 +61,7 @@ def export_ocr(output: Path) -> None:
     source_model = APP_MODELS / "ocr" / "cct_s_v2_global.onnx"
     destination = output / "PlateOCR.mlpackage"
 
+    print("--> 匯出 PlateOCR (CCT)...")
     # Core ML image inputs are NCHW; the ONNX graph declares images as NHWC.
     onnx_model = convert(str(source_model)).eval()
 
@@ -81,8 +74,12 @@ def export_ocr(output: Path) -> None:
             return self.model(image.permute(0, 2, 3, 1))
 
     model = NchwInputModel(onnx_model).eval()
-    sample = torch.rand(1, 3, 64, 128)
+    
+    # fast-plate-ocr 的形狀: (Batch=1, C=3, H=64, W=128)
+    # ONNX already divides uint8 RGB pixels by 255; preserve [0,255] here.
+    sample = torch.randint(0, 256, (1, 3, 64, 128)).float()
     traced_model = torch.jit.trace(model, sample, strict=False)
+    
     converted_model = ct.convert(
         traced_model,
         inputs=[
@@ -103,6 +100,7 @@ def export_ocr(output: Path) -> None:
     )
     replace_package(destination)
     converted_model.save(str(destination))
+    print(f"PlateOCR 匯出完成: {destination}")
 
 
 def export_view_classifier(output: Path) -> None:
@@ -113,6 +111,8 @@ def export_view_classifier(output: Path) -> None:
 
     source_model = QUALITY_BACKEND / "app" / "models" / "view_classifier.pt"
     destination = output / "ViewClassifier.mlpackage"
+
+    print("--> 匯出 ViewClassifier (MobileNetV2)...")
     checkpoint = torch.load(str(source_model), map_location="cpu", weights_only=True)
     classes = list(checkpoint["classes"])
     if set(classes) != set(VIEW_CLASS_ORDER) or len(classes) != len(VIEW_CLASS_ORDER):
@@ -165,6 +165,7 @@ def export_view_classifier(output: Path) -> None:
     )
     replace_package(destination)
     converted_model.save(str(destination))
+    print(f"ViewClassifier 匯出完成: {destination}")
 
 
 def main() -> None:
@@ -179,7 +180,7 @@ def main() -> None:
         export_ocr(args.output)
     if not args.skip_view:
         export_view_classifier(args.output)
-    print(f"Generated Core ML packages in {args.output}")
+    print(f"\n所有模型已產生至目錄: {args.output}")
 
 
 if __name__ == "__main__":
