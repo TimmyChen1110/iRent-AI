@@ -1,13 +1,24 @@
+import CoreLocation
 import Foundation
 import Observation
 
+/// App 端畫面階段。後端 `RentalSession.state` 才是主要依據（`RentalStore.phase(for:)` 做對應）；
+/// 本機只補足後端沒有的子步驟（例如取車照拍完但還沒按「開始租借」）。
 enum RentalPhase: String, Codable, CaseIterable {
-    /// 尚未租借：Find a Car（3D 地圖找車 → 前往取車 → 抵達後進入既有取車檢查）。
+    /// 尚未租借：定位 → 地圖找車 → 車輛資訊 → 開始租車（建立 Session）→ 前往車輛。
     case findCar
+    /// Session PICKUP_INSPECTION：取車拍攝（建立這次租借的車況基準）。
     case readyForPickup
     case pickupComplete
+    /// Session RENTED：租用中（計時）。
     case activeRental
+    /// Session RETURN_INITIATED：還車資訊確認（結束里程、使用時間）。
+    case returnInfo
+    /// Session PHOTO_INSPECTION：還車拍攝。
     case readyForReturn
+    /// Session PHOTO_INSPECTION（分析中）/ INSPECTION_COMPLETED / INSPECTION_FAILED：AI 檢測結果。
+    case inspectionResult
+    /// Session RETURNED：還車完成。
     case completed
 
     var title: String {
@@ -16,7 +27,9 @@ enum RentalPhase: String, Codable, CaseIterable {
         case .readyForPickup: "取車檢查"
         case .pickupComplete: "取車檢查完成"
         case .activeRental: "租用中"
-        case .readyForReturn: "還車檢查"
+        case .returnInfo: "還車資訊確認"
+        case .readyForReturn: "還車拍攝"
+        case .inspectionResult: "AI 影像檢測"
         case .completed: "還車完成"
         }
     }
@@ -92,6 +105,23 @@ struct Rental: Codable, Identifiable, Equatable {
     )
 
     static let available: [Rental] = [.demo, .coreMLTest]
+
+    /// 由後端 Session 建立這次租借用的租約（照片上傳沿用 `rental_id`）。
+    init(session: RentalSession) {
+        id = session.rentalId
+        vehicleID = session.vehicle.vehicleId
+        plateNumber = session.vehicle.plate
+        carName = session.vehicle.model ?? "車輛"
+        isDemo = true
+    }
+
+    init(id: String, vehicleID: String, plateNumber: String, carName: String, isDemo: Bool) {
+        self.id = id
+        self.vehicleID = vehicleID
+        self.plateNumber = plateNumber
+        self.carName = carName
+        self.isDemo = isDemo
+    }
 }
 
 struct CapturedPhoto: Codable, Identifiable {
@@ -127,6 +157,272 @@ struct RentalRemoteStatus: Codable {
     let analysis: String   // pending | analyzing | complete | failed
 }
 
+// MARK: - 模擬租還車（後端 /v1/rental-sessions）
+
+/// 後端 JSON 走 snake_case；本 App 的 Session／車輛模型統一用這組 coder。
+enum APICoding {
+    static let decoder: JSONDecoder = {
+        let d = JSONDecoder()
+        d.keyDecodingStrategy = .convertFromSnakeCase
+        return d
+    }()
+    static let encoder: JSONEncoder = {
+        let e = JSONEncoder()
+        e.keyEncodingStrategy = .convertToSnakeCase
+        return e
+    }()
+}
+
+struct GeoPoint: Codable, Equatable {
+    let lat: Double?
+    let lng: Double?
+    var name: String? = nil
+    var source: String? = nil      // gps | manual
+    var simulated: Bool? = nil
+
+    var coordinate: CLLocationCoordinate2D? {
+        guard let lat, let lng else { return nil }
+        return CLLocationCoordinate2D(latitude: lat, longitude: lng)
+    }
+}
+
+/// 模擬車輛（後端 `demo_vehicles`）。**不是**真實 iRent 車隊；位置為固定座標。
+struct SimVehicle: Codable, Identifiable, Equatable {
+    let vehicleId: String
+    let plate: String
+    let model: String
+    let imageUrl: String?
+    let imageNote: String?
+    let location: GeoPoint
+    let status: String              // AVAILABLE | RENTED | RETURNED
+    let odometerKm: Int
+    let fuelPercent: Int?
+    let aiSource: String            // pipeline | demo_fixture
+    let aiSourceLabel: String?
+    let simulated: Bool
+    let dataNote: String?
+    /// simulated | demo（固定 Demo 測試車輛：不受定位限制、首頁固定入口、可重設）
+    var category: String? = nil
+    var isDemoVehicle: Bool? = nil
+    var details: Details? = nil
+    let activeSessionId: String?
+
+    struct Pricing: Codable, Equatable {
+        let hourlyTwd: Double?
+        let perKmTwd: Double?
+        let estimatedKmFeeTwd: Double?
+        let estimatedTotalTwd: Double?
+        let note: String?
+    }
+    struct Details: Codable, Equatable {
+        var vehicleType: String? = nil
+        var seats: Int? = nil
+        var parkingSpot: String? = nil
+        var color: String? = nil
+        var pricing: Pricing? = nil
+        var demoPinned: Bool? = nil
+        var pinnedNote: String? = nil
+        /// Demo Vehicle Registry 的車牌（有登記＝有已驗證的借車前／還車後照片，可用模式 B 預載）
+        var registryPlate: String? = nil
+        var registryRole: String? = nil
+    }
+    var hasRegistryPhotos: Bool { details?.registryPlate != nil }
+
+    var id: String { vehicleId }
+    var isDemo: Bool { isDemoVehicle ?? (category == "demo") }
+    var coordinate: CLLocationCoordinate2D { location.coordinate ?? CLLocationCoordinate2D(latitude: 0, longitude: 0) }
+    var isAvailable: Bool { status == "AVAILABLE" }
+    var statusLabel: String {
+        switch status {
+        case "AVAILABLE": "可租借"
+        case "RENTED": "租用中"
+        case "RETURNED": "已還車"
+        default: status
+        }
+    }
+    var isFixture: Bool { aiSource == "demo_fixture" }
+
+    func distance(from origin: CLLocationCoordinate2D) -> CLLocationDistance {
+        CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+            .distance(from: CLLocation(latitude: origin.latitude, longitude: origin.longitude))
+    }
+    func distanceLabel(from origin: CLLocationCoordinate2D) -> String {
+        let meters = distance(from: origin)
+        if meters >= 1000 { return String(format: "約 %.1f km", meters / 1000) }
+        return "約 \(max(10, Int((meters / 10).rounded()) * 10)) m"
+    }
+    func walkingLabel(from origin: CLLocationCoordinate2D) -> String {
+        "步行約 \(max(1, Int((distance(from: origin) / 80).rounded(.up)))) 分鐘"
+    }
+}
+
+/// 租車 Session（後端 `rental_sessions`）。狀態轉換由後端驗證。
+struct RentalSession: Codable, Equatable, Identifiable {
+    struct Vehicle: Codable, Equatable {
+        let vehicleId: String
+        let plate: String
+        let model: String?
+        let imageUrl: String?
+        let imageNote: String?
+        let location: GeoPoint?
+        let status: String?
+        let aiSource: String?
+        var category: String? = nil
+    }
+    struct Completeness: Codable, Equatable {
+        let received: [String]
+        let missing: [String]
+        let complete: Bool
+    }
+
+    let sessionId: String
+    let state: String
+    let vehicle: Vehicle
+    let rentalId: String
+    let rentalStatus: String?
+    let aiSource: String?
+    let aiSourceLabel: String?
+    let startedAt: String
+    let startLocation: GeoPoint?
+    let startOdometerKm: Int
+    let returnInitiatedAt: String?
+    let returnInfoConfirmedAt: String?
+    let returnLocation: GeoPoint?
+    let endOdometerKm: Int?
+    let distanceKm: Int?
+    let usedSeconds: Int?
+    let returnedAt: String?
+    /// 後端已收到的照片（每個角度最新一張）：url 可供圖；preloaded = 預載 Demo 照片（非當下拍攝）
+    struct RemotePhoto: Codable, Equatable, Identifiable {
+        let angle: String
+        let angleCode: String?
+        let url: String?
+        let validationMode: String?
+        let source: String?
+        let preloaded: Bool?
+        let interiorStandin: Bool?
+        var id: String { angle }
+    }
+    var photos: [String: [RemotePhoto]]? = nil          // "PICKUP" | "RETURN"
+    var captureMode: [String: String?]? = nil           // live | preloaded | mixed
+    let pickup: Completeness?
+    let `return`: Completeness?
+    let analysis: String?          // pending | analyzing | complete | failed
+    let inspectionAttempts: Int?
+    let lastError: String?
+    let reviewRequired: Bool?
+
+    var id: String { sessionId }
+    var startedDate: Date? { Self.parse(startedAt) }
+    func remotePhotos(_ stage: InspectionStage) -> [RemotePhoto] { photos?[stage.inspectionType] ?? [] }
+    func remotePhoto(_ stage: InspectionStage, _ shot: InspectionShot) -> RemotePhoto? { remotePhotos(stage).first { $0.angle == shot.rawValue } }
+    func isPreloaded(_ stage: InspectionStage) -> Bool { (captureMode?[stage.inspectionType] ?? nil) == "preloaded" }
+    func captureModeLabel(_ stage: InspectionStage) -> String? {
+        switch captureMode?[stage.inspectionType] ?? nil {
+        case "preloaded": "模式 B：預載 Demo 照片（資料集，非當下拍攝）"
+        case "live": "模式 A：即時拍攝"
+        case "mixed": "混合：部分即時拍攝、部分預載"
+        default: nil
+        }
+    }
+    var returnedDate: Date? { returnedAt.flatMap(Self.parse) }
+    var isFixture: Bool { aiSource == "demo_fixture" }
+
+    /// 後端時間為本地時間的 ISO 8601（無時區）。
+    static func parse(_ text: String) -> Date? {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.timeZone = .current
+        for fmt in ["yyyy-MM-dd'T'HH:mm:ss", "yyyy-MM-dd'T'HH:mm:ss.SSSSSS"] {
+            f.dateFormat = fmt
+            if let d = f.date(from: text) { return d }
+        }
+        return ISO8601DateFormatter().date(from: text)
+    }
+}
+
+/// `GET /v1/rental-sessions/{id}/inspection`：逐角度比對、車內整潔、車牌比對、AI 來源。
+struct InspectionResult: Codable, Equatable {
+    struct Comparison: Codable, Equatable, Identifiable {
+        struct Finding: Codable, Equatable {
+            let label: String?
+            let type: String?
+            let severity: String?
+            let confidence: Double?
+            let status: String?
+            let reasoning: String?
+        }
+        let angle: String
+        let angleCode: String
+        let result: String?
+        let resultLabel: String
+        let summary: String?
+        let findings: [Finding]
+        let returnPhotoUrl: String?
+        let caseId: String?
+        var id: String { angle }
+    }
+    struct Interior: Codable, Equatable {
+        struct Finding: Codable, Equatable {
+            let label: String?
+            let severity: String?
+            let confidence: Double?
+            let description: String?
+        }
+        let result: String?
+        let resultLabel: String?
+        let cleanliness: String?
+        let confidence: Double?
+        let score: Int?
+        let findings: [Finding]?
+        let summary: String?
+    }
+    struct Incident: Codable, Equatable, Identifiable {
+        let caseId: String
+        let kind: String
+        let angle: String
+        let label: String?
+        let severity: String?
+        let confidence: Double?
+        let aiLevel: String?
+        let summary: String?
+        var id: String { caseId }
+    }
+    struct PlateCheck: Codable, Equatable {
+        struct Photo: Codable, Equatable, Identifiable {
+            let angle: String
+            let plateText: String?
+            let confidence: Double?
+            let source: String
+            let status: String
+            var id: String { angle }
+        }
+        let status: String          // MATCH | MANUAL | MISMATCH | UNKNOWN | PENDING
+        let label: String
+        let expectedPlate: String
+        let photos: [Photo]
+        let requiresManualReview: Bool
+    }
+
+    let sessionId: String
+    let state: String
+    let analysis: String
+    let aiSource: String?
+    let aiSourceLabel: String
+    let analysisError: String?
+    let overall: String?            // PASSED | ISSUES | FAILED | ANALYZING | PENDING
+    let overallLabel: String
+    let comparisons: [Comparison]
+    let interior: Interior?
+    let incidents: [Incident]
+    let plateCheck: PlateCheck
+    let reviewRequired: Bool
+    let note: String?
+
+    var isFixture: Bool { aiSource == "demo_fixture" }
+    var isFinished: Bool { analysis == "complete" || analysis == "failed" }
+}
+
 @MainActor
 @Observable
 final class RentalStore {
@@ -137,6 +433,14 @@ final class RentalStore {
     var isSyncing = false
     /// 每個槽位的拍攝次數（Demo 劇本用：第一次固定失敗 → 重拍通過）。
     var attempts: [String: Int] = [:]
+
+    /// 目前的租車 Session（後端為準）。nil = 尚未租借。
+    private(set) var session: RentalSession?
+    /// 地圖上的模擬車輛（後端 /v1/rental-sessions/vehicles）。
+    var vehicles: [SimVehicle] = []
+    var vehiclesError: String?
+    /// 最近一次與後端同步 Session 失敗的訊息（離線時顯示，不擋本機操作）。
+    var sessionSyncError: String?
 
     var apiBaseURL: String {
         didSet { UserDefaults.standard.set(apiBaseURL, forKey: "apiBaseURL") }
@@ -150,8 +454,7 @@ final class RentalStore {
         // 預設留空：127.0.0.1 在真機上是 iPhone 自己，重裝後會靜默連錯；空值讓設定頁直接顯示紅字提示要填 Mac 的區網 IP
         apiBaseURL = UserDefaults.standard.string(forKey: "apiBaseURL") ?? ""
         demoMode = UserDefaults.standard.object(forKey: "demoMode") as? Bool ?? false
-        let rentalID = UserDefaults.standard.string(forKey: "rentalID") ?? Rental.demo.id
-        rental = Rental.available.first { $0.id == rentalID } ?? .demo
+        rental = .demo
         load()
     }
 
@@ -169,8 +472,31 @@ final class RentalStore {
         InspectionShot.exterior.filter { photo(for: stage, shot: $0) != nil }.count
     }
 
+    /// 本機拍齊 5 張，或後端已用預載照片收齊（模式 B）。
     func isComplete(_ stage: InspectionStage) -> Bool {
-        completedShots(for: stage) == InspectionShot.allCases.count
+        completedShots(for: stage) == InspectionShot.allCases.count || isRemoteComplete(stage)
+    }
+
+    /// 外觀／車內張數：本機拍攝或後端已收到（預載）取大者。
+    func exteriorCount(_ stage: InspectionStage) -> Int {
+        max(completedExterior(for: stage), session?.remotePhotos(stage).filter { $0.angle != InspectionShot.interior.rawValue }.count ?? 0)
+    }
+    func interiorCount(_ stage: InspectionStage) -> Int {
+        (photo(for: stage, shot: .interior) != nil || session?.remotePhoto(stage, .interior) != nil) ? 1 : 0
+    }
+
+    func isRemoteComplete(_ stage: InspectionStage) -> Bool {
+        guard let session else { return false }
+        return (stage == .pickup ? session.pickup?.complete : session.return?.complete) ?? false
+    }
+
+    /// 模式 B：請後端把 Registry 的借車前／還車後照片灌進這次租約，之後與即時拍攝走同一條 pipeline。
+    func preloadDemoPhotos(stage: InspectionStage) async throws {
+        guard let session else { throw SyncError.rejected("沒有進行中的租車 Session") }
+        let updated = try await RentalSessionService().preload(id: session.sessionId, stage: stage.rawValue, baseURL: apiBaseURL)
+        apply(updated)
+        phase = stage == .pickup ? .pickupComplete : .inspectionResult
+        save()
     }
 
     func uploadedCount(for stage: InspectionStage) -> Int {
@@ -182,7 +508,8 @@ final class RentalStore {
     }
 
     func nextShot(for stage: InspectionStage) -> InspectionShot? {
-        InspectionShot.allCases.first { photo(for: stage, shot: $0) == nil }
+        if isRemoteComplete(stage) { return nil }
+        return InspectionShot.allCases.first { photo(for: stage, shot: $0) == nil }
     }
 
     func attemptCount(stage: InspectionStage, shot: InspectionShot) -> Int {
@@ -216,20 +543,25 @@ final class RentalStore {
         save()
     }
 
+    /// 重新拍攝某一階段：清掉該階段本機照片與拍攝次數（檔案一併刪除）。
+    func clearPhotos(stage: InspectionStage) {
+        let files = photos.filter { $0.stage == stage }.map(\.fileName)
+        photos.removeAll { $0.stage == stage }
+        for shot in InspectionShot.allCases { attempts["\(stage.rawValue)/\(shot.rawValue)"] = nil }
+        PhotoStore().remove(files)
+        save()
+    }
+
+    /// 本機確認拍攝清單：取車 → 取車完成頁；還車 → AI 檢測結果頁（等待後端分析）。
     func confirm(stage: InspectionStage) {
         guard isComplete(stage) else { return }
-        phase = stage == .pickup ? .pickupComplete : .completed
+        phase = stage == .pickup ? .pickupComplete : .inspectionResult
         save()
     }
 
-    func startRental() {
-        phase = .activeRental
-        save()
-    }
-
-    /// Find My Car →「我已抵達車輛」：進入既有取車檢查（取車流程本身不變）。
+    /// 「我已抵達車輛」：進入取車檢查（Session 已在 PICKUP_INSPECTION）。
     func arriveAtVehicle() {
-        guard phase == .findCar else { return }
+        guard phase == .findCar, session != nil else { return }
         phase = .readyForPickup
         save()
     }
@@ -237,18 +569,6 @@ final class RentalStore {
     /// 還車完成畫面「完成」：這次租借結束，回到 Find a Car（照片檔由呼叫端用 PhotoStore 清）。
     func finishRental() {
         guard phase == .completed else { return }
-        resetLocal()
-    }
-
-    func beginReturn() {
-        phase = .readyForReturn
-        save()
-    }
-
-    func selectRental(_ newRental: Rental) {
-        guard newRental != rental else { return }
-        rental = newRental
-        UserDefaults.standard.set(newRental.id, forKey: "rentalID")
         resetLocal()
     }
 
@@ -262,13 +582,116 @@ final class RentalStore {
         phase = .findCar
         attempts = [:]
         remoteStatus = nil
+        session = nil
+        sessionSyncError = nil
+        UserDefaults.standard.removeObject(forKey: "sessionID")
         save()
+    }
+
+    // MARK: - Session（後端為主要依據）
+
+    /// 套用後端回來的 Session：更新租約與畫面階段。`keepLocalSubphase` 時尊重本機子步驟（例如取車照已拍完、等待按「開始租借」）。
+    func apply(_ newSession: RentalSession) {
+        let changedRental = session?.rentalId != newSession.rentalId
+        session = newSession
+        sessionSyncError = nil
+        UserDefaults.standard.set(newSession.sessionId, forKey: "sessionID")
+        if changedRental {
+            rental = Rental(session: newSession)
+            photos = []
+            attempts = [:]
+            remoteStatus = nil
+        }
+        phase = Self.phase(for: newSession, current: phase, localPhotos: photos)
+        save()
+    }
+
+    /// 後端狀態 → App 畫面階段。
+    static func phase(for s: RentalSession, current: RentalPhase, localPhotos: [CapturedPhoto]) -> RentalPhase {
+        switch s.state {
+        case "PICKUP_INSPECTION":
+            if current == .findCar {
+                // Demo 測試車輛不需要走到車旁：直接取車檢查；其他車輛停在 Find My Car
+                return s.vehicle.category == "demo" ? .readyForPickup : .findCar
+            }
+            return current == .pickupComplete ? .pickupComplete : .readyForPickup
+        case "RENTED":
+            return .activeRental
+        case "RETURN_INITIATED":
+            return .returnInfo
+        case "PHOTO_INSPECTION":
+            // 還車照齊、本機已按「完成還車拍攝」→ 停在結果頁等分析；否則（含重新拍攝）回到拍攝清單
+            let remoteComplete = s.return?.complete ?? false
+            if current == .inspectionResult && remoteComplete { return .inspectionResult }
+            return .readyForReturn
+        case "INSPECTION_COMPLETED", "INSPECTION_FAILED":
+            return .inspectionResult
+        case "RETURNED":
+            return .completed
+        default:
+            return .findCar
+        }
+    }
+
+    /// 開啟 App：有保存的 Session 就向後端取最新狀態；沒有就看後端是否有進行中的 Session（換手機／重裝）。
+    func restoreSession() async {
+        let service = RentalSessionService()
+        let savedID = UserDefaults.standard.string(forKey: "sessionID") ?? session?.sessionId
+        do {
+            if let savedID {
+                let s = try await service.get(id: savedID, baseURL: apiBaseURL)
+                if s.state == "CANCELLED" || s.state == "ARCHIVED" || (s.state == "RETURNED" && phase != .completed) {
+                    resetLocal()
+                } else {
+                    apply(s)
+                }
+            } else if let s = try await service.active(baseURL: apiBaseURL) {
+                apply(s)
+            }
+        } catch SyncError.rejected(let reason) {
+            // 404：後端已沒有這筆 Session（例如 Demo 重置）→ 本機回到找車
+            sessionSyncError = reason
+            if savedID != nil { resetLocal() }
+        } catch {
+            sessionSyncError = "無法連線到伺服器，顯示本機最後狀態（\(error.localizedDescription)）"
+        }
+    }
+
+    /// 固定 Demo 測試車輛（後端 category=demo）：不受定位限制，首頁固定入口。
+    var demoVehicles: [SimVehicle] { vehicles.filter(\.isDemo) }
+
+    /// Demo 車輛「開始使用」：建立 Session 後直接進入取車檢查（不需要走到車旁）。
+    func startDemoVehicle(_ vehicle: SimVehicle, location: RentalSessionService.LocationBody?) async throws {
+        let session = try await RentalSessionService().create(vehicleID: vehicle.vehicleId, location: location, baseURL: apiBaseURL)
+        apply(session)
+        phase = .readyForPickup
+        save()
+        await loadVehicles()
+    }
+
+    /// 重設 Demo 車輛（後端封存 Session、車輛回 AVAILABLE）；若目前 Session 就是這台車，本機一併清掉。
+    func resetDemoVehicle(_ vehicle: SimVehicle) async throws {
+        try await RentalSessionService().resetVehicle(id: vehicle.vehicleId, baseURL: apiBaseURL)
+        if session?.vehicle.vehicleId == vehicle.vehicleId {
+            PhotoStore().removeAll()
+            resetLocal()
+        }
+        await loadVehicles()
+    }
+
+    func loadVehicles() async {
+        do {
+            vehicles = try await RentalSessionService().vehicles(baseURL: apiBaseURL)
+            vehiclesError = nil
+        } catch {
+            vehiclesError = error.localizedDescription
+        }
     }
 
     // MARK: - 持久化
 
     private func save() {
-        let state = PersistedRentalState(rentalID: rental.id, phase: phase, photos: photos)
+        let state = PersistedRentalState(rentalID: rental.id, phase: phase, photos: photos, rental: rental, session: session)
         guard let data = try? JSONEncoder().encode(state) else { return }
         UserDefaults.standard.set(data, forKey: "rentalState")
     }
@@ -276,14 +699,16 @@ final class RentalStore {
     private func load() {
         guard
             let data = UserDefaults.standard.data(forKey: "rentalState"),
-            let state = try? JSONDecoder().decode(PersistedRentalState.self, from: data),
-            state.rentalID == rental.id
+            let state = try? JSONDecoder().decode(PersistedRentalState.self, from: data)
         else { return }
+        if let r = state.rental { rental = r }
+        session = state.session
         phase = state.phase
         photos = state.photos
-        // 舊版沒有 Find a Car：取車還沒拍任何照片就視為尚未租借；取車進行中／租用中／還車則維持原狀（不回 Find a Car）。
-        if phase == .readyForPickup, !photos.contains(where: { $0.stage == .pickup }) {
+        // 沒有 Session 就不可能在租借流程中（舊版資料或 Demo 重置後）
+        if session == nil, phase != .findCar {
             phase = .findCar
+            photos = []
         }
     }
 }
@@ -292,4 +717,51 @@ private struct PersistedRentalState: Codable {
     let rentalID: String
     let phase: RentalPhase
     let photos: [CapturedPhoto]
+    var rental: Rental? = nil
+    var session: RentalSession? = nil
+}
+
+
+/// `GET /v1/rental-sessions/vehicles/{id}/photos`：Demo Vehicle Registry 的借車前／還車後照片集。
+struct DemoPhotoSet: Codable, Equatable {
+    struct Photo: Codable, Equatable, Identifiable {
+        struct Quality: Codable, Equatable { let pass: Bool?; let sharpness: Double?; let brightness: Double? }
+        struct Plate: Codable, Equatable { let ocrText: String?; let confidence: Double?; let verification: String?; let engine: String? }
+        let image: String
+        let file: String
+        let url: String?
+        let stage: String
+        let angle: String?
+        let quality: Quality?
+        let plateRecognition: Plate?
+        let source: String?
+        let sourceNote: String?
+        var id: String { image }
+    }
+    struct Pair: Codable, Equatable, Identifiable {
+        let angle: String
+        let pairVerification: String
+        let aiAngleMatch: Bool?
+        let humanRelabel: String?
+        let humanNote: String?
+        var id: String { angle }
+    }
+    struct InteriorStandin: Codable, Equatable {
+        let available: Bool
+        let note: String
+        let pickup: String?
+        let `return`: String?
+    }
+    let plate: String
+    let vehicleModel: String?
+    let role: String?
+    let coverImage: String?
+    let before: [Photo]
+    let after: [Photo]
+    let pairs: [Pair]
+    let completePair: Bool?
+    let verifiedPairAngles: [String]?
+    let qualityScore: Double?
+    let damageAngles: [String]?
+    let interiorStandin: InteriorStandin?
 }

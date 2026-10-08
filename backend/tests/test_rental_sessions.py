@@ -1,0 +1,453 @@
+"""模擬租還車 Session 的 End-to-End 回歸測試（零 Gemini API 成本）。
+
+AVAILABLE → PICKUP_INSPECTION → RENTED → RETURN_INITIATED → PHOTO_INSPECTION → INSPECTION_COMPLETED → RETURNED，
+以及：重複租車、里程驗證、檢測失敗重試、車牌手動輸入／不一致、Demo 重置、狀態恢復。
+"""
+import hashlib
+import io
+import json
+
+import pytest
+from fastapi.testclient import TestClient
+from PIL import Image
+
+
+@pytest.fixture()
+def srv(tmp_path, monkeypatch):
+    import server
+    import rental_inspections as ri
+    import rental_sessions as rs
+    monkeypatch.setattr(server, "DB_PATH", tmp_path / "test.sqlite3")
+    monkeypatch.setattr(server, "send_notification", lambda payload: True)
+    monkeypatch.setenv("DEMO_MODE", "true")
+    monkeypatch.setattr(ri.paths, "UPLOAD_DIR", tmp_path / "uploads")
+    monkeypatch.setattr(ri, "ANALYSIS_RUNNER", ri.run_analysis)   # 同步跑分析
+    ri.reset_schema_cache()
+    rs.reset_schema_cache()
+    ri.ensure_registered_rentals()
+    rs.ensure_vehicles()
+    return server
+
+
+@pytest.fixture()
+def client(srv):
+    return TestClient(srv.app)
+
+
+FIXTURE_VEHICLE = "SIM-ABC-1234"   # 示範固定劇本（demo fixture）
+PIPELINE_VEHICLE = "SIM-RCG-2235"  # 真實 pipeline（測試中 mock judge）
+ANGLES = ["左前", "右前", "左後", "右後"]
+CODES = {"左前": "FRONT_LEFT", "右前": "FRONT_RIGHT", "左後": "REAR_LEFT", "右後": "REAR_RIGHT", "車內": "INTERIOR"}
+
+
+def jpeg(seed: int) -> bytes:
+    im = Image.new("RGB", (800, 600), (seed % 255, 120, 80))
+    b = io.BytesIO()
+    im.save(b, "JPEG")
+    return b.getvalue()
+
+
+def upload(client, session, stage, view, seed, *, plate=None, confirmation=None, mode="demo"):
+    data = jpeg(seed)
+    sha = hashlib.sha256(data).hexdigest()
+    plate = plate or session["vehicle"]["plate"]
+    form = {"rental_id": session["rental_id"], "car_id": session["vehicle"]["vehicle_id"],
+            "expected_plate": session["vehicle"]["plate"], "stage": stage, "view": view,
+            "recognized_plate": plate, "image_sha256": sha, "captured_at": "2026-10-09T10:00:00Z",
+            "local_result_json": json.dumps({"passed": True, "plateText": plate if view != "車內" else None,
+                                             "plateConfidence": 0.95, "detectedView": view if view != "車內" else None,
+                                             "viewConfidence": 0.9, "errors": [], "modelVersions": {"mode": mode}}),
+            "photo_id": f"{session['session_id']}-{stage}-{view}-{seed}", "inspection_type": stage.upper(),
+            "angle": CODES[view], "photo_category": "interior" if view == "車內" else "exterior",
+            "validation_mode": mode}
+    if confirmation:
+        form["plate_confirmation"] = confirmation
+    return client.post("/v1/mobile-inspections/photos", data=form, files={"photo": ("p.jpg", data, "image/jpeg")})
+
+
+def shoot(client, session, stage, base=0, **kw):
+    for i, v in enumerate(ANGLES):
+        r = upload(client, session, stage, v, base + i, **kw)
+        assert r.status_code == 201, r.text
+    r = upload(client, session, stage, "車內", base + 9, **kw)
+    assert r.status_code == 201, r.text
+    return r.json()
+
+
+def start(client, vehicle=FIXTURE_VEHICLE):
+    r = client.post("/v1/rental-sessions", json={"vehicle_id": vehicle, "user_location": {"lat": 25.0, "lng": 121.5, "source": "gps"}})
+    assert r.status_code == 201, r.text
+    return r.json()
+
+
+def drive_to_photo_inspection(client, vehicle=FIXTURE_VEHICLE, end_km=None):
+    s = start(client, vehicle)
+    shoot(client, s, "pickup", 10)
+    s = client.post(f"/v1/rental-sessions/{s['session_id']}/pickup/complete").json()
+    assert s["state"] == "RENTED"
+    s = client.post(f"/v1/rental-sessions/{s['session_id']}/return/initiate", json={"user_location": {"lat": 25.0, "lng": 121.5, "source": "manual"}}).json()
+    assert s["state"] == "RETURN_INITIATED"
+    r = client.post(f"/v1/rental-sessions/{s['session_id']}/return/info",
+                    json={"end_odometer_km": end_km if end_km is not None else s["start_odometer_km"] + 12})
+    assert r.status_code == 200, r.text
+    s = r.json()
+    assert s["state"] == "PHOTO_INSPECTION" and s["distance_km"] == 12
+    return s
+
+
+class TestVehicles:
+    def test_模擬車輛明確標示且可查詢(self, client):
+        j = client.get("/v1/rental-sessions/vehicles").json()
+        assert j["simulated"] is True
+        ids = {v["vehicle_id"] for v in j["vehicles"]}
+        assert {FIXTURE_VEHICLE, PIPELINE_VEHICLE} <= ids
+        for v in j["vehicles"]:
+            assert v["simulated"] is True and v["status"] == "AVAILABLE"
+            assert v["location"]["simulated"] is True and v["odometer_km"] > 0
+        fx = next(v for v in j["vehicles"] if v["vehicle_id"] == FIXTURE_VEHICLE)
+        assert fx["ai_source"] == "demo_fixture" and "非真實" in fx["ai_source_label"]
+        assert client.get("/v1/rental-sessions/vehicles/nope").status_code == 404
+
+    def test_沒有進行中Session時active為空(self, client):
+        assert client.get("/v1/rental-sessions/active").json()["session"] is None
+
+
+class TestFlow:
+    def test_完整流程_示範固定劇本車輛(self, client):
+        s = drive_to_photo_inspection(client)
+        sid = s["session_id"]
+        # 還車照尚未齊：不能確認還車
+        assert client.post(f"/v1/rental-sessions/{sid}/confirm-return").status_code == 409
+        shoot(client, s, "return", 30)
+        s = client.get(f"/v1/rental-sessions/{sid}").json()
+        assert s["state"] == "INSPECTION_COMPLETED" and s["analysis"] == "complete"
+        res = client.get(f"/v1/rental-sessions/{sid}/inspection").json()
+        assert res["ai_source"] == "demo_fixture" and "非真實" in res["ai_source_label"]
+        assert res["overall"] == "ISSUES" and len(res["incidents"]) == 2        # 右後新損 + 車內髒汙（固定劇本）
+        assert {c["angle"]: c["result"] for c in res["comparisons"]}["右後"] == "NEW_DAMAGE"
+        assert res["interior"]["result"] == "CLEANING_REQUIRED"
+        assert res["plate_check"]["status"] == "MATCH"
+        assert res["review_required"] is True
+        # 檢測完成 ≠ 還車完成：要確認
+        s = client.post(f"/v1/rental-sessions/{sid}/confirm-return").json()
+        assert s["state"] == "RETURNED" and s["returned_at"] and s["review_required"] is True
+        v = client.get(f"/v1/rental-sessions/vehicles/{FIXTURE_VEHICLE}").json()
+        assert v["status"] == "AVAILABLE" and v["odometer_km"] == s["end_odometer_km"]
+        assert client.get("/v1/rental-sessions/active").json()["session"] is None
+        # 冪等：再確認一次不報錯、狀態不變
+        assert client.post(f"/v1/rental-sessions/{sid}/confirm-return").json()["state"] == "RETURNED"
+
+    def test_完整流程_真實pipeline車輛_mock判定_正常不開案(self, client, monkeypatch):
+        import judge_photos
+        import run_eval_gemini
+        monkeypatch.setattr(run_eval_gemini, "find_key", lambda: "test-key")
+        monkeypatch.setattr(judge_photos, "judge_pair", lambda p, r, angle=None, **kw: (
+            {"final": {"angle_match": True, "new_damage_found": False, "damages": [], "no_damage_confidence": 0.95,
+                       "pre_existing_notes": ""}, "level": "flash"}, None))
+        monkeypatch.setattr(judge_photos, "judge_interior", lambda p, **kw: (
+            {"final": {"photo_ok": True, "level": "乾淨", "confidence": 0.9, "findings": [], "reasoning": "ok"}, "score": 95}, None))
+        s = drive_to_photo_inspection(client, PIPELINE_VEHICLE)
+        shoot(client, s, "return", 30, mode="coreml")
+        res = client.get(f"/v1/rental-sessions/{s['session_id']}/inspection").json()
+        assert res["ai_source"] == "pipeline" and res["overall"] == "PASSED" and res["incidents"] == []
+        assert all(c["result"] == "NO_NEW_DAMAGE" for c in res["comparisons"])
+        assert res["interior"]["result"] == "CLEAN" and res["review_required"] is False
+        s = client.post(f"/v1/rental-sessions/{s['session_id']}/confirm-return").json()
+        assert s["state"] == "RETURNED" and s["review_required"] is False
+
+    def test_沒有GEMINI_KEY_檢測失敗_可重新檢測與重新拍攝(self, client, monkeypatch):
+        import run_eval_gemini
+        monkeypatch.setattr(run_eval_gemini, "find_key", lambda: None)
+        s = drive_to_photo_inspection(client, PIPELINE_VEHICLE)
+        sid = s["session_id"]
+        shoot(client, s, "return", 30)
+        s = client.get(f"/v1/rental-sessions/{sid}").json()
+        assert s["state"] == "INSPECTION_FAILED" and "GEMINI_API_KEY" in (s["last_error"] or "")
+        res = client.get(f"/v1/rental-sessions/{sid}/inspection").json()
+        assert res["overall"] == "FAILED"
+        assert client.post(f"/v1/rental-sessions/{sid}/confirm-return").status_code == 409
+        # 重新檢測（仍然沒 key → 再次失敗，但 attempts +1）
+        s = client.post(f"/v1/rental-sessions/{sid}/inspection/retry", json={"mode": "reanalyze"}).json()
+        assert s["state"] == "INSPECTION_FAILED" and s["inspection_attempts"] == 2
+        # 重新拍攝：還車照清空、回到 PHOTO_INSPECTION、取車基準保留
+        s = client.post(f"/v1/rental-sessions/{sid}/inspection/retry", json={"mode": "retake"}).json()
+        assert s["state"] == "PHOTO_INSPECTION" and s["return"]["received"] == [] and s["pickup"]["complete"]
+        assert s["rental_status"] == "PICKUP_COMPLETE"
+        # 補 key 後重拍 → 成功
+        monkeypatch.setattr(run_eval_gemini, "find_key", lambda: "k")
+        import judge_photos
+        monkeypatch.setattr(judge_photos, "judge_pair", lambda p, r, angle=None, **kw: (
+            {"final": {"angle_match": True, "new_damage_found": False, "damages": [], "no_damage_confidence": 0.9, "pre_existing_notes": ""}}, None))
+        monkeypatch.setattr(judge_photos, "judge_interior", lambda p, **kw: (
+            {"final": {"photo_ok": True, "level": "乾淨", "confidence": 0.9, "findings": [], "reasoning": "ok"}, "score": 90}, None))
+        shoot(client, s, "return", 50)
+        assert client.get(f"/v1/rental-sessions/{sid}").json()["state"] == "INSPECTION_COMPLETED"
+
+
+class TestGuards:
+    def test_重複租車與不可租狀態(self, client):
+        s = start(client)
+        r = client.post("/v1/rental-sessions", json={"vehicle_id": FIXTURE_VEHICLE})
+        assert r.status_code == 409
+        v = client.get(f"/v1/rental-sessions/vehicles/{FIXTURE_VEHICLE}").json()
+        assert v["status"] == "RENTED" and v["active_session_id"] == s["session_id"]
+        # 另一台車仍可租
+        assert client.post("/v1/rental-sessions", json={"vehicle_id": PIPELINE_VEHICLE}).status_code == 201
+
+    def test_取車照未齊不能開始租用(self, client):
+        s = start(client)
+        r = client.post(f"/v1/rental-sessions/{s['session_id']}/pickup/complete")
+        assert r.status_code == 409 and "取車照片" in r.json()["detail"]
+
+    def test_狀態順序_不能跳過(self, client):
+        s = start(client)
+        sid = s["session_id"]
+        assert client.post(f"/v1/rental-sessions/{sid}/return/initiate").status_code == 409
+        assert client.post(f"/v1/rental-sessions/{sid}/return/info", json={"end_odometer_km": 1}).status_code == 409
+        assert client.post(f"/v1/rental-sessions/{sid}/confirm-return").status_code == 409
+        assert client.get("/v1/rental-sessions/none").status_code == 404
+
+    def test_結束里程不可小於起始里程(self, client):
+        s = start(client)
+        shoot(client, s, "pickup", 10)
+        sid = s["session_id"]
+        client.post(f"/v1/rental-sessions/{sid}/pickup/complete")
+        client.post(f"/v1/rental-sessions/{sid}/return/initiate")
+        r = client.post(f"/v1/rental-sessions/{sid}/return/info", json={"end_odometer_km": s["start_odometer_km"] - 1})
+        assert r.status_code == 422 and "不可小於" in r.json()["detail"]
+        r = client.post(f"/v1/rental-sessions/{sid}/return/info", json={"end_odometer_km": "abc"})
+        assert r.status_code == 422
+        r = client.post(f"/v1/rental-sessions/{sid}/return/info", json={"end_odometer_km": s["start_odometer_km"]})
+        assert r.status_code == 200 and r.json()["distance_km"] == 0
+
+    def test_取消只能在取車檢查前(self, client):
+        s = start(client)
+        sid = s["session_id"]
+        assert client.post(f"/v1/rental-sessions/{sid}/cancel").json()["state"] == "CANCELLED"
+        assert client.get(f"/v1/rental-sessions/vehicles/{FIXTURE_VEHICLE}").json()["status"] == "AVAILABLE"
+        s2 = start(client)
+        shoot(client, s2, "pickup", 10)
+        client.post(f"/v1/rental-sessions/{s2['session_id']}/pickup/complete")
+        assert client.post(f"/v1/rental-sessions/{s2['session_id']}/cancel").status_code == 409
+
+    def test_重新整理後可恢復狀態(self, client):
+        s = drive_to_photo_inspection(client)
+        a = client.get("/v1/rental-sessions/active").json()["session"]
+        assert a["session_id"] == s["session_id"] and a["state"] == "PHOTO_INSPECTION"
+        assert a["end_odometer_km"] == s["end_odometer_km"] and a["used_seconds"] is not None
+
+
+class TestPlateCheck:
+    def test_手動輸入車牌_需人工確認(self, client):
+        s = drive_to_photo_inspection(client)
+        shoot(client, s, "return", 30, confirmation="manual")
+        res = client.get(f"/v1/rental-sessions/{s['session_id']}/inspection").json()
+        assert res["plate_check"]["status"] == "MANUAL" and res["plate_check"]["requires_manual_review"]
+        assert all(p["source"] == "manual" for p in res["plate_check"]["photos"])
+
+    def test_車牌不一致_預設拒收_使用者確認後收下並標記(self, client):
+        s = drive_to_photo_inspection(client)
+        r = upload(client, s, "return", "左前", 30, plate="ZZZ-9999")
+        assert r.status_code == 422
+        r = upload(client, s, "return", "左前", 30, plate="ZZZ-9999", confirmation="user_confirmed_mismatch")
+        assert r.status_code == 201 and r.json()["plate_mismatch"] is True
+        for i, v in enumerate(ANGLES[1:]):
+            assert upload(client, s, "return", v, 31 + i).status_code == 201
+        assert upload(client, s, "return", "車內", 39).status_code == 201
+        res = client.get(f"/v1/rental-sessions/{s['session_id']}/inspection").json()
+        assert res["plate_check"]["status"] == "MISMATCH" and res["review_required"] is True
+        s2 = client.post(f"/v1/rental-sessions/{s['session_id']}/confirm-return").json()
+        assert s2["state"] == "RETURNED" and s2["review_required"] is True
+
+    def test_plate_confirmation非法值(self, client):
+        s = drive_to_photo_inspection(client)
+        assert upload(client, s, "return", "左前", 30, confirmation="whatever").status_code == 422
+
+
+class TestReset:
+    def test_demo_reset_清空Session_車輛回AVAILABLE(self, client):
+        s = drive_to_photo_inspection(client, PIPELINE_VEHICLE)
+        j = client.post("/v1/rental-sessions/reset").json()
+        assert j["ok"] and j["cleared_sessions"] == 1
+        assert client.get("/v1/rental-sessions/active").json()["session"] is None
+        assert client.get(f"/v1/rental-sessions/vehicles/{PIPELINE_VEHICLE}").json()["status"] == "AVAILABLE"
+        assert client.get(f"/v1/rental-sessions/{s['session_id']}").status_code == 404
+
+    def test_非demo環境_reset_404(self, client, monkeypatch):
+        monkeypatch.delenv("DEMO_MODE")
+        assert client.post("/v1/rental-sessions/reset").status_code == 404
+
+    def test_demo_health_含Session資訊(self, client, srv):
+        j = srv.demo_health()   # /api/demo/health 受 ops 登入中介層保護；直接呼叫函式驗證內容
+        assert "rental_sessions" in j and j["rental_sessions"]["active_sessions"] == 0
+
+
+class TestAdminIntegration:
+    def test_模擬租約出現在管理者檢查紀錄且標示demo(self, client, srv):
+        import rental_inspections as ri
+        s = drive_to_photo_inspection(client)
+        shoot(client, s, "return", 30)
+        items = ri.list_inspections()
+        mine = next(i for i in items if i["rental_id"] == s["rental_id"])
+        assert mine["demo"] is True and mine["result"] == "ISSUES"
+        assert ri.vehicles()[s["vehicle"]["plate"]]["rental_id"] == s["rental_id"]
+
+
+DEMO_VEHICLE = "demo-rfy-1753"
+
+
+class TestDemoVehicle:
+    def test_固定Demo車輛資料與示範計費(self, client):
+        v = client.get(f"/v1/rental-sessions/vehicles/{DEMO_VEHICLE}").json()
+        assert v["plate"] == "RFY-1753" and v["model"] == "TOYOTA ALTIS HYBRID"
+        assert v["category"] == "demo" and v["is_demo_vehicle"] is True and v["status"] == "AVAILABLE"
+        d = v["details"]
+        assert d["seats"] == 5 and d["parking_spot"] == "67" and d["color"] == "白色" and d["vehicle_type"] == "個人用車"
+        assert d["pricing"]["hourly_twd"] == 130 and d["pricing"]["per_km_twd"] == 3.5
+        assert d["pricing"]["estimated_km_fee_twd"] == 70 and d["pricing"]["estimated_total_twd"] == 200
+        assert d["demo_pinned"] is True
+        assert v["image_url"].startswith("/photos/demo/") and "示意圖" in v["image_note"]
+        # 其他模擬車不是 demo 類別
+        others = [x for x in client.get("/v1/rental-sessions/vehicles").json()["vehicles"] if x["vehicle_id"].startswith("SIM-")]
+        assert others and all(x["category"] == "simulated" and not x["is_demo_vehicle"] for x in others)
+
+    def test_示意圖可供圖(self, client):
+        r = client.get("/photos/demo/rfy-1753.png")
+        assert r.status_code == 200 and r.headers["content-type"].startswith("image/png")
+        assert client.get("/photos/demo/../server.py").status_code in (404, 422)
+
+    def test_完整流程_走真實pipeline並可重設(self, client, monkeypatch):
+        import judge_photos, run_eval_gemini
+        monkeypatch.setattr(run_eval_gemini, "find_key", lambda: "k")
+        monkeypatch.setattr(judge_photos, "judge_pair", lambda p, r, angle=None, **kw: (
+            {"final": {"angle_match": True, "new_damage_found": False, "damages": [], "no_damage_confidence": 0.9, "pre_existing_notes": ""}}, None))
+        monkeypatch.setattr(judge_photos, "judge_interior", lambda p, **kw: (
+            {"final": {"photo_ok": True, "level": "乾淨", "confidence": 0.9, "findings": [], "reasoning": "ok"}, "score": 90}, None))
+        s = drive_to_photo_inspection(client, DEMO_VEHICLE)
+        assert s["rental_id"].startswith("RNT-DEMO-") and s["ai_source"] == "pipeline"
+        assert client.get(f"/v1/rental-sessions/vehicles/{DEMO_VEHICLE}").json()["status"] == "RENTED"
+        shoot(client, s, "return", 30)
+        s = client.post(f"/v1/rental-sessions/{s['session_id']}/confirm-return").json()
+        assert s["state"] == "RETURNED"
+        v = client.get(f"/v1/rental-sessions/vehicles/{DEMO_VEHICLE}").json()
+        assert v["status"] == "AVAILABLE" and v["odometer_km"] == s["end_odometer_km"]
+        # 下一位展示者可直接再租
+        assert client.post("/v1/rental-sessions", json={"vehicle_id": DEMO_VEHICLE}).status_code == 201
+
+    def test_重設Demo車輛_封存Session_不碰其他車(self, client, monkeypatch):
+        monkeypatch.delenv("DEMO_MODE")          # 不需要 DEMO_MODE
+        other = start(client, FIXTURE_VEHICLE)
+        s = drive_to_photo_inspection(client, DEMO_VEHICLE)
+        j = client.post(f"/v1/rental-sessions/vehicles/{DEMO_VEHICLE}/reset").json()
+        assert j["ok"] and j["archived_sessions"] == [s["session_id"]] and j["vehicle"]["status"] == "AVAILABLE"
+        archived = client.get(f"/v1/rental-sessions/{s['session_id']}").json()
+        assert archived["state"] == "ARCHIVED" and archived["rental_status"] is None     # Session 封存、租約已清
+        # 封存的 Session 不再是進行中；另一台車的 Session 不受影響
+        assert client.get("/v1/rental-sessions/active").json()["session"]["session_id"] == other["session_id"]
+        assert client.get(f"/v1/rental-sessions/{other['session_id']}").json()["state"] == "PICKUP_INSPECTION"
+        assert client.get(f"/v1/rental-sessions/vehicles/{FIXTURE_VEHICLE}").json()["status"] == "RENTED"
+        # 只有 demo 類別可重設
+        assert client.post(f"/v1/rental-sessions/vehicles/{FIXTURE_VEHICLE}/reset").status_code == 403
+        assert client.post("/v1/rental-sessions/vehicles/nope/reset").status_code == 404
+        # 重設後可重新租借
+        assert client.post("/v1/rental-sessions", json={"vehicle_id": DEMO_VEHICLE}).status_code == 201
+
+    def test_既有資料庫缺欄位時自動補(self, srv, tmp_path):
+        import sqlite3
+        import rental_sessions as rs
+        db = tmp_path / "test.sqlite3"
+        with sqlite3.connect(db) as c:
+            c.execute("DROP TABLE demo_vehicles")
+            c.execute("""CREATE TABLE demo_vehicles(vehicle_id TEXT PRIMARY KEY, plate TEXT NOT NULL, model TEXT NOT NULL,
+                image_url TEXT, image_note TEXT, lat REAL NOT NULL, lng REAL NOT NULL, location_name TEXT, status TEXT NOT NULL,
+                odometer_km INTEGER NOT NULL, fuel_percent INTEGER, ai_source TEXT NOT NULL, fixture_rental_id TEXT,
+                simulated INTEGER NOT NULL DEFAULT 1, last_returned_at TEXT, updated_at TEXT NOT NULL)""")
+        rs.reset_schema_cache()
+        rs.ensure_vehicles()
+        assert rs.get_vehicle(DEMO_VEHICLE)["details"]["seats"] == 5
+
+
+class TestDemoRegistryPreload:
+    """Demo Vehicle Registry（DEMO_IMAGE_MANIFEST.json）＋ Preloaded Demo（模式 B）。"""
+
+    def test_登記車輛有已驗證的借還照片集(self, client):
+        r = client.get("/v1/rental-sessions/vehicles/demo-rdg-9853/photos")
+        assert r.status_code == 200, r.text
+        j = r.json()
+        assert j["plate"] == "RDG-9853" and j["complete_pair"] is True
+        assert [p["angle"] for p in j["before"]] == [p["angle"] for p in j["after"]]
+        assert len(j["before"]) == 4 and all(p["url"].startswith("/photos/pair/") for p in j["before"] + j["after"])
+        assert all(p["pair_verification"] == "VERIFIED" for p in j["pairs"])
+        assert all(p["plate_recognition"]["verification"] == "VERIFIED" for p in j["before"] + j["after"])
+        assert j["interior_standin"]["available"] and "非本車" in j["interior_standin"]["note"]
+        # 車損展示車：右後角人工重標 damage
+        d = client.get("/v1/rental-sessions/vehicles/demo-rfh-8122/photos").json()
+        assert "右後" in d["damage_angles"]
+        # 沒登記照片的 Demo 車（RFY-1753）→ 404、不虛構
+        assert client.get("/v1/rental-sessions/vehicles/demo-rfy-1753/photos").status_code == 404
+        # 供圖可用
+        assert client.get(j["before"][0]["url"]).status_code == 200
+
+    def test_首頁Demo車輛清單含三台且不受定位影響(self, client):
+        vs = client.get("/v1/rental-sessions/vehicles").json()["vehicles"]
+        demo = {v["vehicle_id"] for v in vs if v["is_demo_vehicle"]}
+        assert demo == {"demo-rfy-1753", "demo-rdg-9853", "demo-rfh-8122"}
+        for v in vs:
+            if v["is_demo_vehicle"]:
+                assert v["details"]["demo_pinned"] is True and v["image_url"]
+
+    def test_預載取車與還車照片_走同一條pipeline(self, client, monkeypatch):
+        import judge_photos, run_eval_gemini
+        calls = []
+        monkeypatch.setattr(run_eval_gemini, "find_key", lambda: "k")
+        def judge(p, r, angle=None, **kw):
+            calls.append((angle, p.split("/")[-1], r.split("/")[-1]))
+            return ({"final": {"angle_match": True, "new_damage_found": angle == "右後", "no_damage_confidence": 0.9, "pre_existing_notes": "",
+                               "damages": [{"location": "右後保險桿", "type": "刮痕", "severity": "medium", "confidence": 0.9, "reasoning": "x", "box_2d": [1, 2, 3, 4]}] if angle == "右後" else []}}, None)
+        monkeypatch.setattr(judge_photos, "judge_pair", judge)
+        monkeypatch.setattr(judge_photos, "judge_interior", lambda p, **kw: (
+            {"final": {"photo_ok": True, "level": "乾淨", "confidence": 0.9, "findings": [], "reasoning": "ok"}, "score": 90}, None))
+        s = start(client, "demo-rfh-8122")
+        sid = s["session_id"]
+        # 狀態不對不能預載
+        assert client.post(f"/v1/rental-sessions/{sid}/preload/return").status_code == 409
+        assert client.post(f"/v1/rental-sessions/{sid}/preload/nope").status_code == 422
+        r = client.post(f"/v1/rental-sessions/{sid}/preload/pickup")
+        assert r.status_code == 200, r.text
+        j = r.json()
+        assert j["preload"]["mode"] == "preloaded" and len(j["preload"]["ingested"]) == 5
+        assert j["pickup"]["complete"] and j["rental_status"] == "PICKUP_COMPLETE"
+        assert j["capture_mode"]["PICKUP"] == "preloaded"
+        assert all(p["preloaded"] for p in j["photos"]["PICKUP"]) and any(p["interior_standin"] for p in j["photos"]["PICKUP"])
+        s = client.post(f"/v1/rental-sessions/{sid}/pickup/complete").json(); assert s["state"] == "RENTED"
+        client.post(f"/v1/rental-sessions/{sid}/return/initiate")
+        s = client.post(f"/v1/rental-sessions/{sid}/return/info", json={"end_odometer_km": s["start_odometer_km"] + 3}).json()
+        j = client.post(f"/v1/rental-sessions/{sid}/preload/return").json()
+        assert j["state"] == "INSPECTION_COMPLETED" and j["capture_mode"]["RETURN"] == "preloaded"
+        # 真的用資料集借／還照逐角度呼叫既有 judge_pair（同一條 pipeline）
+        assert sorted(a for a, _, _ in calls) == ["右前", "右後", "左前", "左後"]
+        assert all(p.startswith("RFH8122") and "借" in p and "還" in r for _, p, r in calls)
+        res = client.get(f"/v1/rental-sessions/{sid}/inspection").json()
+        assert res["ai_source"] == "pipeline" and res["overall"] == "ISSUES"
+        assert {c["angle"]: c["result"] for c in res["comparisons"]}["右後"] == "NEW_DAMAGE"
+        assert res["plate_check"]["status"] == "MATCH" and all(p["source"] == "preloaded" for p in res["plate_check"]["photos"])
+        s = client.post(f"/v1/rental-sessions/{sid}/confirm-return").json()
+        assert s["state"] == "RETURNED"
+        # Reset 後可再跑
+        assert client.post("/v1/rental-sessions/vehicles/demo-rfh-8122/reset").json()["ok"]
+        assert client.post("/v1/rental-sessions", json={"vehicle_id": "demo-rfh-8122"}).status_code == 201
+
+    def test_沒有登記照片的Demo車預載回404(self, client):
+        s = start(client, "demo-rfy-1753")
+        r = client.post(f"/v1/rental-sessions/{s['session_id']}/preload/pickup")
+        assert r.status_code == 404
+
+    def test_manifest缺檔時仍可啟動(self, client, monkeypatch, tmp_path):
+        import demo_vehicle_registry as registry
+        monkeypatch.setattr(registry, "MANIFEST_PATH", tmp_path / "missing.json")
+        registry.reload()
+        try:
+            assert client.get("/v1/rental-sessions/vehicles").status_code == 200
+            assert client.get("/v1/rental-sessions/vehicles/demo-rdg-9853/photos").status_code == 404
+        finally:
+            registry.reload()

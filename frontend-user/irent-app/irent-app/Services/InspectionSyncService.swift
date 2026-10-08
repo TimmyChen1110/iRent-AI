@@ -79,6 +79,8 @@ struct InspectionSyncService {
         append("photo_category", photo.shot.photoCategory, to: &body, boundary: boundary)
         append("angle", photo.shot.angleCode, to: &body, boundary: boundary)
         append("validation_mode", photo.result.modelVersions["mode"] == DemoCaptureScenario.mode ? "demo" : "coreml", to: &body, boundary: boundary)
+        // 車牌來源：ocr（預設）| manual（OCR 失敗、使用者手動輸入）| user_confirmed_mismatch（OCR 與租約不符、使用者確認同一台車 → 後端標記待人工複核）
+        append("plate_confirmation", photo.result.plateSource ?? "ocr", to: &body, boundary: boundary)
         appendFile(imageData, name: "photo", filename: photo.fileName, to: &body, boundary: boundary)
         body.append(Data("--\(boundary)--\r\n".utf8))
         request.httpBody = body
@@ -119,7 +121,7 @@ struct InspectionSyncService {
         }
     }
 
-    private static func detail(from data: Data) -> String? {
+    static func detail(from data: Data) -> String? {
         if let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
            let detail = object["detail"] as? String {
             return detail

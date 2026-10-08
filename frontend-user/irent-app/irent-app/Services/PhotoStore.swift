@@ -35,6 +35,11 @@ struct PhotoStore {
         try Data(contentsOf: directory.appendingPathComponent(fileName))
     }
 
+    /// 重新拍攝某一階段時只清掉那些檔案。
+    func remove(_ fileNames: [String]) {
+        for name in fileNames { try? FileManager.default.removeItem(at: directory.appendingPathComponent(name)) }
+    }
+
     /// 重新開始 Demo 時清掉本機照片檔。
     func removeAll() {
         guard let files = try? FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil) else { return }

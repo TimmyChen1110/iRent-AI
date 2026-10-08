@@ -30,6 +30,7 @@ router = APIRouter(tags=["mobile-inspections"])
 VALID_STAGES = set(ri.STAGE_TO_TYPE)
 VALID_VIEWS = set(ri.ALL_ANGLES)
 VALID_VALIDATION_MODES = {"coreml", "demo"}
+VALID_PLATE_CONFIRMATIONS = {"ocr", "manual", "user_confirmed_mismatch"}
 
 
 def _normalise_plate(value: str) -> str:
@@ -65,6 +66,7 @@ async def submit_photo(
     photo_category: str | None = Form(None),      # exterior | interior
     angle: str | None = Form(None),               # FRONT_LEFT … INTERIOR（同 view；規格命名）
     validation_mode: str | None = Form(None),     # coreml（預設）| demo
+    plate_confirmation: str | None = Form(None),  # ocr（預設）| manual（OCR 失敗、使用者手動輸入）| user_confirmed_mismatch（OCR 與租約不符、使用者確認同一台車 → 待人工複核）
 ):
     if inspection_type and stage not in VALID_STAGES:
         stage = ri.TYPE_TO_STAGE.get(inspection_type.upper(), stage)
@@ -85,7 +87,12 @@ async def submit_photo(
     registered_plate = rental["plate"]
     if _normalise_plate(expected_plate) != _normalise_plate(registered_plate):
         raise HTTPException(422, "expected_plate does not match the rental")
-    if view != ri.INTERIOR_ANGLE and _normalise_plate(recognized_plate) != _normalise_plate(registered_plate):
+    confirmation = (plate_confirmation or "ocr").lower()
+    if confirmation not in VALID_PLATE_CONFIRMATIONS:
+        raise HTTPException(422, "plate_confirmation must be ocr, manual or user_confirmed_mismatch")
+    plate_mismatch = view != ri.INTERIOR_ANGLE and _normalise_plate(recognized_plate) != _normalise_plate(registered_plate)
+    if plate_mismatch and confirmation != "user_confirmed_mismatch":
+        # 預設守門不變：車牌不符一律拒收。只有使用者明確確認「同一台車」才收下，並在 validation 留下記號待人工複核。
         raise HTTPException(422, "recognized_plate does not match the rental")
 
     try:
@@ -111,6 +118,9 @@ async def submit_photo(
         stored_path.write_bytes(data)
 
     local_result.setdefault("validationMode", mode)
+    if confirmation != "ocr":
+        local_result["plateSource"] = confirmation
+        local_result["plateText"] = recognized_plate
     try:
         ingest = ri.ingest_photo(
             rental_id=rental_id, stage=stage, view=view, image_sha256=image_sha256, captured_at=captured_at,
@@ -130,6 +140,8 @@ async def submit_photo(
         "image_sha256": image_sha256,
         "photo_id": ingest["photo_id"],
         "deduplicated": ingest["deduplicated"],
+        "plate_confirmation": confirmation,
+        "plate_mismatch": plate_mismatch,
         "rental_status": ingest["rental_status"],
         "completeness": ingest["completeness"],
         "triggered": ingest["triggered"],
