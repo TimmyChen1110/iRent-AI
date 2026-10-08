@@ -327,7 +327,7 @@ struct RentalSession: Codable, Equatable, Identifiable {
     var isFixture: Bool { aiSource == "demo_fixture" }
 
     /// 後端時間為本地時間的 ISO 8601（無時區）。
-    static func parse(_ text: String) -> Date? {
+    nonisolated static func parse(_ text: String) -> Date? {
         let f = DateFormatter()
         f.locale = Locale(identifier: "en_US_POSIX")
         f.timeZone = .current

@@ -500,7 +500,7 @@ private struct CoreMLModel {
 
 
 /// 拍攝驗證的使用者補救選項（只影響車牌關卡；角度／品質關卡不可跳過）。
-struct CaptureOptions {
+nonisolated struct CaptureOptions {
     /// OCR 讀不到車牌時，使用者手動輸入的車牌（必須與租約一致才通過）。
     var manualPlate: String? = nil
     /// OCR 讀到的車牌與租約不符，使用者確認「是同一台車」：照片通過但標記為待人工複核。

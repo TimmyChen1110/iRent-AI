@@ -6,13 +6,13 @@ import UIKit
 /// 後端以 `validation_mode` 分辨。Demo 不會取代真實模型，只是可切換的另一條路。
 struct CaptureValidator {
     let demoMode: Bool
-    private let recognizer = OnDeviceRecognitionService()
 
     func validate(image: UIImage, rental: Rental, stage: InspectionStage, shot: InspectionShot, attempt: Int,
                   options: CaptureOptions = CaptureOptions()) async -> LocalInspectionResult {
         if demoMode {
             return DemoCaptureScenario.result(rental: rental, stage: stage, shot: shot, attempt: attempt)
         }
+        let recognizer = OnDeviceRecognitionService()
         if let view = shot.exteriorView {
             return await recognizer.evaluate(image: image, expectedPlate: rental.plateNumber, expectedView: view, options: options)
         }
