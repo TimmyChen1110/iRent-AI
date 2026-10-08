@@ -2,11 +2,6 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<!--
-	  App Transport Security（Demo 限定）：後端跑在 Mac 區網、純 HTTP，手機用 http://<區網 IP>:8000 連。
-	  NSAllowsLocalNetworking 在真機上不保證涵蓋 192.168.x.x 這種直接用 IP 的連線，所以 Demo 期間一併開
-	  NSAllowsArbitraryLoads。Production：後端走 HTTPS，整段 NSAppTransportSecurity 直接刪除。
-	-->
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>
