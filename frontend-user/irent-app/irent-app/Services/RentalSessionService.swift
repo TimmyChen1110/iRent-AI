@@ -40,6 +40,11 @@ struct RentalSessionService {
         try await post("v1/rental-sessions/\(id)/return/initiate", body: InitiateBody(userLocation: location), baseURL: baseURL, as: RentalSession.self)
     }
 
+    /// 撤回開始還車 → RENTED（尚無還車照片時）。
+    func cancelReturn(id: String, baseURL: String) async throws -> RentalSession {
+        try await post("v1/rental-sessions/\(id)/return/cancel", body: EmptyBody(), baseURL: baseURL, as: RentalSession.self)
+    }
+
     func returnInfo(id: String, endOdometerKm: Int, location: LocationBody?, baseURL: String) async throws -> RentalSession {
         try await post("v1/rental-sessions/\(id)/return/info", body: ReturnInfoBody(endOdometerKm: endOdometerKm, returnLocation: location), baseURL: baseURL, as: RentalSession.self)
     }

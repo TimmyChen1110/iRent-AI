@@ -587,6 +587,33 @@ final class RentalStore {
         save()
     }
 
+    // MARK: - 返回上一頁（只切換畫面；租借、照片、檢測結果都保留）
+
+    /// 各階段畫面按返回要去的地方；nil = 根畫面（找車、租用中、還車完成）不顯示返回鍵。
+    var backTarget: RentalPhase? {
+        switch phase {
+        case .readyForPickup: .findCar           // 回地圖；租借保留，可從「前往車輛」或車輛資訊頁繼續取車
+        case .pickupComplete: .readyForPickup
+        case .returnInfo: .activeRental          // 需撤回「開始還車」（後端），見 cancelReturn()
+        case .readyForReturn: .returnInfo
+        case .inspectionResult: .readyForReturn
+        case .findCar, .activeRental, .completed: nil
+        }
+    }
+
+    /// 本機畫面返回：不呼叫後端、不清照片、不改租借狀態。
+    func navigateBack(to target: RentalPhase) {
+        phase = target
+        save()
+    }
+
+    /// 還車資訊頁返回租用中：撤回開始還車（尚未上傳任何還車照片時後端才允許）。
+    func cancelReturn() async throws {
+        guard let session else { return }
+        let updated = try await RentalSessionService().cancelReturn(id: session.sessionId, baseURL: apiBaseURL)
+        apply(updated)
+    }
+
     /// 「我已抵達車輛」：進入取車檢查（Session 已在 PICKUP_INSPECTION）。
     func arriveAtVehicle() {
         guard phase == .findCar, session != nil else { return }

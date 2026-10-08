@@ -105,6 +105,14 @@ struct VehicleDetailView: View {
                     if hasActiveSessionHere {
                         Label("你目前正在使用這台車（\(store.phase.title)）。關閉此頁即可繼續。", systemImage: "car.fill")
                             .font(.footnote).foregroundStyle(.secondary)
+                    } else if store.session?.vehicle.vehicleId == vehicle.vehicleId, store.session?.state == "PICKUP_INSPECTION" {
+                        AppButton(title: "繼續取車檢查", systemImage: "camera.viewfinder") {
+                            store.arriveAtVehicle()
+                            dismiss()
+                        }
+                        .listRowInsets(EdgeInsets())
+                        .listRowBackground(Color.clear)
+                        Text("這台車已為你保留，已拍的取車照片都還在。").font(.footnote).foregroundStyle(.secondary)
                     } else if store.session != nil {
                         Label("你已有進行中的租借，請先完成還車再租借其他車輛。", systemImage: "exclamationmark.triangle")
                             .font(.footnote).foregroundStyle(.orange)

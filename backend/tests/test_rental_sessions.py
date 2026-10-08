@@ -498,3 +498,28 @@ class Test3DSupport:
         client.post(f"/v1/rental-sessions/{s['session_id']}/confirm-return")
         recs = client.get(f"/v1/rental-sessions/vehicles/{DEMO_VEHICLE}/records").json()["damage_records"]
         assert len(recs) == 1 and recs[0]["region"] == "rear-bumper" and recs[0]["type"] == "刮痕" and recs[0]["photo_url"].startswith("/photos/")
+
+
+
+class TestBackNavigation:
+    def test_撤回開始還車_回到租用中_有還車照後不可撤回(self, client):
+        s = start(client)
+        shoot(client, s, "pickup", 10)
+        sid = s["session_id"]
+        client.post(f"/v1/rental-sessions/{sid}/pickup/complete")
+        assert client.post(f"/v1/rental-sessions/{sid}/return/cancel").json()["state"] == "RENTED"      # 冪等
+        client.post(f"/v1/rental-sessions/{sid}/return/initiate")
+        j = client.post(f"/v1/rental-sessions/{sid}/return/cancel").json()
+        assert j["state"] == "RENTED" and j["return_initiated_at"] is None and j["pickup"]["complete"]
+        client.post(f"/v1/rental-sessions/{sid}/return/initiate")
+        s2 = client.post(f"/v1/rental-sessions/{sid}/return/info", json={"end_odometer_km": s["start_odometer_km"] + 5}).json()
+        assert s2["state"] == "PHOTO_INSPECTION"
+        assert client.post(f"/v1/rental-sessions/{sid}/return/cancel").json()["state"] == "RENTED"       # 還沒拍還車照
+        client.post(f"/v1/rental-sessions/{sid}/return/initiate")
+        client.post(f"/v1/rental-sessions/{sid}/return/info", json={"end_odometer_km": s["start_odometer_km"] + 5})
+        assert upload(client, s2, "return", "左前", 31).status_code == 201
+        r = client.post(f"/v1/rental-sessions/{sid}/return/cancel")
+        assert r.status_code == 409 and "還車照片" in r.json()["detail"]
+        # 不可從取車檢查撤回
+        s3 = start(client, PIPELINE_VEHICLE)
+        assert client.post(f"/v1/rental-sessions/{s3['session_id']}/return/cancel").status_code == 409

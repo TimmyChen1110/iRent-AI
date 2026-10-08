@@ -5,6 +5,8 @@ struct ContentView: View {
     @Environment(RentalStore.self) private var store
     @Environment(LocationService.self) private var location
     @State private var showSettings = false
+    @State private var confirmCancelReturn = false
+    @State private var backError: String?
 
     var body: some View {
         NavigationStack {
@@ -35,9 +37,25 @@ struct ContentView: View {
             .navigationTitle(store.phase == .findCar && !location.isResolved ? "定位" : store.phase.title)
             .navigationBarTitleDisplayMode(store.phase == .findCar ? .inline : .automatic)
             .toolbar {
+                if let target = store.backTarget {
+                    ToolbarItem(placement: .topBarLeading) {
+                        AppBackButton { goBack(to: target) }
+                    }
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("設定", systemImage: "gear") { showSettings = true }
                 }
+            }
+            .confirmationDialog("回到租用中？", isPresented: $confirmCancelReturn, titleVisibility: .visible) {
+                Button("回到租用中") { Task { await cancelReturn() } }
+                Button("留在還車資訊", role: .cancel) {}
+            } message: {
+                Text("將取消這次還車，租借與計時照常繼續。")
+            }
+            .alert("無法返回", isPresented: Binding(get: { backError != nil }, set: { if !$0 { backError = nil } })) {
+                Button("好") { backError = nil }
+            } message: {
+                Text(backError ?? "")
             }
             .sheet(isPresented: $showSettings) {
                 SettingsView()
@@ -46,7 +64,34 @@ struct ContentView: View {
                 // 重新開啟 App：以後端 Session 狀態為準恢復畫面，再補傳離線照片
                 await store.restoreSession()
                 await PendingUploadSync().run(for: store)
+                #if DEBUG
+                // 開發驗證用（僅 Debug build）：模擬器沒有點按自動化，用啟動參數呼叫與返回鍵相同的函式
+                let args = CommandLine.arguments
+                if args.contains("-openSettings") { showSettings = true }
+                if args.contains("-autoBack"), let target = store.backTarget {
+                    if store.phase == .returnInfo, args.contains("-autoConfirm") { await cancelReturn() } else { goBack(to: target) }
+                }
+                #endif
             }
+        }
+    }
+}
+
+extension ContentView {
+    /// 根畫面返回：還車資訊 → 租用中需先撤回還車（確認後呼叫後端）；其他只切換畫面，照片與結果都保留。
+    fileprivate func goBack(to target: RentalPhase) {
+        if store.phase == .returnInfo {
+            confirmCancelReturn = true
+        } else {
+            withAnimation(.snappy(duration: 0.25)) { store.navigateBack(to: target) }
+        }
+    }
+
+    fileprivate func cancelReturn() async {
+        do {
+            try await store.cancelReturn()
+        } catch {
+            backError = error.localizedDescription
         }
     }
 }
@@ -713,6 +758,8 @@ private struct SettingsView: View {
                 }
             }
             .navigationTitle("設定")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("完成") { dismiss() } } }
         }
     }
 

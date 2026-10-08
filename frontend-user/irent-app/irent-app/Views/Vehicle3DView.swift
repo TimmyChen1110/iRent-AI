@@ -259,7 +259,7 @@ struct Vehicle3DCard: View {
         VStack(spacing: 8) {
             ZStack {
                 RoundedRectangle(cornerRadius: AppTheme.Radius.md, style: .continuous)
-                    .fill(LinearGradient(colors: [Color(hex: 0xF4F6FA), Color(hex: 0xE6EAF1)], startPoint: .top, endPoint: .bottom))
+                    .fill(LinearGradient(colors: [Color(.secondarySystemBackground), Color(.tertiarySystemBackground)], startPoint: .top, endPoint: .bottom))
                 if status == .failed {
                     fallback
                 } else {

@@ -442,6 +442,22 @@ def initiate_return(session_id: str, user_location: dict | None = None) -> dict:
         return _view(conn, _get(conn, session_id))
 
 
+def cancel_return(session_id: str) -> dict:
+    """使用者在還車資訊頁按返回：撤回「開始還車」，回到 RENTED（計時照常繼續）。
+    只允許在還沒有任何還車照片時（RETURN_INITIATED，或 PHOTO_INSPECTION 但一張還車照都沒收到）；
+    已上傳還車照片就不能撤回，避免檢測資料與租約狀態不一致。"""
+    with _conn() as conn:
+        s = _get(conn, session_id)
+        if s["state"] == "RENTED":
+            return _view(conn, s)
+        _require_state(s, "RETURN_INITIATED", "PHOTO_INSPECTION")
+        if ri._completeness(conn, s["rental_id"], "RETURN")["received"]:
+            raise SessionError(409, "已開始上傳還車照片，無法回到租用中；可在還車資訊頁修改里程後繼續拍照")
+        _update(conn, session_id, state="RENTED", return_initiated_at=None, return_info_confirmed_at=None,
+                inspection_attempts=0, last_error=None)
+        return _view(conn, _get(conn, session_id))
+
+
 def confirm_return_info(session_id: str, end_odometer_km: int, return_location: dict | None = None) -> dict:
     """還車資訊確認：驗證結束里程 ≥ 起始里程 → PHOTO_INSPECTION。"""
     with _conn() as conn:

@@ -17,6 +17,11 @@ struct CaptureView: View {
     @State private var syncMessage: String?
     @State private var manualPlate = ""
     @State private var showManualEntry = false
+    @State private var isUploading = false
+    @State private var confirmLeave = false
+
+    /// 檢查或上傳進行中：改用自訂返回鍵先確認（平常保留系統返回鍵與邊緣滑動手勢）
+    private var isBusy: Bool { isChecking || isUploading }
 
     private let photoStore = PhotoStore()
     private let syncService = InspectionSyncService()
@@ -93,6 +98,20 @@ struct CaptureView: View {
         }
         .navigationTitle(stage.title)
         .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(isBusy)
+        .toolbar {
+            if isBusy {
+                ToolbarItem(placement: .topBarLeading) {
+                    AppBackButton { confirmLeave = true }
+                }
+            }
+        }
+        .confirmationDialog(isChecking ? "照片還在檢查中" : "照片正在上傳", isPresented: $confirmLeave, titleVisibility: .visible) {
+            Button("返回清單") { dismiss() }
+            Button("留在此頁", role: .cancel) {}
+        } message: {
+            Text("返回後會在背景繼續完成，已通過檢查的照片不會遺失。")
+        }
         .sheet(isPresented: $showCamera) {
             CameraPicker { process($0) }
         }
@@ -196,6 +215,8 @@ struct CaptureView: View {
                 )
                 store.replace(photo)
                 syncMessage = "照片已保存在手機，正在上傳…"
+                isUploading = true
+                defer { isUploading = false }
 
                 do {
                     try await syncService.upload(
