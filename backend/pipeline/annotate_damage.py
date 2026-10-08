@@ -26,6 +26,26 @@ HERE = Path(__file__).resolve().parent
 OUT = HERE / "annotated"
 OUT.mkdir(exist_ok=True)
 FONT = "/System/Library/Fonts/STHeiti Medium.ttc"
+# Noto TTC 的第 3 個字型為繁體中文；macOS 則沿用原本的黑體。
+FONT_CANDIDATES = (
+    (FONT, 0),
+    ("/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc", 3),
+    ("DejaVuSans.ttf", 0),
+)
+
+
+def _load_font(size: int):
+    """跨平台載入標註字型，缺少系統字型時保留分析結果。"""
+    for path, index in FONT_CANDIDATES:
+        try:
+            return ImageFont.truetype(path, size, index=index)
+        except OSError:
+            continue
+    # Pillow 10.1+ 的內建字型支援指定大小；舊版仍可退回基本字型。
+    try:
+        return ImageFont.load_default(size=size)
+    except TypeError:
+        return ImageFont.load_default()
 
 
 # ---------- Schema：每個標註點含 box_2d（[ymin,xmin,ymax,xmax]，0~1000 正規化） ----------
@@ -74,8 +94,10 @@ def draw_annotations(img: Image.Image, result: AnnotatedResult) -> Image.Image:
     img = img.convert("RGB")
     W, H = img.size
     d = ImageDraw.Draw(img, "RGBA")
-    f_lbl = ImageFont.truetype(FONT, max(20, W // 36))
-    f_num = ImageFont.truetype(FONT, max(22, W // 30))
+    label_size = max(20, W // 36)
+    number_size = max(22, W // 30)
+    f_lbl = _load_font(label_size)
+    f_num = _load_font(number_size)
 
     RED = (214, 40, 40)
     for i, fd in enumerate(result.findings, 1):
@@ -87,7 +109,7 @@ def draw_annotations(img: Image.Image, result: AnnotatedResult) -> Image.Image:
         for w in range(4):
             d.rounded_rectangle([bx0 - w, by0 - w, bx1 + w, by1 + w], radius=8, outline=RED)
         # 編號圓標
-        r = f_num.size
+        r = number_size
         cx, cy = bx0, max(by0 - r - 6, 4)
         d.ellipse([cx, cy, cx + r + 10, cy + r + 10], fill=RED)
         d.text((cx + 5 + r // 4, cy + 1), str(i), font=f_num, fill=(255, 255, 255))
@@ -107,7 +129,7 @@ def draw_annotations(img: Image.Image, result: AnnotatedResult) -> Image.Image:
             for i, fd in enumerate(result.findings, 1)]
            if result.findings else ["未發現需標註的異常"])
     lines = [seg for line in raw for seg in wrap(line, W - 28)]
-    lh = f_lbl.size + 10
+    lh = label_size + 10
     pad = 14
     box_h = lh * len(lines) + pad * 2
     d.rectangle([0, H - box_h, W, H], fill=(0, 0, 0, 185))
