@@ -82,6 +82,11 @@ struct FindCarView: View {
                 didPlaceCamera = true
                 camera = .camera(FleetCamera.overview(center: userLocation))
             }
+            // 後台新增／移動車輛、別人租走車輛：找車畫面每 10 秒刷新一次車輛清單（座標與狀態以後端為準）
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(10))
+                if mode == .findCar { await store.loadVehicles() }
+            }
         }
         .onChange(of: location.coordinate?.latitude) { _, _ in
             // 定位更新（例如手動改位置）→ 鏡頭跟著移
@@ -409,6 +414,7 @@ private struct VehicleBottomSheet: View {
                         InfoChip(icon: "gauge.with.needle", text: "\(vehicle.odometerKm) km")
                     }
                     HStack(spacing: 8) {
+                        if vehicle.isDemo == true { DemoBadge() }
                         if let fuel = vehicle.fuelPercent { InfoChip(icon: "fuelpump.fill", text: "油量 \(fuel)%") }
                         InfoChip(icon: vehicle.isAvailable ? "checkmark.circle.fill" : "minus.circle.fill",
                                  text: vehicle.statusLabel,

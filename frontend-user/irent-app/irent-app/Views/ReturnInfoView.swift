@@ -106,6 +106,7 @@ struct ReturnInfoView: View {
                     Text("確認後進入還車拍攝：四個外觀角度與一張車內照，每張都會在手機上先檢查車牌、角度與品質。")
                         .font(.footnote).foregroundStyle(.secondary)
                 }
+                CancelReturnSection(disabled: isSubmitting)
             }
             .onAppear {
                 if endOdometerText.isEmpty, let end = session.endOdometerKm { endOdometerText = "\(end)" }

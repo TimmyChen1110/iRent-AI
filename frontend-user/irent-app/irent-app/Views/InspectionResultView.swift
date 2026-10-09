@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// Phase 4/5：AI 影像檢測結果。資料來自後端 `GET /v1/rental-sessions/{id}/inspection`（既有 pipeline 的比對結果）。
-/// 分析中每 4 秒輪詢；失敗可「重新檢測」或「重新拍攝」；完成後需使用者按「確認還車」才會 RETURNED。
+/// 分析中每 2 秒輪詢（顯示已完成項目數）；失敗可「重新檢測」或「重新拍攝」；完成後需使用者按「確認還車」才會 RETURNED。
 struct InspectionResultView: View {
     @Environment(RentalStore.self) private var store
 
@@ -172,6 +172,9 @@ struct InspectionResultView: View {
 
                 if result.analysis == "failed" {
                     Section("檢測失敗") {
+                        if result.analysisError?.contains("TimeoutError") == true {
+                            Text("這次檢測等待太久已自動停止（照片都已保存），可直接重新檢測。").font(.footnote).foregroundStyle(.red)
+                        }
                         Text("車況檢測暫時無法完成，請重新檢測或重新拍攝；若持續發生，客服會協助人工檢視。").font(.footnote).foregroundStyle(.red)
                         Button { retry(mode: "reanalyze") } label: { Label("重新檢測（同一批照片）", systemImage: "arrow.clockwise") }
                             .disabled(isActing)
@@ -200,6 +203,8 @@ struct InspectionResultView: View {
             if let actionError {
                 Section { Text(actionError).font(.footnote).foregroundStyle(.red) }
             }
+
+            CancelReturnSection(disabled: isActing)
         }
         .task {
             await PendingUploadSync().run(for: store)
@@ -242,7 +247,17 @@ struct InspectionResultView: View {
                 .font(.title3.bold()).multilineTextAlignment(.center)
             Text("\(store.rental.carName) · \(store.rental.plateNumber)").foregroundStyle(.secondary)
             if analysis == "analyzing" || analysis == "pending" {
-                Text("系統正在比對取車與還車照片，約需 1–2 分鐘。")
+                if let progress = result?.analysisProgress ?? store.session?.analysisProgress, let total = progress.total, total > 0 {
+                    ProgressView(value: Double(min(progress.done, total)), total: Double(total))
+                        .frame(maxWidth: 220)
+                        .accessibilityIdentifier("analysis-progress-bar")
+                    Text("已完成 \(min(progress.done, total)) / \(total) 項比對" + (progress.elapsedS.map { " · 已等待 \($0) 秒" } ?? ""))
+                        .font(.caption.monospacedDigit()).foregroundStyle(.secondary)
+                        .accessibilityIdentifier("analysis-progress-text")
+                }
+                Text(pendingUploads > 0
+                     ? "照片上傳完成後會自動開始分析。"
+                     : "系統正同時比對四個角度與車內照片，通常 10–40 秒完成。請留在此頁，不需要重新送出。")
                     .font(.caption).foregroundStyle(.secondary).multilineTextAlignment(.center)
             }
         }
@@ -284,10 +299,14 @@ struct InspectionResultView: View {
 
     private func refresh() async {
         guard let session = store.session else { return }
+        // 請求發出後若使用者取消了還車，回來的舊狀態／舊結果一律丟掉（否則會把畫面推回分析中或檢測完成）
+        let generation = store.returnFlowGeneration
         do {
             let updated = try await RentalSessionService().get(id: session.sessionId, baseURL: store.apiBaseURL)
-            store.apply(updated)
-            result = try await RentalSessionService().inspection(id: session.sessionId, baseURL: store.apiBaseURL)
+            guard store.applyIfCurrent(updated, generation: generation) else { return }
+            let fresh = try await RentalSessionService().inspection(id: session.sessionId, baseURL: store.apiBaseURL)
+            guard generation == store.returnFlowGeneration else { return }
+            result = fresh
             fetchError = nil
         } catch {
             fetchError = "無法取得檢測結果：\(error.localizedDescription)"
@@ -299,7 +318,7 @@ struct InspectionResultView: View {
             await refresh()
             if let result, result.isFinished { break }
             if store.phase != .inspectionResult { break }
-            try? await Task.sleep(for: .seconds(4))
+            try? await Task.sleep(for: .seconds(2))
             if pendingUploads > 0 { await PendingUploadSync().run(for: store) }
         }
     }
@@ -308,10 +327,12 @@ struct InspectionResultView: View {
         guard let session = store.session, !isActing else { return }
         isActing = true
         actionError = nil
+        let generation = store.returnFlowGeneration
         Task {
             defer { isActing = false }
             do {
                 let updated = try await RentalSessionService().retry(id: session.sessionId, mode: mode, baseURL: store.apiBaseURL)
+                guard generation == store.returnFlowGeneration else { return }
                 if mode == "retake" {
                     store.clearPhotos(stage: .return)
                 }

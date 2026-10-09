@@ -70,6 +70,7 @@ struct FeaturedVehiclesView: View {
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 6) {
                     Text(vehicle.plate).font(.subheadline.weight(.bold)).monospaced()
+                    if vehicle.isDemo == true { DemoBadge() }
                     Text(vehicle.statusLabel).font(.caption2.weight(.semibold))
                         .padding(.horizontal, 5).padding(.vertical, 1)
                         .background((vehicle.isAvailable ? Color.green : Color.gray).opacity(0.15), in: Capsule())
@@ -90,5 +91,17 @@ struct FeaturedVehiclesView: View {
     static func imageURL(_ vehicle: SimVehicle, baseURL: String) -> URL? {
         guard let path = vehicle.imageUrl, let base = InspectionSyncService.normalizedBaseURL(baseURL) else { return nil }
         return URL(string: path, relativeTo: base)?.absoluteURL
+    }
+}
+
+/// Demo 測試車輛標記（後端 is_demo）：與正式車輛區隔。
+struct DemoBadge: View {
+    var body: some View {
+        Text("DEMO")
+            .font(.caption2.weight(.heavy))
+            .padding(.horizontal, 5).padding(.vertical, 1)
+            .background(Color.orange.opacity(0.18), in: Capsule())
+            .foregroundStyle(.orange)
+            .accessibilityLabel("Demo 測試車輛")
     }
 }

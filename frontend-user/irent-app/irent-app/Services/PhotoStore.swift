@@ -17,14 +17,34 @@ struct PhotoStore {
         try? fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
     }
 
+    /// 保存／上傳的長邊上限。後端送 AI 前一律縮到 1280 寬（run_eval_gemini.prep_image），
+    /// 原尺寸（iPhone 4032×3024）只會讓每張上傳變大數倍、拖慢還車；裝置端車牌／角度檢查在縮圖前就已完成。
+    static let maxLongEdge: CGFloat = 1920
+
     func save(_ image: UIImage, stage: InspectionStage, shot: InspectionShot) throws -> (fileName: String, data: Data, hash: String) {
-        guard let data = image.jpegData(compressionQuality: 0.9) else {
+        guard let data = Self.downscaled(image).jpegData(compressionQuality: 0.9) else {
             throw PhotoStoreError.imageEncodingFailed
         }
         let hash = SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
         let fileName = "\(stage.rawValue)-\(shot.rawValue)-\(UUID().uuidString).jpg"
         try data.write(to: directory.appendingPathComponent(fileName), options: .atomic)
         return (fileName, data, hash)
+    }
+
+    /// 長邊超過上限才縮小；重繪時套用 EXIF 方向（輸出為正向像素）。
+    static func downscaled(_ image: UIImage, maxLongEdge: CGFloat = maxLongEdge) -> UIImage {
+        let pixelWidth = image.size.width * image.scale
+        let pixelHeight = image.size.height * image.scale
+        let longEdge = max(pixelWidth, pixelHeight)
+        guard longEdge > maxLongEdge else { return image }
+        let ratio = maxLongEdge / longEdge
+        let target = CGSize(width: (pixelWidth * ratio).rounded(), height: (pixelHeight * ratio).rounded())
+        let format = UIGraphicsImageRendererFormat.default()
+        format.scale = 1
+        format.opaque = true
+        return UIGraphicsImageRenderer(size: target, format: format).image { _ in
+            image.draw(in: CGRect(origin: .zero, size: target))
+        }
     }
 
     func image(named fileName: String) -> UIImage? {

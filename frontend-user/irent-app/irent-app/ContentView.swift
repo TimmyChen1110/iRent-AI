@@ -183,6 +183,73 @@ private struct InspectionChecklistView: View {
                     }
                 }
             }
+
+            if stage == .return {
+                CancelReturnSection()
+            }
+        }
+    }
+}
+
+// MARK: - 取消還車（還車資訊／還車拍攝／AI 檢測共用）
+
+/// 還車流程中、確認還車前的任何畫面都能直接取消還車，回到租用中（不需要先回地圖）。
+/// 後端驗證狀態並清掉這次的還車照片與檢測結果；正在跑的 AI 分析結果不會再寫回。
+struct CancelReturnSection: View {
+    @Environment(RentalStore.self) private var store
+    var disabled = false
+    @State private var confirming = false
+    @State private var isCancelling = false
+    @State private var error: String?
+
+    var body: some View {
+        if store.canCancelReturn {
+            let blocked = store.session?.returnCancelBlocked
+            let inactive = isCancelling || disabled || blocked != nil
+            Section {
+                Button(role: .destructive) {
+                    confirming = true
+                } label: {
+                    HStack {
+                        Label(isCancelling ? "取消中…" : "取消還車，繼續租用", systemImage: blocked != nil ? "lock.fill" : "xmark.circle")
+                        if isCancelling { Spacer(); ProgressView() }
+                    }
+                    // 停用時明確灰化（List 內 destructive 按鈕停用後預設不夠明顯）
+                    .foregroundStyle(inactive ? AnyShapeStyle(.tertiary) : AnyShapeStyle(.red))
+                }
+                .disabled(inactive)
+                .accessibilityIdentifier("cancel-return")
+                if let blocked {
+                    Text(blocked).font(.footnote).foregroundStyle(.orange)
+                }
+                if let error {
+                    Text(error).font(.footnote).foregroundStyle(.red)
+                }
+            } footer: {
+                Text("取消後回到租用中，租借與計時照常繼續；這次的還車照片與檢測結果不會保留，之後還車需重新拍攝。")
+            }
+            .confirmationDialog("取消這次還車？", isPresented: $confirming, titleVisibility: .visible) {
+                Button("取消還車，繼續租用", role: .destructive) { Task { await cancel() } }
+                Button("繼續還車", role: .cancel) {}
+            } message: {
+                Text("將回到租用中。若 AI 檢測正在進行，結果會被捨棄。")
+            }
+        }
+    }
+
+    private func cancel() async {
+        isCancelling = true
+        error = nil
+        defer { isCancelling = false }
+        do {
+            try await store.cancelReturn()
+        } catch {
+            // 被拒（例如另一端已確認還車）：以後端狀態為準刷新畫面
+            if let id = store.session?.sessionId,
+               let fresh = try? await RentalSessionService().get(id: id, baseURL: store.apiBaseURL) {
+                store.apply(fresh)
+            }
+            self.error = error.localizedDescription
         }
     }
 }
@@ -533,6 +600,7 @@ private struct ActiveRentalView: View {
                 if let error { Text(error).font(.footnote).foregroundStyle(.red) }
                 AppButton(title: isInitiating ? "處理中…" : "我要還車", systemImage: "arrow.uturn.backward.circle.fill") { beginReturn() }
                     .disabled(isInitiating)
+                    .accessibilityIdentifier("begin-return")
                     .listRowInsets(EdgeInsets())
                     .listRowBackground(Color.clear)
             }

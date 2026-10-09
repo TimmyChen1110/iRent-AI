@@ -67,7 +67,8 @@ struct InspectionSyncService {
         append("expected_plate", rental.plateNumber, to: &body, boundary: boundary)
         append("stage", photo.stage.rawValue, to: &body, boundary: boundary)
         append("view", photo.shot.rawValue, to: &body, boundary: boundary)
-        append("recognized_plate", photo.result.plateText ?? rental.plateNumber, to: &body, boundary: boundary)
+        // 車外照只送裝置端 OCR 的辨識結果（不拿租約車牌補）；車內照不辨識車牌，後端不比對，沿用租約車牌佔欄位
+        append("recognized_plate", photo.shot.isInterior ? rental.plateNumber : (photo.result.plateText ?? ""), to: &body, boundary: boundary)
         append("image_sha256", photo.sha256, to: &body, boundary: boundary)
         append("captured_at", ISO8601DateFormatter().string(from: photo.capturedAt), to: &body, boundary: boundary)
         let resultData = try JSONEncoder().encode(photo.result)

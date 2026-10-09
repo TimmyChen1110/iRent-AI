@@ -225,6 +225,8 @@ struct SimVehicle: Codable, Identifiable, Equatable {
     let featured: Bool
     let serviceNotice: String?
     let activeSessionId: String?
+    /// Demo 測試車輛（後端 category=demo）：畫面上必須標示，避免與正式車輛混淆
+    var isDemo: Bool? = nil
 
     var id: String { vehicleId }
     var coordinate: CLLocationCoordinate2D { location.coordinate ?? CLLocationCoordinate2D(latitude: 0, longitude: 0) }
@@ -233,6 +235,7 @@ struct SimVehicle: Codable, Identifiable, Equatable {
         switch status {
         case "AVAILABLE": "可租借"
         case "RENTED": "租用中"
+        case "MAINTENANCE": "整備中"
         case "RETURNED": "已還車"
         default: status
         }
@@ -321,6 +324,10 @@ struct RentalSession: Codable, Equatable, Identifiable {
     let pickup: Completeness?
     let `return`: Completeness?
     let analysis: String?          // pending | analyzing | complete | failed
+    /// 分析中才有：已完成項目數 / 總數（4 角＋車內）、已等待秒數、後端總期限
+    var analysisProgress: AnalysisProgress? = nil
+    /// 還車檢測結果已由營運人員處理（裁決／整備任務）時，後端不允許取消還車；這裡是原因（nil＝可取消）
+    var returnCancelBlocked: String? = nil
     let inspectionAttempts: Int?
     let lastError: String?
     let reviewRequired: Bool?
@@ -434,6 +441,7 @@ struct InspectionResult: Codable, Equatable {
     let sessionId: String
     let state: String
     let analysis: String
+    var analysisProgress: AnalysisProgress? = nil
     let aiSource: String?
     let aiSourceLabel: String
     let analysisError: String?
@@ -448,6 +456,14 @@ struct InspectionResult: Codable, Equatable {
 
     var isFixture: Bool { aiSource == "demo_fixture" }
     var isFinished: Bool { analysis == "complete" || analysis == "failed" }
+}
+
+/// `analysis_progress`：後端還車 AI 分析進度（各角度同時判定，完成一項加一）。
+struct AnalysisProgress: Codable, Equatable {
+    let done: Int
+    let total: Int?
+    let elapsedS: Int?
+    let deadlineS: Int?
 }
 
 @MainActor
@@ -645,11 +661,29 @@ final class RentalStore {
         save()
     }
 
-    /// 還車資訊頁返回租用中：撤回開始還車（尚未上傳任何還車照片時後端才允許）。
+    /// 後端 `return/cancel` 接受的狀態：確認還車（RETURNED）前的整個還車流程。
+    static let returnCancellableStates: Set<String> = ["RETURN_INITIATED", "PHOTO_INSPECTION", "INSPECTION_COMPLETED", "INSPECTION_FAILED"]
+    var canCancelReturn: Bool { session.map { Self.returnCancellableStates.contains($0.state) } ?? false }
+
+    /// 每次取消還車遞增：還車流程中發出、在取消之後才回來的請求（例如結果頁輪詢）比對這個值，過期就丟掉，
+    /// 不會把畫面推回「AI 分析中／檢測完成」。
+    private(set) var returnFlowGeneration = 0
+
+    /// 取消還車 → 回到租用中（還車流程任何階段、確認還車前都可以）。租借、計時與取車基準保留；
+    /// 這次的還車照片（本機與後端）與檢測結果清掉，下次還車重新拍攝。
     func cancelReturn() async throws {
         guard let session else { return }
         let updated = try await RentalSessionService().cancelReturn(id: session.sessionId, baseURL: apiBaseURL)
+        returnFlowGeneration += 1
+        clearPhotos(stage: .return)          // 本機還車照一併清掉：離線佇列不會在取消後補傳舊照片
         apply(updated)
+    }
+
+    /// 只在還車流程沒被取消過（generation 未變）時套用：給還車流程中的非同步請求用。
+    func applyIfCurrent(_ newSession: RentalSession, generation: Int) -> Bool {
+        guard generation == returnFlowGeneration else { return false }
+        apply(newSession)
+        return true
     }
 
     /// 「我已抵達車輛」：進入取車檢查（Session 已在 PICKUP_INSPECTION）。

@@ -92,6 +92,15 @@ struct CaptureView: View {
                     }
                     .buttonStyle(.borderedProminent)
                     .disabled(isChecking)
+                    #if DEBUG
+                    // UI 測試用（僅 Debug build）：模擬器沒有相機，改讀測試提供的真實照片檔；
+                    // 照片一樣走 process() → 真實 Core ML 車牌偵測／OCR／角度檢查（不是假結果）。
+                    if let image = Self.uiTestPhoto(stage: stage, shot: shot) {
+                        Button("使用測試照片") { process(image) }
+                            .accessibilityIdentifier("uitest-photo")
+                            .disabled(isChecking)
+                    }
+                    #endif
                 }
             }
             .padding()
@@ -185,6 +194,14 @@ struct CaptureView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
+
+    #if DEBUG
+    /// 環境變數 IRENT_UITEST_PHOTO_DIR 下的 `<stage>-<角度>.jpg`（例如 pickup-左前.jpg）。
+    static func uiTestPhoto(stage: InspectionStage, shot: InspectionShot) -> UIImage? {
+        guard let dir = ProcessInfo.processInfo.environment["IRENT_UITEST_PHOTO_DIR"] else { return nil }
+        return UIImage(contentsOfFile: "\(dir)/\(stage.rawValue)-\(shot.rawValue).jpg")
+    }
+    #endif
 
     private func process(_ image: UIImage, options: CaptureOptions = CaptureOptions()) {
         previewImage = image
