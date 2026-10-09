@@ -6,7 +6,18 @@
 	objectVersion = 110;
 	objects = {
 
+/* Begin PBXContainerItemProxy section */
+		A1C0FFEE0000000000000010 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4739C419306375C500E3764D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 4739C420306375C500E3764D;
+			remoteInfo = "irent-app";
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
+		A1C0FFEE000000000000000A /* irent-appUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "irent-appUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		4739C421306375C500E3764D /* irent-app.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "irent-app.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -16,10 +27,20 @@
 			path = "irent-app";
 			sourceTree = "<group>";
 		};
+		A1C0FFEE000000000000000B /* irent-appUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "irent-appUITests";
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		4739C41E306375C500E3764D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+			);
+		};
+		A1C0FFEE000000000000000C /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
 			);
@@ -31,6 +52,7 @@
 			isa = PBXGroup;
 			children = (
 				4739C423306375C500E3764D /* irent-app */,
+				A1C0FFEE000000000000000B /* irent-appUITests */,
 				4739C422306375C500E3764D /* Products */,
 			);
 			sourceTree = "<group>";
@@ -39,6 +61,7 @@
 			isa = PBXGroup;
 			children = (
 				4739C421306375C500E3764D /* irent-app.app */,
+				A1C0FFEE000000000000000A /* irent-appUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -64,6 +87,27 @@
 			productReference = 4739C421306375C500E3764D /* irent-app.app */;
 			productType = "com.apple.product-type.application";
 		};
+		A1C0FFEE000000000000000F /* irent-appUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A1C0FFEE0000000000000014 /* Build configuration list for PBXNativeTarget "irent-appUITests" */;
+			buildPhases = (
+				A1C0FFEE000000000000000D /* Sources */,
+				A1C0FFEE000000000000000C /* Frameworks */,
+				A1C0FFEE000000000000000E /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A1C0FFEE0000000000000011 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				A1C0FFEE000000000000000B /* irent-appUITests */,
+			);
+			name = "irent-appUITests";
+			productName = "irent-appUITests";
+			productReference = A1C0FFEE000000000000000A /* irent-appUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -76,6 +120,10 @@
 				TargetAttributes = {
 					4739C420306375C500E3764D = {
 						CreatedOnToolsVersion = 27.0;
+					};
+					A1C0FFEE000000000000000F = {
+						CreatedOnToolsVersion = 27.0;
+						TestTargetID = 4739C420306375C500E3764D;
 					};
 				};
 			};
@@ -94,12 +142,18 @@
 			projectRoot = "";
 			targets = (
 				4739C420306375C500E3764D /* irent-app */,
+				A1C0FFEE000000000000000F /* irent-appUITests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		4739C41F306375C500E3764D /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+			);
+		};
+		A1C0FFEE000000000000000E /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			files = (
 			);
@@ -112,7 +166,20 @@
 			files = (
 			);
 		};
+		A1C0FFEE000000000000000D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		A1C0FFEE0000000000000011 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 4739C420306375C500E3764D /* irent-app */;
+			targetProxy = A1C0FFEE0000000000000010 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		4739C42A306375C600E3764D /* Debug configuration for PBXProject "irent-app" */ = {
@@ -316,6 +383,40 @@
 			};
 			name = Release;
 		};
+		A1C0FFEE0000000000000012 /* Debug configuration for PBXNativeTarget "irent-appUITests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = D984VGGK65;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "timmy.irent-appUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = "irent-app";
+			};
+			name = Debug;
+		};
+		A1C0FFEE0000000000000013 /* Release configuration for PBXNativeTarget "irent-appUITests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = D984VGGK65;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "timmy.irent-appUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = "irent-app";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -332,6 +433,14 @@
 			buildConfigurations = (
 				4739C42D306375C600E3764D /* Debug configuration for PBXNativeTarget "irent-app" */,
 				4739C42E306375C600E3764D /* Release configuration for PBXNativeTarget "irent-app" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		A1C0FFEE0000000000000014 /* Build configuration list for PBXNativeTarget "irent-appUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A1C0FFEE0000000000000012 /* Debug configuration for PBXNativeTarget "irent-appUITests" */,
+				A1C0FFEE0000000000000013 /* Release configuration for PBXNativeTarget "irent-appUITests" */,
 			);
 			defaultConfigurationName = Release;
 		};
