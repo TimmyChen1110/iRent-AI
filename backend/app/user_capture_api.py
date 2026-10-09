@@ -24,6 +24,7 @@ from fastapi.responses import FileResponse
 import demo_inspection_fixture
 import paths
 import rental_inspections as ri
+import rental_sessions as rs
 
 router = APIRouter(tags=["mobile-inspections"])
 
@@ -84,6 +85,9 @@ async def submit_photo(
         raise HTTPException(404, "unknown rental_id")
     if mode == "demo" and not rental["demo"]:
         raise HTTPException(422, "demo validation is only accepted for demo rentals")
+    if mode == "demo" and rs.is_admin_demo_vehicle(rental["vehicle_id"]):
+        # 後台建立的 Demo 車輛用來測真實車牌辨識：不接受 App 的 Demo 拍攝劇本（劇本會把租約車牌當成辨識結果）
+        raise HTTPException(422, "此 Demo 測試車輛必須使用真實車牌辨識（Core ML），不接受 Demo 拍攝劇本")
     registered_plate = rental["plate"]
     if _normalise_plate(expected_plate) != _normalise_plate(registered_plate):
         raise HTTPException(422, "expected_plate does not match the rental")
@@ -101,6 +105,14 @@ async def submit_photo(
         raise HTTPException(422, "local_result_json must be valid JSON") from error
     if local_result.get("passed") is not True:
         raise HTTPException(422, "only on-device-passed photos are accepted")
+    if view != ri.INTERIOR_ANGLE and mode == "coreml" and confirmation != "manual":
+        # 車外照：比對對象是裝置端 OCR 的原始輸出（local_result.plateText），表單欄位必須與它一致，
+        # 不能拿租約車牌填進 recognized_plate 冒充辨識結果。手動輸入（manual）另有 plateSource 標記、待人工確認。
+        ocr_text = local_result.get("plateText") or ""
+        if not ocr_text:
+            raise HTTPException(422, "車外照缺少裝置端車牌辨識結果")
+        if _normalise_plate(ocr_text) != _normalise_plate(recognized_plate):
+            raise HTTPException(422, "recognized_plate 與裝置端車牌辨識結果不一致")
 
     data = await photo.read()
     actual_hash = hashlib.sha256(data).hexdigest()

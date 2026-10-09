@@ -30,6 +30,7 @@ from pydantic import BaseModel
 import ops_auth
 import ops_db
 import rental_inspections
+import rental_sessions
 import paths
 import task_service
 
@@ -44,6 +45,22 @@ def bind(server_module) -> None:
     ops_db.db_path = lambda: _srv.DB_PATH
     ops_db.base_init = lambda: _srv.db().close()   # 先確保 tasks / task_events 存在
     _srv.TASK_COMPLETE_GUARD = _complete_guard     # 監理台與整備中心共用同一條完工規則
+    rental_sessions.OPS_HOLD = car_hold             # App 可租車輛：整備中／人工鎖定 → 暫停出租（與車隊清單同一條規則）
+
+
+def car_hold(car: str) -> str | None:
+    """這台車目前是否因整備暫停出租：人工鎖定或有未完成（pending / in_progress）的整備任務。回原因，None＝無。
+    與 /fleet 的 locked 判斷同一條規則；車牌不分連字號（RCG2235 = RCG-2235）。"""
+    key = _plate_key(car)
+    with ops_db.db() as conn:
+        lock = next((l for c, l in ops_db.get_locks(conn).items() if _plate_key(c) == key and l["locked"]), None)
+        n_open = sum(1 for (c,) in conn.execute("SELECT car FROM tasks WHERE status IN ('pending','in_progress')")
+                     if _plate_key(c) == key)
+    if lock:
+        return f"人工鎖定派單：{lock['reason']}" if lock.get("reason") else "人工鎖定派單"
+    if n_open:
+        return f"{n_open} 項整備任務未完成"
+    return None
 
 
 def _complete_guard(conn, task_id: int) -> str | None:
@@ -860,6 +877,36 @@ def _location_of(car: str, overrides: dict[str, dict]) -> dict | None:
             "manual": car in overrides}
 
 
+def _vehicle_location(v: dict) -> dict | None:
+    """可租車輛（demo_vehicles）的位置：座標就是車輛實際儲存的 lat/lng（App 地圖同一組），不被站點覆蓋。
+    station_id 取最近的站點，只用於行政區／城市歸類與地圖分群。"""
+    loc = v.get("location") or {}
+    lat, lng = loc.get("lat"), loc.get("lng")
+    if lat is None or lng is None:
+        return None
+    sts = _stations()
+    cities = {c["id"]: c for c in (_stations_doc().get("cities") or [])}
+    near = min(sts, key=lambda st: (st["lat"] - lat) ** 2 + ((st["lng"] - lng) * 0.9) ** 2) if sts else None
+    city = cities.get((near or {}).get("city"), {})
+    return {"station_id": (near or {}).get("id"), "station": loc.get("name") or (near or {}).get("name"),
+            "district": (near or {}).get("district"), "city_id": (near or {}).get("city"), "city": city.get("name"),
+            "lng": lng, "lat": lat, "manual": True, "source": "vehicle",
+            "nearest_station": (near or {}).get("name")}
+
+
+def _rental_fleet_by_key() -> dict[str, dict]:
+    try:
+        return {_plate_key(v["plate"]): v for v in rental_sessions.list_vehicles(internal=True, include_parked=False)}
+    except Exception:
+        return {}
+
+
+def _car_location(car: str, overrides: dict[str, dict], fleet_by_key: dict[str, dict]) -> dict | None:
+    """可租車輛 → 車輛座標；其他（資料集車輛）→ 既有站點指派。"""
+    v = fleet_by_key.get(_plate_key(car))
+    return (_vehicle_location(v) if v else None) or _location_of(car, overrides)
+
+
 @router.get("/stations")
 def stations():
     doc = _stations_doc()
@@ -876,6 +923,16 @@ def patch_location(car: str, body: LocationIn, x_ops_reader: str | None = Header
     car = car.strip().upper()
     if not car:
         raise HTTPException(400, "car 不可為空")
+    bookable = rental_sessions.vehicle_by_plate(car)
+    if bookable and body.station_id:
+        # 可租車輛：位置以車輛座標為準 → 直接把座標改到該站點（App 地圖同步）
+        st = next((x for x in _stations() if x["id"] == body.station_id), None)
+        if not st:
+            raise HTTPException(400, f"未知站點 {body.station_id}")
+        try:
+            rental_sessions.set_vehicle_location(bookable["vehicle_id"], st["lat"], st["lng"], st["name"])
+        except rental_sessions.SessionError as e:
+            raise HTTPException(e.status, e.detail) from e
     with ops_db.db() as conn:
         if body.station_id:
             if body.station_id not in {st["id"] for st in _stations()}:
@@ -884,7 +941,7 @@ def patch_location(car: str, body: LocationIn, x_ops_reader: str | None = Header
         else:
             conn.execute(ops_db.sql("DELETE FROM car_locations WHERE car=?"), (car,))
         ops_db.add_audit(conn, "relocate", "fleet", car, body.station_id)
-        loc = _location_of(car, ops_db.get_car_locations(conn))
+        loc = _car_location(car, ops_db.get_car_locations(conn), _rental_fleet_by_key())
     return {"car": car, "location": loc, "server_time": _iso(_now())}
 
 
@@ -912,6 +969,11 @@ def fleet(q: str | None = None, status: str | None = None):
             " WHERE t.status='completed' GROUP BY UPPER(p.car)")}
     ds = _dataset_cars()
     try:
+        # App 可租車輛（demo_vehicles）：即使從沒被租過也要出現在車隊清單；租用中由 Session／車輛狀態決定
+        rental_fleet = {v["plate"]: v for v in rental_sessions.list_vehicles(internal=True, include_parked=False)}
+    except Exception:
+        rental_fleet = {}
+    try:
         rentals = rental_inspections.vehicles()      # iOS App 租約的車（車型、最近還車）
         mobile_cases: dict[str, int] = {}
         for c in rental_inspections.ops_cases():
@@ -920,7 +982,7 @@ def fleet(q: str | None = None, status: str | None = None):
         rentals, mobile_cases = {}, {}
     # 同一台車的不同寫法（RCG2235 / RCG-2235）合併成一列
     groups: dict[str, set[str]] = {}
-    for name in set(ds) | {t["car"] for t in tasks if t.get("car")} | set(locks) | set(rentals):
+    for name in set(ds) | {t["car"] for t in tasks if t.get("car")} | set(locks) | set(rentals) | set(rental_fleet):
         groups.setdefault(_plate_key(name), set()).add(name)
     rows = []
     for key, names in groups.items():
@@ -932,7 +994,10 @@ def fleet(q: str | None = None, status: str | None = None):
         info = next((ds[n] for n in names if n in ds), {})
         rental = next((rentals[n] for n in names if n in rentals), None)
         mobile_count = sum(v for k, v in mobile_cases.items() if _plate_key(k) == key)
-        if open_tasks or manual:
+        bookable = next((rental_fleet[n] for n in names if n in rental_fleet), None)
+        if bookable and bookable["status"] == "RENTED":
+            st = "rented"            # 租用中（含還車流程尚未確認還車）：不論其他條件都不可出租
+        elif open_tasks or manual:
             st = "locked"
         elif info.get("unreviewed") or _unreviewed_mobile(car, mobile_cases):
             st = "review"
@@ -952,19 +1017,30 @@ def fleet(q: str | None = None, status: str | None = None):
             "baseline_count": baseline_counts.get(car.upper(), 0),
             "dataset_cases": info.get("cases", 0), "claims": info.get("claims", 0),
             "unreviewed_flags": info.get("unreviewed", 0),
-            "location": _location_of(car, loc_overrides),
-            "model": (rental or {}).get("model"),
+            "location": (_vehicle_location(bookable) if bookable else None) or _location_of(car, loc_overrides),
+            "model": (rental or {}).get("model") or (bookable or {}).get("model"),
             "last_rental": rental,
             "mobile_cases": mobile_count,
+            # App 可租車輛才有以下欄位意義：rentable＝使用者現在租得到（與 App 車輛清單一致）
+            "rental_fleet": bool(bookable),
+            # 與 App 同一個判斷（rental_sessions.availability）；待審核（review）的 AI 案件依既有語意不鎖派單，只提示營運人員
+            "rentable": bool(bookable) and bookable["status"] == "AVAILABLE",
+            "rental_state": {"vehicle_id": bookable["vehicle_id"], "vehicle_status": bookable["status"],
+                             "session_id": bookable.get("active_session_id"),
+                             "session_state": bookable.get("active_session_state"),
+                             "visibility": bookable.get("visibility"),
+                             "is_demo": bool(bookable.get("is_demo")),
+                             "admin_created": bool(bookable.get("admin_created"))} if bookable else None,
         })
     if q:
         rows = [r for r in rows if q.upper() in r["car"].upper()]
     if status:
         rows = [r for r in rows if r["status"] == status]
-    order = {"locked": 0, "review": 1, "available": 2}
+    order = {"rented": 0, "locked": 1, "review": 2, "available": 3}
     rows.sort(key=lambda r: (order[r["status"]], -len(r["open_tasks"]), r["car"]))
     return {"fleet": rows, "server_time": _iso(now),
-            "counts": {k: sum(r["status"] == k for r in rows) for k in order},
+            "counts": {**{k: sum(r["status"] == k for r in rows) for k in order},
+                       "rentable": sum(r["rentable"] for r in rows)},
             "note": "派單鎖定為模擬狀態：未與派單系統串接，僅反映整備任務與手動鎖定。"}
 
 
@@ -1055,6 +1131,7 @@ def _attach_case_state(cases: list[dict]) -> list[dict]:
             "SELECT id, case_id, task_type, status, priority, assignee, created_at, resolved_at FROM tasks ORDER BY id")]
     with ops_db.db() as oconn:
         overrides = ops_db.get_car_locations(oconn)
+    fleet_by_key = _rental_fleet_by_key()
     tasks_by_case: dict[str, list[dict]] = {}
     for t in task_rows:
         tasks_by_case.setdefault(t["case_id"], []).append(t)
@@ -1063,7 +1140,7 @@ def _attach_case_state(cases: list[dict]) -> list[dict]:
         c.setdefault("source", "dataset")
         c["decision"] = decisions.get(c["case_id"])
         c["tasks"] = tasks_by_case.get(c["case_id"], [])
-        c["location"] = _location_of(c["car"], overrides)
+        c["location"] = _car_location(c["car"], overrides, fleet_by_key)
         d = (c["decision"] or {}).get("decision")
         open_task = any(t["status"] in ("pending", "in_progress") for t in c["tasks"])
         if d == "confirm":

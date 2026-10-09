@@ -17,15 +17,26 @@ Incident 以 case_id `RI-<rental_id>-<角度>` 進入既有裁決／整備任務
 Demo 與 Production 分離：只有 demo_inspection_fixture.is_demo_rental() 的租約
 用 fixture 固定結果；其他租約走 judge_photos.judge_pair / judge_interior。
 背景機制沿用 inspections_api 的 threading.Thread（單容器、免費層 RPM 限制）。
+
+效能（2026-10-09 實測後調整）：還車分析耗時 92% 在 Gemini 呼叫，原本 4 角＋車內依序跑、Pro 三票依序跑。
+現在 4 角＋車內同時送出（共用一個 client 與 RPM 預算）、Pro 複核三票同時送出；每次呼叫有期限
+（GEMINI_CALL_TIMEOUT_S，逾時回 504 → judge_photos._call 重送），整次分析有總期限（ANALYSIS_DEADLINE_S，超過 → ANALYSIS_FAILED，可重新檢測）。
+
+過期結果防護：每次分析有 analysis_run_id；寫回結果前在同一個 transaction 確認租約仍在 ANALYZING 且 run_id 相同。
+取消還車／重新拍攝／補傳照片觸發重跑時 run_id 會失效，舊執行緒的結果直接丟棄，不會把 Session 推回「檢測完成」。
 """
 from __future__ import annotations
 
 import json
+import os
 import sqlite3
 import sys
 import threading
+import time
 import traceback
 import uuid
+from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import wait as wait_futures
 from datetime import datetime
 from pathlib import Path
 from urllib.parse import quote
@@ -68,7 +79,32 @@ CASE_PREFIX = "RI-"
 MOBILE_UPLOAD_DIRNAME = "mobile-inspections"
 
 _srv = None          # server 模組（bind 後：DB_PATH 可被測試 monkeypatch）
-_analysis_lock = threading.Lock()
+
+# ---------- AI 分析效能設定（可用環境變數覆寫） ----------
+ANALYSIS_DEADLINE_S = float(os.environ.get("IRENT_ANALYSIS_DEADLINE_S", "180"))     # 整次還車分析的總期限
+GEMINI_CALL_TIMEOUT_S = float(os.environ.get("IRENT_GEMINI_CALL_TIMEOUT_S", "45"))  # 單次模型呼叫期限（Gemini 最少 10 秒）
+GEMINI_RPM = int(os.environ.get("IRENT_GEMINI_RPM", "60"))                          # 所有租約共用的呼叫速率上限
+ANALYSIS_WORKERS = len(EXTERIOR_ANGLES) + 1                                          # 4 角＋車內同時判定
+
+_rental_locks: dict[str, threading.Lock] = {}   # 同一租約的分析不重疊；不同租約互不等待
+_rental_locks_guard = threading.Lock()
+_gemini: dict = {"key": None, "client": None, "throttle": None}
+_gemini_guard = threading.Lock()
+
+
+def _rental_lock(rental_id: str) -> threading.Lock:
+    with _rental_locks_guard:
+        return _rental_locks.setdefault(rental_id, threading.Lock())
+
+
+def _gemini_resources():
+    """共用 Gemini client（含單次呼叫期限）與全域 Throttle。client 必須保留引用，臨時物件被 GC 會關閉連線（見 server._client）。"""
+    from run_eval_gemini import Throttle, find_key, get_client  # noqa: PLC0415
+    key = find_key()
+    with _gemini_guard:
+        if _gemini["client"] is None or _gemini["key"] != key:
+            _gemini.update(key=key, client=get_client(timeout_s=GEMINI_CALL_TIMEOUT_S), throttle=Throttle(GEMINI_RPM))
+        return _gemini["client"], _gemini["throttle"]
 
 
 def bind(server_module) -> None:
@@ -104,6 +140,8 @@ DDL = [
          analysis_error TEXT,
          analysis_source TEXT,          -- demo_fixture | pipeline
          versions_json  TEXT,
+         analysis_run_id TEXT,          -- 目前有效的分析（過期執行緒的結果不寫回）
+         analysis_progress_json TEXT,   -- {"done": n, "total": m}
          source         TEXT NOT NULL,  -- mobile | demo_seed
          demo           INTEGER NOT NULL DEFAULT 0,
          created_at     TEXT NOT NULL,
@@ -186,6 +224,11 @@ class db:
             cols = {r[1] for r in self.conn.execute("PRAGMA table_info(rental_inspections)")}
             if "interior_skipped" not in cols:   # 車內照選填：使用者完成拍攝時選擇略過
                 self.conn.execute("ALTER TABLE rental_inspections ADD COLUMN interior_skipped INTEGER NOT NULL DEFAULT 0")
+            rcols = {r[1] for r in self.conn.execute("PRAGMA table_info(rentals)")}
+            if "analysis_run_id" not in rcols:    # 這次分析的識別碼：結果寫回前比對，過期執行緒的結果丟棄
+                self.conn.execute("ALTER TABLE rentals ADD COLUMN analysis_run_id TEXT")
+            if "analysis_progress_json" not in rcols:   # {"done": n, "total": m}：App 顯示分析進度
+                self.conn.execute("ALTER TABLE rentals ADD COLUMN analysis_progress_json TEXT")
             self.conn.commit()
             _schema_ready.add(self.path)
         return self.conn
@@ -282,6 +325,8 @@ def ingest_photo(*, rental_id: str, stage: str, view: str, image_sha256: str, ca
         rental = get_rental(rental_id, conn)
         if not rental:
             raise IngestError(404, "unknown rental_id")
+        if itype == "RETURN" and _session_blocks_return(conn, rental_id):
+            raise IngestError(409, "目前不在還車拍攝階段（還車已取消或尚未開始），無法上傳還車照片")
         if itype == "PICKUP" and STATUS_ORDER.index(rental["status"]) > STATUS_ORDER.index("PICKUP_COMPLETE"):
             dup = conn.execute(
                 "SELECT photo_id FROM inspection_photos WHERE rental_id=? AND inspection_type=? AND view_angle=? AND image_sha256=?",
@@ -326,6 +371,15 @@ def ingest_photo(*, rental_id: str, stage: str, view: str, image_sha256: str, ca
         ANALYSIS_RUNNER(rental_id)
     return {"photo_id": photo_id, "deduplicated": deduplicated, "rental_status": status,
             "inspection_type": itype, "completeness": completeness, "triggered": triggered}
+
+
+def _session_blocks_return(conn, rental_id: str) -> bool:
+    """模擬租還車 Session（rental_sessions）綁著這筆租約、且目前不在還車拍照階段 → 不收還車照。
+    沒有 Session 的租約（舊 /mobile-inspections 流程、示範種子）不受影響。"""
+    if not _table_exists(conn, "rental_sessions"):
+        return False
+    r = conn.execute("SELECT state FROM rental_sessions WHERE rental_id=? ORDER BY created_at DESC LIMIT 1", (rental_id,)).fetchone()
+    return bool(r) and r[0] in ("PICKUP_INSPECTION", "RENTED")
 
 
 def _completeness(conn, rental_id: str, itype: str) -> dict:
@@ -448,41 +502,86 @@ def recover_stale_analyses() -> list[str]:
 
 
 def run_analysis(rental_id: str) -> dict | None:
-    """RETURN_COMPLETE → ANALYZING → ANALYSIS_COMPLETE | ANALYSIS_FAILED。失敗保留紀錄、不擋還車。"""
-    with _analysis_lock:
+    """RETURN_COMPLETE → ANALYZING → ANALYSIS_COMPLETE | ANALYSIS_FAILED。失敗保留紀錄、不擋還車。
+    結果只在這次分析仍有效時寫回（_still_current）；排隊或執行期間被取消還車／重拍，結果丟棄。"""
+    with _rental_lock(rental_id):
+        run_id = uuid.uuid4().hex[:12]
         with db() as conn:
             rental = get_rental(rental_id, conn)
             if not rental:
                 return None
-            _set_status(conn, rental_id, "ANALYZING", analysis_started_at=now_iso())
+            if rental["status"] not in ("RETURN_COMPLETE", "ANALYZING"):
+                # 排隊等鎖期間已取消還車或重新拍攝（租約退回 PICKUP_COMPLETE 等）：這次分析不再需要
+                print(f"rental analysis skipped ({rental_id}): status={rental['status']}", file=sys.stderr)
+                return None
             pickup = _latest_photos(conn, rental_id, "PICKUP")
             ret = _latest_photos(conn, rental_id, "RETURN")
+            total = sum(1 for a in ALL_ANGLES if (ret.get(a) or {}).get("storage_path"))
+            _set_status(conn, rental_id, "ANALYZING", analysis_started_at=now_iso(), analysis_run_id=run_id,
+                        analysis_progress_json=json.dumps({"done": 0, "total": total}))
             base_row = conn.execute("SELECT baseline_json FROM rental_inspections WHERE rental_id=? AND inspection_type='PICKUP'",
                                     (rental_id,)).fetchone()
             baseline = _loads(base_row[0] if base_row else None, {})
+        t0 = time.perf_counter()
         try:
             if fixture.is_demo_rental(rental_id):
                 result = fixture.analysis()
             else:
-                result = _real_analysis(rental, pickup, ret, baseline)
+                result = _real_analysis(rental, pickup, ret, baseline,
+                                        progress=lambda done, timings: _report_progress(rental_id, run_id, done, total, timings))
         except BaseException as e:   # get_client() 無 key 會 sys.exit → SystemExit 也要接住
             err = f"{type(e).__name__}: {str(e)[:200]}"
             print(f"rental analysis failed ({rental_id}): {err}", file=sys.stderr)
             traceback.print_exc()
             with db() as conn:
-                _set_status(conn, rental_id, "ANALYSIS_FAILED", analysis_error=err,
-                            analysis_completed_at=now_iso())
+                if _still_current(conn, rental_id, run_id):
+                    _set_status(conn, rental_id, "ANALYSIS_FAILED", analysis_error=err,
+                                analysis_completed_at=now_iso(), analysis_run_id=None)
             return None
+        print(f"rental analysis done ({rental_id}): {time.perf_counter() - t0:.1f}s {result.get('timings_s') or ''}", file=sys.stderr)
         with db() as conn:
+            if not _still_current(conn, rental_id, run_id):
+                print(f"rental analysis discarded ({rental_id}): superseded (cancelled / retaken / re-run)", file=sys.stderr)
+                return None
             _write_results(conn, rental, result, pickup, ret)
             _set_status(conn, rental_id, "ANALYSIS_COMPLETE", analysis_completed_at=now_iso(),
-                        analysis_source=result.get("source"), analysis_error=None,
+                        analysis_source=result.get("source"), analysis_error=None, analysis_run_id=None,
                         versions_json=json.dumps(result.get("versions") or {}, ensure_ascii=False))
         return result
 
 
-def _real_analysis(rental: dict, pickup: dict, ret: dict, baseline: dict) -> dict:
-    """Production path：逐角度 judge_pair + 車內 judge_interior（既有 pipeline，不重寫）。"""
+def _still_current(conn, rental_id: str, run_id: str) -> bool:
+    """在寫入 transaction 內（BEGIN IMMEDIATE 取得寫鎖）確認這次分析仍有效：租約仍在 ANALYZING 且 run_id 沒被換掉。"""
+    conn.execute("BEGIN IMMEDIATE")
+    r = conn.execute("SELECT status, analysis_run_id FROM rentals WHERE rental_id=?", (rental_id,)).fetchone()
+    return bool(r) and r["status"] == "ANALYZING" and r["analysis_run_id"] == run_id
+
+
+def _report_progress(rental_id: str, run_id: str, done: int, total: int, timings: dict) -> None:
+    with db() as conn:
+        conn.execute("UPDATE rentals SET analysis_progress_json=? WHERE rental_id=? AND analysis_run_id=?",
+                     (json.dumps({"done": done, "total": total, "timings_s": timings}, ensure_ascii=False), rental_id, run_id))
+
+
+def analysis_progress(rental: dict) -> dict | None:
+    """App 用的分析進度：{done, total, elapsed_s}。只在分析中回傳。"""
+    if rental.get("status") not in ("RETURN_COMPLETE", "ANALYZING"):
+        return None
+    prog = _loads(rental.get("analysis_progress_json"), {}) if rental.get("status") == "ANALYZING" else {}
+    started = rental.get("analysis_started_at") if rental.get("status") == "ANALYZING" else None
+    elapsed = None
+    if started:
+        try:
+            elapsed = max(0, int((datetime.now() - datetime.fromisoformat(started)).total_seconds()))
+        except ValueError:
+            elapsed = None
+    return {"done": prog.get("done", 0), "total": prog.get("total"), "elapsed_s": elapsed,
+            "deadline_s": int(ANALYSIS_DEADLINE_S)}
+
+
+def _real_analysis(rental: dict, pickup: dict, ret: dict, baseline: dict, progress=None) -> dict:
+    """Production path：judge_pair（4 角）+ judge_interior（車內）同時執行（既有 pipeline，不重寫判定邏輯）。
+    任一項失敗或超過 ANALYSIS_DEADLINE_S → 整次分析失敗（與原本依序執行的語意相同）。"""
     from run_eval_gemini import find_key  # noqa: PLC0415
     if not find_key():
         raise RuntimeError("GEMINI_API_KEY 未設定：無法執行 AI 比對（紀錄已保存，待人工複核）")
@@ -492,6 +591,8 @@ def _real_analysis(rental: dict, pickup: dict, ret: dict, baseline: dict) -> dic
     out = {"source": "pipeline", "exterior": {}, "interior": None,
            "versions": {"prompt_p7": PROMPT_VERSIONS.get("P7"), "prompt_p9": PROMPT_VERSIONS.get("P9"),
                         "threshold": PROMPT_VERSIONS.get("threshold")}}
+    jobs: dict[str, callable] = {}
+    client, throttle = _gemini_resources()
     for angle in EXTERIOR_ANGLES:
         p, r = pickup.get(angle), ret.get(angle)
         if not r or not r.get("storage_path"):
@@ -503,15 +604,55 @@ def _real_analysis(rental: dict, pickup: dict, ret: dict, baseline: dict) -> dic
         if _is_duplicate(p, r):
             out["exterior"][angle] = _duplicate_result()   # 同一張照片不必送 AI
             continue
-        res, _img = judge_pair(p["storage_path"], r["storage_path"], angle=angle)
-        out["exterior"][angle] = _map_pair_result(res, angle)
+        jobs[angle] = (lambda p=p, r=r, angle=angle: _map_pair_result(
+            judge_pair(p["storage_path"], r["storage_path"], angle=angle, client=client, throttle=throttle,
+                       parallel_votes=True)[0], angle))
     r = ret.get(INTERIOR_ANGLE)
     if r and r.get("storage_path"):
         if _is_duplicate(pickup.get(INTERIOR_ANGLE), r):
             out["interior"] = _duplicate_result()
         else:
-            res, _img = judge_interior(r["storage_path"])
-            out["interior"] = _map_interior_result(res)
+            jobs[INTERIOR_ANGLE] = (lambda r=r: _map_interior_result(
+                judge_interior(r["storage_path"], client=client, throttle=throttle)[0]))
+
+    timings: dict[str, float] = {}
+    total = sum(1 for a in ALL_ANGLES if (ret.get(a) or {}).get("storage_path"))
+    done = [total - len(jobs)]          # 缺基準／照片重複的角度不送 AI，直接算完成
+    lock = threading.Lock()
+
+    def timed(name, fn):
+        t = time.perf_counter()
+        try:
+            return fn()
+        finally:
+            with lock:
+                timings[name] = round(time.perf_counter() - t, 1)
+                done[0] += 1
+                if progress:
+                    try:
+                        progress(done[0], dict(timings))
+                    except Exception:   # 進度只是顯示用，寫入失敗不影響分析
+                        pass
+
+    if progress and done[0]:
+        progress(done[0], {})
+    ex = ThreadPoolExecutor(max_workers=max(1, min(ANALYSIS_WORKERS, len(jobs))), thread_name_prefix=f"ri-{rental['rental_id']}")
+    try:
+        futures = {name: ex.submit(timed, name, fn) for name, fn in jobs.items()}
+        finished, pending = wait_futures(futures.values(), timeout=ANALYSIS_DEADLINE_S)
+        if pending:
+            late = [n for n, f in futures.items() if f in pending]
+            raise TimeoutError(f"AI 分析超過 {int(ANALYSIS_DEADLINE_S)} 秒仍未完成（{'、'.join(late)}），請重新檢測")
+        for name, f in futures.items():
+            res = f.result()            # 任一項例外 → 往上拋，整次分析 FAILED
+            if name == INTERIOR_ANGLE:
+                out["interior"] = res
+            else:
+                out["exterior"][name] = res
+    finally:
+        ex.shutdown(wait=False, cancel_futures=True)   # 逾時的呼叫留在背景跑完即丟（run_id 防護不會寫回）
+    out["exterior"] = {a: out["exterior"][a] for a in EXTERIOR_ANGLES if a in out["exterior"]}   # 角度順序固定
+    out["timings_s"] = timings
     return out
 
 
@@ -913,7 +1054,7 @@ def clear_rental(conn, rental_id: str) -> None:
         conn.execute(f"DELETE FROM {t} WHERE rental_id=?", (rental_id,))
     conn.execute("UPDATE rentals SET status='CREATED', pickup_at=NULL, return_at=NULL, analysis_started_at=NULL,"
                  " analysis_completed_at=NULL, analysis_error=NULL, analysis_source=NULL, versions_json=NULL,"
-                 " updated_at=? WHERE rental_id=?", (now_iso(), rental_id))
+                 " analysis_run_id=NULL, analysis_progress_json=NULL, updated_at=? WHERE rental_id=?", (now_iso(), rental_id))
 
 
 def clear_return_stage(conn, rental_id: str) -> list[str]:
@@ -926,6 +1067,7 @@ def clear_return_stage(conn, rental_id: str) -> list[str]:
     conn.execute("DELETE FROM inspection_incidents WHERE rental_id=?", (rental_id,))
     conn.execute("UPDATE rentals SET status='PICKUP_COMPLETE', return_at=NULL, analysis_started_at=NULL,"
                  " analysis_completed_at=NULL, analysis_error=NULL, analysis_source=NULL, versions_json=NULL,"
+                 " analysis_run_id=NULL, analysis_progress_json=NULL,"   # 進行中的分析隨之失效（結果不寫回）
                  " updated_at=? WHERE rental_id=?", (now_iso(), rental_id))
     return case_ids
 

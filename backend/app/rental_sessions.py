@@ -18,6 +18,7 @@
 from __future__ import annotations
 
 import json
+import re
 import uuid
 from datetime import datetime
 from pathlib import Path
@@ -32,7 +33,7 @@ SESSION_STATES = ("PICKUP_INSPECTION", "RENTED", "RETURN_INITIATED", "PHOTO_INSP
                   "INSPECTION_COMPLETED", "INSPECTION_FAILED", "RETURNED", "CANCELLED", "ARCHIVED")
 ACTIVE_STATES = ("PICKUP_INSPECTION", "RENTED", "RETURN_INITIATED", "PHOTO_INSPECTION",
                  "INSPECTION_COMPLETED", "INSPECTION_FAILED")
-VEHICLE_STATES = ("AVAILABLE", "RENTED", "RETURNED")
+VEHICLE_STATES = ("AVAILABLE", "RENTED", "RETURNED", "PARKED")   # PARKED：固定劇本車把劇本車牌讓給後台 Demo 車
 
 # ---------- 模擬車輛（固定資料；不是真實 iRent 車隊） ----------
 # 位置：臺灣大學第二學生活動中心（二活）周邊，座標為示意，可用 IRENT_SIM_VEHICLES_JSON 覆寫。
@@ -123,7 +124,7 @@ DDL = [
          lat            REAL NOT NULL,
          lng            REAL NOT NULL,
          location_name  TEXT,
-         status         TEXT NOT NULL,          -- AVAILABLE | RENTED | RETURNED
+         status         TEXT NOT NULL,          -- AVAILABLE | RENTED | RETURNED | PARKED
          odometer_km    INTEGER NOT NULL,
          fuel_percent   INTEGER,
          ai_source      TEXT NOT NULL,          -- pipeline | demo_fixture
@@ -160,6 +161,10 @@ DDL = [
 
 _schema_ready: set[str] = set()
 _srv = None
+
+# 管理端整備狀態（ops_api.bind 注入）：plate → 暫停出租原因（未完成的整備任務／人工鎖定），None＝可出租。
+# 車輛「能不能租」只有這一個判斷來源：App 車輛清單、開始租車、管理者網站車隊清單都用它。
+OPS_HOLD = None
 
 
 def bind(server_module) -> None:
@@ -239,22 +244,51 @@ def _pricing(details: dict) -> dict | None:
             "billing_note": "費用為試算，不會扣款"}
 
 
+def _ops_hold(plate: str) -> str | None:
+    if OPS_HOLD is None:
+        return None
+    try:
+        return OPS_HOLD(plate)
+    except Exception:    # 整備資料讀不到不擋出租（與管理端「讀不到就不鎖」一致）
+        return None
+
+
+PARKED_REASON = "劇本車牌目前由後台建立的 Demo 測試車輛使用，固定劇本車暫停使用"
+
+
+def availability(v: dict, active: dict | None) -> tuple[str, str | None]:
+    """實際可用性：PARKED（固定劇本車把劇本車牌讓給 Demo 車）> RENTED（有進行中的 Session 或車輛標記租出）
+    > MAINTENANCE（整備任務未完成／人工鎖定）> AVAILABLE。"""
+    if v["status"] == "PARKED":
+        return "PARKED", PARKED_REASON
+    if v["status"] == "RENTED" or active:
+        return "RENTED", None
+    hold = _ops_hold(v["plate"])
+    if hold:
+        return "MAINTENANCE", hold
+    return "AVAILABLE", None
+
+
 def _vehicle_view(v: dict, active: dict | None, internal: bool = False) -> dict:
     """一般使用者視圖：只有產品資訊（車牌、車型、照片、位置、狀態、里程、油量、費用、置頂推薦）與服務說明。
     internal=True（內部工具）再附上資料來源、AI 來源、示範固定劇本、Registry 等開發資訊。"""
     details = json.loads(v["details_json"]) if v.get("details_json") else {}
     category = v.get("category") or "simulated"
+    status, hold = availability(v, active)
     public = {
         "vehicle_id": v["vehicle_id"], "plate": v["plate"], "model": v["model"],
         "color": details.get("color"), "seats": details.get("seats"), "vehicle_type": details.get("vehicle_type"),
         "parking_spot": details.get("parking_spot"),
         "image_url": v["image_url"],
         "location": {"lat": v["lat"], "lng": v["lng"], "name": v["location_name"]},
-        "status": v["status"], "odometer_km": v["odometer_km"], "fuel_percent": v["fuel_percent"],
+        "status": status, "odometer_km": v["odometer_km"], "fuel_percent": v["fuel_percent"],
+        "rentable": status == "AVAILABLE",
+        "unavailable_reason": "整備中，暫停出租" if status == "MAINTENANCE" else None,
         "pricing": _pricing(details),
         "body_style": details.get("body_style") or "sedan",   # App 3D 模型樣式：sedan | hatchback
         "paint_hex": details.get("paint_hex"),
         "featured": category == "demo",          # 置頂推薦：不受定位／搜尋半徑限制
+        "is_demo": category == "demo",           # Demo 測試車輛：App／後台都要明確標示，避免與正式車輛混淆
         "service_notice": SERVICE_NOTICE,
         "active_session_id": active["session_id"] if active else None,
         "updated_at": v["updated_at"],
@@ -267,6 +301,10 @@ def _vehicle_view(v: dict, active: dict | None, internal: bool = False) -> dict:
             "ai_source": v["ai_source"],
             "ai_source_label": "示範固定劇本（非真實 AI 判定）" if v["ai_source"] == "demo_fixture" else "Gemini 模型級聯（真實 pipeline）",
             "fixture_rental_id": v.get("fixture_rental_id"), "details": details,
+            "db_status": v["status"], "hold_reason": hold,
+            "admin_created": bool(details.get("admin_created")),
+            "is_fixture": bool(v.get("fixture_rental_id")),
+            "active_session_state": active["state"] if active else None,
             "data_note": "模擬車輛資料，非真實 iRent 車隊；位置為固定座標，非 GPS 追蹤。",
             "last_returned_at": v["last_returned_at"]}
 
@@ -278,12 +316,15 @@ def _active_for_vehicle(conn, vehicle_id: str) -> dict | None:
     return dict(r) if r else None
 
 
-def list_vehicles(internal: bool = False) -> list[dict]:
-    """一般清單：只列 visibility=public，置頂推薦（featured）排前面。內部工具：全部。"""
+def list_vehicles(internal: bool = False, include_parked: bool = True) -> list[dict]:
+    """一般清單：只列 visibility=public，置頂推薦（featured）排前面。內部工具：全部。
+    停放中（PARKED）的固定劇本車不算在車隊裡：一般清單與 include_parked=False（車隊／車牌對照）都排除。"""
     with _conn() as conn:
         vs = rows(conn.execute("SELECT * FROM demo_vehicles ORDER BY vehicle_id"))
         out = [_vehicle_view(v, _active_for_vehicle(conn, v["vehicle_id"]), internal)
-               for v in vs if internal or (v.get("visibility") or "public") == "public"]
+               for v in vs
+               if (internal or (v.get("visibility") or "public") == "public")
+               and (v["status"] != "PARKED" or (internal and include_parked))]
     out.sort(key=lambda x: (not x["featured"], x["plate"]))
     return out
 
@@ -386,8 +427,12 @@ def create_session(vehicle_id: str, user_location: dict | None = None) -> dict:
         v = dict(v)
         if _active_for_vehicle(conn, vehicle_id):
             raise SessionError(409, "此車輛已有進行中的租車 Session，請勿重複租車")
+        if v["status"] == "PARKED":
+            raise SessionError(409, PARKED_REASON)
         if v["status"] != "AVAILABLE":
             raise SessionError(409, f"車輛狀態為 {v['status']}，無法租借")
+        if _ops_hold(v["plate"]):
+            raise SessionError(409, "車輛整備中，暫停出租")
         rid = _prepare_rental(conn, v)
         sid = _new_session_id()
         now = now_iso()
@@ -456,20 +501,45 @@ def finish_photos(session_id: str, stage: str) -> dict:
     return get_session(session_id)
 
 
+RETURN_CANCELLABLE_STATES = ("RETURN_INITIATED", "PHOTO_INSPECTION", "INSPECTION_COMPLETED", "INSPECTION_FAILED")
+RETURN_CANCEL_BLOCKED = "這次還車的檢測結果已由營運人員處理（已裁決或已開立整備任務），無法取消還車；請完成還車或聯繫客服。"
+
+
+def _return_cancel_block(conn, s: dict) -> str | None:
+    """這次還車衍生的案件只要有人工裁決或整備任務，就不能取消還車：取消會清掉還車照片與案件，
+    營運人員的裁決、任務與歷程必須保留（不刪、不重置）。回傳拒絕原因；可取消回 None。"""
+    case_ids = [r[0] for r in conn.execute("SELECT case_id FROM inspection_incidents WHERE rental_id=?", (s["rental_id"],))]
+    if not case_ids:
+        return None
+    marks = ",".join("?" * len(case_ids))
+    for table in ("decisions", "tasks"):
+        if ri._table_exists(conn, table) and conn.execute(
+                f"SELECT 1 FROM {table} WHERE case_id IN ({marks}) LIMIT 1", case_ids).fetchone():
+            return RETURN_CANCEL_BLOCKED
+    return None
+
+
 def cancel_return(session_id: str) -> dict:
-    """使用者在還車資訊頁按返回：撤回「開始還車」，回到 RENTED（計時照常繼續）。
-    只允許在還沒有任何還車照片時（RETURN_INITIATED，或 PHOTO_INSPECTION 但一張還車照都沒收到）；
-    已上傳還車照片就不能撤回，避免檢測資料與租約狀態不一致。"""
+    """取消還車：還車流程中、尚未按「確認還車」（RETURNED）前的任何階段都可以取消，回到 RENTED。
+    租借本身不結束：租車開始時間、起始里程、取車照片與車況基準都保留，計時照常繼續。
+    這次還車的資料（還車照片、AI 比對結果與衍生案件、結束里程）一併清掉：
+      - 下次還車重新拍攝、重新比對，不沿用舊照片；
+      - 正在跑的 AI 分析隨之失效（租約 analysis_run_id 清空），結果不會寫回、不會把 Session 推回「檢測完成」；
+      - 管理者端不會出現一台仍在租用中、卻掛著還車案件的車。"""
     with _conn() as conn:
         s = _get(conn, session_id)
         if s["state"] == "RENTED":
             return _view(conn, s)
-        _require_state(s, "RETURN_INITIATED", "PHOTO_INSPECTION")
-        if ri._completeness(conn, s["rental_id"], "RETURN")["received"]:
-            raise SessionError(409, "已開始上傳還車照片，無法回到租用中；可在還車資訊頁修改里程後繼續拍照")
+        _require_state(s, *RETURN_CANCELLABLE_STATES)
+        blocked = _return_cancel_block(conn, s)
+        if blocked:
+            raise SessionError(409, blocked)
+        case_ids = ri.clear_return_stage(conn, s["rental_id"])
         _update(conn, session_id, state="RENTED", return_initiated_at=None, return_info_confirmed_at=None,
-                inspection_attempts=0, last_error=None)
-        return _view(conn, _get(conn, session_id))
+                end_odometer_km=None, return_lat=None, return_lng=None, return_location_source=None,
+                inspection_attempts=0, last_error=None, review_required=0)
+    _reset_case_state(case_ids)        # 裁決／任務在另一條連線清，要在上面的 transaction commit 之後
+    return get_session(session_id)
 
 
 def confirm_return_info(session_id: str, end_odometer_km: int, return_location: dict | None = None) -> dict:
@@ -556,9 +626,197 @@ def reset_all() -> dict:
                 ri.clear_rental(conn, s["rental_id"])
                 conn.execute("DELETE FROM rentals WHERE rental_id=?", (s["rental_id"],))
         conn.execute("DELETE FROM rental_sessions")
-        conn.execute("UPDATE demo_vehicles SET status='AVAILABLE', updated_at=?", (now_iso(),))
+        conn.execute("UPDATE demo_vehicles SET status='AVAILABLE', updated_at=? WHERE status!='PARKED'", (now_iso(),))
     _reset_case_state(case_ids)
     return {"ok": True, "cleared_sessions": len(sessions), "cleared_cases": case_ids}
+
+
+# ---------- 後台建立的 Demo 測試車輛（管理者網站 → /api/ops/devtools/demo-vehicles） ----------
+# 寫進同一張 demo_vehicles（category=demo、details.admin_created=True），走完全相同的租車／還車／AI 流程；
+# 車輛座標（lat/lng）是 App 地圖與管理者網站唯一的位置來源。
+
+PLATE_RE = re.compile(r"^[A-Z0-9]{2,4}-[A-Z0-9]{2,4}$")
+TAIWAN_BOUNDS = {"lat": (21.8, 25.4), "lng": (119.9, 122.1)}   # 臺澎金馬本島範圍外多半是點錯地圖
+ADMIN_DEMO_DETAILS = {
+    "admin_created": True, "demo_label": "Demo 測試車輛（後台建立）",
+    "vehicle_type": "個人用車", "seats": 5, "body_style": "sedan", "paint_hex": "#f3f4f6",
+    "pricing": {"hourly_twd": 130, "per_km_twd": 3.5, "estimated_km_fee_twd": 70, "estimated_total_twd": 200,
+                "note": "示範數值，不串接真實 iRent 計費，不會產生任何費用"},
+    "demo_pinned": True,
+    "pinned_note": "後台建立的 Demo 測試車輛：取車／還車照片一律走真實車牌辨識與 AI 檢測。",
+}
+
+
+def normalise_plate_input(plate: str) -> str:
+    """車牌輸入正規化：去空白、轉大寫、全形連字號轉半形；格式須為 ABC-1234 這類「2–4 碼-2–4 碼」。"""
+    p = (plate or "").strip().upper().replace("－", "-").replace("—", "-").replace(" ", "")
+    m = re.fullmatch(r"([A-Z]+)(\d+)|(\d+)([A-Z]+)", p)
+    if m:                                          # 沒打連字號：RDL7827 → RDL-7827
+        p = "-".join(g for g in m.groups() if g)
+    if not PLATE_RE.match(p):
+        raise SessionError(422, "車牌格式不正確，請輸入例如 ABC-1234（英數字，中間以 - 分隔）")
+    return p
+
+
+def _plate_key(plate: str) -> str:
+    return "".join(ch for ch in (plate or "").upper() if ch.isalnum())
+
+
+def _check_location(lat, lng) -> tuple[float, float]:
+    try:
+        lat, lng = float(lat), float(lng)
+    except (TypeError, ValueError) as e:
+        raise SessionError(422, "座標必須是數字") from e
+    (a, b), (c, d) = TAIWAN_BOUNDS["lat"], TAIWAN_BOUNDS["lng"]
+    if not (a <= lat <= b and c <= lng <= d):
+        raise SessionError(422, "座標不在臺灣範圍內，請在地圖上重新點選位置")
+    return lat, lng
+
+
+def _ensure_plate_free(conn, plate: str, except_vehicle: str | None = None) -> list[dict]:
+    """同一車牌只能有一台在車隊裡的車。例外：固定劇本車（fixture_rental_id）的車牌是劇本用的、不是實際車輛，
+    可以讓給後台建立的 Demo 車——回傳需要停放（PARKED）的固定劇本車；它租用中時不能讓。"""
+    claim = []
+    for r in rows(conn.execute("SELECT * FROM demo_vehicles")):
+        if r["vehicle_id"] == except_vehicle or _plate_key(r["plate"]) != _plate_key(plate):
+            continue
+        if r["fixture_rental_id"]:
+            if r["status"] == "PARKED":
+                continue                     # 已讓出：佔用者是另一台 Demo 車，下面會以那台車判定衝突
+            if r["status"] == "RENTED" or _active_for_vehicle(conn, r["vehicle_id"]):
+                raise SessionError(409, f"車牌 {plate} 是固定劇本車的車牌，固定劇本車目前租用中，請等它還車或重設後再使用")
+            claim.append(r)
+            continue
+        raise SessionError(409, f"車牌 {plate} 已存在（{r['vehicle_id']}），同一車牌只能有一台車")
+    return claim
+
+
+def _park_fixtures(conn, fixtures: list[dict]) -> list[str]:
+    """固定劇本車讓出車牌：狀態改 PARKED（不可租、不列入車隊），清掉它可重演的劇本租約紀錄與案件，
+    避免劇本的假車損案件／整備任務以同一車牌掛到真實測試車上。固定劇本車本身與設定保留。回傳要重置的 case_id。"""
+    case_ids: list[str] = []
+    for f in fixtures:
+        rid = f["fixture_rental_id"]
+        case_ids += [r[0] for r in conn.execute("SELECT case_id FROM inspection_incidents WHERE rental_id=?", (rid,))]
+        if conn.execute("SELECT 1 FROM rentals WHERE rental_id=?", (rid,)).fetchone():
+            ri.clear_rental(conn, rid)          # 與固定劇本「重新開始」相同的清理（劇本每次重演本來就會清）
+        conn.execute("UPDATE demo_vehicles SET status='PARKED', updated_at=? WHERE vehicle_id=?", (now_iso(), f["vehicle_id"]))
+    return case_ids
+
+
+def _release_fixtures(conn, plate: str) -> None:
+    """Demo 車不再使用這個車牌（刪除或改車牌）→ 讓出的固定劇本車恢復可用。"""
+    key = _plate_key(plate)
+    for r in rows(conn.execute("SELECT vehicle_id, plate, status, fixture_rental_id FROM demo_vehicles")):
+        if r["fixture_rental_id"] and r["status"] == "PARKED" and _plate_key(r["plate"]) == key:
+            conn.execute("UPDATE demo_vehicles SET status='AVAILABLE', updated_at=? WHERE vehicle_id=?", (now_iso(), r["vehicle_id"]))
+
+
+def fixture_parked() -> bool:
+    """固定劇本車是否已讓出車牌（DEMO_MODE 啟動／重置時不要再種下劇本案件）。"""
+    with _conn() as conn:
+        return bool(conn.execute("SELECT 1 FROM demo_vehicles WHERE fixture_rental_id=? AND status='PARKED'",
+                                 (fixture.DEMO_RENTAL_ID,)).fetchone())
+
+
+def _admin_vehicle(conn, vehicle_id: str) -> dict:
+    v = conn.execute("SELECT * FROM demo_vehicles WHERE vehicle_id=?", (vehicle_id,)).fetchone()
+    if not v:
+        raise SessionError(404, "unknown vehicle_id")
+    v = dict(v)
+    details = json.loads(v["details_json"]) if v.get("details_json") else {}
+    if not details.get("admin_created"):
+        raise SessionError(403, "只有後台建立的 Demo 測試車輛可以修改車牌或刪除")
+    return v
+
+
+def is_admin_demo_vehicle(vehicle_id: str | None) -> bool:
+    """後台建立的 Demo 車輛：拍攝驗證必須走真實 Core ML（不接受 Demo 拍攝劇本）。"""
+    if not vehicle_id:
+        return False
+    with _conn() as conn:
+        r = conn.execute("SELECT details_json FROM demo_vehicles WHERE vehicle_id=?", (vehicle_id,)).fetchone()
+    return bool(r and r["details_json"] and json.loads(r["details_json"]).get("admin_created"))
+
+
+def create_demo_vehicle(plate: str, lat, lng, model: str | None = None, location_name: str | None = None) -> dict:
+    plate = normalise_plate_input(plate)
+    lat, lng = _check_location(lat, lng)
+    model = (model or "").strip()[:60] or "Demo 測試車輛"
+    with _conn() as conn:
+        claimed = _ensure_plate_free(conn, plate)
+        case_ids = _park_fixtures(conn, claimed)
+        vid = f"demo-admin-{_plate_key(plate).lower()}"
+        if conn.execute("SELECT 1 FROM demo_vehicles WHERE vehicle_id=?", (vid,)).fetchone():
+            vid = f"{vid}-{uuid.uuid4().hex[:4]}"
+        conn.execute(
+            "INSERT INTO demo_vehicles(vehicle_id, plate, model, image_url, image_note, lat, lng, location_name, status,"
+            " odometer_km, fuel_percent, ai_source, fixture_rental_id, simulated, category, details_json, visibility, updated_at)"
+            " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,1,?,?,?,?)",
+            (vid, plate, model, None, "後台建立的 Demo 測試車輛（無車輛照片）", lat, lng,
+             (location_name or "").strip()[:80] or "後台指定位置（Demo）", "AVAILABLE", 10000, 100, "pipeline", None,
+             "demo", json.dumps(ADMIN_DEMO_DETAILS, ensure_ascii=False), "public", now_iso()))
+    _reset_case_state(case_ids)
+    return get_vehicle(vid, internal=True)
+
+
+def update_demo_vehicle(vehicle_id: str, plate: str | None = None, model: str | None = None) -> dict:
+    """修改後台 Demo 車輛的車牌／車型。租用中不可改車牌（取車照片與租約都綁著原車牌）。"""
+    case_ids: list[str] = []
+    with _conn() as conn:
+        v = _admin_vehicle(conn, vehicle_id)
+        fields = {}
+        if plate is not None:
+            plate = normalise_plate_input(plate)
+            if _plate_key(plate) != _plate_key(v["plate"]):
+                if _active_for_vehicle(conn, vehicle_id) or v["status"] == "RENTED":
+                    raise SessionError(409, "車輛租用中，不能修改車牌")
+                case_ids = _park_fixtures(conn, _ensure_plate_free(conn, plate, except_vehicle=vehicle_id))
+                _release_fixtures(conn, v["plate"])
+            fields["plate"] = plate
+        if model is not None:
+            fields["model"] = model.strip()[:60] or "Demo 測試車輛"
+        if fields:
+            fields["updated_at"] = now_iso()
+            conn.execute(f"UPDATE demo_vehicles SET {', '.join(f'{k}=?' for k in fields)} WHERE vehicle_id=?",
+                         (*fields.values(), vehicle_id))
+    _reset_case_state(case_ids)
+    return get_vehicle(vehicle_id, internal=True)
+
+
+def set_vehicle_location(vehicle_id: str, lat, lng, location_name: str | None = None) -> dict:
+    """更新車輛座標（所有可租車輛皆可）：App 地圖與管理者網站都讀這組座標。"""
+    lat, lng = _check_location(lat, lng)
+    with _conn() as conn:
+        if not conn.execute("SELECT 1 FROM demo_vehicles WHERE vehicle_id=?", (vehicle_id,)).fetchone():
+            raise SessionError(404, "unknown vehicle_id")
+        sets, vals = ["lat=?", "lng=?", "updated_at=?"], [lat, lng, now_iso()]
+        if location_name is not None:
+            sets.append("location_name=?")
+            vals.append(location_name.strip()[:80] or "後台指定位置")
+        conn.execute(f"UPDATE demo_vehicles SET {', '.join(sets)} WHERE vehicle_id=?", (*vals, vehicle_id))
+    return get_vehicle(vehicle_id, internal=True)
+
+
+def delete_demo_vehicle(vehicle_id: str) -> dict:
+    """刪除後台 Demo 車輛：只限未租用。過去的租約、照片與案件紀錄保留（不刪歷史資料）。"""
+    with _conn() as conn:
+        v = _admin_vehicle(conn, vehicle_id)
+        if _active_for_vehicle(conn, vehicle_id) or v["status"] == "RENTED":
+            raise SessionError(409, "車輛租用中，不能刪除；請等還車完成或先重設車輛")
+        conn.execute("DELETE FROM demo_vehicles WHERE vehicle_id=?", (vehicle_id,))
+        _release_fixtures(conn, v["plate"])
+    return {"ok": True, "vehicle_id": vehicle_id, "plate": v["plate"]}
+
+
+def vehicle_by_plate(plate: str) -> dict | None:
+    """車牌（不分連字號）→ 可租車輛的內部視圖；不是可租車輛回 None。"""
+    key = _plate_key(plate)
+    with _conn() as conn:
+        for r in conn.execute("SELECT vehicle_id, plate FROM demo_vehicles WHERE status!='PARKED'"):
+            if _plate_key(r["plate"]) == key:
+                return get_vehicle(r["vehicle_id"], internal=True)
+    return None
 
 
 def reset_vehicle(vehicle_id: str) -> dict:
@@ -712,6 +970,8 @@ def _view(conn, s: dict) -> dict:
         "end_odometer_km": s["end_odometer_km"], "distance_km": distance,
         "used_seconds": used, "returned_at": s["returned_at"], "cancelled_at": s["cancelled_at"],
         "pickup": pickup, "return": ret, "analysis": analysis,
+        "analysis_progress": ri.analysis_progress(rental),
+        "return_cancel_blocked": (_return_cancel_block(conn, s) if s["state"] in RETURN_CANCELLABLE_STATES else None),
         "inspection_attempts": s["inspection_attempts"], "last_error": s["last_error"],
         "review_required": bool(s["review_required"]), "updated_at": s["updated_at"],
     }
@@ -786,6 +1046,7 @@ def inspection_result(session_id: str) -> dict:
     analysis = detail.get("analysis") or {}
     return {
         "session_id": session_id, "state": view["state"], "analysis": view["analysis"],
+        "analysis_progress": view["analysis_progress"],
         "ai_source": analysis.get("source") or view["ai_source"],
         "ai_source_label": ("示範固定劇本（非真實 AI 判定）" if (analysis.get("source") or view["ai_source"]) == "demo_fixture"
                             else "Gemini 模型級聯（真實 pipeline）"),

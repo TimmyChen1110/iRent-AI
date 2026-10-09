@@ -502,7 +502,7 @@ class Test3DSupport:
 
 
 class TestBackNavigation:
-    def test_撤回開始還車_回到租用中_有還車照後不可撤回(self, client):
+    def test_撤回開始還車_回到租用中_有還車照後也可取消(self, client):
         s = start(client)
         shoot(client, s, "pickup", 10)
         sid = s["session_id"]
@@ -519,7 +519,12 @@ class TestBackNavigation:
         client.post(f"/v1/rental-sessions/{sid}/return/info", json={"end_odometer_km": s["start_odometer_km"] + 5})
         assert upload(client, s2, "return", "左前", 31).status_code == 201
         r = client.post(f"/v1/rental-sessions/{sid}/return/cancel")
-        assert r.status_code == 409 and "還車照片" in r.json()["detail"]
+        assert r.status_code == 200, r.text
+        j = r.json()
+        # 回到租用中：租借本身（開始時間、起始里程、取車基準）保留；這次的還車照片與結束里程清掉
+        assert j["state"] == "RENTED" and j["return"]["received"] == [] and j["end_odometer_km"] is None
+        assert j["started_at"] == s["started_at"] and j["start_odometer_km"] == s["start_odometer_km"] and j["pickup"]["complete"]
+        assert j["rental_status"] == "PICKUP_COMPLETE" and j["vehicle"]["status"] == "RENTED"
         # 不可從取車檢查撤回
         s3 = start(client, PIPELINE_VEHICLE)
         assert client.post(f"/v1/rental-sessions/{s3['session_id']}/return/cancel").status_code == 409

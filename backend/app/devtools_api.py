@@ -10,11 +10,16 @@
   POST /api/ops/devtools/sessions/{sid}/preload/{stage}  把登記的借車前／還車後照片灌進 Session（走同一條 AI pipeline）
   GET  /api/ops/devtools/sessions/{sid}/pipeline         AI pipeline 詳細輸出（inspection_detail + App 端結果）
   GET  /api/ops/devtools/audit                           照片盤點摘要（DEMO_IMAGE_MANIFEST 統計）
+  POST   /api/ops/devtools/demo-vehicles                 建立 Demo 測試車輛（車牌＋地圖座標，寫入 demo_vehicles，立即可租）
+  PATCH  /api/ops/devtools/demo-vehicles/{id}            修改 Demo 車輛車牌／車型（租用中不可改車牌）
+  DELETE /api/ops/devtools/demo-vehicles/{id}            刪除未租用的 Demo 車輛（歷史租約紀錄保留）
+  PATCH  /api/ops/devtools/vehicles/{id}/location        修改任一可租車輛座標（App 地圖與管理者網站共用）
 """
 from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import HTMLResponse
+from pydantic import BaseModel, Field
 
 import demo_vehicle_registry as registry
 import rental_inspections as ri
@@ -33,6 +38,45 @@ def _wrap(fn, *args, **kwargs):
 @router.get("/vehicles")
 def vehicles():
     return {"vehicles": rs.list_vehicles(internal=True)}
+
+
+class DemoVehicleIn(BaseModel):
+    plate: str
+    lat: float
+    lng: float
+    model: str | None = Field(None, max_length=60)
+    location_name: str | None = Field(None, max_length=80)
+
+
+class DemoVehiclePatch(BaseModel):
+    plate: str | None = None
+    model: str | None = Field(None, max_length=60)
+
+
+class LocationIn(BaseModel):
+    lat: float
+    lng: float
+    location_name: str | None = Field(None, max_length=80)
+
+
+@router.post("/demo-vehicles", status_code=201)
+def demo_vehicle_create(body: DemoVehicleIn):
+    return _wrap(rs.create_demo_vehicle, body.plate, body.lat, body.lng, body.model, body.location_name)
+
+
+@router.patch("/demo-vehicles/{vehicle_id}")
+def demo_vehicle_update(vehicle_id: str, body: DemoVehiclePatch):
+    return _wrap(rs.update_demo_vehicle, vehicle_id, body.plate, body.model)
+
+
+@router.delete("/demo-vehicles/{vehicle_id}")
+def demo_vehicle_delete(vehicle_id: str):
+    return _wrap(rs.delete_demo_vehicle, vehicle_id)
+
+
+@router.patch("/vehicles/{vehicle_id}/location")
+def vehicle_location(vehicle_id: str, body: LocationIn):
+    return _wrap(rs.set_vehicle_location, vehicle_id, body.lat, body.lng, body.location_name)
 
 
 @router.post("/vehicles/{vehicle_id}/reset")

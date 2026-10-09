@@ -65,7 +65,7 @@ def _startup_rentals() -> None:
         rental_inspections.recover_stale_analyses()   # 上次 process 被 kill 時卡住的分析重新排入
         if _demo_mode():
             r = rental_inspections.get_rental(rental_inspections.fixture.DEMO_RENTAL_ID)
-            if r and r["status"] == "CREATED":
+            if r and r["status"] == "CREATED" and not rental_sessions.fixture_parked():
                 rental_inspections.seed_demo_rental()
     except Exception as e:  # 租約登記失敗不能擋住監理台啟動
         print(f"rental seed skipped: {type(e).__name__}: {e}", file=sys.stderr)
@@ -520,7 +520,8 @@ def demo_reset():
     out = reset_case_state(list(DEMO_CASE_IDS) + rental_case_ids)
     # 示範租約（iOS → Backend → Admin 主線）回到固定劇本落地後的狀態：
     # 若 App 已上傳真照片，會被佔位照取代；要重演 iOS 流程請由 App 端「重新開始 Demo」。
-    rental_inspections.seed_demo_rental()
+    if not rental_sessions.fixture_parked():   # 劇本車牌讓給 Demo 車時不重種劇本案件（避免掛到真車）
+        rental_inspections.seed_demo_rental()
     return {"ok": True, "reset_cases": out["reset_cases"],
             "demo_rental": _demo_rental_info(),
             "note": "示範案例已回到「AI 已判定、尚未人工確認」狀態"}

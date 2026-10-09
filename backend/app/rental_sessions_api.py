@@ -8,7 +8,7 @@
   GET  /v1/rental-sessions/{session_id}                   Session 狀態（含租約照片完整度、分析狀態）
   POST /v1/rental-sessions/{session_id}/pickup/complete   取車照齊（後端驗證）→ RENTED
   POST /v1/rental-sessions/{session_id}/return/initiate   我要還車 → RETURN_INITIATED
-  POST /v1/rental-sessions/{session_id}/return/cancel     撤回開始還車 → RENTED（尚無還車照片時）
+  POST /v1/rental-sessions/{session_id}/return/cancel     取消還車 → RENTED（確認還車前任何階段；清掉這次的還車照片與檢測結果）
   POST /v1/rental-sessions/{session_id}/photos/{stage}/finish  完成拍攝：車內照選填，沒拍即略過；還車外觀齊即開始 AI 分析
   POST /v1/rental-sessions/{session_id}/return/info       確認還車資訊（結束里程 ≥ 起始里程）→ PHOTO_INSPECTION
   GET  /v1/rental-sessions/{session_id}/inspection        AI 檢測結果（逐角度、車內、車牌比對、AI 來源）
@@ -119,7 +119,7 @@ def photos_finish(session_id: str, stage: str):
 
 @router.post("/{session_id}/return/cancel")
 def return_cancel(session_id: str):
-    """撤回開始還車 → RENTED（尚未上傳任何還車照片時才允許）。"""
+    """取消還車 → RENTED：確認還車（RETURNED）前的任何還車階段都可取消；租借與取車基準保留，這次的還車照片與檢測結果清掉。"""
     return _wrap(rs.cancel_return, session_id)
 
 
