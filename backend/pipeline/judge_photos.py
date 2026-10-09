@@ -18,8 +18,10 @@ import argparse
 import json
 import sys
 import time
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
+import httpx
 from google.genai import types, errors
 from PIL import Image, ImageOps
 from pydantic import BaseModel, Field
@@ -110,7 +112,13 @@ def _call(client, model, contents, system, schema, throttle, retries=3, fallback
             if e.code in (429, 500, 503):
                 time.sleep(15 * (i + 1))
                 continue
+            if e.code == 504:          # 單次呼叫逾時（client 設了 timeout）：模型端偶發慢，短暫等待後重送
+                time.sleep(2)
+                continue
             raise
+        except httpx.TimeoutException:
+            time.sleep(2)
+            continue
     raise RuntimeError(f"{model} 判定失敗（重試已用盡）")
 
 
@@ -137,12 +145,16 @@ def triage(a: dict):
 # ---------- 車損比對（借照 vs 還照） ----------
 
 def judge_pair(pickup, ret, client=None, votes=3, rpm=8, skip_gate=False, log=lambda m: None,
-               angle=None, coverage_weighting=False):
+               angle=None, coverage_weighting=False, throttle=None, parallel_votes=False):
     """回傳 (result_dict, 標註後 PIL Image 或 None)。
 
     coverage_weighting=True 時額外跑規格 Stage 1/4/6（見 coverage.py / diff_new_damage.py）：
     對【借車照】評估逐分區觀測品質，據以加權新損信心，並產出估價與處置建議。
     預設關閉——多一次 API 呼叫，且現場 demo 以速度優先。
+
+    throttle：外部共用的 Throttle（多個角度同時判定時共用一個 RPM 預算）；None＝本次自建 Throttle(rpm)。
+    parallel_votes=True：Pro 複核的多票同時送出（各票獨立、多數決與順序無關；票序依送出順序固定）。
+    預設 False——離線評測與既有呼叫端行為不變。
     """
     t0 = time.time()
     # angle 一併帶回：下游估價要靠它把「左後保桿」這種自由文字推成分區代碼，
@@ -161,7 +173,7 @@ def judge_pair(pickup, ret, client=None, votes=3, rpm=8, skip_gate=False, log=la
 
     # ② 快篩
     client = client or get_client()
-    throttle = Throttle(rpm)
+    throttle = throttle or Throttle(rpm)
     contents = [
         "方位：未知（請先自行確認兩張照片是否為同一車輛的同一方位）。第一張＝借車照：",
         types.Part.from_bytes(data=prep_image(str(pickup)), mime_type="image/jpeg"),
@@ -181,7 +193,19 @@ def judge_pair(pickup, ret, client=None, votes=3, rpm=8, skip_gate=False, log=la
     if reason:
         log(f"③ 臨界案件（{reason}）→ 升級 {REVIEW_MODEL} {votes} 票多數決")
         vlist, model = [], REVIEW_MODEL
-        for _ in range(votes):
+        if parallel_votes:
+            def _vote():
+                return _call(client, REVIEW_MODEL, contents, PAIR_SYSTEM_LIVE, LiveAssessment,
+                             throttle, fallback=SCREEN_MODEL)
+            with ThreadPoolExecutor(max_workers=votes) as ex:
+                futures = [ex.submit(_vote) for _ in range(votes)]
+            for f in futures:
+                try:
+                    model, pv = f.result()
+                    vlist.append(pv.model_dump())
+                except Exception as e:
+                    log(f"   複核一票失敗：{str(e)[:80]}")
+        for _ in range(0 if parallel_votes else votes):
             try:
                 model, pv = _call(client, model, contents, PAIR_SYSTEM_LIVE, LiveAssessment,
                                   throttle, fallback=SCREEN_MODEL)
@@ -245,8 +269,8 @@ def judge_pair(pickup, ret, client=None, votes=3, rpm=8, skip_gate=False, log=la
 
 # ---------- 車內整潔（單張） ----------
 
-def judge_interior(photo, client=None, rpm=8, skip_gate=False, log=lambda m: None):
-    """回傳 (result_dict, 標註後 PIL Image 或 None)。"""
+def judge_interior(photo, client=None, rpm=8, skip_gate=False, log=lambda m: None, throttle=None):
+    """回傳 (result_dict, 標註後 PIL Image 或 None)。throttle：外部共用的 Throttle（見 judge_pair）。"""
     t0 = time.time()
     result = {"mode": "interior", "photo": str(photo)}
 
@@ -260,7 +284,7 @@ def judge_interior(photo, client=None, rpm=8, skip_gate=False, log=lambda m: Non
         return result, None
 
     client = client or get_client()
-    throttle = Throttle(rpm)
+    throttle = throttle or Throttle(rpm)
     contents = [
         "還車車內照：",
         types.Part.from_bytes(data=prep_image(str(photo)), mime_type="image/jpeg"),

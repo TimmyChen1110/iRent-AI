@@ -208,12 +208,15 @@ def find_key() -> str | None:
     return None
 
 
-def get_client() -> genai.Client:
+def get_client(timeout_s: float | None = None) -> genai.Client:
+    """timeout_s：單次呼叫的期限（Gemini 端最少 10 秒；逾時回 504 DEADLINE_EXCEEDED）。None＝SDK 預設（無期限）。"""
     key = find_key()
     if not key:
         sys.exit("找不到 API key：請在 環節二_還車影像AI辨識/.env 寫入 GEMINI_API_KEY=<key>"
                  "（見 .env.example），或直接設定環境變數 GEMINI_API_KEY")
-    return genai.Client(api_key=key)
+    if timeout_s is None:
+        return genai.Client(api_key=key)
+    return genai.Client(api_key=key, http_options=types.HttpOptions(timeout=int(max(timeout_s, 10) * 1000)))
 
 
 class Throttle:
