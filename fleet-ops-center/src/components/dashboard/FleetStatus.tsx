@@ -9,13 +9,13 @@ import { StatusPill } from "@/components/ui/Badge";
 import { statusMeta, cn } from "@/lib/utils";
 import type { VehicleStatus } from "@/types";
 
-const ORDER: VehicleStatus[] = ["healthy", "ready", "damage", "cleaning", "maintenance", "pending-review", "unavailable"];
+const ORDER: VehicleStatus[] = ["rented", "healthy", "ready", "damage", "cleaning", "maintenance", "pending-review", "unavailable"];
 
 export function FleetStatus({ className }: { className?: string }) {
   const { vehicles } = useOps();
   const counts = ORDER.map((s) => ({ status: s, count: vehicles.filter((v) => v.status === s).length })).filter((c) => c.count > 0);
   const total = vehicles.length;
-  const attention = vehicles.filter((v) => v.status !== "healthy").slice(0, 6);
+  const attention = vehicles.filter((v) => v.status !== "healthy" && v.status !== "rented").slice(0, 6);
 
   return (
     <GlassPanel className={className}>

@@ -126,6 +126,7 @@ export function toViewTask(t: Task): ViewTask {
 }
 
 function deriveStatus(row: FleetRow | undefined, cases: OpsCase[], tasks: Task[]): VehicleStatus {
+  if (row?.status === "rented") return "rented";   // 租用中（含還車流程尚未確認還車）優先於其他狀態
   const open = tasks.filter((t) => t.status === "pending" || t.status === "in_progress");
   if (open.length > 0 || row?.manual_lock) return "unavailable";
   const unreviewed = cases.filter((c) => c.review_status === "unreviewed");
@@ -198,7 +199,7 @@ export function toVehicle(car: string, row: FleetRow | undefined, cases: OpsCase
     location: loc?.city || "—",
     station: loc?.station || "未指派站點",
     status,
-    aiStatus: topPair && topPair.review_status === "unreviewed" ? "車損待裁決" : topInterior && topInterior.review_status === "unreviewed" ? "清潔待裁決" : open.length ? "整備中" : "正常",
+    aiStatus: status === "rented" ? "租用中" : topPair && topPair.review_status === "unreviewed" ? "車損待裁決" : topInterior && topInterior.review_status === "unreviewed" ? "清潔待裁決" : open.length ? "整備中" : "正常",
     lastInspection: cases.length ? `${cases.length} 個 AI 案件` : "無案件",
     lastReturned: returnedAt
       ? { date: fmt(returnedAt).slice(0, 10), time: fmt(returnedAt).slice(11) }
@@ -206,7 +207,9 @@ export function toVehicle(car: string, row: FleetRow | undefined, cases: OpsCase
     rentalId: rental?.rental_id ?? null,
     manualLock: Boolean(row?.manual_lock),
     lockReason: row?.lock_reason ?? null,
+    rentable: Boolean(row?.rentable),
     lngLat: loc ? [loc.lng, loc.lat] : null,
+    exactLocation: loc?.source === "vehicle",
     city: loc?.city ?? null,
     district: loc?.district ?? null,
     stationId: loc?.station_id ?? null,

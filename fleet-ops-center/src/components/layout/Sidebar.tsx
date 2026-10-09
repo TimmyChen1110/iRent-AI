@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
-import { LayoutDashboard, Car, AlertTriangle, SprayCan, Wrench, Sparkles, PanelLeftClose, PanelLeftOpen, Hexagon, Radar, Bell, Users, Settings, Smartphone, ClipboardCheck } from "lucide-react";
+import { LayoutDashboard, Car, AlertTriangle, SprayCan, Wrench, Sparkles, PanelLeftClose, PanelLeftOpen, Hexagon, Radar, Bell, Users, Settings, Smartphone, ClipboardCheck, FlaskConical } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useOps } from "@/store/OpsStore";
 
@@ -14,6 +14,7 @@ const NAV = [
   { href: "/incidents", label: "事件中心", icon: AlertTriangle, badge: "cases" as const },
   { href: "/inspections", label: "檢查紀錄", icon: ClipboardCheck },
   { href: "/fleet", label: "車隊", icon: Car },
+  { href: "/demo-vehicles", label: "Demo 測試車輛", icon: FlaskConical },
   { href: "/cleaning", label: "清潔", icon: SprayCan },
   { href: "/maintenance", label: "維修", icon: Wrench },
   { href: "/insights", label: "AI 洞察", icon: Sparkles },

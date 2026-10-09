@@ -16,6 +16,13 @@ export const statusMeta: Record<
   VehicleStatus,
   { label: string; dot: string; text: string; bg: string; ring: string }
 > = {
+  rented: {
+    label: "租用中",
+    dot: "bg-indigo-400",
+    text: "text-indigo-300",
+    bg: "bg-indigo-400/10",
+    ring: "ring-indigo-400/20",
+  },
   healthy: {
     label: "正常",
     dot: "bg-emerald-400",

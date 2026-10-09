@@ -1,4 +1,5 @@
 export type VehicleStatus =
+  | "rented"
   | "healthy"
   | "damage"
   | "cleaning"
@@ -123,7 +124,11 @@ export interface Vehicle {
   lastReturned: { date: string; time: string };
   manualLock: boolean;
   lockReason: string | null;
+  /** 使用者現在租得到（與 App 車輛清單同一個判斷：非租用中、無未完成整備任務、未人工鎖定）。 */
+  rentable: boolean;
   lngLat: [number, number] | null;
+  /** true：lngLat 是車輛實際儲存座標（App 同一組），地圖不做同站散開偏移。 */
+  exactLocation?: boolean;
   city: string | null;
   district: string | null;
   stationId: string | null;

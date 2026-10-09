@@ -5,7 +5,7 @@
 import type {
   Audience, AuthUser, CaseDetailResp, CaseListResp, Drafts, FleetResp, Health, Insights, MyTask, TaskAction,
   TaskPhoto, NotificationLogEntry, OpsEvent, Person, StationsResp, Summary, Task, TaskDetail, LocationResp,
-  InspectionDetail, InspectionRow,
+  InspectionDetail, InspectionRow, DevVehicle,
 } from "./types";
 
 export class ApiError extends Error {
@@ -45,6 +45,15 @@ const q = (o: Record<string, string | number | boolean | undefined | null>) => {
 };
 
 export const api = {
+  /* ---- Demo 測試車輛（/api/ops/devtools，僅 admin） ---- */
+  devVehicles: () => call<{ vehicles: DevVehicle[] }>("/api/ops/devtools/vehicles"),
+  createDemoVehicle: (body: { plate: string; lat: number; lng: number; model?: string; location_name?: string }) =>
+    call<DevVehicle>("/api/ops/devtools/demo-vehicles", { method: "POST", body: JSON.stringify(body) }),
+  patchDemoVehicle: (id: string, body: { plate?: string; model?: string }) =>
+    call<DevVehicle>(`/api/ops/devtools/demo-vehicles/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify(body) }),
+  deleteDemoVehicle: (id: string) => call<{ ok: boolean }>(`/api/ops/devtools/demo-vehicles/${encodeURIComponent(id)}`, { method: "DELETE" }),
+  setVehicleLocation: (id: string, body: { lat: number; lng: number; location_name?: string }) =>
+    call<DevVehicle>(`/api/ops/devtools/vehicles/${encodeURIComponent(id)}/location`, { method: "PATCH", body: JSON.stringify(body) }),
   login: (username: string, password: string) => call<{ user: AuthUser }>("/api/auth/login", { method: "POST", body: JSON.stringify({ username, password }) }),
   logout: () => call<{ ok: boolean }>("/api/auth/logout", { method: "POST" }),
   me: () => call<{ user: AuthUser }>("/api/auth/me"),

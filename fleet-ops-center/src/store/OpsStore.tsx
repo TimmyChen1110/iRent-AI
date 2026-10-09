@@ -166,7 +166,7 @@ export function OpsProvider({ children }: { children: ReactNode }) {
     const cars = new Set<string>([...fleet.map((r) => r.car), ...cases.map((c) => c.car), ...rawTasks.map((t) => t.car || "").filter(Boolean)]);
     const byCar = (car: string) => ({ row: fleet.find((r) => r.car === car), cs: cases.filter((c) => c.car === car), ts: rawTasks.filter((t) => t.car === car) });
     const list = [...cars].map((car) => { const { row, cs, ts } = byCar(car); return toVehicle(car, row, cs, ts); });
-    const rank: Record<string, number> = { damage: 0, cleaning: 1, unavailable: 2, "pending-review": 3, ready: 4, healthy: 5 };
+    const rank: Record<string, number> = { damage: 0, cleaning: 1, unavailable: 2, "pending-review": 3, rented: 4, ready: 5, healthy: 6 };
     return list.sort((a, b) => (rank[a.status] ?? 9) - (rank[b.status] ?? 9) || a.plate.localeCompare(b.plate));
   }, [fleet, cases, rawTasks]);
 

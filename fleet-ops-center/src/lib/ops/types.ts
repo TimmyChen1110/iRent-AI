@@ -131,7 +131,7 @@ export interface InspectionDetail extends InspectionRow {
 }
 
 export interface FleetRow {
-  car: string; status: 'locked' | 'review' | 'available'; manual_lock: boolean
+  car: string; status: 'rented' | 'locked' | 'review' | 'available'; manual_lock: boolean
   lock_reason: string | null; lock_by: string | null; lock_at: string | null
   open_tasks: Array<{ id: number; task_type: TaskType; status: TaskStatus; priority: Priority | null; title: string; overdue: boolean }>
   completed_tasks: number; last_completed_at: string | null; baseline_count: number
@@ -141,8 +141,22 @@ export interface FleetRow {
   model?: string | null
   last_rental?: { model: string | null; rental_id: string; status: string; pickup_at: string | null; return_at: string | null } | null
   mobile_cases?: number
+  /** App 可租車輛才為 true；rentable 與 App 車輛清單同源（後端 rental_sessions.availability） */
+  rental_fleet?: boolean
+  rentable?: boolean
+  rental_state?: { vehicle_id: string; vehicle_status: 'AVAILABLE' | 'RENTED' | 'MAINTENANCE'; session_id: string | null; session_state: string | null; visibility: string | null } | null
 }
-export interface FleetResp { fleet: FleetRow[]; server_time: string; counts: Record<'locked' | 'review' | 'available', number>; note: string }
+/** /api/ops/devtools/vehicles：App 可租車輛（demo_vehicles，內部視圖）。座標即 App 地圖顯示位置。 */
+export interface DevVehicle {
+  vehicle_id: string; plate: string; model: string
+  location: { lat: number; lng: number; name: string | null }
+  status: 'AVAILABLE' | 'RENTED' | 'MAINTENANCE' | 'PARKED'; rentable: boolean; db_status: string
+  /** is_fixture：固定劇本車（車牌為劇本用，可讓給後台 Demo 車；讓出時 status=PARKED） */
+  is_demo: boolean; admin_created: boolean; is_fixture: boolean; category: string; visibility: string
+  active_session_id: string | null; active_session_state: string | null; hold_reason: string | null
+  odometer_km: number; updated_at: string
+}
+export interface FleetResp { fleet: FleetRow[]; server_time: string; counts: Record<'rented' | 'locked' | 'review' | 'available' | 'rentable', number>; note: string }
 export interface Insights {
   server_time: string
   uploads: { source: string; photos: number; orders: number; vehicles: number; dates: Record<string, number>; by_hour: number[]; interior_uploaded_orders: number; note: string } | null
@@ -160,6 +174,8 @@ export interface StationsResp { cities: City[]; stations: Station[]; server_time
 export interface CarLocation {
   station_id: string; station: string; district: string | null; city_id: string | null; city: string | null
   lng: number; lat: number; manual: boolean
+  /** "vehicle"：可租車輛的實際儲存座標（App 地圖同一組）；未提供＝資料集車輛的站點指派 */
+  source?: "vehicle"
 }
 export interface LocationResp { car: string; location: CarLocation | null; server_time: string }
 

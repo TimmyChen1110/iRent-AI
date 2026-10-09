@@ -55,7 +55,9 @@ export function useFleetMap(): FleetMapModel {
         // 同站多車：以小偏移散開，避免標記完全重疊
         const k = i % 7;
         const off = 0.00035;
-        const jitter: LngLat = [v.lngLat![0] + Math.cos(k * 0.9) * off * (k ? 1 : 0), v.lngLat![1] + Math.sin(k * 0.9) * off * (k ? 1 : 0)];
+        const jitter: LngLat = v.exactLocation
+          ? v.lngLat!                      // 可租車輛：顯示實際座標，不偏移
+          : [v.lngLat![0] + Math.cos(k * 0.9) * off * (k ? 1 : 0), v.lngLat![1] + Math.sin(k * 0.9) * off * (k ? 1 : 0)];
         return { id: v.id, plate: v.plate, lngLat: jitter, district: st.district, stationId: st.id, cityId: st.city, status: v.status, vehicleId: v.id };
       });
 

@@ -44,6 +44,7 @@ export const TAIWAN_PEAKS: [number, number, number, number][] = [
 
 /** Workload weight per status for the heatmap. */
 export const WORKLOAD_WEIGHT: Record<VehicleStatus, number> = {
+  rented: 0.05,
   healthy: 0.05,
   ready: 0.1,
   damage: 1,
@@ -55,6 +56,7 @@ export const WORKLOAD_WEIGHT: Record<VehicleStatus, number> = {
 
 /** Status → marker color (kept muted; matches statusMeta dots). */
 export const MARKER_COLORS: Record<VehicleStatus, string> = {
+  rented: "#818cf8",
   healthy: "#34d399",
   ready: "#5eead4",
   cleaning: "#fbbf24",
