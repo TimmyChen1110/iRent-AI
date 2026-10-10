@@ -67,7 +67,7 @@ function CasePane({ caseId, onClose }: { caseId: string; onClose: () => void }) 
 
   return (
     <>
-      <Head onClose={onClose} label="AI 案件" title={c.case_id} sub={<><Car className="h-3.5 w-3.5" />{c.car} · {c.angle}{vehicle && <Link href={`/vehicle?car=${encodeURIComponent(c.car)}`} onClick={onClose} className="text-sky-300 hover:underline">開啟數位分身</Link>}</>} />
+      <Head onClose={onClose} label="AI 案件" title={c.case_id} sub={<><Car className="h-3.5 w-3.5" />{c.car} · {c.angle}{vehicle && <Link href={`/fleet?car=${encodeURIComponent(c.car)}`} onClick={onClose} className="text-sky-300 hover:underline">車輛管理</Link>}</>} />
       <div className="flex-1 overflow-y-auto p-5">
         <div className={cn("rounded-xl border p-4", damage ? "border-rose-400/15 bg-rose-400/[0.05]" : "border-amber-400/15 bg-amber-400/[0.05]")}>
           <div className="flex items-center gap-2">
@@ -172,7 +172,7 @@ function TaskPane({ taskId, onClose }: { taskId: number; onClose: () => void }) 
 
   return (
     <>
-      <Head onClose={onClose} label={`任務 #${t.id}`} title={t.title} sub={<><Car className="h-3.5 w-3.5" />{t.car} · {t.task_type === "cleaning" ? "清潔" : "維修"}{t.car && <Link href={`/vehicle?car=${encodeURIComponent(t.car)}`} onClick={onClose} className="text-sky-300 hover:underline">開啟數位分身</Link>}</>} />
+      <Head onClose={onClose} label={`任務 #${t.id}`} title={t.title} sub={<><Car className="h-3.5 w-3.5" />{t.car} · {t.task_type === "cleaning" ? "清潔" : "維修"}{t.car && <Link href={`/fleet?car=${encodeURIComponent(t.car)}`} onClick={onClose} className="text-sky-300 hover:underline">車輛管理</Link>}</>} />
       <input ref={fileRef} type="file" accept="image/*" hidden onChange={onFile} />
       <div className="flex-1 space-y-5 overflow-y-auto p-5">
         <section className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">

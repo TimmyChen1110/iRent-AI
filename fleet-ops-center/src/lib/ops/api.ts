@@ -5,7 +5,7 @@
 import type {
   Audience, AuthUser, CaseDetailResp, CaseListResp, Drafts, FleetResp, Health, Insights, MyTask, TaskAction,
   TaskPhoto, NotificationLogEntry, OpsEvent, Person, StationsResp, Summary, Task, TaskDetail, LocationResp,
-  InspectionDetail, InspectionRow, DevVehicle,
+  InspectionDetail, InspectionRow, DevVehicle, Overview, RentalRow, RentalDetail,
 } from "./types";
 
 export class ApiError extends Error {
@@ -45,6 +45,10 @@ const q = (o: Record<string, string | number | boolean | undefined | null>) => {
 };
 
 export const api = {
+  /* ---- 精簡後台：總覽與租還車紀錄（唯讀） ---- */
+  overview: () => call<Overview>("/api/ops/overview"),
+  rentals: (includeOther = false) => call<{ rentals: RentalRow[]; server_time: string }>("/api/ops/rentals" + q({ include_other: includeOther || undefined })),
+  rental: (sessionId: string) => call<RentalDetail>(`/api/ops/rentals/${encodeURIComponent(sessionId)}`),
   /* ---- Demo 測試車輛（/api/ops/devtools，僅 admin） ---- */
   devVehicles: () => call<{ vehicles: DevVehicle[] }>("/api/ops/devtools/vehicles"),
   createDemoVehicle: (body: { plate: string; lat: number; lng: number; model?: string; location_name?: string }) =>

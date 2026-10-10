@@ -5,9 +5,10 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, CheckCircle2, AlertTriangle, Loader2, ShieldCheck, Smartphone, Car, Armchair, ClipboardList, Cpu } from "lucide-react";
+import { ArrowLeft, CheckCircle2, AlertTriangle, Loader2, ShieldCheck, Smartphone, Car, Armchair, ClipboardList, Cpu, ListChecks } from "lucide-react";
 import { api } from "@/lib/ops/api";
-import type { ComparisonResult, InspectionDetail, InspectionIncidentRef, InspectionResult, InspectionRow } from "@/lib/ops/types";
+import type { ComparisonResult, InspectionDetail, InspectionIncidentRef, InspectionResult, InspectionRow, ReviewState } from "@/lib/ops/types";
+import { REVIEW_META, SOURCE_META } from "@/lib/ops/console";
 import { useOps } from "@/store/OpsStore";
 import { GlassPanel, SectionHeader } from "@/components/ui/GlassPanel";
 import { Badge } from "@/components/ui/Badge";
@@ -17,9 +18,14 @@ import { fmt } from "@/lib/ops/time";
 import { cn, pct } from "@/lib/utils";
 
 /**
- * 檢查紀錄（Inspection History）：iOS App 每一筆租約的取車／還車檢查、Before/After 照片、AI 比對結果與衍生案件。
- * 「沒有異常」也是稽核紀錄；案件本身仍由事件中心／數位分身裁決（同一套 /api/ops/cases）。
+ * AI 檢測與人工審核：iOS App 每一筆租約的還車 AI 檢測（取車 vs 還車照片比對、車內整潔）與衍生案件。
+ * 人工審核沿用既有裁決流程（/api/ops/cases/{id}/decision，任務抽屜）；確認異常會開整備任務並暫停出租。
+ * 預設只列真實 App 租約（data_source=app），固定劇本與舊版上傳流程需切換才顯示。
  */
+const STATE_FILTERS: Array<{ id: "all" | ReviewState; label: string }> = [
+  { id: "all", label: "全部" }, { id: "analyzing", label: "檢測中" }, { id: "passed", label: "無異常" },
+  { id: "pending_review", label: "待審核" }, { id: "reviewed", label: "已審核" }, { id: "failed", label: "檢測失敗" },
+];
 const RESULT_META: Record<InspectionResult, { label: string; tone: "danger" | "success" | "info" | "neutral" | "warning"; icon: React.ReactNode }> = {
   ISSUES: { label: "有異常", tone: "danger", icon: <AlertTriangle className="h-3 w-3" /> },
   PASSED: { label: "通過", tone: "success", icon: <CheckCircle2 className="h-3 w-3" /> },
@@ -50,6 +56,9 @@ function InspectionsView() {
   const { tick, loaded } = useOps();
   const params = useSearchParams();
   const selectedId = params.get("rental");
+  const initialState = params.get("state");
+  const [stateFilter, setStateFilter] = useState<"all" | ReviewState>(STATE_FILTERS.some((f) => f.id === initialState) ? (initialState as ReviewState) : "all");
+  const [includeOther, setIncludeOther] = useState(false);
   const [rows, setRows] = useState<InspectionRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -60,43 +69,58 @@ function InspectionsView() {
     return () => { alive = false; };
   }, [tick]);
 
+  const scoped = useMemo(() => (rows ?? []).filter((r) => includeOther || r.data_source === "app"), [rows, includeOther]);
+  const visible = useMemo(() => scoped.filter((r) => r.review_state !== "capturing" && (stateFilter === "all" || r.review_state === stateFilter)), [scoped, stateFilter]);
+  const counts = useMemo(() => Object.fromEntries(STATE_FILTERS.map((f) => [f.id, scoped.filter((r) => r.review_state !== "capturing" && (f.id === "all" || r.review_state === f.id)).length])), [scoped]);
+
   if (selectedId) return <InspectionDetailView rentalId={selectedId} />;
 
   return (
     <motion.div variants={stagger} initial="hidden" animate="show" className="space-y-5">
       <motion.div variants={fadeUp} className="flex items-end justify-between">
         <div>
-          <h2 className="text-[22px] font-semibold tracking-tight text-white">檢查紀錄</h2>
-          <p className="mt-1 text-[13px] text-muted">iOS App 每一筆租約的取車基準與還車檢查。AI 只比對「取車 vs 還車」的變化；正常通過的紀錄同樣保留以供稽核。</p>
+          <h2 className="text-[22px] font-semibold tracking-tight text-white">AI 檢測與人工審核</h2>
+          <p className="mt-1 text-[13px] text-muted">還車後 Gemini 逐角度比對取車與還車照片、判讀車內整潔。發現異常會開案件，請在明細中查看照片與標註後人工審核。</p>
         </div>
-        <Badge tone="info"><Smartphone className="h-3 w-3" /> 來源：iRent iOS App · POST /v1/mobile-inspections/photos</Badge>
+        <label className="flex cursor-pointer items-center gap-2 text-[12.5px] text-white/65">
+          <input type="checkbox" checked={includeOther} onChange={(e) => setIncludeOther(e.target.checked)} data-testid="include-other" />顯示固定劇本／舊版流程
+        </label>
+      </motion.div>
+
+      <motion.div variants={fadeUp} className="flex flex-wrap gap-2">
+        {STATE_FILTERS.map((f) => (
+          <button key={f.id} onClick={() => setStateFilter(f.id)} data-testid={`state-${f.id}`} className={cn("flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-[12.5px] font-medium transition", stateFilter === f.id ? "border-white/25 bg-white/[0.1] text-white" : "border-white/[0.08] text-white/60 hover:bg-white/[0.05] hover:text-white")}>
+            {f.label}<span className="tabular text-white/40">{counts[f.id]}</span>
+          </button>
+        ))}
       </motion.div>
 
       <GlassPanel variants={fadeUp} padded={false} className="overflow-hidden">
         <table className="w-full text-left text-[13px]">
           <thead>
             <tr className="border-b border-white/[0.06] text-[10.5px] uppercase tracking-wider text-white/40">
-              <th className="px-5 py-3 font-medium">租約</th><th className="px-4 py-3 font-medium">車輛</th><th className="px-4 py-3 font-medium">取車</th><th className="px-4 py-3 font-medium">還車</th><th className="px-4 py-3 font-medium">照片</th><th className="px-4 py-3 font-medium">檢查結果</th><th className="px-4 py-3" />
+              <th className="px-5 py-3 font-medium">車牌</th><th className="px-4 py-3 font-medium">租約</th><th className="px-4 py-3 font-medium">還車</th><th className="px-4 py-3 font-medium">AI 判定</th><th className="px-4 py-3 font-medium">審核狀態</th><th className="px-4 py-3" />
             </tr>
           </thead>
           <tbody>
-            {(rows ?? []).map((r, i) => {
+            {visible.map((r, i) => {
               const m = RESULT_META[r.result];
+              const rv = REVIEW_META[r.review_state];
               return (
-                <motion.tr key={r.rental_id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(i * 0.03, 0.3) }} className="border-b border-white/[0.04] transition hover:bg-white/[0.03]">
-                  <td className="px-5 py-3"><Link href={`/inspections?rental=${encodeURIComponent(r.rental_id)}`} className="font-mono font-medium text-white/90 hover:text-sky-200">{r.rental_id}</Link>{r.source === "demo_seed" && <span className="ml-2 text-[10px] text-amber-300/80">示範固定資料</span>}</td>
-                  <td className="px-4 py-3"><span className="font-mono text-white/90">{r.plate}</span><span className="ml-2 text-white/45">{r.vehicle_model || ""}</span></td>
-                  <td className="px-4 py-3 text-white/75">{r.pickup_at ? fmt(r.pickup_at).slice(11) : <span className="text-white/35">{r.pickup.exterior.received}/4 · {r.pickup.interior.received}/1</span>}</td>
-                  <td className="px-4 py-3 text-white/75">{r.return_at ? fmt(r.return_at).slice(11) : <span className="text-white/35">{r.return.exterior.received}/4 · {r.return.interior.received}/1</span>}</td>
-                  <td className="px-4 py-3 text-white/60">{r.pickup.received.length + r.return.received.length} / 10</td>
+                <motion.tr key={r.rental_id} data-testid={`insp-row-${r.rental_id}`} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(i * 0.03, 0.3) }} className="border-b border-white/[0.04] transition hover:bg-white/[0.03]">
+                  <td className="px-5 py-3"><Link href={`/inspections?rental=${encodeURIComponent(r.rental_id)}`} className="font-mono font-medium text-white/90 hover:text-sky-200">{r.plate}</Link><span className="ml-2 text-white/45">{r.vehicle_model || ""}</span>
+                    {r.data_source !== "app" && <span className="ml-2"><Badge tone={SOURCE_META[r.data_source].tone}>{SOURCE_META[r.data_source].label}</Badge></span>}</td>
+                  <td className="px-4 py-3 font-mono text-[12px] text-white/60">{r.rental_id}</td>
+                  <td className="px-4 py-3 text-white/75">{r.return_at ? fmt(r.return_at).slice(5, 16) : "—"}</td>
                   <td className="px-4 py-3"><Badge tone={m.tone}>{m.icon} {r.result === "ISSUES" ? `${r.issue_count} 件異常` : m.label}</Badge></td>
-                  <td className="px-4 py-3 text-right"><Link href={`/inspections?rental=${encodeURIComponent(r.rental_id)}`} className="text-[12px] text-sky-300 hover:underline">查看</Link></td>
+                  <td className="px-4 py-3"><Badge tone={rv.tone}>{rv.label}</Badge></td>
+                  <td className="px-4 py-3 text-right"><Link href={`/inspections?rental=${encodeURIComponent(r.rental_id)}`} className="text-[12px] text-sky-300 hover:underline">{r.review_state === "pending_review" ? "審核" : "查看"}</Link></td>
                 </motion.tr>
               );
             })}
           </tbody>
         </table>
-        {rows && rows.length === 0 && <div className="p-10 text-center text-[13px] text-muted">還沒有任何 App 檢查紀錄。用 iOS App 完成一次取車拍攝後就會出現在這裡。</div>}
+        {rows && visible.length === 0 && <div className="p-10 text-center text-[13px] text-muted">{scoped.length === 0 ? "目前尚無還車檢測紀錄。用 iOS App 完成一次還車拍攝後就會出現在這裡。" : "沒有符合此狀態的檢測紀錄。"}</div>}
         {!rows && !error && <div className="p-10 text-center text-[13px] text-muted">{loaded ? "載入檢查紀錄…" : "連線中…"}</div>}
         {error && <div className="p-10 text-center text-[13px] text-rose-300">無法取得檢查紀錄：{error}</div>}
       </GlassPanel>
@@ -119,7 +143,6 @@ function InspectionDetailView({ rentalId }: { rentalId: string }) {
 
   if (error) return <div className="py-20 text-center text-rose-300">{error} <Link href="/inspections" className="ml-2 text-sky-300 hover:underline">返回列表</Link></div>;
   if (!detail) return <div className="py-20 text-center text-muted">載入 {rentalId}…</div>;
-  const m = RESULT_META[detail.result];
   const passed = detail.result === "PASSED";
 
   return (
@@ -133,8 +156,9 @@ function InspectionDetailView({ rentalId }: { rentalId: string }) {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Badge tone={m.tone}>{m.icon} {m.label}</Badge>
-          <Link href={`/vehicle?car=${encodeURIComponent(detail.plate)}`}><Button variant="secondary" icon={<Car />}>開啟數位分身</Button></Link>
+          {detail.data_source !== "app" && <Badge tone={SOURCE_META[detail.data_source].tone}>{SOURCE_META[detail.data_source].label}</Badge>}
+          <Badge tone={REVIEW_META[detail.review_state].tone}>{REVIEW_META[detail.review_state].label}</Badge>
+          {detail.session_id && <Link href={`/rentals?session=${encodeURIComponent(detail.session_id)}`}><Button variant="secondary" icon={<ListChecks />}>租還車紀錄</Button></Link>}
         </div>
       </motion.div>
 
@@ -145,14 +169,14 @@ function InspectionDetailView({ rentalId }: { rentalId: string }) {
             <div className="flex items-start gap-3">
               <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-emerald-400/12 text-emerald-300"><ShieldCheck className="h-5 w-5" /></span>
               <div>
-                <div className="text-[16px] font-semibold text-emerald-100">Inspection Passed</div>
-                <div className="mt-1 text-[13px] text-white/75">No new damage detected · Interior condition acceptable</div>
+                <div className="text-[16px] font-semibold text-emerald-100">檢測完成，無異常</div>
+                <div className="mt-1 text-[13px] text-white/75">未發現新增車損；車內整潔可接受（或未拍車內照）</div>
                 <div className="mt-0.5 text-[12px] text-muted">未建立任何案件；取車與還車照片仍完整保留於下方供稽核。</div>
               </div>
             </div>
           ) : detail.result === "ISSUES" ? (
             <div>
-              <div className="flex items-center gap-2 text-[16px] font-semibold text-rose-100"><AlertTriangle className="h-4 w-4 text-rose-300" />AI 偵測到 {detail.issue_count} 件異常</div>
+              <div className="flex items-center gap-2 text-[16px] font-semibold text-rose-100"><AlertTriangle className="h-4 w-4 text-rose-300" />AI 偵測到 {detail.issue_count} 件異常{detail.review_state === "pending_review" ? "・請點選案件人工審核" : ""}</div>
               <div className="mt-3 grid gap-2 md:grid-cols-2">
                 {detail.incidents.map((inc) => <IncidentRow key={inc.case_id} inc={inc} onOpen={() => openIncident(inc.case_id)} />)}
               </div>
@@ -186,9 +210,12 @@ function InspectionDetailView({ rentalId }: { rentalId: string }) {
                 {c.findings.length > 0 && (
                   <ul className="mt-2 space-y-1 text-[11.5px]">
                     {c.findings.map((f, i) => (
-                      <li key={i} className="flex items-center justify-between gap-2 text-white/80">
-                        <span><span className={cn("mr-1.5 inline-block h-1.5 w-1.5 rounded-full", f.status === "NEW_DAMAGE" ? "bg-rose-400" : "bg-sky-400")} />{f.label}{f.type ? ` · ${f.type}` : ""}</span>
-                        <span className="tabular text-white/55">{f.confidence != null ? pct(f.confidence) : f.status === "EXISTING_DAMAGE" ? "既有" : ""}</span>
+                      <li key={i} className="text-white/80">
+                        <div className="flex items-center justify-between gap-2">
+                          <span><span className={cn("mr-1.5 inline-block h-1.5 w-1.5 rounded-full", f.status === "NEW_DAMAGE" ? "bg-rose-400" : "bg-sky-400")} />{f.label}{f.type ? ` · ${f.type}` : ""}{f.severity ? ` · ${f.severity}` : ""}</span>
+                          <span className="tabular text-white/55">{f.confidence != null ? pct(f.confidence) : f.status === "EXISTING_DAMAGE" ? "既有" : ""}</span>
+                        </div>
+                        {f.reasoning && <div className="mt-0.5 pl-3 text-[11px] text-white/50">判斷依據：{f.reasoning}</div>}
                       </li>
                     ))}
                   </ul>
@@ -223,7 +250,7 @@ function InspectionDetailView({ rentalId }: { rentalId: string }) {
                   )}
                   <p className="mt-3 text-[12px] text-muted">{detail.interior.summary}</p>
                 </>
-              ) : <p className="text-[12.5px] text-muted">尚未分析。</p>}
+              ) : <p className="text-[12.5px] text-muted">{interior?.return_photo ? "尚未分析。" : "未拍攝車內照（選填），本次未判定車內整潔度。"}</p>}
             </div>
           </div>
         </GlassPanel>
@@ -269,7 +296,7 @@ function IncidentRow({ inc, onOpen }: { inc: InspectionDetail["incidents"][numbe
     <button onClick={onOpen} className={cn("flex items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition", damage ? "border-rose-400/20 bg-rose-400/[0.06] hover:bg-rose-400/[0.1]" : "border-amber-400/20 bg-amber-400/[0.06] hover:bg-amber-400/[0.1]")}>
       <span className={cn("grid h-8 w-8 shrink-0 place-items-center rounded-lg", damage ? "bg-rose-400/15 text-rose-300" : "bg-amber-400/15 text-amber-300")}>{damage ? <AlertTriangle className="h-4 w-4" /> : <Armchair className="h-4 w-4" />}</span>
       <span className="min-w-0 flex-1">
-        <span className="block text-[13px] font-semibold text-white/95">{damage ? "Damage" : "Cleaning"} · {inc.label}{inc.damage_type ? ` · ${inc.damage_type}` : ""} <span className="tabular font-normal text-white/60">{inc.confidence != null ? pct(inc.confidence) : ""}</span></span>
+        <span className="block text-[13px] font-semibold text-white/95">{damage ? "車損" : "車內髒污"} · {inc.label}{inc.damage_type ? ` · ${inc.damage_type}` : ""} <span className="tabular font-normal text-white/60">{inc.confidence != null ? pct(inc.confidence) : ""}</span></span>
         <span className="block truncate text-[11px] text-white/55">{inc.case_id} · {REVIEW_LABEL[inc.review_status ?? "unreviewed"]}{inc.region ? ` · twin ${inc.region}` : ""}</span>
       </span>
       <ClipboardList className="h-3.5 w-3.5 text-white/40" />

@@ -109,7 +109,46 @@ export interface InspectionRow {
   pickup: InspectionCompleteness; return: InspectionCompleteness
   result: InspectionResult; issue_count: number; incidents: InspectionIncidentRef[]
   analysis: { source: string | null; error: string | null; started_at: string | null; completed_at: string | null }
-  source: 'mobile' | 'demo_seed'; demo: boolean; updated_at: string
+  source: 'mobile' | 'demo_seed' | 'simulation'; demo: boolean; updated_at: string
+  /** app＝真實 App 租約（有 Session）｜fixture＝固定劇本（非真實 AI）｜legacy＝舊版上傳流程 */
+  data_source: DataSource; session_id: string | null; review_state: ReviewState
+}
+export type DataSource = 'app' | 'fixture' | 'legacy'
+/** 檢測中／無異常／發現異常待審核／已審核／檢測失敗；capturing＝還車照尚未齊全 */
+export type ReviewState = 'capturing' | 'analyzing' | 'passed' | 'pending_review' | 'reviewed' | 'failed'
+
+/* ---------- 精簡後台：總覽與租還車紀錄（/api/ops/overview、/api/ops/rentals） ---------- */
+export interface RentalRow {
+  session_id: string; rental_id: string; data_source: DataSource
+  plate: string; vehicle_id: string; model: string | null; vehicle_category: string
+  state: string; state_label: string; started_at: string; returned_at: string | null; cancelled_at: string | null
+  pickup_plate_status: 'MATCH' | 'MISMATCH' | 'MANUAL' | 'UNKNOWN' | 'PENDING'; pickup_plate_texts: string[]
+  pickup_photos: number; return_photos: number
+  analysis: 'pending' | 'analyzing' | 'complete' | 'failed'; review_state: ReviewState | null
+  incident_count: number; unreviewed_count: number; review_required: boolean
+  distance_km: number | null; used_seconds: number | null
+}
+export interface StagePhoto {
+  angle: string; angle_code: string; url: string | null; plate_text: string | null; plate_confidence: number | null
+  plate_source: string; plate_status: 'MATCH' | 'MISMATCH' | 'MANUAL' | 'UNKNOWN' | null
+  view: string | null; view_confidence: number | null; validation_mode: string; captured_at: string
+}
+export interface StagePhotos { photos: StagePhoto[]; plate_status: RentalRow['pickup_plate_status']; plate_texts: string[] }
+export interface RentalDetail {
+  rental: RentalRow
+  session: { start_odometer_km: number; end_odometer_km: number | null; distance_km: number | null; used_seconds: number | null; inspection_attempts: number; last_error: string | null; rental_status: string | null }
+  pickup: StagePhotos; return: StagePhotos
+  inspection: { result: InspectionResult | null; review_state: ReviewState | null; issue_count: number; incidents: InspectionIncidentRef[]; analysis: InspectionRow['analysis'] | null }
+  timeline: Array<{ label: string; at: string }>
+}
+export interface Overview {
+  server_time: string
+  vehicles: { total: number; available: number; rented: number; maintenance: number; demo: number; abnormal: number; abnormal_plates: string[] }
+  today: { rentals_started: number; returns_completed: number }
+  ai: { completed: number; analyzing: number; failed: number; passed: number; pending_review_cases: number }
+  recent_rentals: RentalRow[]
+  recent_incidents: Array<InspectionIncidentRef & { rental_id: string; session_id: string | null; plate: string; at: string | null }>
+  scope_note: string
 }
 export interface InspectionPhoto {
   photo_id: string; angle: string; angle_code: string; category: 'exterior' | 'interior'; captured_at: string; uploaded_at: string
@@ -144,7 +183,7 @@ export interface FleetRow {
   /** App 可租車輛才為 true；rentable 與 App 車輛清單同源（後端 rental_sessions.availability） */
   rental_fleet?: boolean
   rentable?: boolean
-  rental_state?: { vehicle_id: string; vehicle_status: 'AVAILABLE' | 'RENTED' | 'MAINTENANCE'; session_id: string | null; session_state: string | null; visibility: string | null } | null
+  rental_state?: { vehicle_id: string; vehicle_status: 'AVAILABLE' | 'RENTED' | 'MAINTENANCE'; session_id: string | null; session_state: string | null; visibility: string | null; is_demo: boolean; admin_created: boolean; is_fixture: boolean } | null
 }
 /** /api/ops/devtools/vehicles：App 可租車輛（demo_vehicles，內部視圖）。座標即 App 地圖顯示位置。 */
 export interface DevVehicle {

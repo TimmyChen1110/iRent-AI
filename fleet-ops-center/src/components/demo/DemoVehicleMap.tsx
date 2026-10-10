@@ -3,14 +3,18 @@
 import { useEffect, useRef, useState } from "react";
 import type { Map as MapLibreMap, Marker as MapLibreMarker } from "maplibre-gl";
 import { MAPLIBRE_WORKER_URL, TAIPEI_DARK_STYLE } from "@/config/map";
-import type { DevVehicle } from "@/lib/ops/types";
-
 export interface LatLng { lat: number; lng: number }
+
+/** 地圖需要的最小車輛資料（DevVehicle 與車隊頁的轉換結果都符合）。座標＝後端 demo_vehicles.lat/lng。 */
+export interface MapVehicle {
+  vehicle_id: string; plate: string; location: LatLng
+  status: "AVAILABLE" | "RENTED" | "MAINTENANCE" | "PARKED"; is_demo: boolean
+}
 
 /** 臺大二活一帶（既有模擬車輛所在位置）。 */
 const DEFAULT_CENTER: [number, number] = [121.5397, 25.0174];
 
-const STATUS_COLOR: Record<DevVehicle["status"], string> = { AVAILABLE: "#34d399", RENTED: "#818cf8", MAINTENANCE: "#fb923c", PARKED: "#71717a" };
+const STATUS_COLOR: Record<MapVehicle["status"], string> = { AVAILABLE: "#34d399", RENTED: "#818cf8", MAINTENANCE: "#fb923c", PARKED: "#71717a" };
 
 async function loadMapLibre() {
   const lib = await import("maplibre-gl");
@@ -42,27 +46,29 @@ function markerEl(label: string, color: string, opts: { demo: boolean; selected:
 }
 
 /**
- * Demo 車輛位置編輯地圖：點地圖放置「新車輛」草稿標記；草稿與選取中的車輛標記可拖曳。
- * 標記位置＝後端 demo_vehicles 的 lat/lng（App 地圖同一組座標）。
+ * 車輛地圖：標記位置＝後端 demo_vehicles 的 lat/lng（App 地圖同一組座標）。
+ * 編輯模式（Demo 測試車輛頁）：點地圖放置「新車輛」草稿標記；草稿與選取中的車輛標記可拖曳。
+ * readOnly（車輛管理頁）：只能點選車輛，不能放置或拖曳。
  */
-export function DemoVehicleMap({ vehicles, selectedId, draft, focus, onMapClick, onSelect, onDraftMove, onVehicleMove }: {
-  vehicles: DevVehicle[];
+export function DemoVehicleMap({ vehicles, selectedId, draft = null, focus = null, readOnly = false, onMapClick, onSelect, onDraftMove, onVehicleMove }: {
+  vehicles: MapVehicle[];
   selectedId: string | null;
-  draft: LatLng | null;
+  draft?: LatLng | null;
   /** 變動時鏡頭飛到該位置 */
-  focus: (LatLng & { token: number }) | null;
-  onMapClick: (p: LatLng) => void;
+  focus?: (LatLng & { token: number }) | null;
+  readOnly?: boolean;
+  onMapClick?: (p: LatLng) => void;
   onSelect: (id: string) => void;
-  onDraftMove: (p: LatLng) => void;
-  onVehicleMove: (id: string, p: LatLng) => void;
+  onDraftMove?: (p: LatLng) => void;
+  onVehicleMove?: (id: string, p: LatLng) => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const libRef = useRef<typeof import("maplibre-gl") | null>(null);
   const markersRef = useRef<Record<string, MapLibreMarker>>({});
   const draftRef = useRef<MapLibreMarker | null>(null);
-  const cb = useRef({ onMapClick, onSelect, onDraftMove, onVehicleMove });
-  useEffect(() => { cb.current = { onMapClick, onSelect, onDraftMove, onVehicleMove }; });
+  const cb = useRef({ onMapClick, onSelect, onDraftMove, onVehicleMove, readOnly });
+  useEffect(() => { cb.current = { onMapClick, onSelect, onDraftMove, onVehicleMove, readOnly }; });
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
 
@@ -85,7 +91,7 @@ export function DemoVehicleMap({ vehicles, selectedId, draft, focus, onMapClick,
           const msg = String((e as { error?: { message?: string } }).error?.message ?? "");
           if (/webgl|style/i.test(msg)) setFailed(true);
         });
-        m.on("click", (e) => cb.current.onMapClick({ lat: +e.lngLat.lat.toFixed(6), lng: +e.lngLat.lng.toFixed(6) }));
+        m.on("click", (e) => { if (!cb.current.readOnly) cb.current.onMapClick?.({ lat: +e.lngLat.lat.toFixed(6), lng: +e.lngLat.lng.toFixed(6) }); });
         m.on("load", () => { if (!cancelled) { m.resize(); setReady(true); } });
       } catch {
         setFailed(true);
@@ -114,15 +120,15 @@ export function DemoVehicleMap({ vehicles, selectedId, draft, focus, onMapClick,
       const el = markerEl(v.plate, STATUS_COLOR[v.status], { demo: v.is_demo, selected });
       el.dataset.testid = `marker-${v.plate}`;
       el.addEventListener("click", (ev) => { ev.stopPropagation(); cb.current.onSelect(v.vehicle_id); });
-      const mk = new lib.Marker({ element: el, anchor: "bottom", draggable: selected && v.status !== "RENTED" })
+      const mk = new lib.Marker({ element: el, anchor: "bottom", draggable: !readOnly && selected && v.status !== "RENTED" })
         .setLngLat([v.location.lng, v.location.lat]).addTo(m);
       mk.on("dragend", () => {
         const p = mk.getLngLat();
-        cb.current.onVehicleMove(v.vehicle_id, { lat: +p.lat.toFixed(6), lng: +p.lng.toFixed(6) });
+        cb.current.onVehicleMove?.(v.vehicle_id, { lat: +p.lat.toFixed(6), lng: +p.lng.toFixed(6) });
       });
       markersRef.current[v.vehicle_id] = mk;
     }
-  }, [ready, vehicles, selectedId]);
+  }, [ready, vehicles, selectedId, readOnly]);
 
   /* 新車輛草稿標記（可拖曳） */
   useEffect(() => {
@@ -134,12 +140,25 @@ export function DemoVehicleMap({ vehicles, selectedId, draft, focus, onMapClick,
       el.dataset.testid = "marker-draft";
       el.addEventListener("click", (ev) => ev.stopPropagation());
       const mk = new lib.Marker({ element: el, anchor: "bottom", draggable: true }).setLngLat([draft.lng, draft.lat]).addTo(m);
-      mk.on("dragend", () => { const p = mk.getLngLat(); cb.current.onDraftMove({ lat: +p.lat.toFixed(6), lng: +p.lng.toFixed(6) }); });
+      mk.on("dragend", () => { const p = mk.getLngLat(); cb.current.onDraftMove?.({ lat: +p.lat.toFixed(6), lng: +p.lng.toFixed(6) }); });
       draftRef.current = mk;
     } else {
       draftRef.current.setLngLat([draft.lng, draft.lat]);
     }
   }, [ready, draft]);
+
+  /* 第一次拿到車輛時把鏡頭框住所有車輛（預設中心不一定涵蓋全部車輛） */
+  const fittedRef = useRef(false);
+  useEffect(() => {
+    const m = mapRef.current, lib = libRef.current;
+    if (!ready || !m || !lib || fittedRef.current || focus) return;
+    const pts = vehicles.filter((v) => v.status !== "PARKED").map((v) => [v.location.lng, v.location.lat] as [number, number]);
+    if (!pts.length) return;
+    fittedRef.current = true;
+    const b = new lib.LngLatBounds(pts[0], pts[0]);
+    pts.forEach((p) => b.extend(p));
+    m.fitBounds(b, { padding: 90, maxZoom: 16, duration: 0 });
+  }, [ready, vehicles, focus]);
 
   useEffect(() => {
     if (ready && focus && mapRef.current) mapRef.current.flyTo({ center: [focus.lng, focus.lat], zoom: Math.max(mapRef.current.getZoom(), 16), duration: 700 });
