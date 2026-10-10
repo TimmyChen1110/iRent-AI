@@ -16,9 +16,9 @@ RUN NEXT_OUTPUT=export NEXT_TELEMETRY_DISABLED=1 npm run build
 # ---- 階段 2：backend ----
 FROM python:3.13-slim
 
-# opencv-python-headless / pillow-heif 的系統依賴。
+# 影像處理的系統依賴與中文標註字型（Linux 沒有 macOS 的 STHeiti）。
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        libglib2.0-0 \
+        libglib2.0-0 fonts-noto-cjk \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
