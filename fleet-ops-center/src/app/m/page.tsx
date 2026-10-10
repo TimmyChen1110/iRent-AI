@@ -3,7 +3,9 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Camera, Play, CheckCircle2, Hand, LogOut, Hexagon } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Camera, Play, CheckCircle2, Hand, LogOut, Hexagon, LayoutDashboard } from "lucide-react";
 import { api } from "@/lib/ops/api";
 import type { MyTask, TaskAction } from "@/lib/ops/types";
 import { rel, slaState, syncClock } from "@/lib/ops/time";
@@ -17,6 +19,9 @@ import { cn } from "@/lib/utils";
 /** 站點整備人員手機版：登入身分 → 我的任務 → 接單 → 開工 → 拍完工照 → 完工。 */
 export default function MobilePage() {
   const { user, logout } = useAuth();
+  const router = useRouter();
+  // 登出後回到首頁網址：下一個登入的若是管理者，直接進入管理後台而不是停在手機版
+  const signOut = async () => { await logout(); router.replace("/"); };
   const { pushToast } = useOps();
   const [tasks, setTasks] = useState<MyTask[]>([]);
   const [busy, setBusy] = useState<number | null>(null);
@@ -46,7 +51,10 @@ export default function MobilePage() {
         <div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-sky-400/30 to-violet-500/20 ring-1 ring-white/10"><Hexagon className="h-4.5 w-4.5 text-sky-200" /></div>
         <div className="leading-tight"><div className="text-[15px] font-semibold text-white/95">整備任務</div><div className="text-[11px] text-dim">站點人員手機版</div></div>
         <span className="flex-1" />
-        <Button size="sm" variant="ghost" icon={<LogOut />} onClick={logout}>登出</Button>
+        {user?.role === "admin" && (
+          <Link href="/" className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/[0.12] bg-white/[0.06] px-3 text-xs font-medium text-white/90 hover:bg-white/[0.1]"><LayoutDashboard className="h-3.5 w-3.5" />回管理後台</Link>
+        )}
+        <Button size="sm" variant="danger" icon={<LogOut />} onClick={signOut} data-testid="logout">登出／切換身分</Button>
       </div>
       <div className="glass flex items-center gap-2 rounded-xl px-3 py-2 text-[12.5px]"><span className="label-xs">登入身分</span><b className="text-white/90">{user?.name}</b><Badge tone="success">{user?.role === "station" ? "站點人員" : "管理者"}</Badge></div>
       <div className="text-[12px] text-muted">{tasks.filter((t) => t.mine).length} 件指派給我 · {tasks.filter((t) => !t.mine).length} 件未指派可接</div>
