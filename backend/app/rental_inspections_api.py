@@ -36,10 +36,9 @@ def _with_case_state(incidents: list[dict]) -> list[dict]:
 
 @router.get("")
 def list_inspections():
-    items = ri.list_inspections()
-    for it in items:
-        it["incidents"] = _with_case_state(it["incidents"])
-    return {"inspections": items, "server_time": ri.now_iso()}
+    """每筆租約的檢查摘要 ＋ 案件裁決狀態 ＋ data_source（app／fixture／legacy）＋ review_state（審核分類）。"""
+    import admin_console_api  # noqa: PLC0415
+    return {"inspections": admin_console_api.inspections_with_state(), "server_time": ri.now_iso()}
 
 
 @router.get("/{rental_id}")
@@ -48,4 +47,9 @@ def inspection_detail(rental_id: str):
     if detail is None:
         raise HTTPException(404, f"找不到租約 {rental_id}")
     detail["incidents"] = _with_case_state(detail["incidents"])
+    import admin_console_api  # noqa: PLC0415
+    sessions = admin_console_api._sessions_by_rental()
+    detail["data_source"] = admin_console_api.data_source(rental_id, sessions)
+    detail["session_id"] = (sessions.get(rental_id) or {}).get("session_id")
+    detail["review_state"] = admin_console_api.review_state(detail["result"], detail["incidents"])
     return {"inspection": detail, "server_time": ri.now_iso()}

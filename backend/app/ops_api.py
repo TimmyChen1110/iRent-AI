@@ -1030,6 +1030,7 @@ def fleet(q: str | None = None, status: str | None = None):
                              "session_state": bookable.get("active_session_state"),
                              "visibility": bookable.get("visibility"),
                              "is_demo": bool(bookable.get("is_demo")),
+                             "is_fixture": bool(bookable.get("is_fixture")),
                              "admin_created": bool(bookable.get("admin_created"))} if bookable else None,
         })
     if q:
