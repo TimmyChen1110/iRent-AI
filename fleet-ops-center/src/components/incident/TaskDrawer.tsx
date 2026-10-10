@@ -4,7 +4,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
-import { X, AlertTriangle, SprayCan, CheckCircle2, XCircle, Camera, Car, Play, RotateCcw, Bell, Send, Undo2, ScanSearch } from "lucide-react";
+import { X, AlertTriangle, SprayCan, CheckCircle2, XCircle, Camera, Car, Play, RotateCcw, Bell, Undo2, ScanSearch } from "lucide-react";
 import { api } from "@/lib/ops/api";
 import type { TaskDetail, TaskAction } from "@/lib/ops/types";
 import { fmt } from "@/lib/ops/time";
@@ -14,7 +14,6 @@ import { useAuth } from "@/store/AuthStore";
 import { Button } from "@/components/ui/Button";
 import { PriorityBadge, Badge } from "@/components/ui/Badge";
 import { ConfidenceBar } from "@/components/ui/ConfidenceBar";
-import { DraftsPanel } from "./DraftsPanel";
 import { PRIORITY_MAP } from "@/lib/ops/adapters";
 import { cn, pct } from "@/lib/utils";
 
@@ -213,10 +212,6 @@ function TaskPane({ taskId, onClose }: { taskId: number; onClose: () => void }) 
         </section>
 
         <section><div className="label-xs mb-2">工作內容</div><pre className="whitespace-pre-wrap rounded-lg bg-white/[0.03] p-3 font-sans text-[12.5px] leading-relaxed text-white/80">{t.description || "—"}</pre></section>
-
-        <section><div className="label-xs mb-2 flex items-center gap-1.5"><Send className="h-3 w-3" />通知文案</div>
-          <DraftsPanel task={t} drafts={d.drafts} log={d.notification_log} onChange={(drafts) => setD({ ...d, drafts })} onSent={(r) => { setD({ ...d, task: r.task, notification_log: r.notification_log }); refresh(); }} />
-        </section>
 
         <section>
           <div className="label-xs mb-2 flex items-center justify-between"><span className="flex items-center gap-1.5"><Camera className="h-3 w-3" />完工照</span>{t.status === "completed" && d.photos.length > 0 ? <Badge tone="success">✓ 已成為基準照</Badge> : d.photos.length > 0 ? <Badge tone="info">完成任務後成為基準照</Badge> : <Badge tone="neutral">尚無完工照</Badge>}</div>
