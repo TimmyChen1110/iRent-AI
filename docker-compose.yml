@@ -4,6 +4,7 @@
 
 services:
   backend:
+    image: cyh032508/irent-backend:v1
     build:
       context: .
       dockerfile: backend/Dockerfile
@@ -40,6 +41,7 @@ services:
       replicas: 1
 
   fleet-ops-center:
+    image: cyh032508/irent-fleet-ops-center:v1
     build:
       context: .
       dockerfile: fleet-ops-center/Dockerfile
